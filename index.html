@@ -48,7 +48,7 @@
       /* --- HEADER / NAVIGATION --- */
       header {
         background-color: var(--bg-panel);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom:1px solid rgba(255,255, 255, 0.1);
         padding: 1rem 2rem;
         position: sticky;
         top: 0;
@@ -61,7 +61,7 @@
         margin: 0 auto;
         display: flex;
         align-items: center;
-        position: relative; /* Needed for absolute children */
+        position: relative;
       }
 
       .nav-link {
@@ -86,7 +86,7 @@
       .nav-my-team {
         color: var(--accent-secondary);
         border: 1px solid var(--accent-secondary);
-        z-index: 102; /* Ensure it sits above */
+        z-index: 102;
       }
 
       .nav-my-team:hover {
@@ -112,12 +112,11 @@
       }
 
       /* --- RIGHT: Group Container --- */
-      /* This new container holds User Info, Admin Button, and Toggle. */
       .nav-right-group {
         display: flex;
         align-items: center;
-        gap: 1rem; /* Space between items on the right */
-        margin-left: auto; /* Pushes everything to the far right */
+        gap: 1rem;
+        margin-left: auto;
         z-index: 102;
       }
 
@@ -125,7 +124,7 @@
       .user-info-display {
         font-size: 0.9rem;
         color: var(--accent-secondary);
-        display: none; /* Hidden by default until logged in */
+        display: none;
         align-items: center;
         gap: 8px;
         background: rgba(16, 185, 129, 0.1);
@@ -134,7 +133,7 @@
         border: 1px solid rgba(16, 185, 129, 0.2);
       }
 
-      /* Admin Button (Top Right) */
+      /* Admin Button */
       .nav-admin {
         color: var(--accent-admin);
         border: 1px solid var(--accent-admin);
@@ -145,9 +144,9 @@
         color: white;
       }
 
-      /* Admin Controls (Toggle) */
+      /* Admin Controls */
       .admin-controls {
-        display: none; /* Hidden by default */
+        display: none;
         align-items: center;
         gap: 10px;
         font-size: 0.85rem;
@@ -261,7 +260,6 @@
         color: white;
       }
 
-      /* Tournament List Styles */
       .tournaments-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -269,22 +267,50 @@
         animation: fadeIn 0.5s ease;
       }
 
+      /* CLICKABLE CARD STYLE */
       .tournament-card {
         background: var(--bg-card);
         border: 1px solid rgba(255, 255, 255, 0.05);
         border-radius: var(--radius-md);
         padding: 2rem;
         text-align: center;
-        display: flex;
+        display: flex; /* Make anchor a flex container */
         flex-direction: column;
         gap: 1rem;
         transition: var(--transition);
+        text-decoration: none; /* Remove link underline */
+        color: var(--text-main); /* Inherit text color */
+        position: relative;
+        overflow: hidden;
       }
+      
+      /* Add a "Click me" hint overlay on hover */
+      .tournament-card::after {
+        content: "Click to Register \2192"; /* Arrow */
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+
       .tournament-card:hover {
         transform: translateY(-5px);
         border-color: var(--accent-primary);
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
       }
+      
+      .tournament-card:hover::after {
+        opacity: 1;
+      }
+
       .card-icon {
         width: 60px;
         height: 60px;
@@ -295,14 +321,17 @@
         align-items: center;
         justify-content: center;
         margin: 0 auto;
+        z-index: 1; /* Above overlay */
       }
       .card-title {
         font-size: 1.5rem;
         font-weight: 700;
+        z-index: 1;
       }
       .card-info {
         color: var(--text-muted);
         font-size: 1rem;
+        z-index: 1;
       }
       .rings-badge {
         display: inline-flex;
@@ -315,6 +344,7 @@
         font-weight: 600;
         font-size: 0.9rem;
         margin-top: 0.5rem;
+        z-index: 1;
       }
 
       .placeholder-card {
@@ -330,7 +360,6 @@
         gap: 10px;
       }
 
-      /* Empty State */
       .empty-state {
         display: none;
         flex-direction: column;
@@ -359,7 +388,6 @@
         max-width: 400px;
       }
 
-      /* Utility to switch states via JS */
       body.registration-closed .tournaments-grid {
         display: none;
       }
@@ -378,7 +406,6 @@
         to { opacity: 1; transform: translateY(0); }
       }
 
-      /* --- MODAL STYLES --- */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -475,18 +502,14 @@
         display: none;
       }
 
-      /* Mobile Adjustments */
       @media (max-width: 768px) {
         .nav-container {
           flex-direction: column;
           gap: 1rem;
           padding-bottom: 1rem;
         }
-        .nav-my-team {
-          position: static; /* Stack on mobile */
-        }
-        .nav-rings {
-          position: static; /* Stack on mobile */
+        .nav-my-team, .nav-rings, .nav-admin {
+          position: static;
           transform: none;
           width: 100%;
           justify-content: center;
@@ -507,11 +530,9 @@
   </head>
   <body class="loading">
 
-    <!-- Header & Navigation -->
     <header>
       <div class="nav-container">
-        
-        <!-- 1. Left: My Team -->
+        <!-- Left: My Team -->
         <a href="register.html" class="nav-link nav-my-team">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -522,7 +543,7 @@
           My Team
         </a>
 
-        <!-- 2. Center: Rings -->
+        <!-- Center: Rings -->
         <a href="#" class="nav-link nav-rings">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -531,10 +552,8 @@
           Rings
         </a>
 
-        <!-- 3. Right: Group Container (Fixes Overlap) -->
+        <!-- Right: Group Container -->
         <div class="nav-right-group">
-          
-          <!-- User Info Display -->
           <div id="userInfoDisplay" class="user-info-display">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -543,7 +562,6 @@
             <span id="userEmailSpan">user@example.com</span>
           </div>
 
-          <!-- Admin Login Button -->
           <button id="btnAdminLogin" class="nav-link nav-admin" style="background: none; border: none">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -552,7 +570,6 @@
             Admin
           </button>
 
-          <!-- Admin Controls (Hidden until logged in) -->
           <div class="admin-controls" id="adminControls">
             <span class="status-text" id="statusText">Checking...</span>
             <label class="switch">
@@ -560,15 +577,12 @@
               <span class="slider"></span>
             </label>
           </div>
-
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
     <main>
       <div class="container">
-        <!-- Big Tournament Box Section -->
         <section class="tournament-section">
           <div class="section-header">
             <h2 class="section-title">Available Tournaments</h2>
@@ -584,13 +598,11 @@
             <span style="color: var(--text-muted); font-size: 0.9rem; width: 100%; margin-top: 0.5rem;" id="liveStatusText">Connecting to DB...</span>
           </div>
 
-          <!-- State 1: Tournaments List -->
           <div class="tournaments-grid" id="tournamentList">
             <!-- Content injected by JS -->
             <div class="placeholder-card">No tournaments added yet.</div>
           </div>
 
-          <!-- State 2: Registration Closed -->
           <div class="empty-state" id="emptyState">
             <div class="empty-icon">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -640,31 +652,17 @@
       </div>
     </div>
 
-    <!-- App Logic -->
     <script>
-      // ==========================================
-      // CONFIGURATION
-      // ==========================================
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 
       let supabaseClient;
       try {
-        // CHANGED: Using 'sessionStorage' instead of default 'localStorage'.
-        // This means, login is ONLY kept while the tab is open.
-        // When you close the tab, the login is forgotten.
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          auth: {
-            storage: window.sessionStorage 
-          }
+          auth: { storage: window.sessionStorage }
         });
-      } catch (e) {
-        console.error("Supabase init error:", e);
-      }
+      } catch (e) { console.error("Supabase init error:", e); }
 
-      // ==========================================
-      // DOM ELEMENTS
-      // ==========================================
       const body = document.body;
       const adminToggle = document.getElementById("adminToggle");
       const adminControls = document.getElementById("adminControls");
@@ -673,8 +671,6 @@
       const tournamentList = document.getElementById("tournamentList");
       const userInfoDisplay = document.getElementById("userInfoDisplay");
       const userEmailSpan = document.getElementById("userEmailSpan");
-
-      // Edit Button & Modal
       const btnEditTournament = document.getElementById("btnEditTournament");
       const editTournamentModal = document.getElementById("editTournamentModal");
       const inputTournamentName = document.getElementById("inputTournamentName");
@@ -682,8 +678,6 @@
       const btnSaveTournament = document.getElementById("btnSaveTournament");
       const btnCancelEdit = document.getElementById("btnCancelEdit");
       const editTournamentError = document.getElementById("editTournamentError");
-
-      // Login Modal Elements
       const btnAdminLogin = document.getElementById("btnAdminLogin");
       const loginModal = document.getElementById("loginModal");
       const btnCancelLogin = document.getElementById("btnCancelLogin");
@@ -691,41 +685,19 @@
       const adminPasswordInput = document.getElementById("adminPasswordInput");
       const loginError = document.getElementById("loginError");
 
-      // State
       let isAdmin = false;
       let currentDbState = false;
       let tournamentName = "";
       let ringsNumber = 0;
 
-      // ==========================================
-      // CORE FUNCTIONS
-      // ==========================================
-
-      /**
-       * 1. Fetch Settings from Supabase
-       */
       async function fetchSettings() {
-        if (!supabaseClient) {
-          updateUI(true);
-          return;
-        }
-
-        const { data, error } = await supabaseClient
-          .from("site_settings")
-          .select("tournament_registration, tournament_name, rings_number")
-          .eq("id", 1)
-          .single();
-
+        if (!supabaseClient) { updateUI(true); return; }
+        const { data, error } = await supabaseClient.from("site_settings").select("tournament_registration, tournament_name, rings_number").eq("id", 1).single();
         if (error) {
           console.error("Error fetching settings:", error);
           liveStatusText.textContent = "Error connecting to database";
-          if (error.code === "42703") {
-            console.error("Missing columns in site_settings!");
-            liveStatusText.textContent = "DB Schema Error (Check Console)";
-          }
           return;
         }
-
         if (data) {
           currentDbState = data.tournament_registration;
           tournamentName = data.tournament_name || "";
@@ -734,22 +706,12 @@
         }
       }
 
-      /**
-       * 2. Update Settings in Supabase
-       */
       async function updateSetting(newState) {
         if (!supabaseClient) return;
-
         statusText.textContent = "Saving...";
         adminToggle.disabled = true;
-
-        const { error } = await supabaseClient
-          .from("site_settings")
-          .update({ tournament_registration: newState })
-          .eq("id", 1);
-
+        const { error } = await supabaseClient.from("site_settings").update({ tournament_registration: newState }).eq("id", 1);
         adminToggle.disabled = false;
-
         if (error) {
           console.error("Error updating settings:", error);
           alert("Failed to update database. Reverting UI.");
@@ -761,60 +723,31 @@
         }
       }
 
-      /**
-       * 3. Save Tournament Details
-       */
       async function saveTournamentDetails() {
         const nameVal = inputTournamentName.value.trim();
         const ringsVal = parseInt(inputRingsNumber.value);
-
         if (!nameVal || isNaN(ringsVal) || ringsVal <= 0) {
           editTournamentError.style.display = "block";
           return;
         }
         editTournamentError.style.display = "none";
-
-        const originalBtnText = btnSaveTournament.textContent;
         btnSaveTournament.textContent = "Saving...";
         btnSaveTournament.disabled = true;
-
         if (!supabaseClient) {
           setTimeout(() => {
-            tournamentName = nameVal;
-            ringsNumber = ringsVal;
-            closeEditModal();
-            renderTournamentCard();
-            btnSaveTournament.textContent = originalBtnText;
-            btnSaveTournament.disabled = false;
+            tournamentName = nameVal; ringsNumber = ringsVal;
+            closeEditModal(); renderTournamentCard();
+            btnSaveTournament.textContent = "Save Details"; btnSaveTournament.disabled = false;
           }, 500);
           return;
         }
-
-        const { error } = await supabaseClient
-          .from("site_settings")
-          .update({
-            tournament_name: nameVal,
-            rings_number: ringsVal,
-          })
-          .eq("id", 1);
-
-        if (error) {
-          console.error("Error saving tournament details:", error);
-          alert("Failed to save details. Check console.");
-        } else {
-          tournamentName = nameVal;
-          ringsNumber = ringsVal;
-          closeEditModal();
-          renderTournamentCard();
-        }
-
-        btnSaveTournament.textContent = originalBtnText;
+        const { error } = await supabaseClient.from("site_settings").update({ tournament_name: nameVal, rings_number: ringsVal }).eq("id", 1);
+        if (error) { console.error("Error saving tournament details:", error); alert("Failed to save details. Check console."); }
+        else { tournamentName = nameVal; ringsNumber = ringsVal; closeEditModal(); renderTournamentCard(); }
+        btnSaveTournament.textContent = "Save Details";
         btnSaveTournament.disabled = false;
       }
 
-      /**
-       * 4. Render the Tournament Card HTML
-       */
       function renderTournamentCard() {
         if (!tournamentName && ringsNumber === 0) {
           tournamentList.innerHTML = `<div class="placeholder-card">No tournament details configured yet. <br>(Admin must configure tournament)</div>`;
@@ -822,8 +755,9 @@
           const displayTitle = tournamentName || "Untitled Tournament";
           const displayRings = ringsNumber || 0;
 
+          // CHANGED: Wrapped the card content in an <a> tag pointing to registration.html
           tournamentList.innerHTML = `
-            <div class="tournament-card">
+            <a href="registration.html" class="tournament-card">
               <div class="card-icon">
                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
               </div>
@@ -833,17 +767,13 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
                 ${displayRings} Rings Available
               </div>
-            </div>
+            </a>
           `;
         }
       }
 
-      /**
-       * 5. Update UI based on state
-       */
       function updateUI(isOpen) {
         adminToggle.checked = isOpen;
-
         if (isOpen) {
           body.classList.remove("registration-closed");
           body.classList.add("registration-open");
@@ -858,24 +788,17 @@
         }
       }
 
-      // ==========================================
-      // SESSION CHECKING (Connection to Register Code)
-      // ==========================================
       async function checkUserSession() {
         if (!supabaseClient) return;
         const { data: { session } } = await supabaseClient.auth.getSession();
-        
         if (session) {
-          // User is logged in
           userInfoDisplay.style.display = "flex";
           userEmailSpan.textContent = session.user.email;
         } else {
-          // User is logged out
           userInfoDisplay.style.display = "none";
         }
       }
 
-      // Listen for auth changes (e.g. if user logs out in register tab, this updates)
       if (supabaseClient) {
         supabaseClient.auth.onAuthStateChange((_event, session) => {
           if (session) {
@@ -887,17 +810,12 @@
         });
       }
 
-      // ==========================================
-      // EVENT LISTENERS
-      // ==========================================
-
       adminToggle.addEventListener("change", (e) => {
         if (!isAdmin) return;
         const newState = e.target.checked;
         updateSetting(newState);
       });
 
-      // Edit Tournament Modal
       btnEditTournament.addEventListener("click", () => {
         inputTournamentName.value = tournamentName;
         inputRingsNumber.value = ringsNumber || "";
@@ -906,17 +824,11 @@
         inputTournamentName.focus();
       });
 
-      function closeEditModal() {
-        editTournamentModal.classList.remove("active");
-      }
-
+      function closeEditModal() { editTournamentModal.classList.remove("active"); }
       btnCancelEdit.addEventListener("click", closeEditModal);
       btnSaveTournament.addEventListener("click", saveTournamentDetails);
-      inputRingsNumber.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") saveTournamentDetails();
-      });
+      inputRingsNumber.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
 
-      // Login Modal
       btnAdminLogin.addEventListener("click", () => {
         if (isAdmin) return;
         loginModal.classList.add("active");
@@ -925,15 +837,9 @@
         adminPasswordInput.focus();
       });
 
-      btnCancelLogin.addEventListener("click", () => {
-        loginModal.classList.remove("active");
-      });
-
+      btnCancelLogin.addEventListener("click", () => { loginModal.classList.remove("active"); });
       btnConfirmLogin.addEventListener("click", attemptLogin);
-
-      adminPasswordInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") attemptLogin();
-      });
+      adminPasswordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") attemptLogin(); });
 
       function attemptLogin() {
         const pass = adminPasswordInput.value;
@@ -951,13 +857,10 @@
         }
       }
 
-      // ==========================================
-      // INITIALIZATION
-      // ==========================================
       document.addEventListener("DOMContentLoaded", () => {
         body.classList.remove("loading");
         fetchSettings();
-        checkUserSession(); // Check if user is already logged in from register.html
+        checkUserSession();
       });
     </script>
   </body>
