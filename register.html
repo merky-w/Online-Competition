@@ -493,6 +493,18 @@
         color: var(--accent-secondary);
       }
 
+      /* Back Button Style */
+      .btn-back {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.9rem;
+      }
+      .btn-back:hover {
+        background-color: var(--bg-body);
+        color: white;
+      }
+
       /* Mobile Adjustments */
       @media (max-width: 768px) {
         .nav-container {
@@ -522,13 +534,18 @@
     </style>
   </head>
   <body>
-    <!-- NEW HEADER (Based on Platform Scheme) -->
+    <!-- NEW HEADER -->
     <header>
       <div class="nav-container">
-        <!-- Title will be updated by JS -->
         <div class="nav-title" id="navTitle">
           <i class="fas fa-trophy"></i> 9-th Vojvodina Open ITF
         </div>
+        
+        <!-- Back to Main Button -->
+        <a href="index.html" class="btn btn-back">
+          <i class="fas fa-arrow-left"></i> Back to Main
+        </a>
+
         <div style="color: var(--text-muted); font-size: 0.9rem">
           Official Registration System
         </div>
@@ -657,8 +674,7 @@
       // CONFIGURATION & INIT
       // ==========================================
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
-      const SUPABASE_ANON_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
       const client = window.supabase.createClient(
         SUPABASE_URL.trim(),
         SUPABASE_ANON_KEY.trim(),
@@ -691,6 +707,21 @@
 
       // Auth State Listener
       client.auth.onAuthStateChange((event, session) => {
+        // If we receive a SIGNED_IN event, show dashboard
+        if (event === "SIGNED_IN" && session) {
+          currentUserId = session.user.id;
+          fetchExistingTeam();
+          authSection.classList.add("hidden");
+          competitionSection.classList.remove("hidden");
+          loadDashboard();
+        }
+        // If SIGNED_OUT, hide dashboard
+        if (event === "SIGNED_OUT") {
+          currentUserId = null;
+          authSection.classList.remove("hidden");
+          competitionSection.classList.add("hidden");
+        }
+
         if (event === "PASSWORD_RECOVERY") {
           isRecoveryFlow = true;
           showAlert(
@@ -707,6 +738,18 @@
         }
       });
 
+      // Check session on load
+      async function checkSession() {
+        const { data: { session } } = await client.auth.getSession();
+        if (session) {
+          currentUserId = session.user.id;
+          fetchExistingTeam();
+          authSection.classList.add("hidden");
+          competitionSection.classList.remove("hidden");
+          loadDashboard();
+        }
+      }
+
       // ==========================================
       // FETCH TOURNAMENT NAME FROM SUPABASE
       // ==========================================
@@ -715,20 +758,16 @@
           const { data, error } = await client
             .from("site_settings")
             .select("tournament_name")
-            .eq("id", 1) // Assuming we use a single row with ID 1 for settings
+            .eq("id", 1)
             .single();
 
           if (error) {
             console.error("Error fetching tournament name:", error);
-            // Keep default name if error
             return;
           }
 
           if (data && data.tournament_name) {
-            // Update Browser Tab Title
             document.title = data.tournament_name;
-
-            // Update Header Title (Keep the Icon, change text)
             if (navTitle) {
               navTitle.innerHTML = `<i class="fas fa-trophy"></i> ${data.tournament_name}`;
             }
@@ -771,17 +810,10 @@
             return;
           }
 
+          // Note: onAuthStateChange will handle the UI update, 
+          // but we update ID here just in case logic needs it immediately
           if (data?.session?.user) {
             currentUserId = data.session.user.id;
-            await fetchExistingTeam();
-            authSection.classList.add("hidden");
-            competitionSection.classList.remove("hidden");
-            loadDashboard();
-          } else {
-            showAlert(
-              "Authentication succeeded but user data not available.",
-              "error",
-            );
           }
         });
 
@@ -796,7 +828,7 @@
             emailValue,
             {
               redirectTo:
-                "https://merky-w.github.io/Competition/azta-index.html",
+                "https://merky-w.github.io/Competition/azta-index.html", // Ensure this matches your deployed URL or local file
             },
           );
 
@@ -833,8 +865,7 @@
               "Password updated successfully. You can now log in.",
               "success",
             );
-            location.href =
-              "https://merky-w.github.io/Competition/azta-index.html";
+            location.href = "index.html";
           }
         });
 
@@ -1575,8 +1606,8 @@
       // INITIALIZATION
       // ==========================================
       document.addEventListener("DOMContentLoaded", () => {
-        // Fetch the tournament name from DB immediately
         fetchTournamentName();
+        checkSession(); // Auto-login if session exists
       });
     </script>
   </body>
