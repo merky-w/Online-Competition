@@ -675,9 +675,18 @@
       // ==========================================
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+      
+      // CHANGED: Using 'sessionStorage' instead of default 'localStorage'.
+      // This means the login is ONLY kept while the tab is open.
+      // When you close the tab, the login is forgotten.
       const client = window.supabase.createClient(
         SUPABASE_URL.trim(),
         SUPABASE_ANON_KEY.trim(),
+        {
+          auth: {
+            storage: window.sessionStorage 
+          }
+        }
       );
 
       // DOM Elements
@@ -1607,7 +1616,7 @@
       // ==========================================
       document.addEventListener("DOMContentLoaded", () => {
         fetchTournamentName();
-        checkSession(); // Auto-login if session exists
+        checkSession(); // Auto-login if session exists (only exists if tab is still open)
       });
     </script>
   </body>
