@@ -61,8 +61,7 @@
         margin: 0 auto;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        position: relative;
+        position: relative; /* Needed for absolute children */
       }
 
       .nav-link {
@@ -83,12 +82,11 @@
         background-color: rgba(255, 255, 255, 0.1);
       }
 
-      /* My Team (Top Left) - Links to register.html */
+      /* --- LEFT: My Team --- */
       .nav-my-team {
-        position: absolute;
-        left: 0;
         color: var(--accent-secondary);
         border: 1px solid var(--accent-secondary);
+        z-index: 102; /* Ensure it sits above */
       }
 
       .nav-my-team:hover {
@@ -96,7 +94,7 @@
         color: #fff;
       }
 
-      /* Rings (Top Center) */
+      /* --- CENTER: Rings --- */
       .nav-rings {
         position: absolute;
         left: 50%;
@@ -105,6 +103,7 @@
         color: white;
         padding: 0.6rem 2rem;
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        z-index: 100;
       }
 
       .nav-rings:hover {
@@ -112,10 +111,18 @@
         transform: translateX(-50%) translateY(-2px);
       }
 
-      /* User Info Display (New) */
+      /* --- RIGHT: Group Container --- */
+      /* This new container holds User Info, Admin Button, and Toggle. */
+      .nav-right-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem; /* Space between items on the right */
+        margin-left: auto; /* Pushes everything to the far right */
+        z-index: 102;
+      }
+
+      /* User Info Display */
       .user-info-display {
-        margin-left: auto;
-        margin-right: 20px;
         font-size: 0.9rem;
         color: var(--accent-secondary);
         display: none; /* Hidden by default until logged in */
@@ -138,11 +145,9 @@
         color: white;
       }
 
-      /* Admin Controls */
+      /* Admin Controls (Toggle) */
       .admin-controls {
-        display: none;
-        position: absolute;
-        right: 120px;
+        display: none; /* Hidden by default */
         align-items: center;
         gap: 10px;
         font-size: 0.85rem;
@@ -475,21 +480,22 @@
         .nav-container {
           flex-direction: column;
           gap: 1rem;
+          padding-bottom: 1rem;
         }
-        .nav-my-team,
-        .nav-rings,
-        .nav-admin {
-          position: static;
+        .nav-my-team {
+          position: static; /* Stack on mobile */
+        }
+        .nav-rings {
+          position: static; /* Stack on mobile */
           transform: none;
           width: 100%;
           justify-content: center;
-          margin: 0;
         }
-        .admin-controls {
-          position: static;
+        .nav-right-group {
           width: 100%;
           justify-content: center;
-          margin: 0.5rem 0 0 0;
+          margin-left: 0;
+          flex-wrap: wrap;
         }
         .section-header {
           flex-direction: column;
@@ -505,7 +511,7 @@
     <header>
       <div class="nav-container">
         
-        <!-- 1. Top-Left: My Team (Now links to register.html) -->
+        <!-- 1. Left: My Team -->
         <a href="register.html" class="nav-link nav-my-team">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -516,7 +522,7 @@
           My Team
         </a>
 
-        <!-- 2. Top-Center: Rings -->
+        <!-- 2. Center: Rings -->
         <a href="#" class="nav-link nav-rings">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -525,31 +531,36 @@
           Rings
         </a>
 
-        <!-- NEW: Logged In User Info Display -->
-        <div id="userInfoDisplay" class="user-info-display">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span id="userEmailSpan">user@example.com</span>
-        </div>
+        <!-- 3. Right: Group Container (Fixes Overlap) -->
+        <div class="nav-right-group">
+          
+          <!-- User Info Display -->
+          <div id="userInfoDisplay" class="user-info-display">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span id="userEmailSpan">user@example.com</span>
+          </div>
 
-        <!-- 3. Admin Login Button -->
-        <button id="btnAdminLogin" class="nav-link nav-admin" style="background: none; border: none">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-          Admin
-        </button>
+          <!-- Admin Login Button -->
+          <button id="btnAdminLogin" class="nav-link nav-admin" style="background: none; border: none">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Admin
+          </button>
 
-        <!-- 4. Admin Toggle (Hidden until logged in) -->
-        <div class="admin-controls" id="adminControls">
-          <span class="status-text" id="statusText">Checking...</span>
-          <label class="switch">
-            <input type="checkbox" id="adminToggle" />
-            <span class="slider"></span>
-          </label>
+          <!-- Admin Controls (Hidden until logged in) -->
+          <div class="admin-controls" id="adminControls">
+            <span class="status-text" id="statusText">Checking...</span>
+            <label class="switch">
+              <input type="checkbox" id="adminToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
         </div>
       </div>
     </header>
@@ -640,7 +651,7 @@
       let supabaseClient;
       try {
         // CHANGED: Using 'sessionStorage' instead of default 'localStorage'.
-        // This means the login is ONLY kept while the tab is open.
+        // This means, login is ONLY kept while the tab is open.
         // When you close the tab, the login is forgotten.
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
           auth: {
@@ -817,7 +828,7 @@
                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
               </div>
               <h3 class="card-title">${displayTitle}</h3>
-              <p class="card-info">Join the competition and prove your skill!</p>
+              <p class="card-info">Join competition and prove your skill!</p>
               <div class="rings-badge">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
                 ${displayRings} Rings Available
