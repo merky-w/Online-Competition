@@ -1,1 +1,415 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Team Registration</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --bg-body: #0f172a;
+        --bg-panel: #1e293b;
+        --bg-card: #334155;
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --accent-secondary: #10b981; /* Green */
+        --accent-register: #f59e0b; /* Orange */
+        --accent-alert: #ef4444;
+        --radius-md: 12px;
+        --radius-lg: 20px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      }
 
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: "Segoe UI", Roboto, sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        background-color: var(--bg-panel);
+        padding: 1rem 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .back-link {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .back-link:hover { color: white; }
+
+      main {
+        flex: 1;
+        padding: 2rem 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      h1 { margin-bottom: 2rem; font-size: 2rem; text-align: center; }
+
+      .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--accent-register);
+        padding-left: 10px;
+        color: var(--text-main);
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 3rem;
+      }
+
+      /* The Card */
+      .person-card {
+        background-color: var(--bg-card);
+        border: 2px solid transparent;
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        user-select: none;
+      }
+
+      .person-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      /* SELECTED STATE (Green) */
+      .person-card.selected {
+        background-color: rgba(16, 185, 129, 0.15);
+        border-color: var(--accent-secondary);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+      }
+
+      .person-card.selected .check-icon {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      .card-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .card-details {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      .check-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: var(--accent-secondary);
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.2s ease;
+        background: var(--bg-card);
+        border-radius: 50%;
+        padding: 4px;
+      }
+
+      /* Submit Bar */
+      .submit-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-panel);
+        padding: 1rem 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+        z-index: 100;
+      }
+
+      .counter {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+      }
+      .counter span {
+        color: var(--accent-secondary);
+        font-weight: 700;
+        font-size: 1.4rem;
+      }
+
+      .btn-submit {
+        background-color: var(--accent-register);
+        color: #fff;
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: var(--radius-md);
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      }
+
+      .btn-submit:hover {
+        background-color: #d97706;
+        transform: translateY(-2px);
+      }
+
+      .btn-submit:disabled {
+        background-color: var(--bg-card);
+        color: var(--text-muted);
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 2rem;
+        font-style: italic;
+      }
+
+      /* Loading */
+      .loading-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        display: none;
+      }
+      .spinner {
+        width: 50px; height: 50px;
+        border: 5px solid rgba(255,255,255,0.1);
+        border-top-color: var(--accent-register);
+        border-radius: 50%;
+        animation: spin 1s infinite linear;
+      }
+      @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    </style>
+  </head>
+  <body>
+
+    <header>
+      <div class="logo">Team Registration</div>
+      <a href="index.html" class="back-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to Main
+      </a>
+    </header>
+
+    <main>
+      <h1>Select Participants</h1>
+
+      <!-- Competitors Section -->
+      <h3 class="section-title">Competitors</h3>
+      <div id="competitorsGrid" class="grid-container">
+        <!-- Loaded via JS -->
+        <div class="empty-state">No competitors found. Add them in "My Team".</div>
+      </div>
+
+      <!-- Judges Section -->
+      <h3 class="section-title">Judges / Referees</h3>
+      <div id="judgesGrid" class="grid-container">
+        <!-- Loaded via JS -->
+      </div>
+
+      <!-- Coaches Section -->
+      <h3 class="section-title">Coaches</h3>
+      <div id="coachesGrid" class="grid-container">
+        <!-- Loaded via JS -->
+      </div>
+    </main>
+
+    <div class="submit-bar">
+      <div class="counter">Selected: <span id="selectedCount">0</span></div>
+      <button id="btnSubmit" class="btn-submit" disabled>Confirm Registration</button>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+
+    <script>
+      const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { storage: window.sessionStorage }
+      });
+
+      // State to track selected IDs
+      const selectedIds = new Set(); 
+
+      // DOM Elements
+      const competitorsGrid = document.getElementById("competitorsGrid");
+      const judgesGrid = document.getElementById("judgesGrid");
+      const coachesGrid = document.getElementById("coachesGrid");
+      const selectedCountSpan = document.getElementById("selectedCount");
+      const btnSubmit = document.getElementById("btnSubmit");
+      const loadingOverlay = document.getElementById("loadingOverlay");
+
+      async function init() {
+        const { data: { session } } = await client.auth.getSession();
+        
+        if (!session) {
+          // If not logged in, redirect to My Team page
+          alert("Please log in to register.");
+          window.location.href = "register.html";
+          return;
+        }
+
+        loadData(session.user.id);
+      }
+
+      async function loadData(userId) {
+        // Fetch all team members
+        const [compRes, judgeRes, coachRes] = await Promise.all([
+          client.from("competitors").select("*").eq("user_id", userId),
+          client.from("judges").select("*").eq("user_id", userId),
+          client.from("coaches").select("*").eq("user_id", userId),
+        ]);
+
+        renderGrid(competitorsGrid, compRes.data || [], 'competitor');
+        renderGrid(judgesGrid, judgeRes.data || [], 'judge');
+        renderGrid(coachesGrid, coachRes.data || [], 'coach');
+      }
+
+      function renderGrid(container, data, type) {
+        container.innerHTML = "";
+        
+        if (data.length === 0) {
+          container.innerHTML = `<div class="empty-state">No ${type}s added yet.</div>`;
+          return;
+        }
+
+        data.forEach(person => {
+          const card = document.createElement("div");
+          card.className = "person-card";
+          card.dataset.id = person.id;
+          card.dataset.type = type; // Store type for easy retrieval
+          card.dataset.raw = JSON.stringify(person); // Store full data
+
+          // Content based on type
+          let details = "";
+          if (type === 'competitor') {
+            details = `
+              <div class="card-details">${person.gender} - ${person.weight}kg</div>
+              <div class="card-details">${person.belt}</div>
+              <div class="card-details" style="font-size:0.8rem; margin-top:5px;">
+                ${person.sparring === 'Yes' ? '<span style="color:var(--accent-secondary)">Sparring</span>' : ''} 
+                ${person.patterns === 'Yes' ? '<span style="color:var(--accent-secondary)">Patterns</span>' : ''}
+              </div>
+            `;
+          } else {
+            details = `
+              <div class="card-details">${person.belt}</div>
+            `;
+          }
+
+          card.innerHTML = `
+            <div class="check-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="card-name">${person.name}</div>
+            ${details}
+          `;
+
+          // Click Event to Toggle Selection
+          card.addEventListener("click", () => toggleSelection(card));
+
+          container.appendChild(card);
+        });
+      }
+
+      function toggleSelection(card) {
+        const id = card.dataset.id;
+        
+        if (selectedIds.has(id)) {
+          // Deselect
+          selectedIds.delete(id);
+          card.classList.remove("selected");
+        } else {
+          // Select
+          selectedIds.add(id);
+          card.classList.add("selected");
+        }
+
+        updateUI();
+      }
+
+      function updateUI() {
+        const count = selectedIds.size;
+        selectedCountSpan.textContent = count;
+        
+        if (count > 0) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = `Register ${count} People`;
+        } else {
+          btnSubmit.disabled = true;
+          btnSubmit.textContent = "Select Participants";
+        }
+      }
+
+      // Submit Registration
+      btnSubmit.addEventListener("click", async () => {
+        if (selectedIds.size === 0) return;
+
+        loadingOverlay.style.display = "flex";
+
+        // Gather all selected cards to get their data
+        // Note: In a real app we might re-fetch from DB, but here we use the stored dataset
+        const cards = document.querySelectorAll(".person-card.selected");
+        const insertData = [];
+        const userId = (await client.auth.getSession()).data.session.user.id;
+
+        cards.forEach(card => {
+          const rawPerson = JSON.parse(card.dataset.raw);
+          const type = card.dataset.type; // 'competitor', 'judge', 'coach'
+
+          insertData.push({
+            user_id: userId,
+            entry_type: type,
+            entry_id: rawPerson.id,
+            entry_data: rawPerson // Snapshot of data
+          });
+        });
+
+        // Insert into Supabase
+        const { error } = await client.from("final_registrations").insert(insertData);
+
+        loadingOverlay.style.display = "none";
+
+        if (error) {
+          alert("Error registering: " + error.message);
+        } else {
+          alert("Successfully registered " + insertData.length + " participants!");
+          window.location.href = "index.html"; // Go back to main
+        }
+      });
+
+      // Start
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
