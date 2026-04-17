@@ -506,7 +506,6 @@
       <div class="nav-container">
         
         <!-- 1. Top-Left: My Team (Now links to register.html) -->
-        <!-- Added onclick to force reload in case user logs out in other tab -->
         <a href="register.html" class="nav-link nav-my-team">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -640,7 +639,14 @@
 
       let supabaseClient;
       try {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // CHANGED: Using 'sessionStorage' instead of default 'localStorage'.
+        // This means the login is ONLY kept while the tab is open.
+        // When you close the tab, the login is forgotten.
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            storage: window.sessionStorage 
+          }
+        });
       } catch (e) {
         console.error("Supabase init error:", e);
       }
@@ -852,8 +858,6 @@
           // User is logged in
           userInfoDisplay.style.display = "flex";
           userEmailSpan.textContent = session.user.email;
-          // Optional: Change "My Team" text if logged in?
-          // document.querySelector('.nav-my-team').innerHTML = `...`;
         } else {
           // User is logged out
           userInfoDisplay.style.display = "none";
