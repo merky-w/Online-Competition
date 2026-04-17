@@ -83,7 +83,7 @@
         background-color: rgba(255, 255, 255, 0.1);
       }
 
-      /* My Team (Top Left) */
+      /* My Team (Top Left) - Links to register.html */
       .nav-my-team {
         position: absolute;
         left: 0;
@@ -112,9 +112,23 @@
         transform: translateX(-50%) translateY(-2px);
       }
 
+      /* User Info Display (New) */
+      .user-info-display {
+        margin-left: auto;
+        margin-right: 20px;
+        font-size: 0.9rem;
+        color: var(--accent-secondary);
+        display: none; /* Hidden by default until logged in */
+        align-items: center;
+        gap: 8px;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
+
       /* Admin Button (Top Right) */
       .nav-admin {
-        margin-left: auto;
         color: var(--accent-admin);
         border: 1px solid var(--accent-admin);
       }
@@ -124,7 +138,7 @@
         color: white;
       }
 
-      /* Admin Controls (Hidden by default, shown after login) */
+      /* Admin Controls */
       .admin-controls {
         display: none;
         position: absolute;
@@ -133,7 +147,7 @@
         gap: 10px;
         font-size: 0.85rem;
         color: var(--text-muted);
-        background: rgba(139, 92, 246, 0.1); /* Purple tint */
+        background: rgba(139, 92, 246, 0.1);
         padding: 8px 12px;
         border-radius: var(--radius-md);
         border: 1px solid rgba(139, 92, 246, 0.3);
@@ -223,7 +237,6 @@
         color: var(--text-main);
       }
 
-      /* Admin Edit Button in Header */
       .btn-edit-tournament {
         background: rgba(139, 92, 246, 0.1);
         color: var(--accent-admin);
@@ -231,7 +244,7 @@
         padding: 0.4rem 0.8rem;
         border-radius: var(--radius-md);
         cursor: pointer;
-        display: none; /* Hidden by default */
+        display: none;
         align-items: center;
         gap: 5px;
         font-size: 0.9rem;
@@ -243,7 +256,7 @@
         color: white;
       }
 
-      /* STATE 1: LIST OF TOURNAMENTS */
+      /* Tournament List Styles */
       .tournaments-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -251,7 +264,6 @@
         animation: fadeIn 0.5s ease;
       }
 
-      /* Dynamic Tournament Card */
       .tournament-card {
         background: var(--bg-card);
         border: 1px solid rgba(255, 255, 255, 0.05);
@@ -300,7 +312,6 @@
         margin-top: 0.5rem;
       }
 
-      /* Placeholder for when no data exists */
       .placeholder-card {
         border: 2px dashed rgba(255, 255, 255, 0.1);
         display: flex;
@@ -314,7 +325,7 @@
         gap: 10px;
       }
 
-      /* STATE 2: CLOSED / EMPTY STATE */
+      /* Empty State */
       .empty-state {
         display: none;
         flex-direction: column;
@@ -358,14 +369,8 @@
       }
 
       @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       /* --- MODAL STYLES --- */
@@ -481,7 +486,7 @@
           margin: 0;
         }
         .admin-controls {
-          position: static; /* Reset absolute position for mobile */
+          position: static;
           width: 100%;
           justify-content: center;
           margin: 0.5rem 0 0 0;
@@ -495,23 +500,15 @@
     </style>
   </head>
   <body class="loading">
-    <!-- Starts in loading state -->
 
     <!-- Header & Navigation -->
     <header>
       <div class="nav-container">
-        <!-- 1. Top-Left: My Team -->
-        <a href="#" class="nav-link nav-my-team">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+        
+        <!-- 1. Top-Left: My Team (Now links to register.html) -->
+        <!-- Added onclick to force reload in case user logs out in other tab -->
+        <a href="register.html" class="nav-link nav-my-team">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -522,38 +519,25 @@
 
         <!-- 2. Top-Center: Rings -->
         <a href="#" class="nav-link nav-rings">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
           Rings
         </a>
 
+        <!-- NEW: Logged In User Info Display -->
+        <div id="userInfoDisplay" class="user-info-display">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span id="userEmailSpan">user@example.com</span>
+        </div>
+
         <!-- 3. Admin Login Button -->
-        <button
-          id="btnAdminLogin"
-          class="nav-link nav-admin"
-          style="background: none; border: none"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+        <button id="btnAdminLogin" class="nav-link nav-admin" style="background: none; border: none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
@@ -579,38 +563,15 @@
           <div class="section-header">
             <h2 class="section-title">Available Tournaments</h2>
 
-            <!-- New Admin Edit Button -->
             <button id="btnEditTournament" class="btn-edit-tournament">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                ></path>
-                <path
-                  d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                ></path>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
               Configure Tournament
             </button>
 
-            <span
-              style="
-                color: var(--text-muted);
-                font-size: 0.9rem;
-                width: 100%;
-                margin-top: 0.5rem;
-              "
-              id="liveStatusText"
-              >Connecting to DB...</span
-            >
+            <span style="color: var(--text-muted); font-size: 0.9rem; width: 100%; margin-top: 0.5rem;" id="liveStatusText">Connecting to DB...</span>
           </div>
 
           <!-- State 1: Tournaments List -->
@@ -622,26 +583,14 @@
           <!-- State 2: Registration Closed -->
           <div class="empty-state" id="emptyState">
             <div class="empty-icon">
-              <svg
-                width="64"
-                height="64"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
             </div>
             <h3 class="empty-title">Registration Closed</h3>
-            <p class="empty-desc">
-              Tournament registration is currently closed. Please wait for an
-              administrator to open registration.
-            </p>
+            <p class="empty-desc">Tournament registration is currently closed. Please wait for an administrator to open registration.</p>
           </div>
         </section>
       </div>
@@ -651,21 +600,8 @@
     <div class="modal-overlay" id="loginModal">
       <div class="modal-box">
         <h3 class="modal-title">Admin Access</h3>
-        <p
-          style="
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-          "
-        >
-          Enter password to manage registration state.
-        </p>
-        <input
-          type="password"
-          id="adminPasswordInput"
-          class="modal-input"
-          placeholder="Enter password..."
-        />
+        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">Enter password to manage registration state.</p>
+        <input type="password" id="adminPasswordInput" class="modal-input" placeholder="Enter password..." />
         <div class="error-msg" id="loginError">Incorrect password.</div>
         <div class="modal-actions">
           <button class="btn btn-cancel" id="btnCancelLogin">Cancel</button>
@@ -674,37 +610,22 @@
       </div>
     </div>
 
-    <!-- NEW: Edit Tournament Details Modal -->
+    <!-- Edit Tournament Details Modal -->
     <div class="modal-overlay" id="editTournamentModal">
       <div class="modal-box">
         <h3 class="modal-title">Configure Tournament</h3>
 
         <label class="modal-label">Tournament Name</label>
-        <input
-          type="text"
-          id="inputTournamentName"
-          class="modal-input"
-          placeholder="e.g. Summer Championship 2024"
-        />
+        <input type="text" id="inputTournamentName" class="modal-input" placeholder="e.g. Summer Championship 2024" />
 
         <label class="modal-label">Number of Rings</label>
-        <input
-          type="number"
-          id="inputRingsNumber"
-          class="modal-input"
-          placeholder="e.g. 5"
-          min="1"
-        />
+        <input type="number" id="inputRingsNumber" class="modal-input" placeholder="e.g. 5" min="1" />
 
-        <div class="error-msg" id="editTournamentError">
-          Please fill in both fields.
-        </div>
+        <div class="error-msg" id="editTournamentError">Please fill in both fields.</div>
 
         <div class="modal-actions">
           <button class="btn btn-cancel" id="btnCancelEdit">Cancel</button>
-          <button class="btn btn-confirm" id="btnSaveTournament">
-            Save Details
-          </button>
+          <button class="btn btn-confirm" id="btnSaveTournament">Save Details</button>
         </div>
       </div>
     </div>
@@ -714,23 +635,12 @@
       // ==========================================
       // CONFIGURATION
       // ==========================================
-      // REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
-      
+      const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 
-      // Initialize Supabase
-      // Renamed to 'supabaseClient' to avoid conflict with window.supabase global object
       let supabaseClient;
       try {
-        if (SUPABASE_URL === "YOUR_SUPABASE_URL" || !SUPABASE_URL) {
-          console.warn(
-            "Supabase credentials not set. Running in UI-Only mode.",
-          );
-        } else {
-          supabaseClient = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY,
-          );
-        }
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       } catch (e) {
         console.error("Supabase init error:", e);
       }
@@ -744,21 +654,17 @@
       const statusText = document.getElementById("statusText");
       const liveStatusText = document.getElementById("liveStatusText");
       const tournamentList = document.getElementById("tournamentList");
+      const userInfoDisplay = document.getElementById("userInfoDisplay");
+      const userEmailSpan = document.getElementById("userEmailSpan");
 
       // Edit Button & Modal
       const btnEditTournament = document.getElementById("btnEditTournament");
-      const editTournamentModal = document.getElementById(
-        "editTournamentModal",
-      );
-      const inputTournamentName = document.getElementById(
-        "inputTournamentName",
-      );
+      const editTournamentModal = document.getElementById("editTournamentModal");
+      const inputTournamentName = document.getElementById("inputTournamentName");
       const inputRingsNumber = document.getElementById("inputRingsNumber");
       const btnSaveTournament = document.getElementById("btnSaveTournament");
       const btnCancelEdit = document.getElementById("btnCancelEdit");
-      const editTournamentError = document.getElementById(
-        "editTournamentError",
-      );
+      const editTournamentError = document.getElementById("editTournamentError");
 
       // Login Modal Elements
       const btnAdminLogin = document.getElementById("btnAdminLogin");
@@ -770,9 +676,9 @@
 
       // State
       let isAdmin = false;
-      let currentDbState = false; // Registration Open/Closed
-      let tournamentName = ""; // Tournament Name from DB
-      let ringsNumber = 0; // Rings Number from DB
+      let currentDbState = false;
+      let tournamentName = "";
+      let ringsNumber = 0;
 
       // ==========================================
       // CORE FUNCTIONS
@@ -780,12 +686,9 @@
 
       /**
        * 1. Fetch Settings from Supabase
-       * Reads 'tournament_registration', 'tournament_name', 'rings_number'
-       * from 'site_settings' table (id=1)
        */
       async function fetchSettings() {
         if (!supabaseClient) {
-          // Fallback for demo if no DB connected
           updateUI(true);
           return;
         }
@@ -793,18 +696,14 @@
         const { data, error } = await supabaseClient
           .from("site_settings")
           .select("tournament_registration, tournament_name, rings_number")
-          .eq("id", 1) // Assuming we use a single row with ID 1 for settings
+          .eq("id", 1)
           .single();
 
         if (error) {
           console.error("Error fetching settings:", error);
           liveStatusText.textContent = "Error connecting to database";
-
-          // If the error is about missing columns (code 42703), warn user
           if (error.code === "42703") {
-            console.error(
-              "Missing columns! Please add 'tournament_name' (text) and 'rings_number' (int) to your site_settings table.",
-            );
+            console.error("Missing columns in site_settings!");
             liveStatusText.textContent = "DB Schema Error (Check Console)";
           }
           return;
@@ -820,12 +719,10 @@
 
       /**
        * 2. Update Settings in Supabase
-       * Writes 'tournament_registration' to 'site_settings' table (id=1)
        */
       async function updateSetting(newState) {
         if (!supabaseClient) return;
 
-        // Visual feedback that we are saving
         statusText.textContent = "Saving...";
         adminToggle.disabled = true;
 
@@ -839,7 +736,6 @@
         if (error) {
           console.error("Error updating settings:", error);
           alert("Failed to update database. Reverting UI.");
-          // Revert toggle on error
           adminToggle.checked = !newState;
           statusText.textContent = "Error Saving";
         } else {
@@ -849,26 +745,23 @@
       }
 
       /**
-       * 3. Save Tournament Details (Name & Rings)
+       * 3. Save Tournament Details
        */
       async function saveTournamentDetails() {
         const nameVal = inputTournamentName.value.trim();
         const ringsVal = parseInt(inputRingsNumber.value);
 
-        // Validation
         if (!nameVal || isNaN(ringsVal) || ringsVal <= 0) {
           editTournamentError.style.display = "block";
           return;
         }
         editTournamentError.style.display = "none";
 
-        // Disable button
         const originalBtnText = btnSaveTournament.textContent;
         btnSaveTournament.textContent = "Saving...";
         btnSaveTournament.disabled = true;
 
         if (!supabaseClient) {
-          // Mock save for UI only mode
           setTimeout(() => {
             tournamentName = nameVal;
             ringsNumber = ringsVal;
@@ -895,7 +788,7 @@
           tournamentName = nameVal;
           ringsNumber = ringsVal;
           closeEditModal();
-          renderTournamentCard(); // Re-render card to show new data
+          renderTournamentCard();
         }
 
         btnSaveTournament.textContent = originalBtnText;
@@ -909,7 +802,6 @@
         if (!tournamentName && ringsNumber === 0) {
           tournamentList.innerHTML = `<div class="placeholder-card">No tournament details configured yet. <br>(Admin must configure tournament)</div>`;
         } else {
-          // Use default values if one is missing
           const displayTitle = tournamentName || "Untitled Tournament";
           const displayRings = ringsNumber || 0;
 
@@ -933,17 +825,13 @@
        * 5. Update UI based on state
        */
       function updateUI(isOpen) {
-        // Sync Toggle Switch (don't trigger event)
         adminToggle.checked = isOpen;
 
-        // Body Classes
         if (isOpen) {
           body.classList.remove("registration-closed");
           body.classList.add("registration-open");
           statusText.textContent = "Registration Open";
           liveStatusText.textContent = "Registration is OPEN";
-
-          // Only render the card if registration is open
           renderTournamentCard();
         } else {
           body.classList.remove("registration-open");
@@ -954,20 +842,48 @@
       }
 
       // ==========================================
+      // SESSION CHECKING (Connection to Register Code)
+      // ==========================================
+      async function checkUserSession() {
+        if (!supabaseClient) return;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        
+        if (session) {
+          // User is logged in
+          userInfoDisplay.style.display = "flex";
+          userEmailSpan.textContent = session.user.email;
+          // Optional: Change "My Team" text if logged in?
+          // document.querySelector('.nav-my-team').innerHTML = `...`;
+        } else {
+          // User is logged out
+          userInfoDisplay.style.display = "none";
+        }
+      }
+
+      // Listen for auth changes (e.g. if user logs out in register tab, this updates)
+      if (supabaseClient) {
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+          if (session) {
+            userInfoDisplay.style.display = "flex";
+            userEmailSpan.textContent = session.user.email;
+          } else {
+            userInfoDisplay.style.display = "none";
+          }
+        });
+      }
+
+      // ==========================================
       // EVENT LISTENERS
       // ==========================================
 
-      // Toggle Change Event (Admin Only)
       adminToggle.addEventListener("change", (e) => {
-        if (!isAdmin) return; // Security check
+        if (!isAdmin) return;
         const newState = e.target.checked;
         updateSetting(newState);
       });
 
-      // --- Edit Tournament Modal Logic ---
-
+      // Edit Tournament Modal
       btnEditTournament.addEventListener("click", () => {
-        // Pre-fill inputs with current data
         inputTournamentName.value = tournamentName;
         inputRingsNumber.value = ringsNumber || "";
         editTournamentError.style.display = "none";
@@ -980,19 +896,13 @@
       }
 
       btnCancelEdit.addEventListener("click", closeEditModal);
-
       btnSaveTournament.addEventListener("click", saveTournamentDetails);
-
-      // Allow Enter key in inputs to save
       inputRingsNumber.addEventListener("keypress", (e) => {
         if (e.key === "Enter") saveTournamentDetails();
       });
 
-      // --- Login Modal Logic ---
-
-      // Open Login Modal
+      // Login Modal
       btnAdminLogin.addEventListener("click", () => {
-        // Prevent opening if already logged in
         if (isAdmin) return;
         loginModal.classList.add("active");
         adminPasswordInput.value = "";
@@ -1000,15 +910,12 @@
         adminPasswordInput.focus();
       });
 
-      // Close Login Modal
       btnCancelLogin.addEventListener("click", () => {
         loginModal.classList.remove("active");
       });
 
-      // Confirm Login
       btnConfirmLogin.addEventListener("click", attemptLogin);
 
-      // Allow Enter key in password input
       adminPasswordInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") attemptLogin();
       });
@@ -1016,21 +923,13 @@
       function attemptLogin() {
         const pass = adminPasswordInput.value;
         if (pass === "admina") {
-          // Success
           isAdmin = true;
           loginModal.classList.remove("active");
-
-          // Show Admin Controls
           adminControls.classList.add("visible");
-          btnAdminLogin.style.display = "none"; // Hide login button
-
-          // Show Edit Tournament Button
+          btnAdminLogin.style.display = "none";
           btnEditTournament.style.display = "flex";
-
-          // Sync toggle with current real state immediately
           adminToggle.checked = currentDbState;
         } else {
-          // Fail
           loginError.style.display = "block";
           adminPasswordInput.classList.add("shake");
           setTimeout(() => adminPasswordInput.classList.remove("shake"), 500);
@@ -1042,8 +941,8 @@
       // ==========================================
       document.addEventListener("DOMContentLoaded", () => {
         body.classList.remove("loading");
-        // Fetch initial state from DB
         fetchSettings();
+        checkUserSession(); // Check if user is already logged in from register.html
       });
     </script>
   </body>
