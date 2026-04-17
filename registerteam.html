@@ -1,0 +1,1583 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>9-th Vojvodina Open ITF Taekwon-do Championship</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      /* ==========================================
+         1. CORE VARIABLES (From Platform Scheme)
+         ========================================== */
+      :root {
+        /* Colors */
+        --bg-body: #0f172a; /* Dark Slate */
+        --bg-panel: #1e293b; /* Lighter Slate */
+        --bg-card: #334155; /* Card background */
+        --bg-input: #0f172a; /* Input background */
+
+        --text-main: #f1f5f9; /* White/Off-white */
+        --text-muted: #94a3b8; /* Gray text */
+
+        --accent-primary: #3b82f6; /* Blue */
+        --accent-secondary: #10b981; /* Green */
+        --accent-alert: #ef4444; /* Red */
+        --accent-admin: #8b5cf6; /* Purple */
+        --accent-warning: #f59e0b; /* Orange/Amber */
+
+        /* Spacing & Borders */
+        --radius-md: 12px;
+        --radius-lg: 20px;
+        --shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+        --transition: all 0.3s ease;
+        --border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      /* ==========================================
+         2. RESET & BASE STYLES
+         ========================================== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        font-size: 16px;
+      }
+
+      body {
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ==========================================
+         3. LAYOUT COMPONENTS
+         ========================================== */
+      /* Header */
+      header {
+        background-color: var(--bg-panel);
+        border-bottom: var(--border);
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: var(--shadow);
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .nav-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* Main Content */
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 3rem 1rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1000px;
+      }
+
+      /* Cards */
+      .card {
+        background-color: var(--bg-panel);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        border: var(--border);
+        margin-bottom: 1.5rem;
+        transition: var(--transition);
+      }
+
+      .card:hover {
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: var(--border);
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-main);
+        word-break: break-word;
+      }
+
+      /* ==========================================
+         4. FORMS & INPUTS
+         ========================================== */
+      .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .form-group {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: var(--bg-input);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        color: var(--text-main);
+        transition: var(--transition);
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      }
+
+      input:disabled {
+        background-color: rgba(255, 255, 255, 0.05);
+        cursor: not-allowed;
+        color: var(--text-muted);
+      }
+
+      .input-error {
+        border-color: var(--accent-alert) !important;
+        background-color: rgba(239, 68, 68, 0.1);
+      }
+
+      .error-text {
+        color: var(--accent-alert);
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        display: none;
+      }
+
+      /* Radio Groups */
+      .radio-group {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        height: 48px;
+        background: var(--bg-input);
+        padding: 0 1rem;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .radio-group label {
+        margin-bottom: 0;
+        font-weight: normal;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+      }
+
+      .radio-group input[type="radio"] {
+        width: auto;
+        margin: 0;
+        accent-color: var(--accent-primary);
+      }
+
+      /* ==========================================
+         5. BUTTONS
+         ========================================== */
+      .btn {
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        text-decoration: none;
+      }
+
+      .btn-primary {
+        background-color: var(--accent-primary);
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .btn-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-success {
+        background-color: var(--accent-secondary);
+        color: white;
+      }
+      .btn-success:hover {
+        background-color: #059669;
+        transform: translateY(-1px);
+      }
+
+      .btn-danger {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: var(--accent-alert);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .btn-danger:hover {
+        background-color: rgba(239, 68, 68, 0.3);
+        border-color: var(--accent-alert);
+      }
+
+      .btn-warning {
+        background-color: var(--accent-warning);
+        color: #1a1a1a;
+      }
+      .btn-warning:hover {
+        background-color: #d97706;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+      }
+
+      /* ==========================================
+         6. DASHBOARD & ACCORDION
+         ========================================== */
+      .dashboard-section {
+        margin-bottom: 1rem;
+        border: var(--border);
+        border-radius: var(--radius-md);
+        background: var(--bg-panel);
+        overflow: hidden;
+      }
+
+      .dashboard-header {
+        background: var(--bg-card);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s;
+      }
+
+      .dashboard-header:hover {
+        background: #3f4e68;
+      }
+
+      .dashboard-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .dashboard-content {
+        height: 0;
+        overflow: hidden;
+        transition: height 0.35s ease;
+        background: var(--bg-panel);
+      }
+
+      .dashboard-content.open {
+        border-top: var(--border);
+      }
+
+      .dashboard-list {
+        padding: 1.5rem;
+      }
+
+      /* Entry Cards (Inside Dashboard) */
+      .entry-card {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: var(--transition);
+      }
+      .entry-card:hover {
+        border-color: var(--accent-primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .entry-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .entry-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      .entry-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .detail-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .detail-value {
+        font-weight: 600;
+        color: var(--text-main);
+        word-break: break-word;
+      }
+
+      /* Badges */
+      .badge {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 75%;
+        font-weight: 700;
+        border-radius: 20px;
+      }
+      .badge-yes {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: var(--accent-secondary);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .badge-no {
+        background-color: rgba(148, 163, 184, 0.2);
+        color: var(--text-muted);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+      }
+
+      /* ==========================================
+         7. STATUS & ALERTS
+         ========================================== */
+      .status-bar {
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 600;
+        border: 1px solid transparent;
+      }
+
+      .status-info {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-primary);
+        border-color: rgba(59, 130, 246, 0.2);
+      }
+
+      .status-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent-secondary);
+        border-color: rgba(16, 185, 129, 0.2);
+      }
+
+      .status-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--accent-alert);
+        border-color: rgba(239, 68, 68, 0.2);
+      }
+
+      .status-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--accent-warning);
+        border-color: rgba(245, 158, 11, 0.2);
+      }
+
+      /* Loading Spinner */
+      .loading {
+        display: inline-block;
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--accent-primary);
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Utilities */
+      .hidden {
+        display: none !important;
+      }
+
+      .team-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        color: var(--accent-secondary);
+      }
+
+      .team-icon {
+        color: var(--accent-secondary);
+      }
+
+      /* Mobile Adjustments */
+      @media (max-width: 768px) {
+        .nav-container {
+          flex-direction: column;
+          gap: 1rem;
+          text-align: center;
+        }
+        .card-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .form-row {
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .btn-group {
+          width: 100%;
+        }
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+        .dashboard-header {
+          padding: 0.8rem 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NEW HEADER (Based on Platform Scheme) -->
+    <header>
+      <div class="nav-container">
+        <!-- Title will be updated by JS -->
+        <div class="nav-title" id="navTitle">
+          <i class="fas fa-trophy"></i> 9-th Vojvodina Open ITF
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.9rem">
+          Official Registration System
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main>
+      <div class="container">
+        <!-- AUTH SECTION -->
+        <div id="authSection" class="card">
+          <div class="card-header">
+            <h2 class="card-title">Account Access</h2>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="Enter your email" />
+          </div>
+          <div class="form-group" style="margin-top: 1.5rem">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              placeholder="Enter your password"
+            />
+          </div>
+          <div class="btn-group" style="margin-top: 2rem">
+            <button id="signupBtn" class="btn btn-primary">
+              <i class="fas fa-user-plus"></i> Sign Up
+            </button>
+            <button id="signinBtn" class="btn btn-secondary">
+              <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+            <button id="forgotBtn" class="btn btn-warning">
+              <i class="fas fa-key"></i> Forgot Password?
+            </button>
+          </div>
+          <button
+            id="setNewPasswordBtn"
+            class="btn btn-success hidden"
+            style="margin-top: 1.5rem; width: 100%; justify-content: center"
+          >
+            <i class="fas fa-lock"></i> Set New Password
+          </button>
+        </div>
+
+        <!-- COMPETITION SECTION (HIDDEN UNTIL LOGGED IN) -->
+        <div id="competitionSection" class="hidden">
+          <!-- DASHBOARD CONTAINER -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Registration Dashboard</h2>
+              <div class="team-display hidden" id="teamDisplay">
+                <i class="fas fa-users team-icon"></i>
+                <span id="teamNameDisplay">Team Name</span>
+              </div>
+            </div>
+
+            <div id="dashboardContainer">
+              <!-- Sections will be injected here by JS -->
+              <div class="status-bar status-info">
+                <span class="loading"></span> Loading dashboard...
+              </div>
+            </div>
+          </div>
+
+          <!-- TEAM MANAGEMENT -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Team Management</h2>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="teamNameInput">Team Name</label>
+                <input
+                  type="text"
+                  id="teamNameInput"
+                  placeholder="Enter your team name"
+                />
+              </div>
+              <div class="form-group" style="align-self: flex-end">
+                <button id="setTeamBtn" class="btn btn-primary">
+                  <i class="fas fa-save"></i> Save Team
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ADD ENTRIES SECTION -->
+          <div class="card hidden" id="addEntriesSection">
+            <div class="card-header">
+              <h2 class="card-title" id="addEntriesTitle">Add Entries</h2>
+              <div style="font-size: 0.9rem; color: var(--text-muted)">
+                Adding for:
+                <strong
+                  id="activeCategoryBadge"
+                  style="color: var(--accent-primary)"
+                  >Competitors</strong
+                >
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="countInput">Number of Entries</label>
+                <input
+                  type="number"
+                  id="countInput"
+                  placeholder="How many?"
+                  min="1"
+                />
+              </div>
+              <div class="form-group" style="align-self: flex-end">
+                <button id="generateBtn" class="btn btn-primary">
+                  <i class="fas fa-plus-circle"></i> Generate Fields
+                </button>
+              </div>
+            </div>
+            <div id="generatedContainer"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // ==========================================
+      // CONFIGURATION & INIT
+      // ==========================================
+      const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+      const client = window.supabase.createClient(
+        SUPABASE_URL.trim(),
+        SUPABASE_ANON_KEY.trim(),
+      );
+
+      // DOM Elements
+      const container = document.getElementById("generatedContainer");
+      const authSection = document.getElementById("authSection");
+      const competitionSection = document.getElementById("competitionSection");
+      const teamDisplay = document.getElementById("teamDisplay");
+      const teamNameDisplay = document.getElementById("teamNameDisplay");
+      const addEntriesSection = document.getElementById("addEntriesSection");
+      const dashboardContainer = document.getElementById("dashboardContainer");
+      const addEntriesTitle = document.getElementById("addEntriesTitle");
+      const activeCategoryBadge = document.getElementById(
+        "activeCategoryBadge",
+      );
+      const countInput = document.getElementById("countInput");
+      const navTitle = document.getElementById("navTitle");
+
+      // State
+      let editingRow = null;
+      let editingCard = null;
+      let isEditing = false;
+      let isRecoveryFlow = false;
+      let teamNameGlobal = "";
+      let currentCategory = "competitors";
+      let currentUserId = null;
+      let openSectionId = null;
+
+      // Auth State Listener
+      client.auth.onAuthStateChange((event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          isRecoveryFlow = true;
+          showAlert(
+            "You are resetting your password. Please enter a new one.",
+            "warning",
+          );
+
+          document.getElementById("signupBtn").style.display = "none";
+          document.getElementById("signinBtn").style.display = "none";
+          document.getElementById("forgotBtn").style.display = "none";
+          document
+            .getElementById("setNewPasswordBtn")
+            .classList.remove("hidden");
+        }
+      });
+
+      // ==========================================
+      // FETCH TOURNAMENT NAME FROM SUPABASE
+      // ==========================================
+      async function fetchTournamentName() {
+        try {
+          const { data, error } = await client
+            .from("site_settings")
+            .select("tournament_name")
+            .eq("id", 1) // Assuming we use a single row with ID 1 for settings
+            .single();
+
+          if (error) {
+            console.error("Error fetching tournament name:", error);
+            // Keep default name if error
+            return;
+          }
+
+          if (data && data.tournament_name) {
+            // Update Browser Tab Title
+            document.title = data.tournament_name;
+
+            // Update Header Title (Keep the Icon, change text)
+            if (navTitle) {
+              navTitle.innerHTML = `<i class="fas fa-trophy"></i> ${data.tournament_name}`;
+            }
+          }
+        } catch (err) {
+          console.error("Unexpected error fetching tournament name:", err);
+        }
+      }
+
+      // ==========================================
+      // AUTHENTICATION LOGIC
+      // ==========================================
+      document
+        .getElementById("signupBtn")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value;
+          if (!email || !password)
+            return showAlert("Email and password required.", "error");
+
+          const { error } = await client.auth.signUp({ email, password });
+          if (error) showAlert(error.message, "error");
+          else showAlert("Check your email to confirm signup.", "success");
+        });
+
+      document
+        .getElementById("signinBtn")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value;
+          if (!email || !password)
+            return showAlert("Email and password required.", "error");
+
+          const { data, error } = await client.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (error) {
+            showAlert(error.message, "error");
+            return;
+          }
+
+          if (data?.session?.user) {
+            currentUserId = data.session.user.id;
+            await fetchExistingTeam();
+            authSection.classList.add("hidden");
+            competitionSection.classList.remove("hidden");
+            loadDashboard();
+          } else {
+            showAlert(
+              "Authentication succeeded but user data not available.",
+              "error",
+            );
+          }
+        });
+
+      document
+        .getElementById("forgotBtn")
+        .addEventListener("click", async () => {
+          const emailValue = document.getElementById("email").value.trim();
+          if (!emailValue)
+            return showAlert("Please enter your email first.", "error");
+
+          const { error } = await client.auth.resetPasswordForEmail(
+            emailValue,
+            {
+              redirectTo:
+                "https://merky-w.github.io/Competition/azta-index.html",
+            },
+          );
+
+          if (error) showAlert(error.message, "error");
+          else
+            showAlert(
+              "Password reset email sent. Check your inbox.",
+              "success",
+            );
+        });
+
+      document
+        .getElementById("setNewPasswordBtn")
+        .addEventListener("click", async () => {
+          if (!isRecoveryFlow)
+            return showAlert(
+              "This page was not opened from a password reset email.",
+              "error",
+            );
+
+          const newPassword = document.getElementById("password").value;
+          if (!newPassword || newPassword.length < 6)
+            return showAlert(
+              "Password must be at least 6 characters.",
+              "error",
+            );
+
+          const { error } = await client.auth.updateUser({
+            password: newPassword,
+          });
+          if (error) showAlert(error.message, "error");
+          else {
+            showAlert(
+              "Password updated successfully. You can now log in.",
+              "success",
+            );
+            location.href =
+              "https://merky-w.github.io/Competition/azta-index.html";
+          }
+        });
+
+      // ==========================================
+      // TEAM LOGIC
+      // ==========================================
+      async function fetchExistingTeam() {
+        if (!currentUserId) return;
+        const checkTable = async (tableName) => {
+          const { data, error } = await client
+            .from(tableName)
+            .select("team")
+            .eq("user_id", currentUserId)
+            .limit(1);
+          if (error) return null;
+          if (data && data.length > 0 && data[0].team)
+            return data[0].team.trim();
+          return null;
+        };
+        let foundTeam = await checkTable("competitors");
+        if (!foundTeam) foundTeam = await checkTable("judges");
+        if (!foundTeam) foundTeam = await checkTable("coaches");
+        applyTeam(foundTeam ? foundTeam.toUpperCase() : "");
+      }
+
+      function applyTeam(teamName) {
+        teamNameGlobal = teamName;
+        document.getElementById("teamNameInput").value = teamNameGlobal;
+        teamNameDisplay.textContent = teamNameGlobal;
+        if (teamNameGlobal) {
+          teamDisplay.classList.remove("hidden");
+          if (openSectionId) addEntriesSection.classList.remove("hidden");
+        } else {
+          teamDisplay.classList.add("hidden");
+          addEntriesSection.classList.add("hidden");
+        }
+      }
+
+      document.getElementById("setTeamBtn").onclick = async () => {
+        const input = document.getElementById("teamNameInput");
+        const newTeamName = input.value.trim().toUpperCase();
+        if (!newTeamName)
+          return showAlert("Please enter a team name.", "error");
+
+        const btn = document.getElementById("setTeamBtn");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Saving...';
+
+        try {
+          const updatePromises = [
+            client
+              .from("competitors")
+              .update({ team: newTeamName })
+              .eq("user_id", currentUserId),
+            client
+              .from("judges")
+              .update({ team: newTeamName })
+              .eq("user_id", currentUserId),
+            client
+              .from("coaches")
+              .update({ team: newTeamName })
+              .eq("user_id", currentUserId),
+          ];
+          await Promise.all(updatePromises);
+          teamNameGlobal = newTeamName;
+          applyTeam(newTeamName);
+          loadDashboard();
+          showAlert("Team name updated successfully!", "success");
+        } catch (err) {
+          console.error("Team update error:", err);
+          showAlert("Failed to update team: " + err.message, "error");
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      };
+
+      // ==========================================
+      // DASHBOARD LOGIC
+      // ==========================================
+      async function loadDashboard() {
+        if (!currentUserId) return;
+        dashboardContainer.innerHTML =
+          '<div class="status-bar status-info"><span class="loading"></span> Loading data...</div>';
+        try {
+          const [compRes, judgeRes, coachRes] = await Promise.all([
+            client.from("competitors").select("*").eq("user_id", currentUserId),
+            client.from("judges").select("*").eq("user_id", currentUserId),
+            client.from("coaches").select("*").eq("user_id", currentUserId),
+          ]);
+          renderDashboard(
+            compRes.data || [],
+            judgeRes.data || [],
+            coachRes.data || [],
+          );
+        } catch (err) {
+          console.error("Dashboard error:", err);
+          dashboardContainer.innerHTML =
+            '<div class="status-bar status-error">Error loading dashboard</div>';
+        }
+      }
+
+      function renderDashboard(competitors, judges, coaches) {
+        dashboardContainer.innerHTML = "";
+        const sections = [
+          {
+            id: "competitors",
+            data: competitors,
+            icon: "fa-user-friends",
+            label: "Competitors",
+          },
+          { id: "judges", data: judges, icon: "fa-gavel", label: "Referees" },
+          {
+            id: "coaches",
+            data: coaches,
+            icon: "fa-chalkboard-teacher",
+            label: "Coaches",
+          },
+        ];
+
+        sections.forEach((section) => {
+          const count = section.data.length;
+          const isOpen = openSectionId === section.id;
+          const sectionEl = document.createElement("div");
+          sectionEl.className = "dashboard-section";
+          sectionEl.id = `section-${section.id}`;
+
+          // Header
+          const headerHtml = `
+            <div class="dashboard-header" onclick="toggleSection('${section.id}')">
+              <div class="dashboard-title">
+                <i class="fas ${section.icon}" style="color: var(--accent-primary)"></i>
+                ${section.label} 
+                <span style="background:var(--bg-body); padding:2px 10px; border-radius:12px; font-size:0.8rem; color:var(--text-muted); border: 1px solid rgba(255,255,255,0.1);">${count}</span>
+              </div>
+              <div style="color: var(--text-muted); font-size: 0.9rem;">
+                ${isOpen ? '<i class="fas fa-chevron-up"></i>' : '<i class="fas fa-chevron-down"></i>'}
+              </div>
+            </div>`;
+
+          // Content
+          let contentHtml = `<div class="dashboard-content ${isOpen ? "open" : ""}"><div class="dashboard-list">`;
+          if (count === 0) {
+            contentHtml += `<div style="text-align:center; color:var(--text-muted); padding:1.5rem; font-style:italic;">No ${section.label.toLowerCase()} added yet.</div>`;
+          } else {
+            section.data.forEach((row) => {
+              contentHtml += createEntryCardHtml(row, section.id);
+            });
+          }
+          contentHtml += `</div></div>`;
+
+          sectionEl.innerHTML = headerHtml + contentHtml;
+          dashboardContainer.appendChild(sectionEl);
+
+          if (isOpen) {
+            const contentDiv = sectionEl.querySelector(".dashboard-content");
+            setTimeout(() => {
+              contentDiv.style.height = contentDiv.scrollHeight + "px";
+            }, 10);
+          }
+
+          // Event Listeners
+          sectionEl.querySelectorAll(".edit-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const rowId = btn.dataset.id;
+              const row = section.data.find(
+                (r) => String(r.id) === String(rowId),
+              );
+              if (row) startEdit(row);
+            });
+          });
+          sectionEl.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const rowId = btn.dataset.id;
+              if (confirm("Are you sure you want to delete this entry?")) {
+                client
+                  .from(section.id)
+                  .delete()
+                  .eq("id", rowId)
+                  .eq("user_id", currentUserId)
+                  .then(() => loadDashboard());
+              }
+            });
+          });
+        });
+      }
+
+      function toggleSection(sectionId) {
+        const section = document.getElementById(`section-${sectionId}`);
+        const content = section.querySelector(".dashboard-content");
+        const isOpen = openSectionId === sectionId;
+
+        // Close all sections
+        document.querySelectorAll(".dashboard-content").forEach((el) => {
+          el.style.height = "0px";
+          el.classList.remove("open");
+        });
+
+        if (isOpen) {
+          // If clicking the already open section, just close it and reset
+          openSectionId = null;
+          addEntriesSection.classList.add("hidden");
+          exitEditMode();
+          clearGenerated();
+          countInput.value = "";
+          return;
+        }
+
+        // Open new section
+        openSectionId = sectionId;
+        content.classList.add("open");
+        content.style.height = content.scrollHeight + "px";
+
+        // --- MODIFICATION STARTS HERE ---
+        // 1. Exit any existing edit mode (resets flags and buttons)
+        exitEditMode();
+
+        // 2. Clear any generated forms (e.g. Judges forms disappear)
+        clearGenerated();
+
+        // 3. Reset the number input (Forces user to re-enter number for new category)
+        countInput.value = "";
+        // --- MODIFICATION ENDS HERE ---
+
+        setCategory(sectionId);
+      }
+
+      function createEntryCardHtml(row, category) {
+        let detailsHtml = "";
+        if (category === "competitors") {
+          const sparringBadge =
+            row.sparring === "Yes"
+              ? '<span class="badge badge-yes">Sparring</span>'
+              : '<span class="badge badge-no">No Sparring</span>';
+          const patternsBadge =
+            row.patterns === "Yes"
+              ? '<span class="badge badge-yes">Patterns</span>'
+              : '<span class="badge badge-no">No Patterns</span>';
+
+          detailsHtml = `
+            <div class="detail-item"><span class="detail-label">Gender</span><span class="detail-value">${row.gender}</span></div>
+            <div class="detail-item"><span class="detail-label">Birth Date</span><span class="detail-value">${row.birthdate}</span></div>
+            <div class="detail-item"><span class="detail-label">Belt</span><span class="detail-value">${row.belt}</span></div>
+            <div class="detail-item"><span class="detail-label">Weight</span><span class="detail-value">${row.weight} kg</span></div>
+            <div class="detail-item" style="grid-column: 1 / -1;">
+                <span class="detail-label">Disciplines</span>
+                <span class="detail-value" style="display:flex; gap:8px;">${sparringBadge} ${patternsBadge}</span>
+            </div>
+          `;
+        } else {
+          detailsHtml = `
+            <div class="detail-item"><span class="detail-label">Belt</span><span class="detail-value">${row.belt}</span></div>
+            <div class="detail-item"><span class="detail-label">Team</span><span class="detail-value">${row.team}</span></div>
+          `;
+        }
+
+        return `
+          <div class="entry-card">
+            <div class="entry-header">
+              <div class="entry-name">${row.name}</div>
+              <span class="badge" style="background: var(--accent-admin); color: white;">${category.slice(0, -1).toUpperCase()}</span>
+            </div>
+            <div class="entry-details">${detailsHtml}</div>
+            <div class="btn-group" style="justify-content: flex-end;">
+              <button class="btn btn-secondary edit-btn" data-id="${row.id}" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button class="btn btn-danger delete-btn" data-id="${row.id}" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // ==========================================
+      // ADD / EDIT ENTRIES LOGIC
+      // ==========================================
+      function setCategory(cat) {
+        currentCategory = cat;
+        const titleMap = {
+          competitors: "Add Competitor Entries",
+          judges: "Add Judge Entries",
+          coaches: "Add Coach Entries",
+        };
+        addEntriesTitle.textContent = titleMap[cat];
+        activeCategoryBadge.textContent =
+          cat.charAt(0).toUpperCase() + cat.slice(1);
+
+        if (teamNameGlobal) {
+          addEntriesSection.classList.remove("hidden");
+          setTimeout(() => {
+            addEntriesSection.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }, 300);
+        }
+      }
+
+      function beltSelect() {
+        return `<select class="field-belt">
+          <option value="">Select Belt *</option>
+          <option>10 kup</option><option>9 kup</option><option>8 kup</option>
+          <option>7 kup</option><option>6 kup</option><option>5 kup</option>
+          <option>4 kup</option><option>3 kup</option><option>2 kup</option>
+          <option>1 kup</option><option>1 dan</option><option>2 dan</option>
+          <option>3 dan</option><option>4 dan</option><option>5 dan</option>
+          <option>6 dan</option>
+        </select>`;
+      }
+
+      function makeCompetitorCard(idx) {
+        const wrap = document.createElement("div");
+        wrap.className = "card";
+        wrap.style.marginBottom = "1rem";
+        wrap.innerHTML = `
+          <h3 class="card-title" style="font-size: 1.2rem; color: var(--accent-primary);">Competitor #${idx}</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Name *</label><input class="field-name" type="text" placeholder="Full name" /></div>
+            <div class="form-group"><label>Birth Date *</label><input class="field-birthdate" type="date" /></div>
+            <div class="form-group">
+              <label>Gender *</label>
+              <select class="field-gender"><option value="">Select Gender</option><option>Male</option><option>Female</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Belt *</label>${beltSelect()}</div>
+            <div class="form-group"><label>Team *</label><input class="field-team" type="text" value="${teamNameGlobal}" disabled /></div>
+            <div class="form-group"><label>Weight (kg) *</label><input class="field-weight" type="number" step="0.1" placeholder="33.0" /></div>
+          </div>
+          <div class="form-row">
+              <div class="form-group">
+                  <label>Sparring</label>
+                  <div class="radio-group">
+                      <label><input type="radio" class="field-sparring" name="sparring_${idx}" value="Yes" checked> Yes</label>
+                      <label><input type="radio" class="field-sparring" name="sparring_${idx}" value="No"> No</label>
+                  </div>
+              </div>
+              <div class="form-group">
+                  <label>Patterns</label>
+                  <div class="radio-group">
+                      <label><input type="radio" class="field-patterns" name="patterns_${idx}" value="Yes" checked> Yes</label>
+                      <label><input type="radio" class="field-patterns" name="patterns_${idx}" value="No"> No</label>
+                  </div>
+              </div>
+          </div>
+          <div class="error-text"></div>`;
+        return wrap;
+      }
+
+      function makeJudgeCard(idx) {
+        const wrap = document.createElement("div");
+        wrap.className = "card";
+        wrap.style.marginBottom = "1rem";
+        wrap.innerHTML = `
+          <h3 class="card-title" style="font-size: 1.2rem; color: var(--accent-admin);">Judge #${idx}</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Name *</label><input class="field-name" type="text" placeholder="Full name" /></div>
+            <div class="form-group"><label>Belt *</label>${beltSelect()}</div>
+            <div class="form-group"><label>Team *</label><input class="field-team" type="text" value="${teamNameGlobal}" disabled /></div>
+          </div>
+          <div class="error-text"></div>`;
+        return wrap;
+      }
+
+      function makeCoachCard(idx) {
+        const wrap = document.createElement("div");
+        wrap.className = "card";
+        wrap.style.marginBottom = "1rem";
+        wrap.innerHTML = `
+          <h3 class="card-title" style="font-size: 1.2rem; color: var(--accent-warning);">Coach #${idx}</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Name *</label><input class="field-name" type="text" placeholder="Full name" /></div>
+            <div class="form-group"><label>Belt *</label>${beltSelect()}</div>
+            <div class="form-group"><label>Team *</label><input class="field-team" type="text" value="${teamNameGlobal}" disabled /></div>
+          </div>
+          <div class="error-text"></div>`;
+        return wrap;
+      }
+
+      // Generate Logic
+      document.getElementById("generateBtn").addEventListener("click", () => {
+        if (!currentUserId) return showAlert("You must be logged in.", "error");
+        if (isEditing) return showAlert("Finish editing first.", "warning");
+        const count = parseInt(countInput.value || "0", 10);
+        if (isNaN(count) || count < 1)
+          return showAlert("Enter a number ≥ 1", "error");
+
+        clearGenerated();
+        for (let i = 0; i < count; i++) {
+          if (currentCategory === "competitors")
+            container.appendChild(makeCompetitorCard(i + 1));
+          else if (currentCategory === "judges")
+            container.appendChild(makeJudgeCard(i + 1));
+          else container.appendChild(makeCoachCard(i + 1));
+        }
+
+        setTimeout(() => {
+          container.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+
+        const addAll = document.createElement("button");
+        addAll.className = "btn btn-success";
+        addAll.innerHTML = `<i class="fas fa-plus"></i> Add All ${currentCategory}`;
+        addAll.style.marginTop = "1.5rem";
+        addAll.style.width = "100%";
+        addAll.addEventListener("click", onAddAll);
+        container.appendChild(addAll);
+      });
+
+      function clearGenerated() {
+        container.innerHTML = "";
+      }
+
+      // Add All Logic
+      async function onAddAll() {
+        if (!currentUserId) return showAlert("Logged in required.", "error");
+        if (isEditing) return showAlert("Finish editing first.", "warning");
+        const cards = Array.from(container.querySelectorAll(".card"));
+        if (cards.length === 0)
+          return showAlert("Generate fields first.", "error");
+
+        let rows = [];
+        let skipped = 0;
+        let hasError = false;
+
+        for (const c of cards) {
+          if (c.querySelector("button")) continue;
+          const inputs = Array.from(c.querySelectorAll("input, select"));
+          const nonTeamFields = inputs.filter(
+            (el) => !el.classList.contains("field-team"),
+          );
+          const allNonTeamEmpty = nonTeamFields.every((el) => !el.value.trim());
+
+          if (allNonTeamEmpty) {
+            skipped++;
+            continue;
+          }
+
+          let data = null;
+          if (currentCategory === "competitors") data = getCompetitorData(c);
+          else if (currentCategory === "judges") data = getJudgeData(c);
+          else data = getCoachData(c);
+
+          if (!data) {
+            nonTeamFields.forEach((el) => {
+              if (!el.value.trim()) markMissing(el);
+            });
+            showError(c, "Fill all required fields or leave entry empty");
+            hasError = true;
+            continue;
+          }
+          rows.push({ ...data, user_id: currentUserId });
+        }
+
+        if (hasError) return showAlert("Incomplete entries found.", "error");
+        if (rows.length === 0)
+          return showAlert("No valid entries to add.", "warning");
+
+        const addAllBtn = container.querySelector(".btn.btn-success");
+        if (addAllBtn) {
+          addAllBtn.disabled = true;
+          addAllBtn.innerHTML = '<span class="loading"></span> Adding...';
+        }
+
+        try {
+          const { error } = await client.from(currentCategory).insert(rows);
+          if (error) throw error;
+
+          let msg = `Added ${rows.length} ${currentCategory}.`;
+          if (skipped > 0) msg += ` Skipped ${skipped} empty entries.`;
+          showAlert(msg, "success");
+          clearGenerated();
+          loadDashboard();
+
+          const sectionEl = document.getElementById(
+            `section-${currentCategory}`,
+          );
+          if (sectionEl) {
+            setTimeout(() => {
+              sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 100);
+          }
+        } catch (err) {
+          showAlert(`Failed: ${err.message}`, "error");
+        } finally {
+          if (addAllBtn) {
+            addAllBtn.disabled = false;
+            addAllBtn.innerHTML = `<i class="fas fa-plus"></i> Add All ${currentCategory}`;
+          }
+        }
+      }
+
+      // Data Extraction Helpers
+      function getCompetitorData(wrap) {
+        const name = wrap.querySelector(".field-name").value.trim();
+        const birthdate = wrap.querySelector(".field-birthdate").value.trim();
+        const gender = wrap.querySelector(".field-gender").value.trim();
+        const belt = wrap.querySelector(".field-belt").value.trim();
+        const team = wrap.querySelector(".field-team").value.trim();
+        const weight = wrap.querySelector(".field-weight").value;
+        const sparring = wrap.querySelector(".field-sparring:checked").value;
+        const patterns = wrap.querySelector(".field-patterns:checked").value;
+
+        const required = [
+          [name, wrap.querySelector(".field-name"), "Name is required"],
+          [
+            birthdate,
+            wrap.querySelector(".field-birthdate"),
+            "Birth date is required",
+          ],
+          [gender, wrap.querySelector(".field-gender"), "Gender is required"],
+          [belt, wrap.querySelector(".field-belt"), "Belt rank is required"],
+          [team, wrap.querySelector(".field-team"), "Team name is required"],
+          [weight, wrap.querySelector(".field-weight"), "Weight is required"],
+        ];
+
+        for (const [val, el, msg] of required) {
+          if (!val) {
+            markMissing(el);
+            showError(wrap, msg);
+            return null;
+          }
+        }
+        return {
+          name,
+          birthdate,
+          gender,
+          belt,
+          team,
+          weight: Number(weight),
+          sparring,
+          patterns,
+        };
+      }
+
+      function getJudgeData(wrap) {
+        const name = wrap.querySelector(".field-name").value.trim();
+        const belt = wrap.querySelector(".field-belt").value.trim();
+        const team = wrap.querySelector(".field-team").value.trim();
+        if (!name || !belt || !team) {
+          showError(wrap, "All fields are required");
+          return null;
+        }
+        return { name, belt, team };
+      }
+
+      function getCoachData(wrap) {
+        const name = wrap.querySelector(".field-name").value.trim();
+        const belt = wrap.querySelector(".field-belt").value.trim();
+        const team = wrap.querySelector(".field-team").value.trim();
+        if (!name || !belt || !team) {
+          showError(wrap, "All fields are required");
+          return null;
+        }
+        return { name, belt, team };
+      }
+
+      function markMissing(input) {
+        input.classList.add("input-error");
+      }
+      function showError(wrap, msg) {
+        const el = wrap.querySelector(".error-text");
+        el.textContent = msg;
+        el.classList.add("show");
+        setTimeout(() => el.classList.remove("show"), 3000);
+      }
+
+      // ==========================================
+      // EDIT LOGIC
+      // ==========================================
+      function startEdit(row) {
+        isEditing = true;
+        editingRow = row;
+        const cat = currentCategory;
+        if (openSectionId !== cat) {
+          openSectionId = cat;
+          setCategory(cat);
+          loadDashboard();
+          setTimeout(() => executeEditFlow(row), 100);
+        } else {
+          executeEditFlow(row);
+        }
+      }
+
+      function executeEditFlow(row) {
+        document.getElementById("generateBtn").disabled = true;
+        document.getElementById("setTeamBtn").disabled = true;
+        countInput.disabled = true;
+        addEntriesSection.classList.remove("hidden");
+        clearGenerated();
+
+        let card;
+        const cat = currentCategory;
+        if (cat === "competitors") {
+          card = makeCompetitorCard(1);
+          card.querySelector(".field-name").value = row.name;
+          card.querySelector(".field-birthdate").value = row.birthdate;
+          card.querySelector(".field-gender").value = row.gender;
+          card.querySelector(".field-belt").value = row.belt;
+          card.querySelector(".field-team").value = row.team;
+          card.querySelector(".field-weight").value = row.weight;
+          if (row.sparring)
+            card.querySelector(
+              `.field-sparring[value="${row.sparring}"]`,
+            ).checked = true;
+          if (row.patterns)
+            card.querySelector(
+              `.field-patterns[value="${row.patterns}"]`,
+            ).checked = true;
+        } else {
+          card = cat === "judges" ? makeJudgeCard(1) : makeCoachCard(1);
+          card.querySelector(".field-name").value = row.name;
+          card.querySelector(".field-belt").value = row.belt;
+          card.querySelector(".field-team").value = row.team;
+        }
+
+        editingCard = card;
+        container.appendChild(card);
+
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "btn btn-success";
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        saveBtn.style.marginTop = "1.5rem";
+        saveBtn.style.width = "100%";
+        saveBtn.onclick = saveEdit;
+        container.appendChild(saveBtn);
+
+        setTimeout(() => {
+          container.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
+
+      async function saveEdit() {
+        if (!editingRow || !editingCard)
+          return showAlert("Nothing to update", "error");
+        const rowId = editingRow.id;
+        const userId = currentUserId;
+        const cat = currentCategory;
+        let data = null;
+        if (cat === "competitors") data = getCompetitorData(editingCard);
+        else if (cat === "judges") data = getJudgeData(editingCard);
+        else data = getCoachData(editingCard);
+        if (!data) return;
+
+        const saveBtn = container.querySelector(".btn.btn-success");
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<span class="loading"></span> Saving...';
+        }
+
+        try {
+          const { data: updatedRows, error } = await client
+            .from(cat)
+            .update(data)
+            .eq("id", rowId)
+            .eq("user_id", userId)
+            .select();
+          if (error) throw error;
+          showAlert("Updated successfully!", "success");
+          exitEditMode();
+          await loadDashboard();
+          const sectionEl = document.getElementById(`section-${cat}`);
+          if (sectionEl) {
+            setTimeout(
+              () =>
+                sectionEl.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                }),
+              100,
+            );
+          }
+        } catch (err) {
+          console.error("Update error:", err);
+          showAlert("Update failed: " + err.message, "error");
+        } finally {
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+          }
+        }
+      }
+
+      function exitEditMode() {
+        isEditing = false;
+        editingRow = null;
+        editingCard = null;
+        document.getElementById("generateBtn").disabled = false;
+        document.getElementById("setTeamBtn").disabled = false;
+        countInput.disabled = false;
+        clearGenerated();
+        countInput.value = "";
+      }
+
+      // ==========================================
+      // ALERT UTILS
+      // ==========================================
+      function showAlert(message, type) {
+        const existingAlert = document.querySelector(".status-bar.alert");
+        if (existingAlert) existingAlert.remove();
+
+        const alertDiv = document.createElement("div");
+        let statusClass = "status-warning";
+        if (type === "success") statusClass = "status-success";
+        else if (type === "error") statusClass = "status-error";
+
+        alertDiv.className = "status-bar alert " + statusClass;
+        alertDiv.textContent = message;
+
+        if (authSection.classList.contains("hidden")) {
+          competitionSection.insertBefore(
+            alertDiv,
+            competitionSection.firstChild,
+          );
+          setTimeout(() => {
+            competitionSection.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }, 10);
+        } else {
+          authSection.parentNode.insertBefore(
+            alertDiv,
+            authSection.nextSibling,
+          );
+        }
+        setTimeout(() => {
+          if (alertDiv.parentNode) alertDiv.remove();
+        }, 5000);
+      }
+
+      // ==========================================
+      // INITIALIZATION
+      // ==========================================
+      document.addEventListener("DOMContentLoaded", () => {
+        // Fetch the tournament name from DB immediately
+        fetchTournamentName();
+      });
+    </script>
+  </body>
+</html>
