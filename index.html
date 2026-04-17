@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tournament Platform Main Page</title>
+
+    <!-- 1. Import Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+    <style>
+      /* --- CSS VARIABLES & RESET --- */
+      :root {
+        /* Colors */
+        --bg-body: #0f172a; /* Dark Slate */
+        --bg-panel: #1e293b; /* Lighter Slate */
+        --bg-card: #334155; /* Card background */
+        --text-main: #f1f5f9; /* White/Off-white */
+        --text-muted: #94a3b8; /* Gray text */
+        --accent-primary: #3b82f6; /* Blue for Rings */
+        --accent-secondary: #10b981; /* Green for My Team */
+        --accent-alert: #ef4444; /* Red for closed status */
+        --accent-admin: #8b5cf6; /* Purple for Admin */
+
+        /* Spacing & Borders */
+        --radius-md: 12px;
+        --radius-lg: 20px;
+        --shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+        --transition: all 0.3s ease;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* --- HEADER / NAVIGATION --- */
+      header {
+        background-color: var(--bg-panel);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: var(--shadow);
+      }
+
+      .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+      }
+
+      .nav-link {
+        text-decoration: none;
+        color: var(--text-main);
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+
+      .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      /* My Team (Top Left) */
+      .nav-my-team {
+        position: absolute;
+        left: 0;
+        color: var(--accent-secondary);
+        border: 1px solid var(--accent-secondary);
+      }
+
+      .nav-my-team:hover {
+        background-color: var(--accent-secondary);
+        color: #fff;
+      }
+
+      /* Rings (Top Center) */
+      .nav-rings {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--accent-primary);
+        color: white;
+        padding: 0.6rem 2rem;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+      }
+
+      .nav-rings:hover {
+        background-color: #2563eb;
+        transform: translateX(-50%) translateY(-2px);
+      }
+
+      /* Admin Button (Top Right) */
+      .nav-admin {
+        margin-left: auto;
+        color: var(--accent-admin);
+        border: 1px solid var(--accent-admin);
+      }
+
+      .nav-admin:hover {
+        background-color: var(--accent-admin);
+        color: white;
+      }
+
+      /* Admin Controls (Hidden by default, shown after login) */
+      .admin-controls {
+        display: none;
+        position: absolute;
+        right: 120px;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        background: rgba(139, 92, 246, 0.1); /* Purple tint */
+        padding: 8px 12px;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+      }
+
+      .admin-controls.visible {
+        display: flex;
+      }
+
+      /* Toggle Switch */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--accent-alert);
+        transition: 0.4s;
+        border-radius: 20px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: var(--accent-secondary);
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+
+      /* --- MAIN CONTENT --- */
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 3rem 1rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1000px;
+      }
+
+      .tournament-section {
+        background-color: var(--bg-panel);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        min-height: 400px;
+        position: relative;
+      }
+
+      .section-header {
+        margin-bottom: 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      /* Admin Edit Button in Header */
+      .btn-edit-tournament {
+        background: rgba(139, 92, 246, 0.1);
+        color: var(--accent-admin);
+        border: 1px solid var(--accent-admin);
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9rem;
+        transition: var(--transition);
+      }
+
+      .btn-edit-tournament:hover {
+        background: var(--accent-admin);
+        color: white;
+      }
+
+      /* STATE 1: LIST OF TOURNAMENTS */
+      .tournaments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        animation: fadeIn 0.5s ease;
+      }
+
+      /* Dynamic Tournament Card */
+      .tournament-card {
+        background: var(--bg-card);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        transition: var(--transition);
+      }
+      .tournament-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      }
+      .card-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+      }
+      .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+      .card-info {
+        color: var(--text-muted);
+        font-size: 1rem;
+      }
+      .rings-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent-secondary);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+
+      /* Placeholder for when no data exists */
+      .placeholder-card {
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        min-height: 200px;
+        border-radius: var(--radius-md);
+        font-style: italic;
+        gap: 10px;
+      }
+
+      /* STATE 2: CLOSED / EMPTY STATE */
+      .empty-state {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 300px;
+        text-align: center;
+        animation: fadeIn 0.5s ease;
+      }
+
+      .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: var(--text-muted);
+      }
+
+      .empty-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-main);
+      }
+
+      .empty-desc {
+        color: var(--text-muted);
+        max-width: 400px;
+      }
+
+      /* Utility to switch states via JS */
+      body.registration-closed .tournaments-grid {
+        display: none;
+      }
+      body.registration-closed .empty-state {
+        display: flex;
+      }
+      body.registration-closed .status-text {
+        color: var(--accent-alert);
+      }
+      body:not(.registration-closed) .status-text {
+        color: var(--accent-secondary);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* --- MODAL STYLES --- */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(4px);
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal-box {
+        background: var(--bg-panel);
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+      .modal-overlay.active .modal-box {
+        transform: scale(1);
+      }
+      .modal-title {
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.5rem;
+      }
+      .modal-input {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        background: var(--bg-body);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-md);
+        color: white;
+        font-size: 1rem;
+      }
+      .modal-input:focus {
+        outline: none;
+        border-color: var(--accent-admin);
+      }
+      .modal-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+      .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: var(--transition);
+      }
+      .btn-cancel {
+        background: transparent;
+        color: var(--text-muted);
+      }
+      .btn-cancel:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .btn-confirm {
+        background: var(--accent-admin);
+        color: white;
+      }
+      .btn-confirm:hover {
+        background: #7c3aed;
+      }
+      .error-msg {
+        color: var(--accent-alert);
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        display: none;
+      }
+
+      /* Mobile Adjustments */
+      @media (max-width: 768px) {
+        .nav-container {
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .nav-my-team,
+        .nav-rings,
+        .nav-admin {
+          position: static;
+          transform: none;
+          width: 100%;
+          justify-content: center;
+          margin: 0;
+        }
+        .admin-controls {
+          position: static; /* Reset absolute position for mobile */
+          width: 100%;
+          justify-content: center;
+          margin: 0.5rem 0 0 0;
+        }
+        .section-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="loading">
+    <!-- Starts in loading state -->
+
+    <!-- Header & Navigation -->
+    <header>
+      <div class="nav-container">
+        <!-- 1. Top-Left: My Team -->
+        <a href="#" class="nav-link nav-my-team">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          My Team
+        </a>
+
+        <!-- 2. Top-Center: Rings -->
+        <a href="#" class="nav-link nav-rings">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Rings
+        </a>
+
+        <!-- 3. Admin Login Button -->
+        <button
+          id="btnAdminLogin"
+          class="nav-link nav-admin"
+          style="background: none; border: none"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Admin
+        </button>
+
+        <!-- 4. Admin Toggle (Hidden until logged in) -->
+        <div class="admin-controls" id="adminControls">
+          <span class="status-text" id="statusText">Checking...</span>
+          <label class="switch">
+            <input type="checkbox" id="adminToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <div class="container">
+        <!-- Big Tournament Box Section -->
+        <section class="tournament-section">
+          <div class="section-header">
+            <h2 class="section-title">Available Tournaments</h2>
+
+            <!-- New Admin Edit Button -->
+            <button id="btnEditTournament" class="btn-edit-tournament">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                ></path>
+                <path
+                  d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                ></path>
+              </svg>
+              Configure Tournament
+            </button>
+
+            <span
+              style="
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                width: 100%;
+                margin-top: 0.5rem;
+              "
+              id="liveStatusText"
+              >Connecting to DB...</span
+            >
+          </div>
+
+          <!-- State 1: Tournaments List -->
+          <div class="tournaments-grid" id="tournamentList">
+            <!-- Content injected by JS -->
+            <div class="placeholder-card">No tournaments added yet.</div>
+          </div>
+
+          <!-- State 2: Registration Closed -->
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h3 class="empty-title">Registration Closed</h3>
+            <p class="empty-desc">
+              Tournament registration is currently closed. Please wait for an
+              administrator to open registration.
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Admin Password Modal -->
+    <div class="modal-overlay" id="loginModal">
+      <div class="modal-box">
+        <h3 class="modal-title">Admin Access</h3>
+        <p
+          style="
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+          "
+        >
+          Enter password to manage registration state.
+        </p>
+        <input
+          type="password"
+          id="adminPasswordInput"
+          class="modal-input"
+          placeholder="Enter password..."
+        />
+        <div class="error-msg" id="loginError">Incorrect password.</div>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" id="btnCancelLogin">Cancel</button>
+          <button class="btn btn-confirm" id="btnConfirmLogin">Unlock</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW: Edit Tournament Details Modal -->
+    <div class="modal-overlay" id="editTournamentModal">
+      <div class="modal-box">
+        <h3 class="modal-title">Configure Tournament</h3>
+
+        <label class="modal-label">Tournament Name</label>
+        <input
+          type="text"
+          id="inputTournamentName"
+          class="modal-input"
+          placeholder="e.g. Summer Championship 2024"
+        />
+
+        <label class="modal-label">Number of Rings</label>
+        <input
+          type="number"
+          id="inputRingsNumber"
+          class="modal-input"
+          placeholder="e.g. 5"
+          min="1"
+        />
+
+        <div class="error-msg" id="editTournamentError">
+          Please fill in both fields.
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-cancel" id="btnCancelEdit">Cancel</button>
+          <button class="btn btn-confirm" id="btnSaveTournament">
+            Save Details
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Logic -->
+    <script>
+      // ==========================================
+      // CONFIGURATION
+      // ==========================================
+      // REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
+      
+
+      // Initialize Supabase
+      // Renamed to 'supabaseClient' to avoid conflict with window.supabase global object
+      let supabaseClient;
+      try {
+        if (SUPABASE_URL === "YOUR_SUPABASE_URL" || !SUPABASE_URL) {
+          console.warn(
+            "Supabase credentials not set. Running in UI-Only mode.",
+          );
+        } else {
+          supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY,
+          );
+        }
+      } catch (e) {
+        console.error("Supabase init error:", e);
+      }
+
+      // ==========================================
+      // DOM ELEMENTS
+      // ==========================================
+      const body = document.body;
+      const adminToggle = document.getElementById("adminToggle");
+      const adminControls = document.getElementById("adminControls");
+      const statusText = document.getElementById("statusText");
+      const liveStatusText = document.getElementById("liveStatusText");
+      const tournamentList = document.getElementById("tournamentList");
+
+      // Edit Button & Modal
+      const btnEditTournament = document.getElementById("btnEditTournament");
+      const editTournamentModal = document.getElementById(
+        "editTournamentModal",
+      );
+      const inputTournamentName = document.getElementById(
+        "inputTournamentName",
+      );
+      const inputRingsNumber = document.getElementById("inputRingsNumber");
+      const btnSaveTournament = document.getElementById("btnSaveTournament");
+      const btnCancelEdit = document.getElementById("btnCancelEdit");
+      const editTournamentError = document.getElementById(
+        "editTournamentError",
+      );
+
+      // Login Modal Elements
+      const btnAdminLogin = document.getElementById("btnAdminLogin");
+      const loginModal = document.getElementById("loginModal");
+      const btnCancelLogin = document.getElementById("btnCancelLogin");
+      const btnConfirmLogin = document.getElementById("btnConfirmLogin");
+      const adminPasswordInput = document.getElementById("adminPasswordInput");
+      const loginError = document.getElementById("loginError");
+
+      // State
+      let isAdmin = false;
+      let currentDbState = false; // Registration Open/Closed
+      let tournamentName = ""; // Tournament Name from DB
+      let ringsNumber = 0; // Rings Number from DB
+
+      // ==========================================
+      // CORE FUNCTIONS
+      // ==========================================
+
+      /**
+       * 1. Fetch Settings from Supabase
+       * Reads 'tournament_registration', 'tournament_name', 'rings_number'
+       * from 'site_settings' table (id=1)
+       */
+      async function fetchSettings() {
+        if (!supabaseClient) {
+          // Fallback for demo if no DB connected
+          updateUI(true);
+          return;
+        }
+
+        const { data, error } = await supabaseClient
+          .from("site_settings")
+          .select("tournament_registration, tournament_name, rings_number")
+          .eq("id", 1) // Assuming we use a single row with ID 1 for settings
+          .single();
+
+        if (error) {
+          console.error("Error fetching settings:", error);
+          liveStatusText.textContent = "Error connecting to database";
+
+          // If the error is about missing columns (code 42703), warn user
+          if (error.code === "42703") {
+            console.error(
+              "Missing columns! Please add 'tournament_name' (text) and 'rings_number' (int) to your site_settings table.",
+            );
+            liveStatusText.textContent = "DB Schema Error (Check Console)";
+          }
+          return;
+        }
+
+        if (data) {
+          currentDbState = data.tournament_registration;
+          tournamentName = data.tournament_name || "";
+          ringsNumber = data.rings_number || 0;
+          updateUI(currentDbState);
+        }
+      }
+
+      /**
+       * 2. Update Settings in Supabase
+       * Writes 'tournament_registration' to 'site_settings' table (id=1)
+       */
+      async function updateSetting(newState) {
+        if (!supabaseClient) return;
+
+        // Visual feedback that we are saving
+        statusText.textContent = "Saving...";
+        adminToggle.disabled = true;
+
+        const { error } = await supabaseClient
+          .from("site_settings")
+          .update({ tournament_registration: newState })
+          .eq("id", 1);
+
+        adminToggle.disabled = false;
+
+        if (error) {
+          console.error("Error updating settings:", error);
+          alert("Failed to update database. Reverting UI.");
+          // Revert toggle on error
+          adminToggle.checked = !newState;
+          statusText.textContent = "Error Saving";
+        } else {
+          currentDbState = newState;
+          updateUI(newState);
+        }
+      }
+
+      /**
+       * 3. Save Tournament Details (Name & Rings)
+       */
+      async function saveTournamentDetails() {
+        const nameVal = inputTournamentName.value.trim();
+        const ringsVal = parseInt(inputRingsNumber.value);
+
+        // Validation
+        if (!nameVal || isNaN(ringsVal) || ringsVal <= 0) {
+          editTournamentError.style.display = "block";
+          return;
+        }
+        editTournamentError.style.display = "none";
+
+        // Disable button
+        const originalBtnText = btnSaveTournament.textContent;
+        btnSaveTournament.textContent = "Saving...";
+        btnSaveTournament.disabled = true;
+
+        if (!supabaseClient) {
+          // Mock save for UI only mode
+          setTimeout(() => {
+            tournamentName = nameVal;
+            ringsNumber = ringsVal;
+            closeEditModal();
+            renderTournamentCard();
+            btnSaveTournament.textContent = originalBtnText;
+            btnSaveTournament.disabled = false;
+          }, 500);
+          return;
+        }
+
+        const { error } = await supabaseClient
+          .from("site_settings")
+          .update({
+            tournament_name: nameVal,
+            rings_number: ringsVal,
+          })
+          .eq("id", 1);
+
+        if (error) {
+          console.error("Error saving tournament details:", error);
+          alert("Failed to save details. Check console.");
+        } else {
+          tournamentName = nameVal;
+          ringsNumber = ringsVal;
+          closeEditModal();
+          renderTournamentCard(); // Re-render card to show new data
+        }
+
+        btnSaveTournament.textContent = originalBtnText;
+        btnSaveTournament.disabled = false;
+      }
+
+      /**
+       * 4. Render the Tournament Card HTML
+       */
+      function renderTournamentCard() {
+        if (!tournamentName && ringsNumber === 0) {
+          tournamentList.innerHTML = `<div class="placeholder-card">No tournament details configured yet. <br>(Admin must configure tournament)</div>`;
+        } else {
+          // Use default values if one is missing
+          const displayTitle = tournamentName || "Untitled Tournament";
+          const displayRings = ringsNumber || 0;
+
+          tournamentList.innerHTML = `
+            <div class="tournament-card">
+              <div class="card-icon">
+                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+              </div>
+              <h3 class="card-title">${displayTitle}</h3>
+              <p class="card-info">Join the competition and prove your skill!</p>
+              <div class="rings-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+                ${displayRings} Rings Available
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      /**
+       * 5. Update UI based on state
+       */
+      function updateUI(isOpen) {
+        // Sync Toggle Switch (don't trigger event)
+        adminToggle.checked = isOpen;
+
+        // Body Classes
+        if (isOpen) {
+          body.classList.remove("registration-closed");
+          body.classList.add("registration-open");
+          statusText.textContent = "Registration Open";
+          liveStatusText.textContent = "Registration is OPEN";
+
+          // Only render the card if registration is open
+          renderTournamentCard();
+        } else {
+          body.classList.remove("registration-open");
+          body.classList.add("registration-closed");
+          statusText.textContent = "Registration Closed";
+          liveStatusText.textContent = "Registration is CLOSED";
+        }
+      }
+
+      // ==========================================
+      // EVENT LISTENERS
+      // ==========================================
+
+      // Toggle Change Event (Admin Only)
+      adminToggle.addEventListener("change", (e) => {
+        if (!isAdmin) return; // Security check
+        const newState = e.target.checked;
+        updateSetting(newState);
+      });
+
+      // --- Edit Tournament Modal Logic ---
+
+      btnEditTournament.addEventListener("click", () => {
+        // Pre-fill inputs with current data
+        inputTournamentName.value = tournamentName;
+        inputRingsNumber.value = ringsNumber || "";
+        editTournamentError.style.display = "none";
+        editTournamentModal.classList.add("active");
+        inputTournamentName.focus();
+      });
+
+      function closeEditModal() {
+        editTournamentModal.classList.remove("active");
+      }
+
+      btnCancelEdit.addEventListener("click", closeEditModal);
+
+      btnSaveTournament.addEventListener("click", saveTournamentDetails);
+
+      // Allow Enter key in inputs to save
+      inputRingsNumber.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") saveTournamentDetails();
+      });
+
+      // --- Login Modal Logic ---
+
+      // Open Login Modal
+      btnAdminLogin.addEventListener("click", () => {
+        // Prevent opening if already logged in
+        if (isAdmin) return;
+        loginModal.classList.add("active");
+        adminPasswordInput.value = "";
+        loginError.style.display = "none";
+        adminPasswordInput.focus();
+      });
+
+      // Close Login Modal
+      btnCancelLogin.addEventListener("click", () => {
+        loginModal.classList.remove("active");
+      });
+
+      // Confirm Login
+      btnConfirmLogin.addEventListener("click", attemptLogin);
+
+      // Allow Enter key in password input
+      adminPasswordInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") attemptLogin();
+      });
+
+      function attemptLogin() {
+        const pass = adminPasswordInput.value;
+        if (pass === "admina") {
+          // Success
+          isAdmin = true;
+          loginModal.classList.remove("active");
+
+          // Show Admin Controls
+          adminControls.classList.add("visible");
+          btnAdminLogin.style.display = "none"; // Hide login button
+
+          // Show Edit Tournament Button
+          btnEditTournament.style.display = "flex";
+
+          // Sync toggle with current real state immediately
+          adminToggle.checked = currentDbState;
+        } else {
+          // Fail
+          loginError.style.display = "block";
+          adminPasswordInput.classList.add("shake");
+          setTimeout(() => adminPasswordInput.classList.remove("shake"), 500);
+        }
+      }
+
+      // ==========================================
+      // INITIALIZATION
+      // ==========================================
+      document.addEventListener("DOMContentLoaded", () => {
+        body.classList.remove("loading");
+        // Fetch initial state from DB
+        fetchSettings();
+      });
+    </script>
+  </body>
+</html>
