@@ -11,23 +11,21 @@
     />
     <style>
       /* ==========================================
-         1. CORE VARIABLES (From Platform Scheme)
+         1. CORE VARIABLES
          ========================================== */
       :root {
         /* Colors */
-        --bg-body: #0f172a; /* Dark Slate */
-        --bg-panel: #1e293b; /* Lighter Slate */
-        --bg-card: #334155; /* Card background */
-        --bg-input: #0f172a; /* Input background */
-
-        --text-main: #f1f5f9; /* White/Off-white */
-        --text-muted: #94a3b8; /* Gray text */
-
-        --accent-primary: #3b82f6; /* Blue */
-        --accent-secondary: #10b981; /* Green */
-        --accent-alert: #ef4444; /* Red */
-        --accent-admin: #8b5cf6; /* Purple */
-        --accent-warning: #f59e0b; /* Orange/Amber */
+        --bg-body: #0f172a;
+        --bg-panel: #1e293b;
+        --bg-card: #334155;
+        --bg-input: #0f172a;
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --accent-primary: #3b82f6;
+        --accent-secondary: #10b981;
+        --accent-alert: #ef4444;
+        --accent-admin: #8b5cf6;
+        --accent-warning: #f59e0b;
 
         /* Spacing & Borders */
         --radius-md: 12px;
@@ -38,9 +36,6 @@
         --border: 1px solid rgba(255, 255, 255, 0.1);
       }
 
-      /* ==========================================
-         2. RESET & BASE STYLES
-         ========================================== */
       * {
         margin: 0;
         padding: 0;
@@ -62,9 +57,8 @@
       }
 
       /* ==========================================
-         3. LAYOUT COMPONENTS
+         2. RESET & BASE STYLES
          ========================================== */
-      /* Header */
       header {
         background-color: var(--bg-panel);
         border-bottom: var(--border);
@@ -152,6 +146,7 @@
       .form-group {
         flex: 1;
         min-width: 200px;
+        position: relative; /* For positioning error message */
       }
 
       label {
@@ -187,6 +182,20 @@
         color: var(--text-muted);
       }
 
+      /* ERROR STYLES */
+      .input-error-decimal {
+        border-color: var(--accent-alert) !important;
+        background-color: rgba(239, 68, 68, 0.1) !important;
+      }
+
+      .error-text-decimal {
+        color: var(--accent-alert);
+        font-size: 0.8rem;
+        margin-top: 0.3rem;
+        display: none;
+        font-weight: 600;
+      }
+      
       .input-error {
         border-color: var(--accent-alert) !important;
         background-color: rgba(239, 68, 68, 0.1);
@@ -713,7 +722,6 @@
 
       // Auth State Listener
       client.auth.onAuthStateChange((event, session) => {
-        // If we receive a SIGNED_IN event, show dashboard
         if (event === "SIGNED_IN" && session) {
           currentUserId = session.user.id;
           
@@ -722,7 +730,7 @@
           if (redirectTarget) {
             localStorage.removeItem('redirectAfterLogin');
             window.location.href = redirectTarget;
-            return; // Stop here to prevent full page reload
+            return;
           }
 
           fetchExistingTeam();
@@ -1220,7 +1228,10 @@
           <div class="form-row">
             <div class="form-group"><label>Belt *</label>${beltSelect()}</div>
             <div class="form-group"><label>Team *</label><input class="field-team" type="text" value="${teamNameGlobal}" disabled /></div>
-            <div class="form-group"><label>Weight (kg) *</label><input class="field-weight" type="number" step="0.1" placeholder="33.0" /></div>
+            <div class="form-group"><label>Weight (kg) *</label>
+                <input class="field-weight" type="number" step="1" placeholder="e.g. 33" /> <!-- STEP="1" PREVENTS DECIMALS -->
+                <div class="error-text-decimal">Whole numbers only (e.g. 33)</div> <!-- ERROR MESSAGE -->
+            </div>
           </div>
           <div class="form-row">
               <div class="form-group">
@@ -1239,6 +1250,23 @@
               </div>
           </div>
           <div class="error-text"></div>`;
+        
+        // Add listener to clear error on input
+        const weightInput = wrap.querySelector(".field-weight");
+        const errorMsg = wrap.querySelector(".error-text-decimal");
+        weightInput.addEventListener("input", (e) => {
+           const val = e.target.value;
+           if (val.indexOf('.') !== -1) {
+               // Contains decimal
+               weightInput.classList.add("input-error-decimal");
+               errorMsg.style.display = "block";
+           } else {
+               // Valid integer
+               weightInput.classList.remove("input-error-decimal");
+               errorMsg.style.display = "none";
+           }
+        });
+
         return wrap;
       }
 
@@ -1326,6 +1354,13 @@
           );
           const allNonTeamEmpty = nonTeamFields.every((el) => !el.value.trim());
 
+          // Check for validation errors (decimals)
+          if (c.querySelector(".input-error-decimal")) {
+            hasError = true;
+            showError(c, "Please fix errors before submitting.");
+            continue; 
+          }
+
           if (allNonTeamEmpty) {
             skipped++;
             continue;
@@ -1337,17 +1372,28 @@
           else data = getCoachData(c);
 
           if (!data) {
-            nonTeamFields.forEach((el) => {
-              if (!el.value.trim()) markMissing(el);
-            });
-            showError(c, "Fill all required fields or leave entry empty");
-            hasError = true;
-            continue;
+            // If data is null but no visible error class was set (e.g. empty fields), mark empty ones
+             const missingInputs = nonTeamFields.filter(el => !el.value.trim());
+             if(missingInputs.length > 0) {
+                 missingInputs.forEach(el => {
+                     el.classList.add("input-error");
+                 // Add simple error text if not present
+                     let errDiv = el.parentNode.querySelector(".error-text");
+                     if(!errDiv) {
+                         const div = document.createElement("div");
+                         div.className = "error-text";
+                         div.textContent = "This field is required";
+                         el.parentNode.appendChild(div);
+                     }
+                 });
+             }
+             hasError = true;
+             continue;
           }
           rows.push({ ...data, user_id: currentUserId });
         }
 
-        if (hasError) return showAlert("Incomplete entries found.", "error");
+        if (hasError) return showAlert("Please fill in all required fields correctly (Whole numbers for weight).", "error");
         if (rows.length === 0)
           return showAlert("No valid entries to add.", "warning");
 
@@ -1387,12 +1433,26 @@
 
       // Data Extraction Helpers
       function getCompetitorData(wrap) {
+        // First check for decimal validation UI
+        const weightInput = wrap.querySelector(".field-weight");
+        if (weightInput.classList.contains("input-error-decimal")) {
+             return null; // Fail validation
+        }
+
         const name = wrap.querySelector(".field-name").value.trim();
         const birthdate = wrap.querySelector(".field-birthdate").value.trim();
         const gender = wrap.querySelector(".field-gender").value.trim();
         const belt = wrap.querySelector(".field-belt").value.trim();
         const team = wrap.querySelector(".field-team").value.trim();
         const weight = wrap.querySelector(".field-weight").value;
+        
+        // Regex: Allow whole numbers only
+        if (!/^\d+$/.test(weight)) {
+            markMissing(weightInput);
+            showError(wrap, "Weight must be a whole number (e.g. 33). No decimals.");
+            return null;
+        }
+
         const sparring = wrap.querySelector(".field-sparring:checked").value;
         const patterns = wrap.querySelector(".field-patterns:checked").value;
 
@@ -1406,7 +1466,7 @@
           [gender, wrap.querySelector(".field-gender"), "Gender is required"],
           [belt, wrap.querySelector(".field-belt"), "Belt rank is required"],
           [team, wrap.querySelector(".field-team"), "Team name is required"],
-          [weight, wrap.querySelector(".field-weight"), "Weight is required"],
+          [weight, weightInput, "Weight is required"],
         ];
 
         for (const [val, el, msg] of required) {
@@ -1452,9 +1512,28 @@
 
       function markMissing(input) {
         input.classList.add("input-error");
+        // Remove error-text if present
+        const errText = input.parentNode.querySelector(".error-text");
+        if(errText) {
+           // Only remove generic error text if it's the decimal specific one
+           if(!errText.classList.contains("error-text-decimal")) {
+               errText.remove();
+           }
+        }
       }
       function showError(wrap, msg) {
-        const el = wrap.querySelector(".error-text");
+        // Don't overwrite decimal message if it exists
+        const decimalMsg = wrap.querySelector(".error-text-decimal");
+        if(decimalMsg && msg !== "Weight must be a whole number (e.g. 33). No decimals.") {
+             return; // Keep the decimal message
+        }
+
+        let el = wrap.querySelector(".error-text");
+        if (!el || (el && el.classList.contains("error-text-decimal"))) {
+             el = document.createElement("div");
+             el.className = "error-text";
+             wrap.appendChild(el);
+        }
         el.textContent = msg;
         el.classList.add("show");
         setTimeout(() => el.classList.remove("show"), 3000);
@@ -1532,9 +1611,12 @@
         const userId = currentUserId;
         const cat = currentCategory;
         let data = null;
+        
+        // Check validation before saving
         if (cat === "competitors") data = getCompetitorData(editingCard);
         else if (cat === "judges") data = getJudgeData(editingCard);
         else data = getCoachData(editingCard);
+        
         if (!data) return;
 
         const saveBtn = container.querySelector(".btn.btn-success");
