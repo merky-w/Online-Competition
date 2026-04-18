@@ -5,21 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Team Registration</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
       :root {
+        /* Colors */
         --bg-body: #0f172a;
         --bg-panel: #1e293b;
         --bg-card: #334155;
         --text-main: #f1f5f9;
         --text-muted: #94a3b8;
         --accent-secondary: #10b981;
+        --accent-alert: #ef4444;
         --accent-register: #f59e0b;
         --accent-primary: #3b82f6;
-        --accent-alert: #ef4444;
         --radius-md: 12px;
         --radius-lg: 20px;
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        --shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0, 0.3);
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,6 +33,7 @@
         font-family: "Segoe UI", Roboto, sans-serif;
         background-color: var(--bg-body);
         color: var(--text-main);
+        line-height: 1.6;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -36,12 +42,13 @@
       header {
         background-color: var(--bg-panel);
         padding: 1rem 2rem;
-        border-bottom: 1px solid rgba(255,255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
       }
 
+      /* Header Actions */
       .header-actions {
         display: flex;
         gap: 1rem;
@@ -86,17 +93,17 @@
 
       h1 { margin-bottom: 1rem; font-size: 1.8rem; text-align: center; }
 
-      /* Category Accordion */
+      /* Category Buttons (Accordion Style) */
       .category-section {
         background-color: var(--bg-panel);
-        border: 1px solid rgba(255,255,255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: var(--radius-lg);
         margin-bottom: 1.5rem;
         overflow: hidden;
       }
 
       .category-header {
-        background: var(--bg-card);
+        background-color: var(--bg-card);
         padding: 1rem 1.5rem;
         display: flex;
         justify-content: space-between;
@@ -122,15 +129,16 @@
       /* Split Content */
       .split-content {
         display: none;
-        border-top: 1px solid rgba(255,255,255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
       }
+
       .split-content.open {
         display: block;
       }
 
       .split-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
         gap: 2rem;
         padding: 1.5rem;
         background-color: var(--bg-body);
@@ -147,7 +155,7 @@
         letter-spacing: 1px;
         color: var(--text-muted);
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(255,255,255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
 
       /* The Person Card */
@@ -172,7 +180,7 @@
       .col-left .person-card:hover {
         transform: translateY(-3px);
         border-color: var(--accent-primary);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
       }
 
       /* RIGHT COLUMN (Registered) */
@@ -196,8 +204,8 @@
       /* Unregister Button (X) */
       .btn-unregister {
         position: absolute;
-        top: 8px;
-        right: 8px;
+        top: 5px;
+        right: 5px;
         background: rgba(239, 68, 68, 0.2);
         color: var(--accent-alert);
         border: 1px solid var(--accent-alert);
@@ -223,11 +231,11 @@
         width: 100%;
         background-color: var(--bg-panel);
         padding: 1rem 2rem;
-        border-top: 1px solid rgba(255,255,255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
         z-index: 100;
       }
 
@@ -251,7 +259,7 @@
         font-weight: 700;
         cursor: pointer;
         transition: 0.2s;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
       }
       .btn-submit:hover { background-color: #059669; transform: translateY(-2px); }
       .btn-submit:disabled {
@@ -270,22 +278,32 @@
       }
       .spinner {
         width: 50px; height: 50px;
-        border: 5px solid rgba(255,255,255,0.1);
+        border: 5px solid rgba(255, 255, 255, 0.1);
         border-top-color: var(--accent-secondary);
         border-radius: 50%;
         animation: spin 1s infinite linear;
       }
       @keyframes spin { 100% { transform: rotate(360deg); } }
 
+      /* Mobile Adjustments */
       @media (max-width: 768px) {
-        .split-grid { grid-template-columns: 1fr; gap: 0.5rem; }
-        .category-header { flex-direction: column; align-items: flex-start; gap: 5px; }
-        .header-actions { width: 100%; justify-content: space-between; }
+        .split-grid {
+          grid-template-columns: 1fr;
+          gap: 0.5rem;
+        }
+        .category-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 5px;
+        }
+        .header-actions {
+          width: 100%;
+          justify-content: space-between;
+        }
       }
     </style>
   </head>
   <body>
-
     <header>
       <div class="logo">Team Registration</div>
       <div class="header-actions">
@@ -293,7 +311,7 @@
         <a href="register.html" class="btn-add-team">
           <i class="fas fa-user-plus"></i> Add to My Team
         </a>
-        
+
         <!-- Back to Main -->
         <a href="index.html" class="back-link">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -318,9 +336,11 @@
         </div>
         <div class="split-content" id="content-sec-competitors">
           <div class="split-grid">
+            <!-- Left: Available -->
             <div class="col-left" id="comp-left">
               <div class="col-header">Available to Register</div>
             </div>
+            <!-- Right: Registered -->
             <div class="col-right" id="comp-right">
               <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
             </div>
@@ -393,8 +413,8 @@
         auth: { storage: window.sessionStorage }
       });
 
-      const selectedIds = new Set(); 
-      
+      const selectedIds = new Set();
+
       // DOM Elements
       const btnSubmit = document.getElementById("btnSubmit");
       const selectedCountSpan = document.getElementById("selectedCount");
@@ -403,43 +423,23 @@
       // ==========================================
       // GLOBAL SCOPE FUNCTIONS
       // ==========================================
-      
-      // Moved to top level to ensure btnSubmit can access it inside click handlers
       async function unregisterPerson(registrationId) {
         loadingOverlay.style.display = "flex";
-        
+
         const { error } = await client
           .from("final_registrations")
           .delete()
-          .eq("id", registrationId); // Delete by Registration Row ID
+          .eq("id", registrationId); // Delete by -> Registration Row ID
 
         loadingOverlay.style.display = "none";
 
         if (error) {
           alert("Error unregistering: " + error.message);
         } else {
-          // Success
-          alert("Unregistered successfully.");
-          
-          // Reload the page to update the view
-          // We use location.reload() to force a clean refresh from the server
-          window.location.reload();
+          // Reload data to update view
+          const { data: { session } } = await client.auth.getSession();
+          if (session) loadAllData(session.user.id);
         }
-      }
-
-      // ==========================================
-      // INIT & LOAD LOGIC
-      // ==========================================
-      async function init() {
-        const { data: { session } } = await client.auth.getSession();
-        
-        if (!session) {
-          localStorage.setItem('redirectAfterLogin', 'registration.html');
-          window.location.href = "register.html";
-          return;
-        }
-
-        loadAllData(session.user.id);
       }
 
       async function loadAllData(userId) {
@@ -453,27 +453,32 @@
         ]);
 
         // 2. Fetch Registrations
+        // NOTE: We get full rows (entry_id + entry_data) to simplify logic
         const { data: regData, error: regError } = await client
           .from("final_registrations")
-          .select("*") // Select all to get ID and Entry ID
+          .select("*") // Select all to get the Row ID
           .eq("user_id", userId);
 
-        // 3. Create Map of Person ID -> Registration Row
-        const regMap = new Map();
+        const registeredIds = new Set();
         if (regData && !regError) {
-          regData.forEach(r => {
-            regMap.set(String(r.entry_id), r);
+          // Create a Map of Registration Row ID -> (User ID)
+          // e.g. "264" (row.id in final_registrations) -> "264"
+          // We map Registration ID -> Entry Data (Snapshot of user/entry_id)
+          const regMap = new Map();
+          if (regData && !regError) {
+            regData.forEach(r => {
+              regMap.set(r.id, r); // Map ID to Row Object
+            });
           });
         }
 
-        // 4. Render Sections
+        // 3. Render Sections
         renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
         renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
         renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], regMap);
 
         // Open first section
         toggleSection("sec-competitors");
-        
         loadingOverlay.style.display = "none";
       }
 
@@ -481,7 +486,7 @@
         const leftContainer = document.getElementById(`${typeShort}-left`);
         const rightContainer = document.getElementById(`${typeShort}-right`);
 
-        leftContainer.innerHTML = ""; 
+        leftContainer.innerHTML = "";
         rightContainer.innerHTML = "";
 
         if (data.length === 0) {
@@ -491,15 +496,16 @@
         }
 
         data.forEach(person => {
-          const personIdStr = String(person.id);
-          const registration = regMap.get(personIdStr); 
+          // Check if person is registered using Registration ID
+          // IMPORTANT: We use `person.id` (ID from people tables), not `person.entry_id`
+          const registration = regMap.get(person.id);
           const isRegistered = !!registration;
 
           const card = document.createElement("div");
           card.className = "person-card";
-          
+
           let details = "";
-          if (typeShort === 'comp') {
+          if (typeShort === "comp") {
             details = `<div class="card-details"><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
           }
 
@@ -514,12 +520,12 @@
             btnUnreg.className = "btn-unregister";
             btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
             btnUnreg.title = "Unregister from Tournament";
-            
+
             // Click Event: Unregister
             btnUnreg.addEventListener("click", async (e) => {
               e.stopPropagation();
-              if(confirm(`Unregister ${person.name} from the tournament? This will allow you to register them again.`)) {
-                await unregisterPerson(registration.id); // Use Registration ID
+              if(confirm(`Unregister ${person.name} from tournament?`)) {
+                await unregisterPerson(person.id); // Use Person ID
               }
             });
 
@@ -527,7 +533,7 @@
             rightContainer.appendChild(card);
           } else {
             // ADD TO LEFT SIDE (Available)
-            card.dataset.id = personIdStr;
+            card.dataset.id = person.id;
             card.dataset.type = typeShort;
             card.dataset.raw = JSON.stringify(person);
 
@@ -546,7 +552,7 @@
 
         const content = document.getElementById(`content-${sectionId}`);
         const icon = document.getElementById(`icon-${sectionId}`);
-        
+
         if (!content.classList.contains("open")) {
           content.classList.add("open");
           icon.classList.remove("fa-chevron-down");
@@ -556,7 +562,7 @@
 
       function toggleSelection(card) {
         const id = card.dataset.id;
-        
+
         if (selectedIds.has(id)) {
           selectedIds.delete(id);
           card.style.borderColor = "transparent";
@@ -569,10 +575,31 @@
         updateUI();
       }
 
+      async function unregisterPerson(personId) {
+        loadingOverlay.style.display = "flex";
+
+        // Delete by Person ID
+        const { error } = await client
+          .from("final_registrations")
+          .delete()
+          .eq("id", personId); 
+
+        loadingOverlay.style.display = "none";
+
+        if (error) {
+          alert("Error unregistering: " + error.message);
+        } else {
+          alert("Successfully unregistered " + person.name + " from database!");
+          // Reload data to update view
+          const { data: { session } } = await client.auth.getSession();
+          if (session) loadAllData(session.user.id);
+        }
+      }
+
       function updateUI() {
         const count = selectedIds.size;
         selectedCountSpan.textContent = count;
-        
+
         if (count > 0) {
           btnSubmit.disabled = false;
           btnSubmit.textContent = `Register ${count} People`;
@@ -592,16 +619,17 @@
 
         cards.forEach(card => {
           const rawPerson = JSON.parse(card.dataset.raw);
-          const type = card.dataset.type; 
+          const type = card.dataset.type;
 
           insertData.push({
             user_id: userId,
             entry_type: type,
-            entry_id: card.dataset.id,
+            entry_id: card.dataset.id, // Use Person ID
             entry_data: rawPerson 
           });
         });
 
+        // Try to Insert
         const { error } = await client.from("final_registrations").insert(insertData);
 
         loadingOverlay.style.display = "none";
@@ -614,6 +642,7 @@
           }
         } else {
           alert("Successfully registered " + insertData.length + " participants!");
+          // Reload page
           window.location.reload();
         }
       });
