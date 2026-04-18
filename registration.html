@@ -12,9 +12,10 @@
         --bg-card: #334155;
         --text-main: #f1f5f9;
         --text-muted: #94a3b8;
-        --accent-secondary: #10b981;
-        --accent-register: #f59e0b;
+        --accent-secondary: #10b981; /* Green */
+        --accent-register: #f59e0b; /* Orange */
         --accent-alert: #ef4444;
+        --accent-primary: #3b82f6;
         --radius-md: 12px;
         --radius-lg: 20px;
         --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
@@ -53,87 +54,145 @@
       main {
         flex: 1;
         padding: 2rem 1rem;
-        max-width: 1200px;
+        max-width: 1400px; /* Wider for split view */
         margin: 0 auto;
         width: 100%;
       }
 
-      h1 { margin-bottom: 2rem; font-size: 2rem; text-align: center; }
+      h1 { margin-bottom: 1rem; font-size: 1.8rem; text-align: center; }
 
-      .section-title {
-        font-size: 1.25rem;
-        margin-bottom: 1rem;
-        border-left: 4px solid var(--accent-register);
-        padding-left: 10px;
+      /* Category Buttons (Accordion Style) */
+      .category-section {
+        background-color: var(--bg-panel);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-lg);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+      }
+
+      .category-header {
+        background: var(--bg-card);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s;
+      }
+
+      .category-header:hover {
+        background: #3f4e68;
+      }
+
+      .category-title {
+        font-weight: 700;
+        font-size: 1.3rem;
         color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
 
-      .grid-container {
+      .category-icon {
+        color: var(--accent-primary);
+        width: 24px;
+        text-align: center;
+      }
+
+      /* THE SPLIT GRID (Left / Right) */
+      .split-content {
+        display: none; /* Hidden by default */
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .split-content.open {
+        display: block;
+      }
+
+      .split-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 1rem;
-        margin-bottom: 3rem;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: 2rem;
+        padding: 1.5rem;
+        background-color: var(--bg-body); /* Darker background to distinguish split */
+        min-height: 100px;
       }
 
+      /* Column Headers */
+      .col-header {
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255,255,255, 0.05);
+      }
+
+      /* The Card */
       .person-card {
         background-color: var(--bg-card);
         border: 2px solid transparent;
         border-radius: var(--radius-md);
-        padding: 1.5rem;
+        padding: 1rem;
         cursor: pointer;
         transition: all 0.2s ease;
         position: relative;
-        user-select: none;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
       }
 
-      .person-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(255, 255, 255, 0.1);
+      /* LEFT COLUMN (Available) Styling */
+      .col-left .person-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
       }
 
-      .person-card.selected {
-        background-color: rgba(16, 185, 129, 0.15);
+      /* RIGHT COLUMN (Registered) Styling */
+      .col-right .person-card {
+        opacity: 0.6;
+        cursor: not-allowed;
         border-color: var(--accent-secondary);
-        box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        background-color: rgba(16, 185, 129, 0.05);
       }
 
-      .person-card.selected .check-icon {
-        opacity: 1;
-        transform: scale(1);
+      .col-right .person-card::after {
+        content: "Registered";
+        position: absolute;
+        top: 5px; right: 5px;
+        font-size: 0.7rem;
+        color: var(--accent-secondary);
+        font-weight: bold;
+        background: var(--bg-card);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--accent-secondary);
       }
 
       .card-name {
         font-size: 1.1rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
       }
 
       .card-details {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: var(--text-muted);
+        display: flex;
+        gap: 10px;
       }
 
-      .check-icon {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        color: var(--accent-secondary);
-        opacity: 0;
-        transform: scale(0.5);
-        transition: all 0.2s ease;
-        background: var(--bg-card);
-        border-radius: 50%;
-        padding: 4px;
-      }
-
+      /* Submit Bar */
       .submit-bar {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
+        bottom: 0; left: 0; width: 100%;
         background-color: var(--bg-panel);
         padding: 1rem 2rem;
-        border-top: 1px solid rgba(255,255, 255, 0.1);
+        border-top: 1px solid rgba(255,255,255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -146,13 +205,13 @@
         color: var(--text-muted);
       }
       .counter span {
-        color: var(--accent-secondary);
+        color: var(--accent-primary);
         font-weight: 700;
         font-size: 1.4rem;
       }
 
       .btn-submit {
-        background-color: var(--accent-register);
+        background-color: var(--accent-secondary);
         color: #fff;
         border: none;
         padding: 0.8rem 2rem;
@@ -163,45 +222,35 @@
         transition: 0.2s;
         box-shadow: 0 4px 6px rgba(0,0,0,0.2);
       }
-
-      .btn-submit:hover {
-        background-color: #d97706;
-        transform: translateY(-2px);
-      }
-
+      .btn-submit:hover { background-color: #059669; transform: translateY(-2px); }
       .btn-submit:disabled {
         background-color: var(--bg-card);
         color: var(--text-muted);
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .empty-state {
-        text-align: center;
-        color: var(--text-muted);
-        padding: 2rem;
-        font-style: italic;
+        cursor: not-allowed; transform: none;
       }
 
       .loading-overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(15, 23, 42, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 2000;
-        display: none;
+        display: flex; justify-content: center; align-items: center;
+        z-index: 2000; display: none;
       }
       .spinner {
         width: 50px; height: 50px;
         border: 5px solid rgba(255,255,255,0.1);
-        border-top-color: var(--accent-register);
+        border-top-color: var(--accent-secondary);
         border-radius: 50%;
         animation: spin 1s infinite linear;
       }
       @keyframes spin { 100% { transform: rotate(360deg); } }
 
+      /* Mobile Adjustments */
+      @media (max-width: 768px) {
+        .split-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+        .category-header { flex-direction: column; align-items: flex-start; gap: 5px; }
+        .col-right .person-card { opacity: 0.8; } /* Easier to see on mobile */
+      }
     </style>
   </head>
   <body>
@@ -217,18 +266,77 @@
     <main>
       <h1>Select Participants</h1>
 
-      <h3 class="section-title">Competitors</h3>
-      <div id="competitorsGrid" class="grid-container">
-        <div class="empty-state">No competitors found. Add them in "My Team".</div>
+      <!-- COMPETITORS SECTION -->
+      <div class="category-section" id="sec-competitors">
+        <div class="category-header" onclick="toggleSection('sec-competitors')">
+          <div class="category-title">
+            <span class="category-icon"><i class="fas fa-users"></i></span>
+            Competitors
+          </div>
+          <div style="color: var(--text-muted);">
+            <i class="fas fa-chevron-down" id="icon-sec-competitors"></i>
+          </div>
+        </div>
+        <div class="split-content" id="content-sec-competitors">
+          <div class="split-grid">
+            <!-- Left: Available -->
+            <div class="col-left" id="comp-left">
+              <div class="col-header">Available to Register</div>
+            </div>
+            <!-- Right: Registered -->
+            <div class="col-right" id="comp-right">
+              <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <h3 class="section-title">Judges / Referees</h3>
-      <div id="judgesGrid" class="grid-container">
+      <!-- JUDGES SECTION -->
+      <div class="category-section" id="sec-judges">
+        <div class="category-header" onclick="toggleSection('sec-judges')">
+          <div class="category-title">
+            <span class="category-icon"><i class="fas fa-gavel"></i></span>
+            Judges / Referees
+          </div>
+          <div style="color: var(--text-muted);">
+            <i class="fas fa-chevron-down" id="icon-sec-judges"></i>
+          </div>
+        </div>
+        <div class="split-content" id="content-sec-judges">
+          <div class="split-grid">
+            <div class="col-left" id="judge-left">
+              <div class="col-header">Available to Register</div>
+            </div>
+            <div class="col-right" id="judge-right">
+              <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <h3 class="section-title">Coaches</h3>
-      <div id="coachesGrid" class="grid-container">
+      <!-- COACHES SECTION -->
+      <div class="category-section" id="sec-coaches">
+        <div class="category-header" onclick="toggleSection('sec-coaches')">
+          <div class="category-title">
+            <span class="category-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+            Coaches
+          </div>
+          <div style="color: var(--text-muted);">
+            <i class="fas fa-chevron-down" id="icon-sec-coaches"></i>
+          </div>
+        </div>
+        <div class="split-content" id="content-sec-coaches">
+          <div class="split-grid">
+            <div class="col-left" id="coach-left">
+              <div class="col-header">Available to Register</div>
+            </div>
+            <div class="col-right" id="coach-right">
+              <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
+            </div>
+          </div>
+        </div>
       </div>
+
     </main>
 
     <div class="submit-bar">
@@ -240,6 +348,8 @@
       <div class="spinner"></div>
     </div>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script>
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
@@ -249,81 +359,116 @@
       });
 
       const selectedIds = new Set(); 
-      const competitorsGrid = document.getElementById("competitorsGrid");
-      const judgesGrid = document.getElementById("judgesGrid");
-      const coachesGrid = document.getElementById("coachesGrid");
-      const selectedCountSpan = document.getElementById("selectedCount");
+
+      // DOM Elements
       const btnSubmit = document.getElementById("btnSubmit");
+      const selectedCountSpan = document.getElementById("selectedCount");
       const loadingOverlay = document.getElementById("loadingOverlay");
 
       async function init() {
         const { data: { session } } = await client.auth.getSession();
         
         if (!session) {
-          // FIX: If not logged in, save destination and redirect to login
           localStorage.setItem('redirectAfterLogin', 'registration.html');
           window.location.href = "register.html";
           return;
         }
 
-        loadData(session.user.id);
+        loadAllData(session.user.id);
       }
 
-      async function loadData(userId) {
+      async function loadAllData(userId) {
+        // 1. Fetch Pool of People (Competitors, Judges, Coaches)
         const [compRes, judgeRes, coachRes] = await Promise.all([
           client.from("competitors").select("*").eq("user_id", userId),
           client.from("judges").select("*").eq("user_id", userId),
           client.from("coaches").select("*").eq("user_id", userId),
         ]);
 
-        renderGrid(competitorsGrid, compRes.data || [], 'competitor');
-        renderGrid(judgesGrid, judgeRes.data || [], 'judge');
-        renderGrid(coachesGrid, coachRes.data || [], 'coach');
+        // 2. Fetch Already Registered IDs
+        const { data: regData, error: regError } = await client
+          .from("final_registrations")
+          .select("entry_id")
+          .eq("user_id", userId);
+
+        const registeredIds = new Set();
+        if (regData && !regError) {
+          regData.forEach(r => registeredIds.add(String(r.entry_id)));
+        }
+
+        // 3. Render Categories
+        renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], registeredIds);
+        renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], registeredIds);
+        renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], registeredIds);
+
+        // Open first section by default
+        toggleSection("sec-competitors");
       }
 
-      function renderGrid(container, data, type) {
-        container.innerHTML = "";
-        
+      function renderSplitSection(typeShort, typeName, iconClass, data, registeredIds) {
+        const leftContainer = document.getElementById(`${typeShort}-left`);
+        const rightContainer = document.getElementById(`${typeShort}-right`);
+
+        // Clear previous content except headers
+        leftContainer.innerHTML = ""; 
+        rightContainer.innerHTML = "";
+
         if (data.length === 0) {
-          container.innerHTML = `<div class="empty-state">No ${type}s added yet.</div>`;
+          leftContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">No ${typeName.toLowerCase()} found.</div>`;
+          rightContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">None registered yet.</div>`;
           return;
         }
 
         data.forEach(person => {
+          const idStr = String(person.id);
+          const isRegistered = registeredIds.has(idStr);
+
           const card = document.createElement("div");
           card.className = "person-card";
-          // FIX: Ensure ID is a string for consistent comparison
-          card.dataset.id = String(person.id); 
-          card.dataset.type = type; 
-          card.dataset.raw = JSON.stringify(person); 
-
+          
+          // Content
           let details = "";
-          if (type === 'competitor') {
-            details = `
-              <div class="card-details">${person.gender} - ${person.weight}kg</div>
-              <div class="card-details">${person.belt}</div>
-              <div class="card-details" style="font-size:0.8rem; margin-top:5px;">
-                ${person.sparring === 'Yes' ? '<span style="color:var(--accent-secondary)">Sparring</span>' : ''} 
-                ${person.patterns === 'Yes' ? '<span style="color:var(--accent-secondary)">Patterns</span>' : ''}
-              </div>
-            `;
-          } else {
-            details = `
-              <div class="card-details">${person.belt}</div>
-            `;
+          if (typeShort === 'comp') {
+            details = `<div class="card-details"><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
           }
 
           card.innerHTML = `
-            <div class="check-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
             <div class="card-name">${person.name}</div>
             ${details}
           `;
 
-          card.addEventListener("click", () => toggleSelection(card));
-          container.appendChild(card);
+          // Interaction: Only allow clicking if NOT registered
+          if (!isRegistered) {
+            card.dataset.id = idStr;
+            card.dataset.type = typeShort; // 'comp', 'judge', 'coach'
+            card.dataset.raw = JSON.stringify(person);
+            
+            card.addEventListener("click", () => toggleSelection(card));
+            leftContainer.appendChild(card);
+          } else {
+            // Add to right side
+            rightContainer.appendChild(card);
+          }
         });
+      }
+
+      function toggleSection(sectionId) {
+        // Close all
+        document.querySelectorAll(".split-content").forEach(el => el.classList.remove("open"));
+        document.querySelectorAll(".category-header i.fa-chevron-up").forEach(el => {
+            el.classList.remove("fa-chevron-up");
+            el.classList.add("fa-chevron-down");
+        });
+
+        // Open Target
+        const content = document.getElementById(`content-${sectionId}`);
+        const icon = document.getElementById(`icon-${sectionId}`);
+        
+        if (!content.classList.contains("open")) {
+          content.classList.add("open");
+          icon.classList.remove("fa-chevron-down");
+          icon.classList.add("fa-chevron-up");
+        }
       }
 
       function toggleSelection(card) {
@@ -331,12 +476,13 @@
         
         if (selectedIds.has(id)) {
           selectedIds.delete(id);
-          card.classList.remove("selected");
+          card.style.borderColor = "transparent";
+          card.style.backgroundColor = "var(--bg-card)";
         } else {
           selectedIds.add(id);
-          card.classList.add("selected");
+          card.style.borderColor = "var(--accent-primary)";
+          card.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
         }
-
         updateUI();
       }
 
@@ -355,35 +501,38 @@
 
       btnSubmit.addEventListener("click", async () => {
         if (selectedIds.size === 0) return;
-
         loadingOverlay.style.display = "flex";
 
-        const cards = document.querySelectorAll(".person-card.selected");
+        const cards = document.querySelectorAll(".col-left .person-card[style*='border-color']");
         const insertData = [];
         const userId = (await client.auth.getSession()).data.session.user.id;
 
         cards.forEach(card => {
           const rawPerson = JSON.parse(card.dataset.raw);
-          const type = card.dataset.type; 
-
           insertData.push({
             user_id: userId,
-            entry_type: type,
-            entry_id: card.dataset.id, // Pass as string
+            entry_type: card.dataset.type,
+            entry_id: card.dataset.id,
             entry_data: rawPerson 
           });
         });
 
-        // Insert into Supabase
+        // Try to Insert
         const { error } = await client.from("final_registrations").insert(insertData);
 
         loadingOverlay.style.display = "none";
 
         if (error) {
-          alert("Error registering: " + error.message);
+          // Check for Unique Constraint Violation
+          if (error.message.includes("unique_entry_per_user")) {
+             alert("One or more selected people are already registered!");
+          } else {
+             alert("Error registering: " + error.message);
+          }
         } else {
           alert("Successfully registered " + insertData.length + " participants!");
-          window.location.href = "index.html"; 
+          // Reload to refresh UI
+          window.location.reload();
         }
       });
 
