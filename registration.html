@@ -34,7 +34,7 @@
       header {
         background-color: var(--bg-panel);
         padding: 1rem 2rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom:1px solid rgba(255,255, 255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -136,7 +136,7 @@
         width: 100%;
         background-color: var(--bg-panel);
         padding: 1rem 2rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(255,255, 255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -273,8 +273,8 @@
         const { data: { session } } = await client.auth.getSession();
         
         if (!session) {
-          // If not logged in, redirect to My Team page
-          alert("Please log in to register.");
+          // FIX: If not logged in, save destination and redirect to login
+          localStorage.setItem('redirectAfterLogin', 'registration.html');
           window.location.href = "register.html";
           return;
         }
@@ -306,11 +306,11 @@
         data.forEach(person => {
           const card = document.createElement("div");
           card.className = "person-card";
-          card.dataset.id = person.id;
-          card.dataset.type = type; // Store type for easy retrieval
-          card.dataset.raw = JSON.stringify(person); // Store full data
+          // IMPORTANT: Ensure ID is a string for consistent comparison
+          card.dataset.id = String(person.id); 
+          card.dataset.type = type; 
+          card.dataset.raw = JSON.stringify(person); 
 
-          // Content based on type
           let details = "";
           if (type === 'competitor') {
             details = `
@@ -335,9 +335,7 @@
             ${details}
           `;
 
-          // Click Event to Toggle Selection
           card.addEventListener("click", () => toggleSelection(card));
-
           container.appendChild(card);
         });
       }
@@ -346,11 +344,9 @@
         const id = card.dataset.id;
         
         if (selectedIds.has(id)) {
-          // Deselect
           selectedIds.delete(id);
           card.classList.remove("selected");
         } else {
-          // Select
           selectedIds.add(id);
           card.classList.add("selected");
         }
@@ -377,21 +373,19 @@
 
         loadingOverlay.style.display = "flex";
 
-        // Gather all selected cards to get their data
-        // Note: In a real app we might re-fetch from DB, but here we use the stored dataset
         const cards = document.querySelectorAll(".person-card.selected");
         const insertData = [];
         const userId = (await client.auth.getSession()).data.session.user.id;
 
         cards.forEach(card => {
           const rawPerson = JSON.parse(card.dataset.raw);
-          const type = card.dataset.type; // 'competitor', 'judge', 'coach'
+          const type = card.dataset.type; 
 
           insertData.push({
             user_id: userId,
             entry_type: type,
-            entry_id: rawPerson.id,
-            entry_data: rawPerson // Snapshot of data
+            entry_id: card.dataset.id, // Pass as string
+            entry_data: rawPerson 
           });
         });
 
@@ -404,7 +398,7 @@
           alert("Error registering: " + error.message);
         } else {
           alert("Successfully registered " + insertData.length + " participants!");
-          window.location.href = "index.html"; // Go back to main
+          window.location.href = "index.html"; 
         }
       });
 
