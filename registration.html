@@ -23,8 +23,8 @@
         --accent-primary: #3b82f6;
         --radius-md: 12px;
         --radius-lg: 20px;
-        --shadow:
-          0 4px 6px -1px rgba(0, 0, 0, 0, 0.3);
+        /* Fixed CSS Syntax Error: Removed extra comma in rgba */
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -423,19 +423,21 @@
       // ==========================================
       // GLOBAL SCOPE FUNCTIONS
       // ==========================================
-      async function unregisterPerson(registrationId) {
+
+      async function unregisterPerson(registrationId, personName) {
         loadingOverlay.style.display = "flex";
 
         const { error } = await client
           .from("final_registrations")
           .delete()
-          .eq("id", registrationId); // Delete by -> Registration Row ID
+          .eq("id", registrationId); 
 
         loadingOverlay.style.display = "none";
 
         if (error) {
           alert("Error unregistering: " + error.message);
         } else {
+          alert("Successfully unregistered " + personName + " from database!");
           // Reload data to update view
           const { data: { session } } = await client.auth.getSession();
           if (session) loadAllData(session.user.id);
@@ -453,22 +455,18 @@
         ]);
 
         // 2. Fetch Registrations
-        // NOTE: We get full rows (entry_id + entry_data) to simplify logic
         const { data: regData, error: regError } = await client
           .from("final_registrations")
-          .select("*") // Select all to get the Row ID
+          .select("*") 
           .eq("user_id", userId);
 
-        const registeredIds = new Set();
+        // FIX: Scope regMap properly so it is accessible outside the 'if' block
+        const regMap = new Map();
+        
         if (regData && !regError) {
-          // Create a Map of Registration Row ID -> (User ID)
-          // e.g. "264" (row.id in final_registrations) -> "264"
-          // We map Registration ID -> Entry Data (Snapshot of user/entry_id)
-          const regMap = new Map();
-          if (regData && !regError) {
-            regData.forEach(r => {
-              regMap.set(r.id, r); // Map ID to Row Object
-            });
+          regData.forEach(r => {
+            // Map Registration ID -> Row Object
+            regMap.set(r.id, r); 
           });
         }
 
@@ -496,10 +494,14 @@
         }
 
         data.forEach(person => {
-          // Check if person is registered using Registration ID
-          // IMPORTANT: We use `person.id` (ID from people tables), not `person.entry_id`
-          const registration = regMap.get(person.id);
-          const isRegistered = !!registration;
+          // Check if person is registered.
+          // We need to find if there is a registration entry where entry_id matches this person.id
+          // The regMap maps 'registration_id' -> 'registration_row'.
+          // We need to iterate regMap values to find a match, OR build the map differently.
+          
+          // Let's find the registration row for this person
+          const registrationRow = Array.from(regMap.values()).find(r => r.entry_id == person.id);
+          const isRegistered = !!registrationRow;
 
           const card = document.createElement("div");
           card.className = "person-card";
@@ -524,8 +526,9 @@
             // Click Event: Unregister
             btnUnreg.addEventListener("click", async (e) => {
               e.stopPropagation();
+              // Pass the ID of the registration ROW, and the person's name for the alert
               if(confirm(`Unregister ${person.name} from tournament?`)) {
-                await unregisterPerson(person.id); // Use Person ID
+                await unregisterPerson(registrationRow.id, person.name);
               }
             });
 
@@ -569,31 +572,10 @@
           card.style.backgroundColor = "var(--bg-card)";
         } else {
           selectedIds.add(id);
-          card.style.borderColor = "var(--accent-primary)";
+          card.style.borderColor = "var(--accent-primary");
           card.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
         }
         updateUI();
-      }
-
-      async function unregisterPerson(personId) {
-        loadingOverlay.style.display = "flex";
-
-        // Delete by Person ID
-        const { error } = await client
-          .from("final_registrations")
-          .delete()
-          .eq("id", personId); 
-
-        loadingOverlay.style.display = "none";
-
-        if (error) {
-          alert("Error unregistering: " + error.message);
-        } else {
-          alert("Successfully unregistered " + person.name + " from database!");
-          // Reload data to update view
-          const { data: { session } } = await client.auth.getSession();
-          if (session) loadAllData(session.user.id);
-        }
       }
 
       function updateUI() {
@@ -613,9 +595,17 @@
         if (selectedIds.size === 0) return;
         loadingOverlay.style.display = "flex";
 
+        // Find all cards that are visually selected (border color set)
         const cards = document.querySelectorAll(".col-left .person-card[style*='border-color']");
         const insertData = [];
-        const userId = (await client.auth.getSession()).data.session.user.id;
+        
+        const { data: { session } } = await client.auth.getSession();
+        if (!session) {
+            loadingOverlay.style.display = "none";
+            alert("No active session.");
+            return;
+        }
+        const userId = session.user.id;
 
         cards.forEach(card => {
           const rawPerson = JSON.parse(card.dataset.raw);
@@ -624,7 +614,7 @@
           insertData.push({
             user_id: userId,
             entry_type: type,
-            entry_id: card.dataset.id, // Use Person ID
+            entry_id: card.dataset.id,
             entry_data: rawPerson 
           });
         });
@@ -646,6 +636,19 @@
           window.location.reload();
         }
       });
+
+      // ==========================================
+      // INITIALIZATION (Missing Function Added)
+      // ==========================================
+      async function init() {
+        const { data: { session } } = await client.auth.getSession();
+        if (session) {
+            loadAllData(session.user.id);
+        } else {
+            console.error("No session found");
+            loadingOverlay.style.display = "none";
+        }
+      }
 
       document.addEventListener("DOMContentLoaded", init);
     </script>
