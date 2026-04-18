@@ -204,7 +204,7 @@
 
       /* --- MAIN CONTENT --- */
       main {
-        flex: 1;
+        flex:1;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -274,12 +274,12 @@
         border-radius: var(--radius-md);
         padding: 2rem;
         text-align: center;
-        display: flex; /* Make anchor a flex container */
+        display: flex;
         flex-direction: column;
         gap: 1rem;
         transition: var(--transition);
-        text-decoration: none; /* Remove link underline */
-        color: var(--text-main); /* Inherit text color */
+        text-decoration: none; 
+        color: var(--text-main);
         position: relative;
         overflow: hidden;
       }
@@ -321,7 +321,7 @@
         align-items: center;
         justify-content: center;
         margin: 0 auto;
-        z-index: 1; /* Above overlay */
+        z-index: 1;
       }
       .card-title {
         font-size: 1.5rem;
@@ -733,17 +733,35 @@
         editTournamentError.style.display = "none";
         btnSaveTournament.textContent = "Saving...";
         btnSaveTournament.disabled = true;
+
         if (!supabaseClient) {
           setTimeout(() => {
             tournamentName = nameVal; ringsNumber = ringsVal;
-            closeEditModal(); renderTournamentCard();
+            currentDbState = true; // Auto open
+            closeEditModal(); renderTournamentCard(); updateUI(true);
             btnSaveTournament.textContent = "Save Details"; btnSaveTournament.disabled = false;
           }, 500);
           return;
         }
-        const { error } = await supabaseClient.from("site_settings").update({ tournament_name: nameVal, rings_number: ringsVal }).eq("id", 1);
-        if (error) { console.error("Error saving tournament details:", error); alert("Failed to save details. Check console."); }
-        else { tournamentName = nameVal; ringsNumber = ringsVal; closeEditModal(); renderTournamentCard(); }
+
+        // FIX: Automatically set registration to OPEN when admin saves details
+        const { error } = await supabaseClient.from("site_settings").update({
+          tournament_name: nameVal,
+          rings_number: ringsVal,
+          tournament_registration: true // <--- AUTO OPENS REGISTRATION
+        }).eq("id", 1);
+
+        if (error) {
+          console.error("Error saving tournament details:", error);
+          alert("Failed to save details. Check console.");
+        } else {
+          tournamentName = nameVal;
+          ringsNumber = ringsVal;
+          currentDbState = true; // Update local state to open
+          closeEditModal();
+          renderTournamentCard();
+          updateUI(true); // Force UI to Open state
+        }
         btnSaveTournament.textContent = "Save Details";
         btnSaveTournament.disabled = false;
       }
@@ -755,7 +773,6 @@
           const displayTitle = tournamentName || "Untitled Tournament";
           const displayRings = ringsNumber || 0;
 
-          // CHANGED: Wrapped the card content in an <a> tag pointing to registration.html
           tournamentList.innerHTML = `
             <a href="registration.html" class="tournament-card">
               <div class="card-icon">
@@ -779,7 +796,7 @@
           body.classList.add("registration-open");
           statusText.textContent = "Registration Open";
           liveStatusText.textContent = "Registration is OPEN";
-          renderTournamentCard();
+          renderTournamentCard(); // Ensure card is drawn
         } else {
           body.classList.remove("registration-open");
           body.classList.add("registration-closed");
