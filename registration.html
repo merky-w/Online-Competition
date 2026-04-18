@@ -12,8 +12,8 @@
         --bg-card: #334155;
         --text-main: #f1f5f9;
         --text-muted: #94a3b8;
-        --accent-secondary: #10b981; /* Green */
-        --accent-register: #f59e0b; /* Orange */
+        --accent-secondary: #10b981;
+        --accent-register: #f59e0b;
         --accent-alert: #ef4444;
         --radius-md: 12px;
         --radius-lg: 20px;
@@ -34,7 +34,7 @@
       header {
         background-color: var(--bg-panel);
         padding: 1rem 2rem;
-        border-bottom:1px solid rgba(255,255, 255, 0.1);
+        border-bottom: 1px solid rgba(255,255, 255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -75,7 +75,6 @@
         margin-bottom: 3rem;
       }
 
-      /* The Card */
       .person-card {
         background-color: var(--bg-card);
         border: 2px solid transparent;
@@ -92,7 +91,6 @@
         border-color: rgba(255, 255, 255, 0.1);
       }
 
-      /* SELECTED STATE (Green) */
       .person-card.selected {
         background-color: rgba(16, 185, 129, 0.15);
         border-color: var(--accent-secondary);
@@ -128,7 +126,6 @@
         padding: 4px;
       }
 
-      /* Submit Bar */
       .submit-bar {
         position: fixed;
         bottom: 0;
@@ -186,7 +183,6 @@
         font-style: italic;
       }
 
-      /* Loading */
       .loading-overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -221,23 +217,17 @@
     <main>
       <h1>Select Participants</h1>
 
-      <!-- Competitors Section -->
       <h3 class="section-title">Competitors</h3>
       <div id="competitorsGrid" class="grid-container">
-        <!-- Loaded via JS -->
         <div class="empty-state">No competitors found. Add them in "My Team".</div>
       </div>
 
-      <!-- Judges Section -->
       <h3 class="section-title">Judges / Referees</h3>
       <div id="judgesGrid" class="grid-container">
-        <!-- Loaded via JS -->
       </div>
 
-      <!-- Coaches Section -->
       <h3 class="section-title">Coaches</h3>
       <div id="coachesGrid" class="grid-container">
-        <!-- Loaded via JS -->
       </div>
     </main>
 
@@ -258,10 +248,7 @@
         auth: { storage: window.sessionStorage }
       });
 
-      // State to track selected IDs
       const selectedIds = new Set(); 
-
-      // DOM Elements
       const competitorsGrid = document.getElementById("competitorsGrid");
       const judgesGrid = document.getElementById("judgesGrid");
       const coachesGrid = document.getElementById("coachesGrid");
@@ -283,7 +270,6 @@
       }
 
       async function loadData(userId) {
-        // Fetch all team members
         const [compRes, judgeRes, coachRes] = await Promise.all([
           client.from("competitors").select("*").eq("user_id", userId),
           client.from("judges").select("*").eq("user_id", userId),
@@ -306,7 +292,7 @@
         data.forEach(person => {
           const card = document.createElement("div");
           card.className = "person-card";
-          // IMPORTANT: Ensure ID is a string for consistent comparison
+          // FIX: Ensure ID is a string for consistent comparison
           card.dataset.id = String(person.id); 
           card.dataset.type = type; 
           card.dataset.raw = JSON.stringify(person); 
@@ -367,7 +353,6 @@
         }
       }
 
-      // Submit Registration
       btnSubmit.addEventListener("click", async () => {
         if (selectedIds.size === 0) return;
 
@@ -402,7 +387,6 @@
         }
       });
 
-      // Start
       document.addEventListener("DOMContentLoaded", init);
     </script>
   </body>
