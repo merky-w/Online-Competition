@@ -15,11 +15,10 @@
         --text-muted: #94a3b8;
         --accent-secondary: #10b981;
         --accent-register: #f59e0b;
-        --accent-primary: #3b82f6;
         --accent-alert: #ef4444;
         --radius-md: 12px;
         --radius-lg: 20px;
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0, 0.3);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -86,10 +85,10 @@
 
       h1 { margin-bottom: 1rem; font-size: 1.8rem; text-align: center; }
 
-      /* Category Accordion */
+      /* Category Buttons (Accordion Style) */
       .category-section {
         background-color: var(--bg-panel);
-        border: 1px solid rgba(255,255,255, 0.1);
+        border: 1px solid rgba(255,255, 255, 0.1);
         border-radius: var(--radius-lg);
         margin-bottom: 1.5rem;
         overflow: hidden;
@@ -119,16 +118,10 @@
         gap: 12px;
       }
 
-      .category-icon {
-        color: var(--accent-primary);
-        width: 24px;
-        text-align: center;
-      }
-
-      /* Split Content */
+      /* THE SPLIT GRID (Left / Right) */
       .split-content {
         display: none;
-        border-top: 1px solid rgba(255,255,255, 0.1);
+        border-top: 1px solid rgba(255,255, 255, 0.1);
       }
       .split-content.open {
         display: block;
@@ -156,7 +149,7 @@
         border-bottom: 1px solid rgba(255,255,255, 0.05);
       }
 
-      /* The Person Card */
+      /* The Card */
       .person-card {
         background-color: var(--bg-card);
         border: 2px solid transparent;
@@ -171,7 +164,7 @@
         gap: 0.5rem;
       }
 
-      /* LEFT COLUMN (Available) */
+      /* LEFT COLUMN (Available) Styling */
       .col-left .person-card {
         cursor: pointer;
       }
@@ -181,7 +174,7 @@
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
       }
 
-      /* RIGHT COLUMN (Registered) */
+      /* RIGHT COLUMN (Registered) Styling */
       .col-right .person-card {
         opacity: 0.6;
         cursor: not-allowed;
@@ -202,13 +195,13 @@
       /* Unregister Button (X) */
       .btn-unregister {
         position: absolute;
-        top: 5px;
-        right: 5px;
+        top: 8px;
+        right: 8px;
         background: rgba(239, 68, 68, 0.2);
         color: var(--accent-alert);
         border: 1px solid var(--accent-alert);
-        width: 26px;
-        height: 26px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -324,9 +317,11 @@
         </div>
         <div class="split-content" id="content-sec-competitors">
           <div class="split-grid">
+            <!-- Left: Available -->
             <div class="col-left" id="comp-left">
               <div class="col-header">Available to Register</div>
             </div>
+            <!-- Right: Registered -->
             <div class="col-right" id="comp-right">
               <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
             </div>
@@ -400,37 +395,12 @@
       });
 
       const selectedIds = new Set(); 
+      
+      // DOM Elements
       const btnSubmit = document.getElementById("btnSubmit");
       const selectedCountSpan = document.getElementById("selectedCount");
       const loadingOverlay = document.getElementById("loadingOverlay");
 
-      // ==========================================
-      // FIX: GLOBAL SCOPE FUNCTIONS
-      // ==========================================
-      
-      // Moved to GLOBAL scope so btnSubmit can access it
-      async function unregisterPerson(registrationId) {
-        loadingOverlay.style.display = "flex";
-        
-        const { error } = await client
-          .from("final_registrations")
-          .delete()
-          .eq("id", registrationId); // Delete by Registration Row ID
-
-        loadingOverlay.style.display = "none";
-
-        if (error) {
-          alert("Error unregistering: " + error.message);
-        } else {
-          // Reload data to update view
-          const { data: { session } } = await client.auth.getSession();
-          if(session) loadAllData(session.user.id);
-        }
-      }
-
-      // ==========================================
-      // INIT & LOAD LOGIC
-      // ==========================================
       async function init() {
         const { data: { session } } = await client.auth.getSession();
         
@@ -456,11 +426,10 @@
         // 2. Fetch Registrations
         const { data: regData, error: regError } = await client
           .from("final_registrations")
-          .select("*") // Select all to get ID and Entry ID
+          .select("*")
           .eq("user_id", userId);
 
         // 3. Create Map of Person ID -> Registration Row
-        // e.g. "264" (competitor ID) -> { id: "uuid-xyz", entry_id: "264", ... }
         const regMap = new Map();
         if (regData && !regError) {
           regData.forEach(r => {
@@ -520,7 +489,7 @@
             // Click Event: Unregister
             btnUnreg.addEventListener("click", async (e) => {
               e.stopPropagation();
-              if(confirm(`Unregister ${person.name} from the tournament? This will remove them completely.`)) {
+              if(confirm(`Unregister ${person.name} from the tournament? This will remove them from your team completely.`)) {
                 await unregisterPerson(registration.id); // Use Registration ID
               }
             });
@@ -571,6 +540,25 @@
         updateUI();
       }
 
+      async function unregisterPerson(registrationId) {
+        loadingOverlay.style.display = "flex";
+        
+        const { error } = await client
+          .from("final_registrations")
+          .delete()
+          .eq("id", registrationId); // Delete by the Registration Row ID
+
+        loadingOverlay.style.display = "none";
+
+        if (error) {
+          alert("Error unregistering: " + error.message);
+        } else {
+          // Reload data to update view
+          const { data: { session } } = await client.auth.getSession();
+          if(session) loadAllData(session.user.id);
+        }
+      }
+
       function updateUI() {
         const count = selectedIds.size;
         selectedCountSpan.textContent = count;
@@ -604,6 +592,7 @@
           });
         });
 
+        // Try to Insert
         const { error } = await client.from("final_registrations").insert(insertData);
 
         loadingOverlay.style.display = "none";
