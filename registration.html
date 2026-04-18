@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Team Registration</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       :root {
         --bg-body: #0f172a;
@@ -12,10 +13,10 @@
         --bg-card: #334155;
         --text-main: #f1f5f9;
         --text-muted: #94a3b8;
-        --accent-secondary: #10b981; /* Green */
-        --accent-register: #f59e0b; /* Orange */
+        --accent-secondary: #10b981;
+        --accent-register: #f59e0b;
+        --accent-primary: #3b82f6; /* Blue for Add Button */
         --accent-alert: #ef4444;
-        --accent-primary: #3b82f6;
         --radius-md: 12px;
         --radius-lg: 20px;
         --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
@@ -41,6 +42,13 @@
         align-items: center;
       }
 
+      /* Header Actions */
+      .header-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
       .back-link {
         color: var(--text-muted);
         text-decoration: none;
@@ -51,20 +59,38 @@
       }
       .back-link:hover { color: white; }
 
+      /* Add to My Team Button */
+      .btn-add-team {
+        background-color: var(--accent-primary);
+        color: white;
+        text-decoration: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-add-team:hover {
+        background-color: #2563eb;
+        transform: translateY(-2px);
+      }
+
       main {
         flex: 1;
         padding: 2rem 1rem;
-        max-width: 1400px; /* Wider for split view */
+        max-width: 1400px;
         margin: 0 auto;
         width: 100%;
       }
 
       h1 { margin-bottom: 1rem; font-size: 1.8rem; text-align: center; }
 
-      /* Category Buttons (Accordion Style) */
+      /* Category Accordion */
       .category-section {
         background-color: var(--bg-panel);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255,255, 255, 0.1);
         border-radius: var(--radius-lg);
         margin-bottom: 1.5rem;
         overflow: hidden;
@@ -91,19 +117,13 @@
         color: var(--text-main);
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
       }
 
-      .category-icon {
-        color: var(--accent-primary);
-        width: 24px;
-        text-align: center;
-      }
-
-      /* THE SPLIT GRID (Left / Right) */
+      /* Split Content */
       .split-content {
-        display: none; /* Hidden by default */
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: none;
+        border-top: 1px solid rgba(255,255, 255, 0.1);
       }
       .split-content.open {
         display: block;
@@ -111,33 +131,33 @@
 
       .split-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        grid-template-columns: 1fr 1fr;
         gap: 2rem;
         padding: 1.5rem;
-        background-color: var(--bg-body); /* Darker background to distinguish split */
+        background-color: var(--bg-body);
         min-height: 100px;
       }
 
       /* Column Headers */
       .col-header {
         text-align: center;
-        font-size: 1rem;
+        font-size: 0.9rem;
         font-weight: 700;
         margin-bottom: 1rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         color: var(--text-muted);
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(255,255,255, 0.05);
+        border-bottom: 1px solid rgba(255,255, 255, 0.05);
       }
 
-      /* The Card */
+      /* The Person Card */
       .person-card {
         background-color: var(--bg-card);
         border: 2px solid transparent;
         border-radius: var(--radius-md);
         padding: 1rem;
-        cursor: pointer;
+        cursor: default; /* Default default */
         transition: all 0.2s ease;
         position: relative;
         margin-bottom: 1rem;
@@ -146,32 +166,22 @@
         gap: 0.5rem;
       }
 
-      /* LEFT COLUMN (Available) Styling */
+      /* LEFT COLUMN (Available) */
+      .col-left .person-card {
+        cursor: pointer;
+      }
       .col-left .person-card:hover {
         transform: translateY(-3px);
         border-color: var(--accent-primary);
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
       }
 
-      /* RIGHT COLUMN (Registered) Styling */
+      /* RIGHT COLUMN (Registered) */
       .col-right .person-card {
         opacity: 0.6;
         cursor: not-allowed;
+        background-color: rgba(16, 185, 129, 0.05); /* Faint green tint */
         border-color: var(--accent-secondary);
-        background-color: rgba(16, 185, 129, 0.05);
-      }
-
-      .col-right .person-card::after {
-        content: "Registered";
-        position: absolute;
-        top: 5px; right: 5px;
-        font-size: 0.7rem;
-        color: var(--accent-secondary);
-        font-weight: bold;
-        background: var(--bg-card);
-        padding: 2px 6px;
-        border-radius: 4px;
-        border: 1px solid var(--accent-secondary);
       }
 
       .card-name {
@@ -182,17 +192,39 @@
       .card-details {
         font-size: 0.85rem;
         color: var(--text-muted);
+      }
+
+      /* Unregister Button (X) */
+      .btn-unregister {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--accent-alert);
+        border: 1px solid var(--accent-alert);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
         display: flex;
-        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-unregister:hover {
+        background: var(--accent-alert);
+        color: white;
       }
 
       /* Submit Bar */
       .submit-bar {
         position: fixed;
-        bottom: 0; left: 0; width: 100%;
+        bottom: 0;
+        left: 0;
+        width: 100%;
         background-color: var(--bg-panel);
         padding: 1rem 2rem;
-        border-top: 1px solid rgba(255,255,255, 0.1);
+        border-top: 1px solid rgba(255,255, 255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -226,7 +258,8 @@
       .btn-submit:disabled {
         background-color: var(--bg-card);
         color: var(--text-muted);
-        cursor: not-allowed; transform: none;
+        cursor: not-allowed;
+        transform: none;
       }
 
       .loading-overlay {
@@ -245,11 +278,10 @@
       }
       @keyframes spin { 100% { transform: rotate(360deg); } }
 
-      /* Mobile Adjustments */
       @media (max-width: 768px) {
         .split-grid { grid-template-columns: 1fr; gap: 0.5rem; }
         .category-header { flex-direction: column; align-items: flex-start; gap: 5px; }
-        .col-right .person-card { opacity: 0.8; } /* Easier to see on mobile */
+        .header-actions { width: 100%; justify-content: space-between; }
       }
     </style>
   </head>
@@ -257,10 +289,18 @@
 
     <header>
       <div class="logo">Team Registration</div>
-      <a href="index.html" class="back-link">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-        Back to Main
-      </a>
+      <div class="header-actions">
+        <!-- Add to My Team Button -->
+        <a href="register.html" class="btn-add-team">
+          <i class="fas fa-user-plus"></i> Add to My Team
+        </a>
+        
+        <!-- Back to Main -->
+        <a href="index.html" class="back-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back to Main
+        </a>
+      </div>
     </header>
 
     <main>
@@ -279,11 +319,9 @@
         </div>
         <div class="split-content" id="content-sec-competitors">
           <div class="split-grid">
-            <!-- Left: Available -->
             <div class="col-left" id="comp-left">
               <div class="col-header">Available to Register</div>
             </div>
-            <!-- Right: Registered -->
             <div class="col-right" id="comp-right">
               <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
             </div>
@@ -348,8 +386,6 @@
       <div class="spinner"></div>
     </div>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <script>
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
@@ -359,7 +395,7 @@
       });
 
       const selectedIds = new Set(); 
-
+      
       // DOM Elements
       const btnSubmit = document.getElementById("btnSubmit");
       const selectedCountSpan = document.getElementById("selectedCount");
@@ -378,38 +414,45 @@
       }
 
       async function loadAllData(userId) {
-        // 1. Fetch Pool of People (Competitors, Judges, Coaches)
+        loadingOverlay.style.display = "flex";
+
+        // 1. Fetch People Pool
         const [compRes, judgeRes, coachRes] = await Promise.all([
           client.from("competitors").select("*").eq("user_id", userId),
           client.from("judges").select("*").eq("user_id", userId),
           client.from("coaches").select("*").eq("user_id", userId),
         ]);
 
-        // 2. Fetch Already Registered IDs
+        // 2. Fetch Registrations
         const { data: regData, error: regError } = await client
           .from("final_registrations")
-          .select("entry_id")
+          .select("*") // Select all to get the ID
           .eq("user_id", userId);
 
-        const registeredIds = new Set();
+        // 3. Create Map of Person ID -> Registration Row
+        // e.g. "264" (competitor ID) -> { id: "uuid-xyz", entry_id: "264" ... }
+        const regMap = new Map();
         if (regData && !regError) {
-          regData.forEach(r => registeredIds.add(String(r.entry_id)));
+          regData.forEach(r => {
+            regMap.set(String(r.entry_id), r);
+          });
         }
 
-        // 3. Render Categories
-        renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], registeredIds);
-        renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], registeredIds);
-        renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], registeredIds);
+        // 4. Render Sections
+        renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
+        renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
+        renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], regMap);
 
-        // Open first section by default
+        // Open first section
         toggleSection("sec-competitors");
+        
+        loadingOverlay.style.display = "none";
       }
 
-      function renderSplitSection(typeShort, typeName, iconClass, data, registeredIds) {
+      function renderSplitSection(typeShort, typeName, iconClass, data, regMap) {
         const leftContainer = document.getElementById(`${typeShort}-left`);
         const rightContainer = document.getElementById(`${typeShort}-right`);
 
-        // Clear previous content except headers
         leftContainer.innerHTML = ""; 
         rightContainer.innerHTML = "";
 
@@ -420,13 +463,14 @@
         }
 
         data.forEach(person => {
-          const idStr = String(person.id);
-          const isRegistered = registeredIds.has(idStr);
+          const personIdStr = String(person.id);
+          const registration = regMap.get(personIdStr); // Check if registered
+          const isRegistered = !!registration;
 
+          // Create Card
           const card = document.createElement("div");
           card.className = "person-card";
           
-          // Content
           let details = "";
           if (typeShort === 'comp') {
             details = `<div class="card-details"><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
@@ -437,30 +481,43 @@
             ${details}
           `;
 
-          // Interaction: Only allow clicking if NOT registered
-          if (!isRegistered) {
-            card.dataset.id = idStr;
-            card.dataset.type = typeShort; // 'comp', 'judge', 'coach'
-            card.dataset.raw = JSON.stringify(person);
+          if (isRegistered) {
+            // ADD TO RIGHT SIDE
+            // Add Unregister Button
+            const btnUnreg = document.createElement("div");
+            btnUnreg.className = "btn-unregister";
+            btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
+            btnUnreg.title = "Unregister from Tournament";
             
+            // Click Event: Unregister
+            btnUnreg.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              if(confirm(`Unregister ${person.name} from the tournament?`)) {
+                await unregisterPerson(registration.id); // Use Registration ID
+              }
+            });
+
+            card.appendChild(btnUnreg);
+            rightContainer.appendChild(card);
+          } else {
+            // ADD TO LEFT SIDE (Available)
+            card.dataset.id = personIdStr;
+            card.dataset.type = typeShort;
+            card.dataset.raw = JSON.stringify(person);
+
             card.addEventListener("click", () => toggleSelection(card));
             leftContainer.appendChild(card);
-          } else {
-            // Add to right side
-            rightContainer.appendChild(card);
           }
         });
       }
 
       function toggleSection(sectionId) {
-        // Close all
         document.querySelectorAll(".split-content").forEach(el => el.classList.remove("open"));
         document.querySelectorAll(".category-header i.fa-chevron-up").forEach(el => {
             el.classList.remove("fa-chevron-up");
             el.classList.add("fa-chevron-down");
         });
 
-        // Open Target
         const content = document.getElementById(`content-${sectionId}`);
         const icon = document.getElementById(`icon-${sectionId}`);
         
@@ -486,6 +543,25 @@
         updateUI();
       }
 
+      async function unregisterPerson(registrationId) {
+        loadingOverlay.style.display = "flex";
+        
+        const { error } = await client
+          .from("final_registrations")
+          .delete()
+          .eq("id", registrationId); // Delete by the Registration Row ID
+
+        loadingOverlay.style.display = "none";
+
+        if (error) {
+          alert("Error unregistering: " + error.message);
+        } else {
+          // Reload data to update view
+          const { data: { session } } = await client.auth.getSession();
+          if(session) loadAllData(session.user.id);
+        }
+      }
+
       function updateUI() {
         const count = selectedIds.size;
         selectedCountSpan.textContent = count;
@@ -509,21 +585,21 @@
 
         cards.forEach(card => {
           const rawPerson = JSON.parse(card.dataset.raw);
+          const type = card.dataset.type; 
+
           insertData.push({
             user_id: userId,
-            entry_type: card.dataset.type,
+            entry_type: type,
             entry_id: card.dataset.id,
             entry_data: rawPerson 
           });
         });
 
-        // Try to Insert
         const { error } = await client.from("final_registrations").insert(insertData);
 
         loadingOverlay.style.display = "none";
 
         if (error) {
-          // Check for Unique Constraint Violation
           if (error.message.includes("unique_entry_per_user")) {
              alert("One or more selected people are already registered!");
           } else {
@@ -531,7 +607,6 @@
           }
         } else {
           alert("Successfully registered " + insertData.length + " participants!");
-          // Reload to refresh UI
           window.location.reload();
         }
       });
