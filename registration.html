@@ -17,7 +17,6 @@
         --accent-register: #f59e0b;
         --accent-primary: #3b82f6;
         --accent-alert: #ef4444;
-        --accent-info: #3b82f6; /* For Info button */
         --radius-md: 12px;
         --radius-lg: 20px;
         --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
@@ -189,7 +188,30 @@
 
       .card-name { font-size: 1.1rem; font-weight: 700; }
 
-      .card-details { font-size: 0.85rem; color: var(--text-muted); }
+      /* NEW: Category Tags */
+      .card-categories {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 0.8rem;
+        margin-top: 4px;
+      }
+      .cat-tag {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 0;
+        color: var(--text-muted);
+      }
+      .cat-tag i { width: 14px; text-align: center; }
+      .cat-spar { color: #a78bfa; } /* Light Purple */
+      .cat-pat { color: #fcd34d; }  /* Light Amber */
+
+      .card-details { 
+        font-size: 0.85rem; 
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
 
       /* INFO BUTTON */
       .btn-info {
@@ -570,7 +592,121 @@
       const loadingOverlay = document.getElementById("loadingOverlay");
 
       // Modal State
-      let currentEditingPerson = null; // Holds { id, type, data }
+      let currentEditingPerson = null;
+
+      // ==========================================
+      // LOGIC IMPORTED FROM ZREB (CATEGORY LOGIC)
+      // ==========================================
+      const RULES = {
+        SPARRING: {
+          KIDS: {
+            time: "2 x 1 min",
+            M: ["-20", "-25", "-30", "-35", "+35"],
+            F: ["-20", "-25", "-30", "-35", "+35"],
+          },
+          YOUTH: {
+            time: "2 x 1.30 min",
+            M: ["-25", "-30", "-35", "-40", "+40"],
+            F: ["-25", "-30", "-35", "-40", "+40"],
+          },
+          OLDER_YOUTH: {
+            time: "2 x 1.30 min",
+            M: ["-35", "-40", "-45", "-50", "-55", "-60", "+60"],
+            F: ["-30", "-35", "-40", "-45", "-50", "-55", "+55"],
+          },
+          JUNIORS: {
+            time: "2 x 2 min",
+            M: ["-45", "-50", "-55", "-60", "-65", "-70", "+70"],
+            F: ["-40", "-45", "-50", "-55", "-60", "-65", "+65"],
+          },
+        },
+      };
+
+      let tournamentDate = new Date().toISOString().split('T')[0]; // Default to today
+
+      function extractBeltNumber(belt) {
+        if (!belt) return -1;
+        const match = belt.match(/(\d+)/);
+        return match ? parseInt(match[1]) : -1;
+      }
+
+      function getBeltGroup(belt) {
+        if (!belt) return "Unknown";
+        const beltUpper = belt.toUpperCase();
+        if (beltUpper.includes("DAN")) return "Dan Grades";
+        const num = extractBeltNumber(belt);
+        if (num === 10 || num === 9) return "10-9 Kup";
+        if (num === 8 || num === 7) return "8-7 Kup";
+        if (num === 6 || num === 5) return "6-5 Kup";
+        if (num === 4 || num === 3) return "4-3 Kup";
+        if (num === 2 || num === 1) return "2-1 Kup";
+        return belt;
+      }
+
+      function getAge(birth) {
+        if (!birth) return 0;
+        const b = new Date(birth);
+        if (isNaN(b.getTime())) return 0;
+        const today = tournamentDate ? new Date(tournamentDate) : new Date();
+        let age = today.getFullYear() - b.getFullYear();
+        if (
+          today.getMonth() < b.getMonth() ||
+          (today.getMonth() === b.getMonth() && today.getDate() < b.getDate())
+        )
+          age--;
+        return age;
+      }
+
+      function getAgeGroup(age) {
+        if (age >= 6 && age <= 9) return "KIDS";
+        if (age >= 10 && age <= 11) return "YOUTH";
+        if (age >= 12 && age <= 13) return "OLDER_YOUTH";
+        if (age >= 14 && age <= 16) return "JUNIORS";
+        return "OTHER";
+      }
+
+      function getSparringWeightClass(ageGroup, gender, weight) {
+        if (!RULES.SPARRING[ageGroup]) return null;
+        const classes = RULES.SPARRING[ageGroup][gender];
+        if (!classes) return null;
+        for (let i = 0; i < classes.length; i++) {
+          const cls = classes[i];
+          if (cls.startsWith("-")) {
+            const upper = parseInt(cls.replace("-", ""));
+            const lower =
+              i === 0 ? 0 : parseInt(classes[i - 1].replace(/[^0-9]/g, ""));
+            if (weight > lower && weight <= upper) return cls;
+          }
+          if (cls.startsWith("+")) {
+            const lower = parseInt(cls.replace("+", ""));
+            if (weight > lower) return cls;
+          }
+        }
+        return null;
+      }
+
+      // Function to calculate display strings
+      function getPersonCategories(person) {
+        const age = getAge(person.birthdate);
+        const ageGroup = getAgeGroup(age);
+        const genderChar = (person.gender || "").trim().toUpperCase().startsWith("M") ? "M" : "F";
+        
+        // Sparring Category
+        let sparringCat = "";
+        if (person.sparring === "Yes") {
+          const wc = getSparringWeightClass(ageGroup, genderChar, person.weight);
+          sparringCat = `${ageGroup} - ${wc || "N/A"}kg`;
+        }
+
+        // Patterns Category
+        let patternCat = "";
+        if (person.patterns === "Yes") {
+          const beltGroup = getBeltGroup(person.belt);
+          patternCat = `${ageGroup} - ${beltGroup}`;
+        }
+
+        return { sparringCat, patternCat };
+      }
 
       // ==========================================
       // MODAL FUNCTIONS
@@ -730,6 +866,13 @@
       // INIT & LOAD LOGIC
       // ==========================================
       async function init() {
+        // Fetch Tournament Date from Settings to ensure Age Calc matches Manager
+        const { data: settings } = await client.from("site_settings").select("tournament_name, tournament_date").eq("id", 1).single();
+        if (settings && settings.tournament_date) {
+           // Assuming date is stored as YYYY-MM-DD string
+           tournamentDate = settings.tournament_date; 
+        }
+
         const { data: { session } } = await client.auth.getSession();
         
         if (!session) {
@@ -818,10 +961,28 @@
 
           headerDiv.appendChild(nameDiv);
           headerDiv.appendChild(infoBtn);
-
           card.appendChild(headerDiv);
 
-          // Extra Details (Weight for competitors)
+          // === NEW: CATEGORY DISPLAY LOGIC ===
+          if (typeShort === 'comp') {
+             // Calculate Categories
+             const { sparringCat, patternCat } = getPersonCategories(person);
+             
+             const catDiv = document.createElement("div");
+             catDiv.className = "card-categories";
+
+             if (sparringCat) {
+               catDiv.innerHTML += `<div class="cat-tag cat-spar"><i class="fas fa-fist-raised"></i> Sparring: ${sparringCat}</div>`;
+             }
+             if (patternCat) {
+               catDiv.innerHTML += `<div class="cat-tag cat-pat"><i class="fas fa-chess-board"></i> Patterns: ${patternCat}</div>`;
+             }
+             
+             card.appendChild(catDiv);
+          }
+          // ===========================================
+
+          // Basic Details (Weight for competitors)
           if (typeShort === 'comp') {
             const details = document.createElement("div");
             details.className = "card-details";
@@ -884,7 +1045,7 @@
           card.style.backgroundColor = "var(--bg-card)";
         } else {
           selectedIds.add(id);
-          card.style.borderColor = "var(--accent-primary)";
+          card.style.borderColor = "var(--accent-primary)");
           card.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
         }
         updateUI();
