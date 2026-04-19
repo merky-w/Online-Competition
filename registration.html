@@ -470,7 +470,7 @@
       });
 
       // ==========================================
-      // LOGIC IMPORTED FROM ZREB
+      // LOGIC IMPORTED FROM ZREB (UPDATED SEPARATE DAN LOGIC)
       // ==========================================
       const RULES = {
         SPARRING: {
@@ -487,16 +487,27 @@
         return match ? parseInt(match[1]) : -1;
       }
 
+      // ✅ UPDATED: SEPARATE DANS INDIVIDUALLY
       function getBeltGroup(belt) {
         if (!belt) return "Unknown";
         const beltUpper = belt.toUpperCase();
-        if (beltUpper.includes("DAN")) return "Dan Grades";
+        
+        // CHECK FOR DANS (BLACK BELTS)
+        if (beltUpper.includes("DAN")) {
+           const num = extractBeltNumber(belt);
+           // If it is a Dan, return STRICTLY that Dan number (1 Dan, 2 Dan, etc)
+           if (num > 0) return `${num} Dan`;
+           return "Dan Grades"; // Fallback if number parsing fails
+        }
+
+        // CHECK FOR KUPS (COLORED BELTS) - KEEP GROUPING
         const num = extractBeltNumber(belt);
         if (num === 10 || num === 9) return "10-9 Kup";
         if (num === 8 || num === 7) return "8-7 Kup";
         if (num === 6 || num === 5) return "6-5 Kup";
         if (num === 4 || num === 3) return "4-3 Kup";
         if (num === 2 || num === 1) return "2-1 Kup";
+        
         return belt;
       }
 
@@ -751,7 +762,7 @@
         loadingOverlay.style.display = "flex";
         
         // Fetch Settings (Tournament Date)
-        const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id", 1).single();
+        const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id",1).single();
         if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
 
         const [compRes, judgeRes, coachRes] = await Promise.all([
@@ -805,7 +816,7 @@
           headerDiv.appendChild(infoBtn);
           card.appendChild(headerDiv);
 
-          // Categories (Visible if toggle is ON)
+          // Categories
           if (typeShort === 'comp') {
              const { sparringCat, patternCat } = getPersonCategories(person);
              const catDiv = document.createElement("div");
