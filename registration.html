@@ -194,12 +194,13 @@
         70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: rgba(59, 130, 246, 0.5); }
         100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: transparent; }
       }
+      /* Only apply pulse to left column when mode is active */
       body.extra-mode .col-left .person-card {
         animation: pulse 2s infinite;
         cursor: pointer;
       }
       body.extra-mode .col-left .person-card:hover {
-        animation: none; /* Stop pulsing on hover to interact */
+        animation: none; /* Stop pulsing on hover */
         border-color: var(--accent-primary);
         background: rgba(59, 130, 246, 0.1);
       }
@@ -213,6 +214,13 @@
         opacity: 0.6; cursor: not-allowed;
         background-color: rgba(16, 185, 129, 0.05);
         border-color: var(--accent-secondary);
+        /* Remove pointer events for registered cards to prevent expansion */
+        pointer-events: auto; 
+      }
+      /* Registered cards should NOT pulse */
+      body.extra-mode .col-right .person-card {
+        animation: none;
+        cursor: not-allowed;
       }
 
       .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -539,7 +547,7 @@
       });
 
       const selectedIds = new Set(); 
-      // Stores extras map: { personId: { sparring_main: true, sparring_weight_up: false, ... } }
+      // Stores extras map: { personId: { spar_main: true, spar_age_up: false, ... } }
       const selectedExtras = new Map(); 
       
       const authSection = document.getElementById("authSection");
@@ -582,7 +590,7 @@
       });
 
       // ==========================================
-      // LOGIC
+      // LOGIC (ZREB BASE + UPDATED 6 ROWS)
       // ==========================================
       const RULES = {
         SPARRING: {
@@ -600,15 +608,13 @@
         return match ? parseInt(match[1]) : -1;
       }
 
-      // Updated Dan Logic (Individual Dans)
       function getBeltGroup(belt) {
         if (!belt) return "Unknown";
         const beltUpper = belt.toUpperCase();
         if (beltUpper.includes("DAN")) {
            const num = extractBeltNumber(belt);
-           if (num >= 1 && num <= 2) return "1-2 Dan";
-           if (num >= 3 && num <= 4) return "3-4 Dan";
-           if (num >= 5) return "5+ Dan";
+           // Separate Dans Individually
+           if (num > 0) return `${num} Dan`;
            return "Dan Grades";
         }
         const num = extractBeltNumber(belt);
@@ -638,14 +644,6 @@
         return "OTHER";
       }
 
-      function getHigherAgeGroup(currentAg) {
-        const idx = RULES.AGE_ORDER.indexOf(currentAg);
-        if (idx !== -1 && idx < RULES.AGE_ORDER.length - 1) {
-          return RULES.AGE_ORDER[idx + 1];
-        }
-        return null;
-      }
-
       function getSparringWeightClass(ageGroup, gender, weight) {
         if (!RULES.SPARRING[ageGroup]) return null;
         const classes = RULES.SPARRING[ageGroup][gender];
@@ -665,6 +663,15 @@
         return null;
       }
 
+      // Get Next Categories (Returns null if max level reached)
+      function getHigherAgeGroup(currentAg) {
+        const idx = RULES.AGE_ORDER.indexOf(currentAg);
+        if (idx !== -1 && idx < RULES.AGE_ORDER.length - 1) {
+          return RULES.AGE_ORDER[idx + 1];
+        }
+        return null; // Max level reached
+      }
+
       function getHigherWeightClass(currentWc, ageGroup, gender) {
         if (!RULES.SPARRING[ageGroup]) return null;
         const classes = RULES.SPARRING[ageGroup][gender];
@@ -673,7 +680,7 @@
         if (idx !== -1 && idx < classes.length - 1) {
           return classes[idx + 1];
         }
-        return null;
+        return null; // Max weight reached
       }
 
       function getPersonCategories(person) {
@@ -698,7 +705,7 @@
       }
 
       // ==========================================
-      // AUTHENTICATION LOGIC
+      // AUTHENTICATION
       // ==========================================
       async function checkSession() {
         const { data: { session } } = await client.auth.getSession();
@@ -744,7 +751,7 @@
       }
 
       // ==========================================
-      // MODAL & EDIT LOGIC
+      // MODAL & EDIT
       // ==========================================
       function openPersonModal(personData, type, personId) {
         currentEditingPerson = { id: personId, type: type, data: personData };
@@ -796,7 +803,6 @@
         
         if (inputType === "number") inpEl.type = "number";
         if (inputType === "date") inpEl.type = "date";
-
         if (inputType === "select") {
           options.forEach(opt => {
             const o = document.createElement("option");
@@ -849,7 +855,7 @@
       }
 
       // ==========================================
-      // DATA LOADING & RENDERING
+      // DATA LOADING & RENDERING (UPDATED 6 ROWS)
       // ==========================================
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
@@ -901,67 +907,14 @@
           headerDiv.appendChild(infoBtn);
           card.appendChild(headerDiv);
 
-          // Extras Panel (Only for Competitors)
+          // Categories (View Mode)
           if (typeShort === 'comp') {
-            const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
-            const catDiv = document.createElement("div");
-            catDiv.className = "card-categories"; 
-            
-            // Standard Category Display
-            if (sparringCat) catDiv.innerHTML += `<div class="cat-tag cat-spar"><i class="fas fa-fist-raised"></i> Sparring: ${sparringCat}</div>`;
-            if (patternCat) catDiv.innerHTML += `<div class="cat-tag cat-pat"><i class="fas fa-chess-board"></i> Patterns: ${patternCat}</div>`;
-            
-            card.appendChild(catDiv);
-
-            // Extras Panel
-            const extrasPanel = document.createElement("div");
-            extrasPanel.className = "extra-options-panel";
-            
-            // Helper to create rows
-            const createExtraRow = (label, catName, key) => {
-              const row = document.createElement("div");
-              row.className = "extra-row";
-              row.innerHTML = `
-                <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
-                <input type="checkbox" class="extra-checkbox" data-key="${key}" data-cat="${catName}" data-person-id="${personIdStr}">
-              `;
-              // Prevent card click when clicking checkbox
-              row.querySelector('input').addEventListener('click', (e) => e.stopPropagation());
-              // Handle change
-              row.querySelector('input').addEventListener('change', (e) => handleExtraChange(personIdStr, key, catName, e.target.checked));
-              return row;
-            };
-
-            // Sparring Options
-            if (person.sparring === "Yes" && sparringWc) {
-              extrasPanel.appendChild(createExtraRow("Sparring: Main", sparringCat, "spar_main"));
-              
-              const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
-              if (nextW) {
-                const catUp = `${ageGroup} - ${nextW}kg`;
-                extrasPanel.appendChild(createExtraRow("Sparring: +1 Weight", catUp, "spar_weight_up"));
-              }
-
-              const nextAg = getHigherAgeGroup(ageGroup);
-              if (nextAg) {
-                const catUpAg = `${nextAg} - ${sparringWc}kg`;
-                extrasPanel.appendChild(createExtraRow("Sparring: +1 Age", catUpAg, "spar_age_up"));
-              }
-            }
-
-            // Pattern Options
-            if (person.patterns === "Yes") {
-              extrasPanel.appendChild(createExtraRow("Patterns: Main", patternCat, "pat_main"));
-
-              const nextAg = getHigherAgeGroup(ageGroup);
-              if (nextAg) {
-                const beltGroup = getBeltGroup(person.belt);
-                const catUp = `${nextAg} - ${beltGroup}`;
-                extrasPanel.appendChild(createExtraRow("Patterns: +1 Age", catUp, "pat_age_up"));
-              }
-            }
-            
-            card.appendChild(extrasPanel);
+             const { sparringCat, patternCat } = getPersonCategories(person);
+             const catDiv = document.createElement("div");
+             catDiv.className = "card-categories"; 
+             if (sparringCat) catDiv.innerHTML += `<div class="cat-tag cat-spar"><i class="fas fa-fist-raised"></i> Sparring: ${sparringCat}</div>`;
+             if (patternCat) catDiv.innerHTML += `<div class="cat-tag cat-pat"><i class="fas fa-chess-board"></i> Patterns: ${patternCat}</div>`;
+             card.appendChild(catDiv);
           }
 
           // Basic Details
@@ -970,6 +923,97 @@
             details.className = "card-details";
             details.innerHTML = `<div><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
             card.appendChild(details);
+          }
+
+          // Extras Panel (Only for Competitors & Available)
+          if (typeShort === 'comp' && !isRegistered) {
+            const extrasPanel = document.createElement("div");
+            extrasPanel.className = "extra-options-panel";
+            
+            // Helper to create rows
+            const createExtraRow = (label, catName, key, checked = false) => {
+              const row = document.createElement("div");
+              row.className = "extra-row";
+              row.innerHTML = `
+                <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
+                <input type="checkbox" class="extra-checkbox" data-key="${key}" data-cat="${catName}" data-person-id="${personIdStr}" ${checked ? 'checked' : ''}>
+              `;
+              // Stop card click
+              row.querySelector('input').addEventListener('click', (e) => e.stopPropagation());
+              // Init state
+              row.querySelector('input').addEventListener('change', (e) => handleExtraChange(personIdStr, key, catName, e.target.checked));
+              return row;
+            };
+
+            // 1. MAIN SPARRING (Default ON)
+            const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
+            if (person.sparring === "Yes" && sparringCat) {
+               // Auto-check main in selectedExtras
+               if (!selectedExtras.has(personIdStr)) selectedExtras.set(personIdStr, {});
+               const map = selectedExtras.get(personIdStr);
+               map['spar_main'] = sparringCat;
+               
+               extrasPanel.appendChild(createExtraRow("Sparring: Main", sparringCat, "spar_main", true));
+            }
+
+            // 2. SPARRING AGE UP
+            if (person.sparring === "Yes" && sparringWc) {
+              const nextAg = getHigherAgeGroup(ageGroup);
+              if (nextAg) {
+                 // Recalculate weight for new age (assuming same weight index or specific weight logic, here we use new age + same weight logic)
+                 // Or simply use same weight class label if it exists in next group
+                 const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
+                 if (nextAgWC) {
+                    const catUp = `${nextAg} - ${nextAgWC}kg`;
+                    extrasPanel.appendChild(createExtraRow("Sparring: Age +1", catUp, "spar_age_up"));
+                 }
+              }
+            }
+
+            // 3. SPARRING WEIGHT UP
+            if (person.sparring === "Yes" && sparringWc) {
+              const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
+              if (nextW) {
+                 const catUp = `${ageGroup} - ${nextW}kg`;
+                 extrasPanel.appendChild(createExtraRow("Sparring: Weight +1", catUp, "spar_weight_up"));
+              }
+            }
+
+            // 4. SPARRING BOTH UP (Age +1 AND Weight +1)
+            if (person.sparring === "Yes" && sparringWc) {
+              const nextAg = getHigherAgeGroup(ageGroup);
+              const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
+              // Both must exist
+              if (nextAg && nextW) {
+                 const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
+                 // Note: This finds the weight class in the NEW age group that fits the original weight.
+                 // This is the logical "Combo" step.
+                 if (nextAgWC) {
+                    const catUp = `${nextAg} - ${nextAgWC}kg`;
+                    extrasPanel.appendChild(createExtraRow("Sparring: Age +1 & Weight +1", catUp, "spar_both_up"));
+                 }
+              }
+            }
+
+            // 5. MAIN PATTERNS (Default ON)
+            if (person.patterns === "Yes" && patternCat) {
+               if (!selectedExtras.has(personIdStr)) selectedExtras.set(personIdStr, {});
+               const map = selectedExtras.get(personIdStr);
+               map['pat_main'] = patternCat;
+               extrasPanel.appendChild(createExtraRow("Patterns: Main", patternCat, "pat_main", true));
+            }
+
+            // 6. PATTERNS AGE UP
+            if (person.patterns === "Yes") {
+              const nextAg = getHigherAgeGroup(ageGroup);
+              if (nextAg) {
+                 const beltGroup = getBeltGroup(person.belt);
+                 const catUp = `${nextAg} - ${beltGroup}`;
+                 extrasPanel.appendChild(createExtraRow("Patterns: Age +1", catUp, "pat_age_up"));
+              }
+            }
+            
+            card.appendChild(extrasPanel);
           }
 
           if (isRegistered) {
@@ -990,6 +1034,7 @@
             card.dataset.id = personIdStr;
             card.dataset.type = typeShort;
             card.dataset.raw = JSON.stringify(person);
+            // Attach Click Handler (Checks for Registered status immediately)
             card.addEventListener("click", (e) => handleCardClick(card, e));
             leftContainer.appendChild(card);
           }
@@ -997,29 +1042,25 @@
       }
 
       function handleCardClick(card, e) {
-        // Stop propagation if clicking controls inside
+        // FIX: If card is registered, do nothing (prevent expansion bug)
+        if (card.parentElement.classList.contains('col-right')) return;
+
+        // Stop propagation if clicking info button or checkbox
         if (e.target.closest('.btn-info') || e.target.closest('.extra-checkbox')) return;
 
         if (isExtraMode) {
-          // Toggle expansion
           const isExpanded = card.classList.contains('expanded');
-          // Collapse others
           document.querySelectorAll('.person-card.expanded').forEach(c => c.classList.remove('expanded'));
           if (!isExpanded) {
             card.classList.add('expanded');
           }
-          // Don't select visually in extra mode (blue border) until we confirm which extras? 
-          // OR: Selecting the main entry + checked extras.
-          // For now, let's just make the click toggle expansion.
         } else {
           toggleSelection(card);
         }
       }
 
       function handleExtraChange(personId, key, catName, isChecked) {
-        if (!selectedExtras.has(personId)) {
-          selectedExtras.set(personId, {});
-        }
+        if (!selectedExtras.has(personId)) selectedExtras.set(personId, {});
         const map = selectedExtras.get(personId);
         map[key] = isChecked ? catName : null;
         updateUI();
@@ -1053,24 +1094,17 @@
       }
 
       function updateUI() {
-        // In Extra Mode, we count distinct entries, not just people
+        // Logic to count total entries
         let totalEntries = 0;
-        selectedIds.forEach(id => {
-          // Base entry (assuming Main is always selected if in Extra Mode and card is expanded? 
-          // Actually user needs to click card to select Main. 
-          // Let's say: If in extra mode, clicking card expands, doesn't select. 
-          // We need a way to confirm selection. 
-          // Let's assume "Expanded" = Selected Main + checked extras.)
-          // To simplify: Just count selected IDs for now. 
-          // We'll handle the multi-entry in Submit.
-          totalEntries++; 
-        });
+        
+        // 1. Count standard single selections (Patterns/Judges/Coaches or Sparring without extras)
+        selectedIds.forEach(id => totalEntries++);
 
-        // Count extras
+        // 2. Count extra entries from map
         selectedExtras.forEach(map => {
-          Object.values(map).forEach(val => {
-            if(val) totalEntries++;
-          });
+           Object.values(map).forEach(val => {
+              if (val) totalEntries++;
+           });
         });
 
         selectedCountSpan.textContent = totalEntries;
@@ -1090,119 +1124,88 @@
         const { data: { session } } = await client.auth.getSession();
         if (!session) return;
 
-        // Helper to process a card
+        // Helper to process card
         const processCard = (cardId, cardData, type, isMainSelected) => {
-          if (!isMainSelected && !selectedExtras.has(cardId)) return; // Ignore
+           if (!isMainSelected && !selectedExtras.has(cardId)) return;
 
-          // Determine Main Categories
-          const cats = getPersonCategories(cardData);
-          const entriesList = [];
+           // Determine Main Categories
+           const cats = getPersonCategories(cardData);
+           const entriesList = [];
 
-          // 1. Main Sparring Entry
-          if (cardData.sparring === "Yes" && (isMainSelected || (selectedExtras.get(cardId)?.spar_main))) {
-             entriesList.push({
-               discipline: "sparring",
-               label: "Main",
-               age_group: cats.ageGroup,
-               weight: cats.sparringWc,
-               full_cat: cats.sparringCat
-             });
-          }
+           // 1. Sparring Main
+           if (cardData.sparring === "Yes" && (isMainSelected || (selectedExtras.get(cardId)?.spar_main))) {
+              entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparringCat });
+           }
 
-          // 2. Weight Up Sparring
-          if (selectedExtras.get(cardId)?.spar_weight_up) {
-             const nextW = getHigherWeightClass(cats.sparringWc, cats.ageGroup, cats.genderChar);
-             entriesList.push({
-               discipline: "sparring",
-               label: "Weight Up",
-               age_group: cats.ageGroup,
-               weight: nextW,
-               full_cat: `${cats.ageGroup} - ${nextW}kg`
-             });
-          }
+           // 2. Sparring Age Up
+           if (selectedExtras.get(cardId)?.spar_age_up) {
+              const nextAg = getHigherAgeGroup(cats.ageGroup);
+              const nextAgWC = getSparringWeightClass(nextAg, cats.genderChar, cardData.weight);
+              entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: `${nextAg} - ${nextAgWC}kg` });
+           }
 
-          // 3. Age Up Sparring
-          if (selectedExtras.get(cardId)?.spar_age_up) {
-             const nextAg = getHigherAgeGroup(cats.ageGroup);
-             // Re-calculate weight for new age? Or keep weight?
-             // Usually you enter the weight class of the NEW age group.
-             // Let's find the weight class in the NEW age group corresponding to current weight.
-             const nextAgWC = getSparringWeightClass(nextAg, cats.genderChar, cardData.weight);
-             entriesList.push({
-               discipline: "sparring",
-               label: "Age Up",
-               age_group: nextAg,
-               weight: nextAgWC,
-               full_cat: `${nextAg} - ${nextAgWC}kg`
-             });
-          }
+           // 3. Sparring Weight Up
+           if (selectedExtras.get(cardId)?.spar_weight_up) {
+              const nextW = getHigherWeightClass(cats.sparringWc, cats.ageGroup, cats.genderChar);
+              entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: `${cats.ageGroup} - ${nextW}kg` });
+           }
 
-          // 4. Main Patterns
-          if (cardData.patterns === "Yes" && (isMainSelected || (selectedExtras.get(cardId)?.pat_main))) {
-             entriesList.push({
-               discipline: "patterns",
-               label: "Main",
-               age_group: cats.ageGroup,
-               belt: getBeltGroup(cardData.belt),
-               full_cat: cats.patternCat
-             });
-          }
+           // 4. Sparring Both Up
+           if (selectedExtras.get(cardId)?.spar_both_up) {
+              const nextAg = getHigherAgeGroup(cats.ageGroup);
+              const nextW = getHigherWeightClass(cats.sparringWc, cats.ageGroup, cats.genderChar);
+              const nextAgWC = getSparringWeightClass(nextAg, cats.genderChar, cardData.weight);
+              entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: `${nextAg} - ${nextAgWC}kg` });
+           }
 
-          // 5. Age Up Patterns
-          if (selectedExtras.get(cardId)?.pat_age_up) {
-             const nextAg = getHigherAgeGroup(cats.ageGroup);
-             const beltGroup = getBeltGroup(cardData.belt);
-             entriesList.push({
-               discipline: "patterns",
-               label: "Age Up",
-               age_group: nextAg,
-               belt: beltGroup,
-               full_cat: `${nextAg} - ${beltGroup}`
-             });
-          }
+           // 5. Patterns Main
+           if (cardData.patterns === "Yes" && (isMainSelected || (selectedExtras.get(cardId)?.pat_main))) {
+              entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patternCat });
+           }
 
-          if (entriesList.length === 0) return;
+           // 6. Patterns Age Up
+           if (selectedExtras.get(cardId)?.pat_age_up) {
+              const nextAg = getHigherAgeGroup(cats.ageGroup);
+              const beltGroup = getBeltGroup(cardData.belt);
+              entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: `${nextAg} - ${beltGroup}` });
+           }
 
-          // Insert one row for the person, with entries_list
-          insertData.push({
-            user_id: session.user.id,
-            entry_type: type,
-            entry_id: cardId,
-            entry_data: {
-               ...cardData,
-               entries_list: entriesList // Important for future bracket logic
-            }
-          });
+           if (entriesList.length === 0) return;
+
+           insertData.push({
+             user_id: session.user.id,
+             entry_type: type,
+             entry_id: cardId,
+             entry_data: { ...cardData, entries_list: entriesList }
+           });
         };
 
-        // Iterate Cards
         const cards = document.querySelectorAll(".col-left .person-card");
         cards.forEach(card => {
           const id = card.dataset.id;
           const raw = JSON.parse(card.dataset.raw);
           const type = card.dataset.type;
           const isSelected = selectedIds.has(id);
-
+          // Check if this card type supports extras (only comp)
           if (type === 'comp') {
-            processCard(id, raw, type, isSelected);
+             processCard(id, raw, type, isSelected);
           } else {
-            if (isSelected) {
-              insertData.push({
-                user_id: session.user.id,
-                entry_type: type,
-                entry_id: id,
-                entry_data: raw
-              });
-            }
+             // For Judges/Coaches, simple entry
+             if (isSelected) {
+               insertData.push({
+                 user_id: session.user.id,
+                 entry_type: type,
+                 entry_id: id,
+                 entry_data: raw
+               });
+             }
           }
         });
 
         const { error } = await client.from("final_registrations").insert(insertData);
         loadingOverlay.style.display = "none";
-
-        if (error) {
-          alert("Error registering: " + error.message);
-        } else {
+        if (error) { alert("Error registering: " + error.message); }
+        else {
           alert("Successfully registered " + insertData.length + " entries!");
           window.location.reload();
         }
