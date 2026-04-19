@@ -17,9 +17,11 @@
         --accent-register: #f59e0b;
         --accent-primary: #3b82f6;
         --accent-alert: #ef4444;
+        --accent-info: #3b82f6; /* For Info button */
         --radius-md: 12px;
         --radius-lg: 20px;
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0, 0.3);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        --modal-bg: rgba(15, 23, 42, 0.95);
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -106,9 +108,7 @@
         transition: background 0.2s;
       }
 
-      .category-header:hover {
-        background: #3f4e68;
-      }
+      .category-header:hover { background: #3f4e68; }
 
       .category-title {
         font-weight: 700;
@@ -119,20 +119,14 @@
         gap: 12px;
       }
 
-      .category-icon {
-        color: var(--accent-primary);
-        width: 24px;
-        text-align: center;
-      }
+      .category-icon { color: var(--accent-primary); width: 24px; text-align: center; }
 
       /* Split Content */
       .split-content {
         display: none;
         border-top: 1px solid rgba(255,255,255, 0.1);
       }
-      .split-content.open {
-        display: block;
-      }
+      .split-content.open { display: block; }
 
       .split-grid {
         display: grid;
@@ -172,9 +166,7 @@
       }
 
       /* LEFT COLUMN (Available) */
-      .col-left .person-card {
-        cursor: pointer;
-      }
+      .col-left .person-card { cursor: pointer; }
       .col-left .person-card:hover {
         transform: translateY(-3px);
         border-color: var(--accent-primary);
@@ -189,14 +181,35 @@
         border-color: var(--accent-secondary);
       }
 
-      .card-name {
-        font-size: 1.1rem;
-        font-weight: 700;
+      .card-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
       }
 
-      .card-details {
-        font-size: 0.85rem;
-        color: var(--text-muted);
+      .card-name { font-size: 1.1rem; font-weight: 700; }
+
+      .card-details { font-size: 0.85rem; color: var(--text-muted); }
+
+      /* INFO BUTTON */
+      .btn-info {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-info);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+        z-index: 5;
+      }
+      .btn-info:hover {
+        background: var(--accent-info);
+        color: white;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
       }
 
       /* Unregister Button (X) */
@@ -215,6 +228,7 @@
         justify-content: center;
         cursor: pointer;
         transition: 0.2s;
+        z-index: 10;
       }
       .btn-unregister:hover {
         background: var(--accent-alert);
@@ -237,10 +251,7 @@
         z-index: 100;
       }
 
-      .counter {
-        font-size: 1.1rem;
-        color: var(--text-muted);
-      }
+      .counter { font-size: 1.1rem; color: var(--text-muted); }
       .counter span {
         color: var(--accent-primary);
         font-weight: 700;
@@ -267,9 +278,138 @@
         transform: none;
       }
 
-      .loading-overlay {
+      /* =========================================
+         BIG STAT MENU MODAL STYLES
+         ========================================= */
+      .modal-overlay {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 2000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(5px);
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+      
+      .modal-box {
+        background: var(--bg-panel);
+        width: 90%;
+        max-width: 600px;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+      }
+      .modal-overlay.active .modal-box { transform: scale(1); }
+
+      .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--accent-primary); }
+      
+      .modal-close-btn {
+        background: none; border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+      .modal-close-btn:hover { color: white; }
+
+      .modal-body {
+        padding: 2rem;
+        overflow-y: auto;
+      }
+
+      /* Stat Grid */
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+      .full-width { grid-column: span 2; }
+
+      .stat-label {
+        display: block;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+      }
+      
+      .stat-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-main);
+        padding: 0.5rem;
+        background: rgba(0,0,0,0.2);
+        border-radius: 8px;
+        border: 1px solid transparent;
+      }
+
+      /* Input Styles (Hidden by default) */
+      .stat-input {
+        display: none; /* Hidden in view mode */
+        width: 100%;
+        padding: 0.6rem;
+        background: var(--bg-body);
+        border: 1px solid var(--accent-primary);
+        color: white;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-family: inherit;
+      }
+      .stat-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); }
+
+      /* When in edit mode */
+      .modal-box.editing .stat-value { display: none; }
+      .modal-box.editing .stat-input { display: block; }
+
+      .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+      }
+
+      .btn-modal {
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: 0.2s;
+      }
+      .btn-cancel { background: rgba(255,255,255,0.1); color: var(--text-main); }
+      .btn-cancel:hover { background: rgba(255,255,255,0.2); }
+      
+      .btn-edit { background: var(--accent-warning); color: #1a1a1a; }
+      .btn-edit:hover { background: #d97706; }
+
+      .btn-save { background: var(--accent-secondary); color: white; display: none; }
+      .btn-save:hover { background: #059669; }
+
+      .modal-box.editing .btn-edit { display: none; }
+      .modal-box.editing .btn-save { display: inline-block; }
+
+      /* Loading Spinner */
+      .loading-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(15, 23, 42, 0.8);
         display: flex; justify-content: center; align-items: center;
         z-index: 2000; display: none;
@@ -287,6 +427,8 @@
         .split-grid { grid-template-columns: 1fr; gap: 0.5rem; }
         .category-header { flex-direction: column; align-items: flex-start; gap: 5px; }
         .header-actions { width: 100%; justify-content: space-between; }
+        .stat-grid { grid-template-columns: 1fr; }
+        .full-width { grid-column: span 1; }
       }
     </style>
   </head>
@@ -391,6 +533,29 @@
       <div class="spinner"></div>
     </div>
 
+    <!-- =========================================
+         BIG STAT MENU MODAL
+         ========================================= -->
+    <div id="infoModal" class="modal-overlay">
+      <div class="modal-box" id="infoModalBox">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalPersonTitle">Person Name</h3>
+          <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Content injected via JS -->
+          <div id="modalStatsContainer" class="stat-grid"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-modal btn-cancel" onclick="closeModal()">Close</button>
+          <button class="btn-modal btn-edit" onclick="toggleEditMode()">Edit Info</button>
+          <button class="btn-modal btn-save" onclick="savePersonChanges()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
@@ -404,25 +569,158 @@
       const selectedCountSpan = document.getElementById("selectedCount");
       const loadingOverlay = document.getElementById("loadingOverlay");
 
+      // Modal State
+      let currentEditingPerson = null; // Holds { id, type, data }
+
       // ==========================================
-      // FIX: GLOBAL SCOPE FUNCTIONS
+      // MODAL FUNCTIONS
       // ==========================================
       
-      // Moved to GLOBAL scope so btnSubmit can access it
-      async function unregisterPerson(registrationId) {
-        loadingOverlay.style.display = "flex";
+      function openPersonModal(personData, type, personId) {
+        currentEditingPerson = { id: personId, type: type, data: personData };
         
-        const { error } = await client
-          .from("final_registrations")
-          .delete()
-          .eq("id", registrationId); // Delete by Registration Row ID
+        const modal = document.getElementById("infoModal");
+        const title = document.getElementById("modalPersonTitle");
+        const container = document.getElementById("modalStatsContainer");
+        const box = document.getElementById("infoModalBox");
 
-        loadingOverlay.style.display = "none";
+        // Reset state to View Mode
+        box.classList.remove("editing");
+        container.innerHTML = "";
+        
+        title.textContent = personData.name;
+
+        // Generate Fields based on Type
+        if (type === 'comp') {
+          createStatField(container, "Name", "name", personData.name);
+          createStatField(container, "Birth Date", "birthdate", personData.birthdate, "date");
+          createStatField(container, "Gender", "gender", personData.gender, "select", ["Male", "Female"]);
+          createStatField(container, "Belt", "belt", personData.belt, "belt-select");
+          createStatField(container, "Weight (kg)", "weight", personData.weight, "number");
+          createStatField(container, "Sparring", "sparring", personData.sparring, "select", ["Yes", "No"]);
+          createStatField(container, "Patterns", "patterns", personData.patterns, "select", ["Yes", "No"]);
+        } else if (type === 'judge' || type === 'coach') {
+          createStatField(container, "Name", "name", personData.name);
+          createStatField(container, "Belt", "belt", personData.belt, "belt-select");
+          createStatField(container, "Team", "team", personData.team);
+        }
+
+        modal.classList.add("active");
+      }
+
+      function closeModal() {
+        document.getElementById("infoModal").classList.remove("active");
+        currentEditingPerson = null;
+      }
+
+      function createStatField(container, label, key, value, inputType = "text", options = []) {
+        const wrapper = document.createElement("div");
+        if (label === "Weight (kg)" || label === "Name" || label === "Team") {
+            wrapper.className = "full-width"; 
+        }
+
+        // Label
+        const labelEl = document.createElement("label");
+        labelEl.className = "stat-label";
+        labelEl.textContent = label;
+        wrapper.appendChild(labelEl);
+
+        // Value Display (Read-only)
+        const valEl = document.createElement("div");
+        valEl.className = "stat-value";
+        valEl.id = `val-${key}`;
+        valEl.textContent = value || "-";
+        wrapper.appendChild(valEl);
+
+        // Input (Edit Mode)
+        const inpEl = document.createElement(inputType === "select" || inputType === "belt-select" ? "select" : "input");
+        inpEl.className = "stat-input";
+        inpEl.id = `inp-${key}`;
+        inpEl.dataset.key = key; // Store key for saving
+        
+        if (inputType === "number") inpEl.type = "number";
+        if (inputType === "date") inpEl.type = "date";
+
+        // Populate Select Options
+        if (inputType === "select") {
+          options.forEach(opt => {
+            const o = document.createElement("option");
+            o.value = opt;
+            o.textContent = opt;
+            if (opt === value) o.selected = true;
+            inpEl.appendChild(o);
+          });
+        } else if (inputType === "belt-select") {
+          const belts = ["10 kup","9 kup","8 kup","7 kup","6 kup","5 kup","4 kup","3 kup","2 kup","1 kup","1 dan","2 dan","3 dan","4 dan","5 dan","6 dan"];
+          belts.forEach(b => {
+            const o = document.createElement("option");
+            o.value = b;
+            o.textContent = b;
+            if (b === value) o.selected = true;
+            inpEl.appendChild(o);
+          });
+        } else {
+          inpEl.value = value;
+        }
+
+        wrapper.appendChild(inpEl);
+        container.appendChild(wrapper);
+      }
+
+      function toggleEditMode() {
+        const box = document.getElementById("infoModalBox");
+        box.classList.add("editing");
+      }
+
+      async function savePersonChanges() {
+        if (!currentEditingPerson) return;
+        
+        // Gather data from inputs
+        const inputs = document.querySelectorAll(".stat-input");
+        const updateData = {};
+        
+        inputs.forEach(inp => {
+          const key = inp.dataset.key;
+          updateData[key] = inp.value;
+        });
+
+        // Simple Validation
+        if (!updateData.name || !updateData.belt) {
+          alert("Name and Belt are required.");
+          return;
+        }
+        if (currentEditingPerson.type === 'comp' && !updateData.weight) {
+          alert("Weight is required.");
+          return;
+        }
+
+        // Save to Supabase
+        const btn = document.querySelector(".btn-save");
+        const originalText = btn.textContent;
+        btn.textContent = "Saving...";
+        btn.disabled = true;
+
+        let tableName = "";
+        if (currentEditingPerson.type === 'comp') tableName = "competitors";
+        else if (currentEditingPerson.type === 'judge') tableName = "judges";
+        else if (currentEditingPerson.type === 'coach') tableName = "coaches";
+
+        const { error } = await client
+          .from(tableName)
+          .update(updateData)
+          .eq("id", currentEditingPerson.id);
 
         if (error) {
-          alert("Error unregistering: " + error.message);
+          alert("Error saving: " + error.message);
+          btn.textContent = originalText;
+          btn.disabled = false;
         } else {
-          // Reload data to update view
+          // Success: Refresh Data
+          btn.textContent = originalText;
+          btn.disabled = false;
+          closeModal();
+          
+          // Reload page data to show updated info
           const { data: { session } } = await client.auth.getSession();
           if(session) loadAllData(session.user.id);
         }
@@ -456,11 +754,10 @@
         // 2. Fetch Registrations
         const { data: regData, error: regError } = await client
           .from("final_registrations")
-          .select("*") // Select all to get ID and Entry ID
+          .select("*") 
           .eq("user_id", userId);
 
         // 3. Create Map of Person ID -> Registration Row
-        // e.g. "264" (competitor ID) -> { id: "uuid-xyz", entry_id: "264", ... }
         const regMap = new Map();
         if (regData && !regError) {
           regData.forEach(r => {
@@ -500,15 +797,37 @@
           const card = document.createElement("div");
           card.className = "person-card";
           
-          let details = "";
-          if (typeShort === 'comp') {
-            details = `<div class="card-details"><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
-          }
+          // Card Header (Name + Info Button)
+          const headerDiv = document.createElement("div");
+          headerDiv.className = "card-header-row";
 
-          card.innerHTML = `
-            <div class="card-name">${person.name}</div>
-            ${details}
-          `;
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "card-name";
+          nameDiv.textContent = person.name;
+
+          // THE INFO BUTTON
+          const infoBtn = document.createElement("div");
+          infoBtn.className = "btn-info";
+          infoBtn.innerHTML = '<i class="fas fa-info"></i>';
+          infoBtn.title = "View / Edit Details";
+          // Stop propagation so it doesn't trigger the "select" click
+          infoBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openPersonModal(person, typeShort, person.id);
+          });
+
+          headerDiv.appendChild(nameDiv);
+          headerDiv.appendChild(infoBtn);
+
+          card.appendChild(headerDiv);
+
+          // Extra Details (Weight for competitors)
+          if (typeShort === 'comp') {
+            const details = document.createElement("div");
+            details.className = "card-details";
+            details.innerHTML = `<div><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
+            card.appendChild(details);
+          }
 
           if (isRegistered) {
             // ADD TO RIGHT SIDE
@@ -521,7 +840,7 @@
             btnUnreg.addEventListener("click", async (e) => {
               e.stopPropagation();
               if(confirm(`Unregister ${person.name} from the tournament? This will remove them completely.`)) {
-                await unregisterPerson(registration.id); // Use Registration ID
+                await unregisterPerson(registration.id);
               }
             });
 
@@ -581,6 +900,22 @@
         } else {
           btnSubmit.disabled = true;
           btnSubmit.textContent = "Select Participants";
+        }
+      }
+
+      async function unregisterPerson(registrationId) {
+        loadingOverlay.style.display = "flex";
+        const { error } = await client
+          .from("final_registrations")
+          .delete()
+          .eq("id", registrationId);
+        loadingOverlay.style.display = "none";
+
+        if (error) {
+          alert("Error unregistering: " + error.message);
+        } else {
+          const { data: { session } } = await client.auth.getSession();
+          if(session) loadAllData(session.user.id);
         }
       }
 
