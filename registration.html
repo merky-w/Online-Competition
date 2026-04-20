@@ -36,7 +36,7 @@
 
       header {
         background-color: var(--bg-panel);
-        padding:1rem 2rem;
+        padding: 1rem 2rem;
         border-bottom: 1px solid rgba(255,255,255, 0.1);
         display: flex;
         justify-content: space-between;
@@ -719,18 +719,24 @@
             card.className = "person-card";
             
             // Unregister Button (Top Right)
-            const btnUnreg = document.createElement("div");
-            btnUnreg.className = "btn-unregister";
-            btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
-            btnUnreg.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              if(confirm(`Unregister ${person.name}?`)) {
-                await client.from("final_registrations").delete().eq("id", registration.id);
-                const { data: { session } } = await client.auth.getSession();
-                if(session) loadAllData(session.user.id);
-              }
-            });
-            card.appendChild(btnUnreg);
+            // FIX: Safety check to prevent accidental deletion
+            // Only show Unregister button if MORE than 1 category is selected (Main + Extras)
+            // If only 1 category, it's likely just "Main", so user shouldn't unregister
+            const entriesList = registration.entry_data?.entries_list || [];
+            if (entriesList.length > 1) {
+                const btnUnreg = document.createElement("div");
+                btnUnreg.className = "btn-unregister";
+                btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
+                btnUnreg.addEventListener("click", async (e) => {
+                  e.stopPropagation();
+                  if(confirm(`Unregister ${person.name}?`)) {
+                    await client.from("final_registrations").delete().eq("id", registration.id);
+                    const { data: { session } } = await client.auth.getSession();
+                    if(session) loadAllData(session.user.id);
+                  }
+                });
+                card.appendChild(btnUnreg);
+            }
 
             // Header (Name)
             const headerDiv = document.createElement("div");
@@ -845,7 +851,7 @@
           }
         }
 
-        // 4. Both +1 (Next Age AND Next Weight)
+        // 4. Both + 1 (Next Age AND Next Weight)
         if (person.sparring === "Yes" && sparringWc) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
@@ -898,16 +904,29 @@
       }
 
       // ==========================================
-      // NEW: LOCAL SELECTION UPDATE (Fixes "Doesn't Save" & "Duplicates")
+      // LOCAL SELECTION UPDATE (Fixes Logic Dependencies)
       // ==========================================
       function updateSelection(regId, person, discipline, label, catName, isChecked) {
-         // Validation: Main must be selected before Extras
+         
+         // RULE 1: You cannot check Extras without Main.
          if (isChecked && label !== "Main") {
             const currentList = tempSelections[regId];
             const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
             if (!hasMain) {
                alert("You must select the Main category first.");
+               // FIX: DO NOT update local state or DB if validation fails
                return; 
+            }
+         }
+
+         // RULE 2: You cannot uncheck Main if Extras are present.
+         if (!isChecked && label === "Main") {
+            const currentList = tempSelections[regId];
+            const hasExtras = currentList.some(e => e.label !== "Main");
+            if (hasExtras) {
+               alert("You cannot uncheck Main because additional categories are selected. Uncheck the additional categories first.");
+               // FIX: DO NOT update local state or DB if validation fails
+               return;
             }
          }
 
@@ -926,7 +945,7 @@
       }
 
       // ==========================================
-      // NEW: SAVE TO DB (Fixes Visual Sync)
+      // SAVE TO DB (Syncs UI)
       // ==========================================
       async function saveExtrasToDB(regId) {
          loadingOverlay.style.display = "flex";
@@ -1148,6 +1167,7 @@
                   if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
                   }
+                  // Note: User has to manually re-check Age+1 etc because logic is tricky
                }
                
                if (beltChanged || birthChanged) {
