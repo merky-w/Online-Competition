@@ -58,7 +58,6 @@
       }
       .back-link:hover { color: white; }
 
-      /* Toggle Switches */
       .cat-toggle-container {
         display: flex;
         align-items: center;
@@ -70,9 +69,7 @@
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.1);
       }
-      .switch {
-        position: relative; display: inline-block; width: 34px; height: 20px;
-      }
+      .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
       .switch input { opacity: 0; width: 0; height: 0; }
       .slider {
         position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
@@ -84,27 +81,6 @@
       }
       input:checked + .slider { background-color: var(--accent-primary); }
       input:checked + .slider:before { transform: translateX(14px); }
-
-      /* Additional Categories Toggle Style */
-      .btn-add-extras {
-        background: rgba(16, 185, 129, 0.1);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        color: var(--accent-secondary);
-        padding: 0.6rem 1.2rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .btn-add-extras.active {
-        background: var(--accent-secondary);
-        color: white;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-      }
 
       /* Auth Section */
       .auth-container {
@@ -136,7 +112,6 @@
       }
       h1 { margin-bottom: 1rem; font-size: 1.8rem; text-align: center; }
 
-      /* Category Accordion */
       .category-section {
         background-color: var(--bg-panel);
         border: 1px solid rgba(255,255,255, 0.1);
@@ -155,83 +130,50 @@
         transition: background 0.2s;
       }
       .category-header:hover { background: #3f4e68; }
-      .category-title {
-        font-weight: 700; font-size: 1.3rem;
-        color: var(--text-main); display: flex; align-items: center; gap: 12px;
-      }
+      .category-title { font-weight: 700; font-size: 1.3rem; color: var(--text-main); display: flex; align-items: center; gap: 12px; }
       .category-icon { color: var(--accent-primary); width: 24px; text-align: center; }
 
-      /* Split Content */
       .split-content { display: none; border-top: 1px solid rgba(255,255,255, 0.1); }
       .split-content.open { display: block; }
       .split-grid {
         display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
         padding: 1.5rem; background-color: var(--bg-body); min-height: 100px;
       }
-      .col-header {
-        text-align: center; font-size: 0.9rem; font-weight: 700;
-        margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;
-        color: var(--text-muted); padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(255,255,255, 0.05);
+      .col-header { 
+        text-align: center; font-size: 0.9rem; font-weight: 700; 
+        margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; 
+        color: var(--text-muted); padding-bottom: 0.5rem; 
+        border-bottom: 1px solid rgba(255,255,255, 0.05); 
       }
 
       /* Person Card */
       .person-card {
         background-color: var(--bg-card); border: 2px solid transparent;
         border-radius: var(--radius-md); padding: 1rem;
-        cursor: default; transition: all 0.2s ease;
+        cursor: pointer; transition: all 0.2s ease;
         position: relative; margin-bottom: 1rem;
         display: flex; flex-direction: column; gap: 0.5rem;
       }
-      .col-left .person-card { cursor: pointer; }
+      
       .col-left .person-card:hover {
         transform: translateY(-3px); border-color: var(--accent-primary);
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
       }
-      /* Pulsing Effect for Extra Categories Mode */
-      @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); border-color: var(--accent-primary); }
-        70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: rgba(59, 130, 246, 0.5); }
-        100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: transparent; }
-      }
-      /* Only apply pulse to left column when mode is active */
-      body.extra-mode .col-left .person-card {
-        animation: pulse 2s infinite;
-        cursor: pointer;
-      }
-      body.extra-mode .col-left .person-card:hover {
-        animation: none; /* Stop pulsing on hover */
-        border-color: var(--accent-primary);
-        background: rgba(59, 130, 246, 0.1);
-      }
-      /* Expanded State */
-      .person-card.expanded {
-        background: #2b3a50; /* Slightly lighter bg */
-        border-color: var(--accent-primary);
-      }
 
       .col-right .person-card {
-        opacity: 0.6; cursor: not-allowed;
+        border-color: rgba(16, 185, 129, 0.3);
         background-color: rgba(16, 185, 129, 0.05);
-        border-color: var(--accent-secondary);
-        /* Remove pointer events for registered cards to prevent expansion */
-        pointer-events: auto; 
       }
-      /* Registered cards should NOT pulse */
-      body.extra-mode .col-right .person-card {
-        animation: none;
-        cursor: not-allowed;
+      .col-right .person-card.expanded {
+        border-color: var(--accent-primary);
+        background-color: #2b3a50;
       }
 
       .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
       .card-name { font-size: 1.1rem; font-weight: 700; }
 
       /* Category Tags */
-      .card-categories {
-        display: flex; flex-direction: column; gap: 4px;
-        font-size: 0.75rem; margin-top: 4px;
-        transition: opacity 0.3s;
-      }
+      .card-categories { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; margin-top: 4px; }
       body.hide-categories .card-categories { display: none; }
       .cat-tag { display: flex; align-items: center; gap: 6px; padding: 2px 0; color: var(--text-muted); }
       .cat-tag i { width: 14px; text-align: center; }
@@ -240,7 +182,7 @@
 
       .card-details { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
 
-      /* Extra Categories Options Panel */
+      /* Extras Options Panel */
       .extra-options-panel {
         display: none;
         margin-top: 10px;
@@ -252,41 +194,20 @@
       }
       .person-card.expanded .extra-options-panel { display: flex; }
 
-      @keyframes slideDown {
-        from { opacity: 0; max-height: 0; }
-        to { opacity: 1; max-height: 500px; }
-      }
+      @keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
 
       .extra-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 0.85rem;
-        background: rgba(0,0,0,0.2);
-        padding: 6px 10px;
-        border-radius: 6px;
-        border: 1px solid transparent;
-        transition: 0.2s;
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 0.85rem; background: rgba(0,0,0,0.2);
+        padding: 6px 10px; border-radius: 6px;
+        border: 1px solid transparent; transition: 0.2s;
       }
-      .extra-row:hover {
-        border-color: rgba(59, 130, 246, 0.3);
-      }
-      .extra-label {
-        flex: 1;
-        color: var(--text-muted);
-      }
-      .extra-cat-name {
-        color: var(--accent-primary);
-        font-weight: 600;
-        margin-left: 5px;
-      }
-      .extra-checkbox {
-        width: 18px; height: 18px;
-        accent-color: var(--accent-secondary);
-        cursor: pointer;
-      }
+      .extra-row:hover { border-color: rgba(59, 130, 246, 0.3); }
+      .extra-label { flex: 1; color: var(--text-muted); }
+      .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 5px; }
+      .extra-checkbox { width: 18px; height: 18px; accent-color: var(--accent-secondary); cursor: pointer; }
 
-      /* Info Button */
+      /* Buttons */
       .btn-info {
         background: rgba(59, 130, 246, 0.1); color: var(--accent-primary);
         border: 1px solid rgba(59, 130, 246, 0.3); width: 28px; height: 28px;
@@ -295,7 +216,6 @@
       }
       .btn-info:hover { background: var(--accent-primary); color: white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
 
-      /* Unregister Button */
       .btn-unregister {
         position: absolute; top: 5px; right: 5px;
         background: rgba(239, 68, 68, 0.2); color: var(--accent-alert);
@@ -304,25 +224,6 @@
         cursor: pointer; transition: 0.2s; z-index: 10;
       }
       .btn-unregister:hover { background: var(--accent-alert); color: white; }
-
-      /* Submit Bar */
-      .submit-bar {
-        position: fixed; bottom: 0; left: 0; width: 100%;
-        background-color: var(--bg-panel); padding: 1rem 2rem;
-        border-top: 1px solid rgba(255,255,255, 0.1);
-        display: flex; justify-content: space-between; align-items: center;
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.2); z-index: 100;
-      }
-      .counter { font-size: 1.1rem; color: var(--text-muted); }
-      .counter span { color: var(--accent-primary); font-weight: 700; font-size: 1.4rem; }
-      .btn-submit {
-        background-color: var(--accent-secondary); color: #fff; border: none;
-        padding: 0.8rem 2rem; border-radius: var(--radius-md);
-        font-size: 1.1rem; font-weight: 700; cursor: pointer;
-        transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      }
-      .btn-submit:hover { background-color: #059669; transform: translateY(-2px); }
-      .btn-submit:disabled { background-color: var(--bg-card); color: var(--text-muted); cursor: not-allowed; transform: none; }
 
       /* Modal */
       .modal-overlay {
@@ -369,7 +270,6 @@
       .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--accent-secondary); border-radius: 50%; animation: spin 1s infinite linear; }
       @keyframes spin { 100% { transform: rotate(360deg); } }
 
-      /* Buttons */
       .btn { padding: 0.6rem 1.2rem; border: none; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
       .btn-primary { background-color: var(--accent-primary); color: white; }
       .btn-primary:hover { background-color: #2563eb; }
@@ -387,7 +287,7 @@
     </style>
   </head>
   <body>
-
+ 
     <header>
       <div class="header-left">
         <div class="logo" style="font-weight:bold; color:white; font-size:1.2rem;">Team Registration</div>
@@ -398,7 +298,6 @@
       </div>
 
       <div class="header-right">
-        <!-- CATEGORY TOGGLE BUTTON -->
         <div class="cat-toggle-container">
           <i class="fas fa-tags"></i> Categories
           <label class="switch">
@@ -406,12 +305,7 @@
             <span class="slider"></span>
           </label>
         </div>
-        
-        <!-- ADDITIONAL CATEGORIES BUTTON -->
-        <button id="btnExtrasToggle" class="btn btn-add-extras">
-          <i class="fas fa-plus-circle"></i> Additional Categories
-        </button>
-        
+                
         <a href="register.html" class="btn btn-primary" id="addTeamLink">
           <i class="fas fa-user-plus"></i> Add Person
         </a>
@@ -458,7 +352,7 @@
               <div class="col-header">Available to Register</div>
             </div>
             <div class="col-right" id="comp-right">
-              <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
+              <div class="col-header" style="color: var(--accent-secondary)">Already Registered (Click to Edit Categories)</div>
             </div>
           </div>
         </div>
@@ -511,11 +405,6 @@
       </div>
     </main>
 
-    <div class="submit-bar" id="submitBar">
-      <div class="counter">Selected: <span id="selectedCount">0</span></div>
-      <button id="btnSubmit" class="btn-submit" disabled>Confirm Registration</button>
-    </div>
-
     <div id="loadingOverlay" class="loading-overlay">
       <div class="spinner"></div>
     </div>
@@ -546,51 +435,15 @@
         auth: { storage: window.sessionStorage }
       });
 
-      const selectedIds = new Set(); 
-      // Stores extras map: { personId: { spar_main: true, spar_age_up: false, ... } }
-      const selectedExtras = new Map(); 
-      
       const authSection = document.getElementById("authSection");
       const competitionSection = document.getElementById("competitionSection");
-      const submitBar = document.getElementById("submitBar");
-      const btnSubmit = document.getElementById("btnSubmit");
-      const selectedCountSpan = document.getElementById("selectedCount");
       const loadingOverlay = document.getElementById("loadingOverlay");
-      let isExtraMode = false;
-
+      
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
 
       // ==========================================
-      // EXTRA MODE TOGGLE
-      // ==========================================
-      document.getElementById('btnExtrasToggle').addEventListener('click', () => {
-        isExtraMode = !isExtraMode;
-        const btn = document.getElementById('btnExtrasToggle');
-        
-        if (isExtraMode) {
-          btn.classList.add('active');
-          document.body.classList.add('extra-mode');
-          // Collapse all expanded cards when switching modes
-          document.querySelectorAll('.person-card.expanded').forEach(c => c.classList.remove('expanded'));
-        } else {
-          btn.classList.remove('active');
-          document.body.classList.remove('extra-mode');
-          selectedExtras.clear();
-          updateUI();
-        }
-      });
-
-      document.getElementById('catToggle').addEventListener('change', (e) => {
-        if(e.target.checked) {
-          document.body.classList.remove('hide-categories');
-        } else {
-          document.body.classList.add('hide-categories');
-        }
-      });
-
-      // ==========================================
-      // LOGIC (ZREB BASE + UPDATED 6 ROWS)
+      // RULES & LOGIC HELPERS
       // ==========================================
       const RULES = {
         SPARRING: {
@@ -611,11 +464,10 @@
       function getBeltGroup(belt) {
         if (!belt) return "Unknown";
         const beltUpper = belt.toUpperCase();
-        if (beltUpper.includes("DAN")) {
+        if (beltUpper.includes("DAN")) { 
            const num = extractBeltNumber(belt);
-           // Separate Dans Individually
            if (num > 0) return `${num} Dan`;
-           return "Dan Grades";
+           return "Dan Grades"; 
         }
         const num = extractBeltNumber(belt);
         if (num === 10 || num === 9) return "10-9 Kup";
@@ -663,13 +515,10 @@
         return null;
       }
 
-      // Get Next Categories (Returns null if max level reached)
       function getHigherAgeGroup(currentAg) {
         const idx = RULES.AGE_ORDER.indexOf(currentAg);
-        if (idx !== -1 && idx < RULES.AGE_ORDER.length - 1) {
-          return RULES.AGE_ORDER[idx + 1];
-        }
-        return null; // Max level reached
+        if (idx !== -1 && idx < RULES.AGE_ORDER.length - 1) return RULES.AGE_ORDER[idx + 1];
+        return null;
       }
 
       function getHigherWeightClass(currentWc, ageGroup, gender) {
@@ -677,10 +526,8 @@
         const classes = RULES.SPARRING[ageGroup][gender];
         if (!classes) return null;
         const idx = classes.indexOf(currentWc);
-        if (idx !== -1 && idx < classes.length - 1) {
-          return classes[idx + 1];
-        }
-        return null; // Max weight reached
+        if (idx !== -1 && idx < classes.length - 1) return classes[idx + 1];
+        return null;
       }
 
       function getPersonCategories(person) {
@@ -690,7 +537,8 @@
         
         let sparringCat = "";
         let sparringWc = null;
-        if (person.sparring === "Yes") {
+        // Edge case check for invalid weight
+        if (person.sparring === "Yes" && person.weight > 0) {
           sparringWc = getSparringWeightClass(ageGroup, genderChar, person.weight);
           sparringCat = `${ageGroup} - ${sparringWc || "N/A"}kg`;
         }
@@ -717,12 +565,10 @@
         if (session) {
           authSection.classList.add('hidden');
           competitionSection.classList.remove('hidden');
-          submitBar.classList.remove('hidden');
           loadAllData(session.user.id);
         } else {
           authSection.classList.remove('hidden');
           competitionSection.classList.add('hidden');
-          submitBar.classList.add('hidden');
         }
       }
 
@@ -751,7 +597,332 @@
       }
 
       // ==========================================
-      // MODAL & EDIT
+      // DATA LOADING & RENDERING
+      // ==========================================
+      async function loadAllData(userId) {
+        loadingOverlay.style.display = "flex";
+        const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id",1).single();
+        if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
+        
+        const [compRes, judgeRes, coachRes] = await Promise.all([
+          client.from("competitors").select("*").eq("user_id", userId),
+          client.from("judges").select("*").eq("user_id", userId),
+          client.from("coaches").select("*").eq("user_id", userId),
+        ]);
+        const { data: regData } = await client.from("final_registrations").select("*").eq("user_id", userId);
+        
+        const regMap = new Map();
+        if (regData) regData.forEach(r => regMap.set(String(r.entry_id), r));
+
+        renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
+        renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
+        renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], regMap);
+        
+        toggleSection("sec-competitors");
+        loadingOverlay.style.display = "none";
+      }
+
+      function renderSplitSection(typeShort, typeName, iconClass, data, regMap) {
+        const leftContainer = document.getElementById(`${typeShort}-left`);
+        const rightContainer = document.getElementById(`${typeShort}-right`);
+        leftContainer.innerHTML = ""; 
+        rightContainer.innerHTML = "";
+
+        if (data.length === 0) {
+          leftContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">No ${typeName.toLowerCase()} found.</div>`;
+          rightContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">None registered yet.</div>`;
+          return;
+        }
+
+        data.forEach(person => {
+          const personIdStr = String(person.id);
+          const isRegistered = !!regMap.get(personIdStr);
+          
+          // --- LEFT COLUMN (Not Registered) ---
+          if (!isRegistered) {
+            const card = document.createElement("div");
+            card.className = "person-card";
+            
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "card-header-row";
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "card-name";
+            nameDiv.textContent = person.name;
+            const infoBtn = document.createElement("div");
+            infoBtn.className = "btn-info";
+            infoBtn.innerHTML = '<i class="fas fa-info"></i>';
+            infoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
+            
+            headerDiv.appendChild(nameDiv);
+            headerDiv.appendChild(infoBtn);
+            card.appendChild(headerDiv);
+
+            if (typeShort === 'comp') {
+              const details = document.createElement("div");
+              details.className = "card-details";
+              details.innerHTML = `<div><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
+              card.appendChild(details);
+            }
+
+            card.addEventListener("click", () => handleRegistrationClick(card, person, typeShort));
+            leftContainer.appendChild(card);
+          } 
+          // --- RIGHT COLUMN (Registered - Has Extras) ---
+          else {
+            const registration = regMap.get(personIdStr);
+            const card = document.createElement("div");
+            card.className = "person-card";
+            
+            const btnUnreg = document.createElement("div");
+            btnUnreg.className = "btn-unregister";
+            btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
+            btnUnreg.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              if(confirm(`Unregister ${person.name}?`)) {
+                await client.from("final_registrations").delete().eq("id", registration.id);
+                const { data: { session } } = await client.auth.getSession();
+                if(session) loadAllData(session.user.id);
+              }
+            });
+            card.appendChild(btnUnreg);
+
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "card-header-row";
+            const nameDiv = document.createElement("div");
+            nameDiv.style.paddingRight = "30px"; 
+            nameDiv.className = "card-name";
+            nameDiv.textContent = person.name;
+            const infoBtn = document.createElement("div");
+            infoBtn.className = "btn-info";
+            infoBtn.innerHTML = '<i class="fas fa-info"></i>';
+            infoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
+            
+            headerDiv.appendChild(nameDiv);
+            headerDiv.appendChild(infoBtn);
+            card.appendChild(headerDiv);
+
+            // Display saved categories from registration
+            if (typeShort === 'comp') {
+              const savedList = registration.entry_data?.entries_list || [];
+              const catDiv = document.createElement("div");
+              catDiv.className = "card-categories";
+              savedList.forEach(entry => {
+                const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
+                const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+                catDiv.innerHTML += `<div class="cat-tag ${color}"><i class="fas ${icon}"></i> ${entry.full_cat}</div>`;
+              });
+              card.appendChild(catDiv);
+            }
+
+            // EXTRAS PANEL (Only for Competitors)
+            if (typeShort === 'comp') {
+               const extrasPanel = createExtrasPanel(person, registration);
+               card.appendChild(extrasPanel);
+            }
+
+            if (typeShort === 'comp') {
+               card.addEventListener("click", (e) => {
+                 if(e.target.closest('.btn-info') || e.target.closest('.btn-unregister') || e.target.closest('.extra-checkbox')) return;
+                 card.classList.toggle('expanded');
+               });
+            }
+
+            rightContainer.appendChild(card);
+          }
+        });
+      }
+
+      // --- CREATE EXTRAS PANEL (REGISTERED PEOPLE) ---
+      function createExtrasPanel(person, registration) {
+        const panel = document.createElement("div");
+        panel.className = "extra-options-panel";
+        
+        const savedList = registration.entry_data?.entries_list || [];
+        const isChecked = (discipline, label) => savedList.some(e => e.discipline === discipline && e.label === label);
+
+        const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
+
+        const createRow = (label, catName, key, discipline, checked = false) => {
+          const row = document.createElement("div");
+          row.className = "extra-row";
+          row.innerHTML = `
+            <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
+            <input type="checkbox" class="extra-checkbox" ${checked ? 'checked' : ''}>
+          `;
+          const checkbox = row.querySelector('input');
+          checkbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            updateRegistrationEntry(registration.id, person, discipline, label, catName, checkbox.checked, savedList);
+          });
+          return row;
+        };
+
+        // --- SPARRING (4 ROWS) ---
+        
+        // 1. Main Sparring
+        if (person.sparring === "Yes" && sparringCat) {
+          panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isChecked("sparring", "Main")));
+        }
+
+        // 2. Age + 1 (Next Age, Same Weight logic)
+        if (person.sparring === "Yes" && sparringCat) {
+          const nextAg = getHigherAgeGroup(ageGroup);
+          if (nextAg) {
+            const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
+            if (nextAgWC) {
+              const catUp = `${nextAg} - ${nextAgWC}kg`;
+              panel.appendChild(createRow("Sparring: Age +1", catUp, "spar_age_up", "sparring", isChecked("sparring", "Age +1")));
+            }
+          }
+        }
+
+        // 3. Weight + 1 (Same Age, Next Weight)
+        if (person.sparring === "Yes" && sparringWc) {
+          const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
+          if (nextW) {
+            const catUp = `${ageGroup} - ${nextW}kg`;
+            panel.appendChild(createRow("Sparring: Weight +1", catUp, "spar_weight_up", "sparring", isChecked("sparring", "Weight +1")));
+          }
+        }
+
+        // 4. Both +1 (Next Age AND Next Weight)
+        if (person.sparring === "Yes" && sparringWc) {
+          const nextAg = getHigherAgeGroup(ageGroup);
+          if (nextAg) {
+            const nextAgBaseCat = getSparringWeightClass(nextAg, genderChar, person.weight);
+            
+            if (nextAgBaseCat) {
+               const nextAgClasses = RULES.SPARRING[nextAg][genderChar];
+               const baseIdx = nextAgClasses.indexOf(nextAgBaseCat);
+               
+               if (baseIdx !== -1 && baseIdx < nextAgClasses.length - 1) {
+                  const bothUpCat = nextAgClasses[baseIdx + 1];
+                  const labelFull = `${nextAg} - ${bothUpCat}kg`;
+                  panel.appendChild(createRow("Sparring: Both +1", labelFull, "spar_both_up", "sparring", isChecked("sparring", "Both +1")));
+               }
+            }
+          }
+        }
+
+        // --- PATTERNS (2 ROWS) ---
+        
+        // 5. Main Patterns
+        if (person.patterns === "Yes" && patternCat) {
+          panel.appendChild(createRow("Patterns: Main", patternCat, "pat_main", "patterns", isChecked("patterns", "Main")));
+        }
+
+        // 6. Age + 1 Patterns
+        if (person.patterns === "Yes") {
+          const nextAg = getHigherAgeGroup(ageGroup);
+          if (nextAg) {
+            const beltGroup = getBeltGroup(person.belt);
+            const catUp = `${nextAg} - ${beltGroup}`;
+            panel.appendChild(createRow("Patterns: Age +1", catUp, "pat_age_up", "patterns", isChecked("patterns", "Age +1")));
+          }
+        }
+
+        return panel;
+      }
+
+      // ==========================================
+      // REGISTRATION LOGIC
+      // ==========================================
+      async function handleRegistrationClick(card, person, type) {
+        const { data: { session } } = await client.auth.getSession();
+        if(!session) return;
+
+        const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
+        
+        const entriesList = [];
+        
+        if (type === 'comp') {
+           if (person.sparring === "Yes" && sparringCat) {
+              entriesList.push({ discipline: "sparring", label: "Main", full_cat: sparringCat });
+           }
+           if (person.patterns === "Yes" && patternCat) {
+              entriesList.push({ discipline: "patterns", label: "Main", full_cat: patternCat });
+           }
+        }
+
+        // FIX: Do not store full person data, only list
+        const payload = {
+          user_id: session.user.id,
+          entry_type: type,
+          entry_id: String(person.id),
+          entry_data: {
+             entries_list: entriesList
+          }
+        };
+
+        loadingOverlay.style.display = "flex";
+        const { error } = await client.from("final_registrations").insert([payload]);
+        loadingOverlay.style.display = "none";
+
+        if (error) alert("Error registering: " + error.message);
+        else loadAllData(session.user.id);
+      }
+
+      // Update specific entries in DB (Add/Remove category)
+      async function updateRegistrationEntry(regId, person, discipline, label, fullCat, isChecked, currentSavedList) {
+        // FIX: Validation - Main must be selected before Extras
+        if (isChecked && label !== "Main") {
+           const hasMain = currentSavedList.some(e => e.discipline === discipline && e.label === "Main");
+           if (!hasMain) {
+              alert("You must select the Main category first.");
+              // Checkbox state is visually reset by the reload that follows immediately if we return,
+              // but usually we'd want to stop the DB update. 
+              // Returning prevents DB update, but reload will reset UI to true state anyway.
+              return; 
+           }
+        }
+
+        const { data, error } = await client.from("final_registrations").select("entry_data").eq("id", regId).single();
+        if (error || !data) return;
+
+        let currentList = data.entry_data?.entries_list || [];
+
+        if (isChecked) {
+           const exists = currentList.some(e => e.discipline === discipline && e.label === label);
+           if (!exists) {
+              currentList.push({ discipline, label, full_cat: fullCat });
+           }
+        } else {
+           currentList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
+        }
+
+        const { error: updateError } = await client.from("final_registrations").update({
+          entry_data: { entries_list: currentList }
+        }).eq("id", regId);
+
+        if (!updateError) {
+           const { data: { session } } = await client.auth.getSession();
+           if(session) loadAllData(session.user.id);
+        }
+      }
+
+      // ==========================================
+      // UI HELPERS
+      // ==========================================
+      function toggleSection(sectionId) {
+        document.querySelectorAll(".split-content").forEach(el => el.classList.remove("open"));
+        document.querySelectorAll(".category-header i.fa-chevron-up").forEach(el => {
+            el.classList.remove("fa-chevron-up"); el.classList.add("fa-chevron-down");
+        });
+        const content = document.getElementById(`content-${sectionId}`);
+        const icon = document.getElementById(`icon-${sectionId}`);
+        if (!content.classList.contains("open")) {
+          content.classList.add("open");
+          icon.classList.remove("fa-chevron-down"); icon.classList.add("fa-chevron-up");
+        }
+      }
+
+      document.getElementById('catToggle').addEventListener('change', (e) => {
+        if(e.target.checked) document.body.classList.remove('hide-categories');
+        else document.body.classList.add('hide-categories');
+      });
+
+      // ==========================================
+      // MODAL & EDIT PROFILE (WITH RECALCULATION FIX)
       // ==========================================
       function openPersonModal(personData, type, personId) {
         currentEditingPerson = { id: personId, type: type, data: personData };
@@ -786,7 +957,8 @@
 
       function createStatField(container, label, key, value, inputType = "text", options = []) {
         const wrapper = document.createElement("div");
-        if (label === "Weight (kg)" || label === "Name" || label === "Team") wrapper.className = "full-width"; 
+        if (label === "Weight (kg)" || label === "Name" || label === "Team") wrapper.className = "full-width";
+
         const labelEl = document.createElement("label");
         labelEl.className = "stat-label";
         labelEl.textContent = label;
@@ -799,7 +971,7 @@
         const inpEl = document.createElement(inputType === "select" || inputType === "belt-select" ? "select" : "input");
         inpEl.className = "stat-input";
         inpEl.id = `inp-${key}`;
-        inpEl.dataset.key = key; 
+        inpEl.dataset.key = key;
         
         if (inputType === "number") inpEl.type = "number";
         if (inputType === "date") inpEl.type = "date";
@@ -826,8 +998,7 @@
       }
 
       function toggleEditMode() {
-        const box = document.getElementById("infoModalBox");
-        box.classList.add("editing");
+        document.getElementById("infoModalBox").classList.add("editing");
       }
 
       async function savePersonChanges() {
@@ -835,381 +1006,93 @@
         const inputs = document.querySelectorAll(".stat-input");
         const updateData = {};
         inputs.forEach(inp => { updateData[inp.dataset.key] = inp.value; });
+        
         if (!updateData.name || !updateData.belt) { alert("Name and Belt are required."); return; }
-        if (currentEditingPerson.type === 'comp' && !updateData.weight) { alert("Weight is required."); return; }
+        if (currentEditingPerson.type === 'comp' && (!updateData.weight || updateData.weight <= 0)) { alert("Weight is required and must be greater than 0."); return; }
+        
         const btn = document.querySelector(".btn-save");
         const originalText = btn.textContent;
         btn.textContent = "Saving..."; btn.disabled = true;
+        
         let tableName = "";
         if (currentEditingPerson.type === 'comp') tableName = "competitors";
         else if (currentEditingPerson.type === 'judge') tableName = "judges";
         else if (currentEditingPerson.type === 'coach') tableName = "coaches";
+        
+        // Update the person table
         const { error } = await client.from(tableName).update(updateData).eq("id", currentEditingPerson.id);
-        if (error) { alert("Error saving: " + error.message); btn.textContent = originalText; btn.disabled = false; }
-        else {
-          btn.textContent = originalText; btn.disabled = false;
-          closeModal();
-          const { data: { session } } = await client.auth.getSession();
-          if(session) loadAllData(session.user.id);
-        }
-      }
-
-      // ==========================================
-      // DATA LOADING & RENDERING (UPDATED 6 ROWS)
-      // ==========================================
-      async function loadAllData(userId) {
-        loadingOverlay.style.display = "flex";
-        const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id",1).single();
-        if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
-        const [compRes, judgeRes, coachRes] = await Promise.all([
-          client.from("competitors").select("*").eq("user_id", userId),
-          client.from("judges").select("*").eq("user_id", userId),
-          client.from("coaches").select("*").eq("user_id", userId),
-        ]);
-        const { data: regData } = await client.from("final_registrations").select("*").eq("user_id", userId);
-        const regMap = new Map();
-        if (regData) regData.forEach(r => regMap.set(String(r.entry_id), r));
-        renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
-        renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
-        renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], regMap);
-        toggleSection("sec-competitors");
-        loadingOverlay.style.display = "none";
-      }
-
-      function renderSplitSection(typeShort, typeName, iconClass, data, regMap) {
-        const leftContainer = document.getElementById(`${typeShort}-left`);
-        const rightContainer = document.getElementById(`${typeShort}-right`);
-        leftContainer.innerHTML = ""; rightContainer.innerHTML = "";
-
-        if (data.length === 0) {
-          leftContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">No ${typeName.toLowerCase()} found.</div>`;
-          rightContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">None registered yet.</div>`;
+        if (error) {
+          alert("Error saving: " + error.message); 
+          btn.textContent = originalText; btn.disabled = false; 
           return;
         }
 
-        data.forEach(person => {
-          const personIdStr = String(person.id);
-          const isRegistered = !!regMap.get(personIdStr);
-          const card = document.createElement("div");
-          card.className = "person-card";
-          
-          // Header
-          const headerDiv = document.createElement("div");
-          headerDiv.className = "card-header-row";
-          const nameDiv = document.createElement("div");
-          nameDiv.className = "card-name";
-          nameDiv.textContent = person.name;
-          const infoBtn = document.createElement("div");
-          infoBtn.className = "btn-info";
-          infoBtn.innerHTML = '<i class="fas fa-info"></i>';
-          infoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
-          headerDiv.appendChild(nameDiv);
-          headerDiv.appendChild(infoBtn);
-          card.appendChild(headerDiv);
+        // FIX: Recalculate categories if critical fields changed
+        if (currentEditingPerson.type === 'comp') {
+           const weightChanged = (updateData.weight !== currentEditingPerson.data.weight);
+           const beltChanged = (updateData.belt !== currentEditingPerson.data.belt);
+           const birthChanged = (updateData.birthdate !== currentEditingPerson.data.birthdate);
+           const sparringPrefChanged = (updateData.sparring !== currentEditingPerson.data.sparring);
+           const patternPrefChanged = (updateData.patterns !== currentEditingPerson.data.patterns);
 
-          // Categories (View Mode)
-          if (typeShort === 'comp') {
-             const { sparringCat, patternCat } = getPersonCategories(person);
-             const catDiv = document.createElement("div");
-             catDiv.className = "card-categories"; 
-             if (sparringCat) catDiv.innerHTML += `<div class="cat-tag cat-spar"><i class="fas fa-fist-raised"></i> Sparring: ${sparringCat}</div>`;
-             if (patternCat) catDiv.innerHTML += `<div class="cat-tag cat-pat"><i class="fas fa-chess-board"></i> Patterns: ${patternCat}</div>`;
-             card.appendChild(catDiv);
-          }
+           // Determine if we need to update registration categories
+           // We create a "New Person" object based on inputs to calculate new categories
+           const newPersonData = { ...currentEditingPerson.data, ...updateData };
+           const newCats = getPersonCategories(newPersonData);
 
-          // Basic Details
-          if (typeShort === 'comp') {
-            const details = document.createElement("div");
-            details.className = "card-details";
-            details.innerHTML = `<div><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
-            card.appendChild(details);
-          }
+           // Fetch the current registration to update entries_list
+           const { data: regData } = await client.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).single();
 
-          // Extras Panel (Only for Competitors & Available)
-          if (typeShort === 'comp' && !isRegistered) {
-            const extrasPanel = document.createElement("div");
-            extrasPanel.className = "extra-options-panel";
-            
-            // Helper to create rows
-            const createExtraRow = (label, catName, key, checked = false) => {
-              const row = document.createElement("div");
-              row.className = "extra-row";
-              row.innerHTML = `
-                <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
-                <input type="checkbox" class="extra-checkbox" data-key="${key}" data-cat="${catName}" data-person-id="${personIdStr}" ${checked ? 'checked' : ''}>
-              `;
-              // Stop card click
-              row.querySelector('input').addEventListener('click', (e) => e.stopPropagation());
-              // Init state
-              row.querySelector('input').addEventListener('change', (e) => handleExtraChange(personIdStr, key, catName, e.target.checked));
-              return row;
-            };
+           if (regData) {
+               let entriesList = regData.entry_data?.entries_list || [];
 
-            // 1. MAIN SPARRING (Default ON)
-            const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
-            if (person.sparring === "Yes" && sparringCat) {
-               // Auto-check main in selectedExtras
-               if (!selectedExtras.has(personIdStr)) selectedExtras.set(personIdStr, {});
-               const map = selectedExtras.get(personIdStr);
-               map['spar_main'] = sparringCat;
+               // 1. If preferences changed to "No", remove all entries for that discipline
+               if (sparringPrefChanged && updateData.sparring === "No") {
+                   entriesList = entriesList.filter(e => e.discipline !== "sparring");
+               }
+               if (patternPrefChanged && updateData.patterns === "No") {
+                   entriesList = entriesList.filter(e => e.discipline !== "patterns");
+               }
+
+               // 2. If Critical Calc Factors changed (Weight, Belt, Birth), 
+               // we MUST update the stored strings to match reality.
+               // However, we should preserve "Extras" if they are still valid.
                
-               extrasPanel.appendChild(createExtraRow("Sparring: Main", sparringCat, "spar_main", true));
-            }
+               // Simple Strategy: Clear Main categories if they existed, re-add them with new calculated strings.
+               // Keep Extras? If Weight changed, "Weight+1" might be invalid now. 
+               // Safest: Clear Sparring if Weight/Age/Gender changed. Clear Patterns if Belt/Age/Gender changed.
+               
+               if (weightChanged || birthChanged) {
+                  // Remove all sparring entries
+                  entriesList = entriesList.filter(e => e.discipline !== "sparring");
+                  // Re-add Main if Yes
+                  if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
+                     entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
+                  }
+                  // Note: User has to manually re-check Age+1 etc because the logic is tricky
+               }
+               
+               if (beltChanged || birthChanged) {
+                  // Remove all pattern entries
+                  entriesList = entriesList.filter(e => e.discipline !== "patterns");
+                  // Re-add Main if Yes
+                  if (newPersonData.patterns === "Yes" && newCats.patternCat) {
+                     entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patternCat });
+                  }
+               }
 
-            // 2. SPARRING AGE UP
-            if (person.sparring === "Yes" && sparringWc) {
-              const nextAg = getHigherAgeGroup(ageGroup);
-              if (nextAg) {
-                 // Recalculate weight for new age (assuming same weight index or specific weight logic, here we use new age + same weight logic)
-                 // Or simply use same weight class label if it exists in next group
-                 const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
-                 if (nextAgWC) {
-                    const catUp = `${nextAg} - ${nextAgWC}kg`;
-                    extrasPanel.appendChild(createExtraRow("Sparring: Age +1", catUp, "spar_age_up"));
-                 }
-              }
-            }
-
-            // 3. SPARRING WEIGHT UP
-            if (person.sparring === "Yes" && sparringWc) {
-              const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
-              if (nextW) {
-                 const catUp = `${ageGroup} - ${nextW}kg`;
-                 extrasPanel.appendChild(createExtraRow("Sparring: Weight +1", catUp, "spar_weight_up"));
-              }
-            }
-
-            // 4. SPARRING BOTH UP (Age +1 AND Weight +1)
-            if (person.sparring === "Yes" && sparringWc) {
-              const nextAg = getHigherAgeGroup(ageGroup);
-              const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
-              // Both must exist
-              if (nextAg && nextW) {
-                 const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
-                 // Note: This finds the weight class in the NEW age group that fits the original weight.
-                 // This is the logical "Combo" step.
-                 if (nextAgWC) {
-                    const catUp = `${nextAg} - ${nextAgWC}kg`;
-                    extrasPanel.appendChild(createExtraRow("Sparring: Age +1 & Weight +1", catUp, "spar_both_up"));
-                 }
-              }
-            }
-
-            // 5. MAIN PATTERNS (Default ON)
-            if (person.patterns === "Yes" && patternCat) {
-               if (!selectedExtras.has(personIdStr)) selectedExtras.set(personIdStr, {});
-               const map = selectedExtras.get(personIdStr);
-               map['pat_main'] = patternCat;
-               extrasPanel.appendChild(createExtraRow("Patterns: Main", patternCat, "pat_main", true));
-            }
-
-            // 6. PATTERNS AGE UP
-            if (person.patterns === "Yes") {
-              const nextAg = getHigherAgeGroup(ageGroup);
-              if (nextAg) {
-                 const beltGroup = getBeltGroup(person.belt);
-                 const catUp = `${nextAg} - ${beltGroup}`;
-                 extrasPanel.appendChild(createExtraRow("Patterns: Age +1", catUp, "pat_age_up"));
-              }
-            }
-            
-            card.appendChild(extrasPanel);
-          }
-
-          if (isRegistered) {
-            const btnUnreg = document.createElement("div");
-            btnUnreg.className = "btn-unregister";
-            btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
-            btnUnreg.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              if(confirm(`Unregister ${person.name}?`)) {
-                await client.from("final_registrations").delete().eq("id", regMap.get(personIdStr).id);
-                const { data: { session } } = await client.auth.getSession();
-                if(session) loadAllData(session.user.id);
-              }
-            });
-            card.appendChild(btnUnreg);
-            rightContainer.appendChild(card);
-          } else {
-            card.dataset.id = personIdStr;
-            card.dataset.type = typeShort;
-            card.dataset.raw = JSON.stringify(person);
-            // Attach Click Handler (Checks for Registered status immediately)
-            card.addEventListener("click", (e) => handleCardClick(card, e));
-            leftContainer.appendChild(card);
-          }
-        });
-      }
-
-      function handleCardClick(card, e) {
-        // FIX: If card is registered, do nothing (prevent expansion bug)
-        if (card.parentElement.classList.contains('col-right')) return;
-
-        // Stop propagation if clicking info button or checkbox
-        if (e.target.closest('.btn-info') || e.target.closest('.extra-checkbox')) return;
-
-        if (isExtraMode) {
-          const isExpanded = card.classList.contains('expanded');
-          document.querySelectorAll('.person-card.expanded').forEach(c => c.classList.remove('expanded'));
-          if (!isExpanded) {
-            card.classList.add('expanded');
-          }
-        } else {
-          toggleSelection(card);
+               // Update DB
+               await client.from("final_registrations").update({
+                  entry_data: { entries_list: entriesList }
+               }).eq("id", regData.id);
+           }
         }
-      }
 
-      function handleExtraChange(personId, key, catName, isChecked) {
-        if (!selectedExtras.has(personId)) selectedExtras.set(personId, {});
-        const map = selectedExtras.get(personId);
-        map[key] = isChecked ? catName : null;
-        updateUI();
-      }
-
-      function toggleSection(sectionId) {
-        document.querySelectorAll(".split-content").forEach(el => el.classList.remove("open"));
-        document.querySelectorAll(".category-header i.fa-chevron-up").forEach(el => {
-            el.classList.remove("fa-chevron-up"); el.classList.add("fa-chevron-down");
-        });
-        const content = document.getElementById(`content-${sectionId}`);
-        const icon = document.getElementById(`icon-${sectionId}`);
-        if (!content.classList.contains("open")) {
-          content.classList.add("open");
-          icon.classList.remove("fa-chevron-down"); icon.classList.add("fa-chevron-up");
-        }
-      }
-
-      function toggleSelection(card) {
-        const id = card.dataset.id;
-        if (selectedIds.has(id)) {
-          selectedIds.delete(id);
-          card.style.borderColor = "transparent";
-          card.style.backgroundColor = "var(--bg-card)";
-        } else {
-          selectedIds.add(id);
-          card.style.borderColor = "var(--accent-primary)";
-          card.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
-        }
-        updateUI();
-      }
-
-      function updateUI() {
-        // Logic to count total entries
-        let totalEntries = 0;
-        
-        // 1. Count standard single selections (Patterns/Judges/Coaches or Sparring without extras)
-        selectedIds.forEach(id => totalEntries++);
-
-        // 2. Count extra entries from map
-        selectedExtras.forEach(map => {
-           Object.values(map).forEach(val => {
-              if (val) totalEntries++;
-           });
-        });
-
-        selectedCountSpan.textContent = totalEntries;
-        if (totalEntries > 0) {
-          btnSubmit.disabled = false;
-          btnSubmit.textContent = `Register ${totalEntries} Entries`;
-        } else {
-          btnSubmit.disabled = true;
-          btnSubmit.textContent = "Select Participants";
-        }
-      }
-
-      btnSubmit.addEventListener("click", async () => {
-        if (selectedIds.size === 0 && selectedExtras.size === 0) return;
-        loadingOverlay.style.display = "flex";
-        const insertData = [];
+        btn.textContent = originalText; btn.disabled = false;
+        closeModal();
         const { data: { session } } = await client.auth.getSession();
-        if (!session) return;
-
-        // Helper to process card
-        const processCard = (cardId, cardData, type, isMainSelected) => {
-           if (!isMainSelected && !selectedExtras.has(cardId)) return;
-
-           // Determine Main Categories
-           const cats = getPersonCategories(cardData);
-           const entriesList = [];
-
-           // 1. Sparring Main
-           if (cardData.sparring === "Yes" && (isMainSelected || (selectedExtras.get(cardId)?.spar_main))) {
-              entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparringCat });
-           }
-
-           // 2. Sparring Age Up
-           if (selectedExtras.get(cardId)?.spar_age_up) {
-              const nextAg = getHigherAgeGroup(cats.ageGroup);
-              const nextAgWC = getSparringWeightClass(nextAg, cats.genderChar, cardData.weight);
-              entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: `${nextAg} - ${nextAgWC}kg` });
-           }
-
-           // 3. Sparring Weight Up
-           if (selectedExtras.get(cardId)?.spar_weight_up) {
-              const nextW = getHigherWeightClass(cats.sparringWc, cats.ageGroup, cats.genderChar);
-              entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: `${cats.ageGroup} - ${nextW}kg` });
-           }
-
-           // 4. Sparring Both Up
-           if (selectedExtras.get(cardId)?.spar_both_up) {
-              const nextAg = getHigherAgeGroup(cats.ageGroup);
-              const nextW = getHigherWeightClass(cats.sparringWc, cats.ageGroup, cats.genderChar);
-              const nextAgWC = getSparringWeightClass(nextAg, cats.genderChar, cardData.weight);
-              entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: `${nextAg} - ${nextAgWC}kg` });
-           }
-
-           // 5. Patterns Main
-           if (cardData.patterns === "Yes" && (isMainSelected || (selectedExtras.get(cardId)?.pat_main))) {
-              entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patternCat });
-           }
-
-           // 6. Patterns Age Up
-           if (selectedExtras.get(cardId)?.pat_age_up) {
-              const nextAg = getHigherAgeGroup(cats.ageGroup);
-              const beltGroup = getBeltGroup(cardData.belt);
-              entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: `${nextAg} - ${beltGroup}` });
-           }
-
-           if (entriesList.length === 0) return;
-
-           insertData.push({
-             user_id: session.user.id,
-             entry_type: type,
-             entry_id: cardId,
-             entry_data: { ...cardData, entries_list: entriesList }
-           });
-        };
-
-        const cards = document.querySelectorAll(".col-left .person-card");
-        cards.forEach(card => {
-          const id = card.dataset.id;
-          const raw = JSON.parse(card.dataset.raw);
-          const type = card.dataset.type;
-          const isSelected = selectedIds.has(id);
-          // Check if this card type supports extras (only comp)
-          if (type === 'comp') {
-             processCard(id, raw, type, isSelected);
-          } else {
-             // For Judges/Coaches, simple entry
-             if (isSelected) {
-               insertData.push({
-                 user_id: session.user.id,
-                 entry_type: type,
-                 entry_id: id,
-                 entry_data: raw
-               });
-             }
-          }
-        });
-
-        const { error } = await client.from("final_registrations").insert(insertData);
-        loadingOverlay.style.display = "none";
-        if (error) { alert("Error registering: " + error.message); }
-        else {
-          alert("Successfully registered " + insertData.length + " entries!");
-          window.location.reload();
-        }
-      });
+        if(session) loadAllData(session.user.id);
+      }
 
       document.addEventListener("DOMContentLoaded", checkSession);
     </script>
