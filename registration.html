@@ -104,7 +104,7 @@
 
       /* Main Content */
       main {
-        flex:1;
+        flex: 1;
         padding: 2rem 1rem;
         max-width: 1400px;
         margin: 0 auto;
@@ -233,6 +233,29 @@
       .extra-label { flex: 1; color: var(--text-muted); }
       .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 5px; }
       .extra-checkbox { width: 18px; height: 18px; accent-color: var(--accent-secondary); cursor: pointer; }
+
+      /* Extras Footer (Save Button) */
+      .extras-footer {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        justify-content: flex-end;
+      }
+      .btn-save-extras {
+        background-color: var(--accent-secondary);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-save-extras:hover { background-color: #059669; transform: translateY(-2px); }
 
       /* Unregister Button */
       .btn-unregister {
@@ -460,6 +483,10 @@
       
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
+      
+      // Temporary storage for Extras Selection (Fixes "Doesn't Save" issue)
+      // Stores: { "regId": [ { discipline, label, full_cat }, ... ] }
+      let tempSelections = {}; 
 
       // ==========================================
       // RULES & LOGIC HELPERS
@@ -556,7 +583,6 @@
         
         let sparringCat = "";
         let sparringWc = null;
-        // Edge case check for invalid weight
         if (person.sparring === "Yes" && person.weight > 0) {
           sparringWc = getSparringWeightClass(ageGroup, genderChar, person.weight);
           sparringCat = `${ageGroup} - ${sparringWc || "N/A"}kg`;
@@ -728,7 +754,7 @@
               card.appendChild(catDiv);
             }
 
-            // --- NEW: BUTTON ACTIONS ROW ---
+            // --- BUTTON ACTIONS ROW ---
             if (typeShort === 'comp') {
                const actionsDiv = document.createElement("div");
                actionsDiv.className = "card-actions";
@@ -765,9 +791,14 @@
       function createExtrasPanel(person, registration) {
         const panel = document.createElement("div");
         panel.className = "extra-options-panel";
+        const regId = registration.id;
         
-        const savedList = registration.entry_data?.entries_list || [];
-        const isChecked = (discipline, label) => savedList.some(e => e.discipline === discipline && e.label === label);
+        // Initialize temporary selection if not exists
+        if (!tempSelections[regId]) {
+            tempSelections[regId] = registration.entry_data?.entries_list ? [...registration.entry_data.entries_list] : [];
+        }
+        const currentList = tempSelections[regId];
+        const isChecked = (discipline, label) => currentList.some(e => e.discipline === discipline && e.label === label);
 
         const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
 
@@ -781,7 +812,8 @@
           const checkbox = row.querySelector('input');
           checkbox.addEventListener('click', (e) => {
             e.stopPropagation();
-            updateRegistrationEntry(registration.id, person, discipline, label, catName, checkbox.checked, savedList);
+            // FIX: Don't reload here, just update local state
+            updateSelection(regId, person, discipline, label, catName, checkbox.checked);
           });
           return row;
         };
@@ -850,11 +882,77 @@
           }
         }
 
+        // --- NEW: SAVE BUTTON FOOTER ---
+        const footerDiv = document.createElement("div");
+        footerDiv.className = "extras-footer";
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "btn-save-extras";
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
+        saveBtn.onclick = (e) => {
+            e.stopPropagation();
+            saveExtrasToDB(regId);
+        };
+        footerDiv.appendChild(saveBtn);
+        panel.appendChild(footerDiv);
+
         return panel;
       }
 
       // ==========================================
-      // REGISTRATION LOGIC
+      // NEW: LOCAL SELECTION UPDATE (Fixes "Doesn't Save" & "Kick out")
+      // ==========================================
+      function updateSelection(regId, person, discipline, label, catName, isChecked) {
+         // Validation: Main must be selected before Extras
+         if (isChecked && label !== "Main") {
+            const currentList = tempSelections[regId];
+            const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
+            if (!hasMain) {
+               alert("You must select the Main category first.");
+               return; 
+            }
+         }
+
+         let currentList = tempSelections[regId];
+
+         if (isChecked) {
+           const exists = currentList.some(e => e.discipline === discipline && e.label === label);
+           if (!exists) {
+              currentList.push({ discipline, label, full_cat: catName });
+           }
+         } else {
+           currentList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
+         }
+         
+         tempSelections[regId] = currentList;
+      }
+
+      // ==========================================
+      // NEW: SAVE TO DB
+      // ==========================================
+      async function saveExtrasToDB(regId) {
+         loadingOverlay.style.display = "flex";
+         
+         // Get local selections
+         const currentList = tempSelections[regId] || [];
+         
+         // Update DB
+         const { error: updateError } = await client.from("final_registrations").update({
+           entry_data: { entries_list: currentList }
+         }).eq("id", regId);
+
+         loadingOverlay.style.display = "none";
+
+         if (updateError) {
+            alert("Error saving categories: " + updateError.message);
+         } else {
+            // Reload ONLY after explicit save
+            const { data: { session } } = await client.auth.getSession();
+            if(session) loadAllData(session.user.id);
+         }
+      }
+
+      // ==========================================
+      // REGISTRATION LOGIC (Left Column)
       // ==========================================
       async function handleRegistrationClick(card, person, type) {
         const { data: { session } } = await client.auth.getSession();
@@ -873,7 +971,6 @@
            }
         }
 
-        // FIX: Do not store full person data, only list
         const payload = {
           user_id: session.user.id,
           entry_type: type,
@@ -889,41 +986,6 @@
 
         if (error) alert("Error registering: " + error.message);
         else loadAllData(session.user.id);
-      }
-
-      // Update specific entries in DB (Add/Remove category)
-      async function updateRegistrationEntry(regId, person, discipline, label, fullCat, isChecked, currentSavedList) {
-        // FIX: Validation - Main must be selected before Extras
-        if (isChecked && label !== "Main") {
-           const hasMain = currentSavedList.some(e => e.discipline === discipline && e.label === "Main");
-           if (!hasMain) {
-              alert("You must select the Main category first.");
-              return; 
-           }
-        }
-
-        const { data, error } = await client.from("final_registrations").select("entry_data").eq("id", regId).single();
-        if (error || !data) return;
-
-        let currentList = data.entry_data?.entries_list || [];
-
-        if (isChecked) {
-           const exists = currentList.some(e => e.discipline === discipline && e.label === label);
-           if (!exists) {
-              currentList.push({ discipline, label, full_cat: fullCat });
-           }
-        } else {
-           currentList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
-        }
-
-        const { error: updateError } = await client.from("final_registrations").update({
-          entry_data: { entries_list: currentList }
-        }).eq("id", regId);
-
-        if (!updateError) {
-           const { data: { session } } = await client.auth.getSession();
-           if(session) loadAllData(session.user.id);
-        }
       }
 
       // ==========================================
@@ -1061,18 +1123,14 @@
            const sparringPrefChanged = (updateData.sparring !== currentEditingPerson.data.sparring);
            const patternPrefChanged = (updateData.patterns !== currentEditingPerson.data.patterns);
 
-           // Determine if we need to update registration categories
-           // We create a "New Person" object based on inputs to calculate new categories
            const newPersonData = { ...currentEditingPerson.data, ...updateData };
            const newCats = getPersonCategories(newPersonData);
 
-           // Fetch current registration to update entries_list
            const { data: regData } = await client.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).single();
 
            if (regData) {
                let entriesList = regData.entry_data?.entries_list || [];
 
-               // 1. If preferences changed to "No", remove all entries for that discipline
                if (sparringPrefChanged && updateData.sparring === "No") {
                    entriesList = entriesList.filter(e => e.discipline !== "sparring");
                }
@@ -1080,34 +1138,20 @@
                    entriesList = entriesList.filter(e => e.discipline !== "patterns");
                }
 
-               // 2. If Critical Calc Factors changed (Weight, Belt, Birth), 
-               // we MUST update stored strings to match reality.
-               // However, we should preserve "Extras" if they are still valid.
-               
-               // Simple Strategy: Clear Main categories if they existed, re-add them with new calculated strings.
-               // Keep Extras? If Weight changed, "Weight+1" might be invalid now. 
-               // Safest: Clear Sparring if Weight/Age/Gender changed. Clear Patterns if Belt/Age/Gender changed.
-               
                if (weightChanged || birthChanged) {
-                  // Remove all sparring entries
                   entriesList = entriesList.filter(e => e.discipline !== "sparring");
-                  // Re-add Main if Yes
                   if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
                   }
-                  // Note: User has to manually re-check Age+1 etc because logic is tricky
                }
                
                if (beltChanged || birthChanged) {
-                  // Remove all pattern entries
                   entriesList = entriesList.filter(e => e.discipline !== "patterns");
-                  // Re-add Main if Yes
                   if (newPersonData.patterns === "Yes" && newCats.patternCat) {
                      entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patternCat });
                   }
                }
 
-               // Update DB
                await client.from("final_registrations").update({
                   entry_data: { entries_list: entriesList }
                }).eq("id", regData.id);
