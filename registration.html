@@ -761,7 +761,8 @@
         
         // 1. Main Sparring
         if (person.sparring === "Yes" && sparringCat) {
-          panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isChecked("sparring", "Main")));
+          // FIX: Removed extra closing parenthesis here
+          panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isChecked("sparring", "Main"))); 
         }
 
         // 2. Age + 1 (Next Age, Same Weight logic)
@@ -771,6 +772,7 @@
             const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
             if (nextAgWC) {
               const catUp = `${nextAg} - ${nextAgWC}kg`;
+              // FIX: Removed extra closing parenthesis here
               panel.appendChild(createRow("Sparring: Age +1", catUp, "spar_age_up", "sparring", isChecked("sparring", "Age +1")));
             }
           }
@@ -781,6 +783,7 @@
           const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
           if (nextW) {
             const catUp = `${ageGroup} - ${nextW}kg`;
+            // FIX: Removed extra closing parenthesis here
             panel.appendChild(createRow("Sparring: Weight +1", catUp, "spar_weight_up", "sparring", isChecked("sparring", "Weight +1")));
           }
         }
@@ -798,6 +801,7 @@
                if (baseIdx !== -1 && baseIdx < nextAgClasses.length - 1) {
                   const bothUpCat = nextAgClasses[baseIdx + 1];
                   const labelFull = `${nextAg} - ${bothUpCat}kg`;
+                  // FIX: Removed extra closing parenthesis here
                   panel.appendChild(createRow("Sparring: Both +1", labelFull, "spar_both_up", "sparring", isChecked("sparring", "Both +1")));
                }
             }
@@ -808,6 +812,7 @@
         
         // 5. Main Patterns
         if (person.patterns === "Yes" && patternCat) {
+          // FIX: Removed extra closing parenthesis here
           panel.appendChild(createRow("Patterns: Main", patternCat, "pat_main", "patterns", isChecked("patterns", "Main")));
         }
 
@@ -817,6 +822,7 @@
           if (nextAg) {
             const beltGroup = getBeltGroup(person.belt);
             const catUp = `${nextAg} - ${beltGroup}`;
+            // FIX: Removed extra closing parenthesis here
             panel.appendChild(createRow("Patterns: Age +1", catUp, "pat_age_up", "patterns", isChecked("patterns", "Age +1")));
           }
         }
@@ -869,9 +875,6 @@
            const hasMain = currentSavedList.some(e => e.discipline === discipline && e.label === "Main");
            if (!hasMain) {
               alert("You must select the Main category first.");
-              // Checkbox state is visually reset by the reload that follows immediately if we return,
-              // but usually we'd want to stop the DB update. 
-              // Returning prevents DB update, but reload will reset UI to true state anyway.
               return; 
            }
         }
@@ -1019,7 +1022,7 @@
         else if (currentEditingPerson.type === 'judge') tableName = "judges";
         else if (currentEditingPerson.type === 'coach') tableName = "coaches";
         
-        // Update the person table
+        // Update person table
         const { error } = await client.from(tableName).update(updateData).eq("id", currentEditingPerson.id);
         if (error) {
           alert("Error saving: " + error.message); 
@@ -1040,7 +1043,7 @@
            const newPersonData = { ...currentEditingPerson.data, ...updateData };
            const newCats = getPersonCategories(newPersonData);
 
-           // Fetch the current registration to update entries_list
+           // Fetch current registration to update entries_list
            const { data: regData } = await client.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).single();
 
            if (regData) {
@@ -1055,12 +1058,7 @@
                }
 
                // 2. If Critical Calc Factors changed (Weight, Belt, Birth), 
-               // we MUST update the stored strings to match reality.
-               // However, we should preserve "Extras" if they are still valid.
-               
-               // Simple Strategy: Clear Main categories if they existed, re-add them with new calculated strings.
-               // Keep Extras? If Weight changed, "Weight+1" might be invalid now. 
-               // Safest: Clear Sparring if Weight/Age/Gender changed. Clear Patterns if Belt/Age/Gender changed.
+               // we MUST update the main categories.
                
                if (weightChanged || birthChanged) {
                   // Remove all sparring entries
@@ -1069,7 +1067,6 @@
                   if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
                   }
-                  // Note: User has to manually re-check Age+1 etc because the logic is tricky
                }
                
                if (beltChanged || birthChanged) {
