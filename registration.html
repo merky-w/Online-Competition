@@ -233,7 +233,6 @@
       .extra-label { flex: 1; color: var(--text-muted); }
       .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 5px; }
       
-      /* THE FIX: Checkbox styling for "Green" state */
       .extra-checkbox { 
         width: 18px; height: 18px; 
         accent-color: var(--accent-secondary); 
@@ -489,8 +488,7 @@
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
       
-      // Temporary storage for Extras Selection
-      // Key = final_registrations ID (regId)
+      // Strict temporary storage. Key = Registration ID.
       let tempSelections = {}; 
 
       // ==========================================
@@ -588,7 +586,6 @@
         
         let sparringCat = "";
         let sparringWc = null;
-        // Edge case check for invalid weight
         if (person.sparring === "Yes" && person.weight > 0) {
           sparringWc = getSparringWeightClass(ageGroup, genderChar, person.weight);
           sparringCat = `${ageGroup} - ${sparringWc || "N/A"}kg`;
@@ -662,12 +659,16 @@
         ]);
         const { data: regData } = await client.from("final_registrations").select("*").eq("user_id", userId);
         
-        // Initialize tempSelections from DB to ensure state is consistent on load
+        // 1. Reset temp selections (fresh start ensures no "ghost" data)
         tempSelections = {}; 
+        
+        // 2. Initialize tempSelections strictly from DB
         if (regData) {
             regData.forEach(r => {
-                const entries = r.entry_data?.entries_list || [];
-                if (entries && entries.length > 0) {
+                // Deep copy to prevent reference issues
+                const entries = JSON.parse(JSON.stringify(r.entry_data?.entries_list || []));
+                // Only store if we have data
+                if (entries.length > 0) {
                     tempSelections[r.id] = entries;
                 }
             });
@@ -735,7 +736,6 @@
             const card = document.createElement("div");
             card.className = "person-card";
             
-            // Unregister Button (Top Right)
             const btnUnreg = document.createElement("div");
             btnUnreg.className = "btn-unregister";
             btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
@@ -749,7 +749,6 @@
             });
             card.appendChild(btnUnreg);
 
-            // Header (Name)
             const headerDiv = document.createElement("div");
             headerDiv.className = "card-header-row";
             const nameDiv = document.createElement("div");
@@ -758,31 +757,25 @@
             headerDiv.appendChild(nameDiv);
             card.appendChild(headerDiv);
 
-            // Display saved categories from registration
             if (typeShort === 'comp') {
               const savedList = registration.entry_data?.entries_list || [];
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
+              // Display categories
               savedList.forEach(entry => {
                 const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
                 const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
                 catDiv.innerHTML += `<div class="cat-tag ${color}"><i class="fas ${icon}"></i> ${entry.full_cat}</div>`;
               });
               card.appendChild(catDiv);
-            }
 
-            // --- BUTTON ACTIONS ROW ---
-            if (typeShort === 'comp') {
                const actionsDiv = document.createElement("div");
                actionsDiv.className = "card-actions";
-
-               // 1. Edit Info Button
                const editInfoBtn = document.createElement("button");
                editInfoBtn.className = "btn btn-edit-info";
                editInfoBtn.innerHTML = '<i class="fas fa-user-edit"></i> Edit Info';
                editInfoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
 
-               // 2. Categories Button
                const catBtn = document.createElement("button");
                catBtn.className = "btn btn-categories";
                catBtn.innerHTML = '<i class="fas fa-list-ul"></i> Additional Categories';
@@ -791,10 +784,7 @@
                actionsDiv.appendChild(editInfoBtn);
                actionsDiv.appendChild(catBtn);
                card.appendChild(actionsDiv);
-            }
-
-            // EXTRAS PANEL (Only for Competitors)
-            if (typeShort === 'comp') {
+               
                const extrasPanel = createExtrasPanel(person, registration);
                card.appendChild(extrasPanel);
             }
@@ -804,23 +794,24 @@
         });
       }
 
-      // --- CREATE EXTRAS PANEL (REGISTERED PEOPLE) ---
+      // ==========================================
+      // CREATE EXTRAS PANEL & SYNC
+      // ==========================================
       function createExtrasPanel(person, registration) {
         const panel = document.createElement("div");
         panel.className = "extra-options-panel";
         const regId = registration.id;
-        
-        // --- FIX: Ensure sync logic is robust ---
-        // 1. Try to get existing state from tempSelections (unsaved changes in current session)
-        // 2. If empty, fallback to actual DB data
-        const dbEntries = registration.entry_data?.entries_list || [];
-        const currentList = (tempSelections[regId] && tempSelections[regId].length > 0) 
-                            ? tempSelections[regId] 
-                            : dbEntries;
 
-        // Helper to check if a category is currently selected (Green Box Logic)
+        // Determine what to show. We prioritize tempSelections if user has unsaved changes in this session
+        // otherwise we strictly use DB data.
+        const dbEntries = registration.entry_data?.entries_list || [];
+        const displayList = (tempSelections[regId] && tempSelections[regId].length > 0) 
+                             ? tempSelections[regId] 
+                             : dbEntries;
+
+        // Helper: Check if entry exists
         const isChecked = (discipline, label) => {
-            return currentList.some(e => e.discipline === discipline && e.label === label);
+            return displayList.some(e => e.discipline === discipline && e.label === label);
         };
 
         const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
@@ -835,41 +826,27 @@
           const checkbox = row.querySelector('input');
           checkbox.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Pass the current list copy so we don't mutate by reference incorrectly
-            updateSelection(regId, [...currentList], person, discipline, label, catName, checkbox.checked);
+            // We pass the displayList as a snapshot, but updateSelection fetches fresh state too
+            updateSelection(regId, discipline, label, catName, checkbox.checked);
           });
           return row;
         };
 
-        // --- SPARRING (4 ROWS) ---
-        
-        // 1. Main Sparring
+        // --- SPARRING ---
         if (person.sparring === "Yes" && sparringCat) {
           panel.appendChild(createRow("Sparring: Main", sparringCat, "sparring"));
         }
-
-        // 2. Age + 1
         if (person.sparring === "Yes" && sparringCat) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
             const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
-            if (nextAgWC) {
-              const catUp = `${nextAg} - ${nextAgWC}kg`;
-              panel.appendChild(createRow("Sparring: Age +1", catUp, "sparring"));
-            }
+            if (nextAgWC) panel.appendChild(createRow("Sparring: Age +1", `${nextAg} - ${nextAgWC}kg`, "sparring"));
           }
         }
-
-        // 3. Weight + 1
         if (person.sparring === "Yes" && sparringWc) {
           const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
-          if (nextW) {
-            const catUp = `${ageGroup} - ${nextW}kg`;
-            panel.appendChild(createRow("Sparring: Weight +1", catUp, "sparring"));
-          }
+          if (nextW) panel.appendChild(createRow("Sparring: Weight +1", `${ageGroup} - ${nextW}kg`, "sparring"));
         }
-
-        // 4. Both + 1
         if (person.sparring === "Yes" && sparringWc) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
@@ -879,40 +856,30 @@
                const baseIdx = nextAgClasses.indexOf(nextAgBaseCat);
                if (baseIdx !== -1 && baseIdx < nextAgClasses.length - 1) {
                   const bothUpCat = nextAgClasses[baseIdx + 1];
-                  const labelFull = `${nextAg} - ${bothUpCat}kg`;
-                  panel.appendChild(createRow("Sparring: Both +1", labelFull, "sparring"));
+                  panel.appendChild(createRow("Sparring: Both +1", `${nextAg} - ${bothUpCat}kg`, "sparring"));
                }
             }
           }
         }
 
-        // --- PATTERNS (2 ROWS) ---
-        
-        // 5. Main Patterns
+        // --- PATTERNS ---
         if (person.patterns === "Yes" && patternCat) {
           panel.appendChild(createRow("Patterns: Main", patternCat, "patterns"));
         }
-
-        // 6. Age + 1 Patterns
         if (person.patterns === "Yes") {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
             const beltGroup = getBeltGroup(person.belt);
-            const catUp = `${nextAg} - ${beltGroup}`;
-            panel.appendChild(createRow("Patterns: Age +1", catUp, "patterns"));
+            panel.appendChild(createRow("Patterns: Age +1", `${nextAg} - ${beltGroup}`, "patterns"));
           }
         }
 
-        // --- NEW: SAVE BUTTON FOOTER ---
         const footerDiv = document.createElement("div");
         footerDiv.className = "extras-footer";
         const saveBtn = document.createElement("button");
         saveBtn.className = "btn-save-extras";
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
-        saveBtn.onclick = (e) => {
-            e.stopPropagation();
-            saveExtrasToDB(regId);
-        };
+        saveBtn.onclick = (e) => { e.stopPropagation(); saveExtrasToDB(regId); };
         footerDiv.appendChild(saveBtn);
         panel.appendChild(footerDiv);
 
@@ -920,11 +887,13 @@
       }
 
       // ==========================================
-      // LOCAL SELECTION UPDATE
+      // DUPLICATE-FREE UPDATE LOGIC
       // ==========================================
-      function updateSelection(regId, currentList, person, discipline, label, catName, isChecked) {
-         // Validation: Main must be selected before Extras
-         // We use the passed currentList (snapshot at time of click)
+      function updateSelection(regId, discipline, label, catName, isChecked) {
+         // 1. Always grab the current list from state to ensure we are working on the latest version
+         let currentList = tempSelections[regId] || [];
+
+         // 2. Validation
          if (isChecked && label !== "Main") {
             const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
             if (!hasMain) {
@@ -933,38 +902,44 @@
             }
          }
 
-         let newList = [];
+         // 3. Remove any existing entry matching this EXACT criteria first (Prevents Duplicates)
+         // This acts as a "toggle" regardless of previous state
+         let newList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
 
+         // 4. Add it back if checked
          if (isChecked) {
-           // Add if not exists
-           const exists = currentList.some(e => e.discipline === discipline && e.label === label);
-           newList = exists ? currentList : [...currentList, { discipline, label, full_cat: catName }];
-         } else {
-           // Remove specific item (Filter keeps everything EXCEPT the unchecked item)
-           // This ensures unchecking "Age +1" does NOT delete "Main"
-           newList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
+            newList.push({ discipline, label, full_cat: catName });
          }
-         
-         // Update Global State
+
+         // 5. Update Global State
          tempSelections[regId] = newList;
       }
 
       // ==========================================
-      // SAVE TO DB
+      // ROBUST SAVE LOGIC
       // ==========================================
       async function saveExtrasToDB(regId) {
          loadingOverlay.style.display = "flex";
          
-         // Get the selections from our local state
-         const currentList = tempSelections[regId] || [];
+         // 1. Get local state
+         let listToSave = tempSelections[regId] || [];
          
-         // Update DB
+         // 2. FINAL CLEANUP: Remove any accidental duplicates before sending to DB
+         // This ensures database integrity even if JS logic had a hiccup
+         const uniqueMap = new Map();
+         listToSave.forEach(item => {
+            const key = `${item.discipline}-${item.label}`;
+            uniqueMap.set(key, item);
+         });
+         listToSave = Array.from(uniqueMap.values());
+
+         // 3. Update DB
          const { data: existingData } = await client.from("final_registrations").select("*").eq("id", regId).single();
          
          const { error: updateError } = await client.from("final_registrations").update({
            entry_data: { 
              ...existingData.entry_data, 
-             entries_list: currentList 
+             entries_list: listToSave 
            }
          }).eq("id", regId);
 
@@ -973,7 +948,7 @@
          if (updateError) {
             alert("Error saving categories: " + updateError.message);
          } else {
-            // Reload to show correct tags and clear tempSelections
+            // Success: Reload to sync everything perfectly
             const { data: { session } } = await client.auth.getSession();
             if(session) loadAllData(session.user.id);
          }
@@ -986,11 +961,12 @@
         const { data: { session } } = await client.auth.getSession();
         if(!session) return;
 
-        const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
+        const { sparringCat, patternCat } = getPersonCategories(person);
         
         const entriesList = [];
         
         if (type === 'comp') {
+           // Automatically add Mains
            if (person.sparring === "Yes" && sparringCat) {
               entriesList.push({ discipline: "sparring", label: "Main", full_cat: sparringCat });
            }
