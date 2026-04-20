@@ -238,6 +238,12 @@
         accent-color: var(--accent-secondary); 
         cursor: pointer; 
       }
+      /* Style for disabled checkboxes (Mains) */
+      .extra-checkbox:disabled {
+        accent-color: #64748b; /* Grey */
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
       /* Extras Footer (Save Button) */
       .extras-footer {
@@ -488,7 +494,7 @@
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
       
-      // Strict temporary storage. Key = Registration ID.
+      // Only store EXTRAS here. Mains are calculated on the fly.
       let tempSelections = {}; 
 
       // ==========================================
@@ -659,23 +665,23 @@
         ]);
         const { data: regData } = await client.from("final_registrations").select("*").eq("user_id", userId);
         
-        // 1. Reset temp selections (fresh start ensures no "ghost" data)
         tempSelections = {}; 
         
-        // 2. Initialize tempSelections strictly from DB
         if (regData) {
             regData.forEach(r => {
-                // Deep copy to prevent reference issues
-                const entries = JSON.parse(JSON.stringify(r.entry_data?.entries_list || []));
-                // Only store if we have data
-                if (entries.length > 0) {
-                    tempSelections[r.id] = entries;
+                // Filter out MAIN categories. We ONLY want to store Extras in tempSelections.
+                // Mains are forced.
+                const allEntries = r.entry_data?.entries_list || [];
+                const extrasOnly = allEntries.filter(e => e.label !== "Main");
+                
+                if (extrasOnly.length > 0) {
+                    tempSelections[r.id] = extrasOnly;
                 }
             });
         }
 
         const regMap = new Map();
-        if (regData) regData.forEach(r => regMap.set(String(r.entry_id), r));
+        if (regData) regMap.forEach(r => regMap.set(String(r.entry_id), r));
 
         renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
         renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
@@ -761,7 +767,6 @@
               const savedList = registration.entry_data?.entries_list || [];
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
-              // Display categories
               savedList.forEach(entry => {
                 const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
                 const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
@@ -795,57 +800,70 @@
       }
 
       // ==========================================
-      // CREATE EXTRAS PANEL & SYNC
+      // CREATE EXTRAS PANEL & LOCKED MAINS
       // ==========================================
       function createExtrasPanel(person, registration) {
         const panel = document.createElement("div");
         panel.className = "extra-options-panel";
         const regId = registration.id;
 
-        // Determine what to show. We prioritize tempSelections if user has unsaved changes in this session
-        // otherwise we strictly use DB data.
-        const dbEntries = registration.entry_data?.entries_list || [];
-        const displayList = (tempSelections[regId] && tempSelections[regId].length > 0) 
-                             ? tempSelections[regId] 
-                             : dbEntries;
-
-        // Helper: Check if entry exists
-        const isChecked = (discipline, label) => {
-            return displayList.some(e => e.discipline === discipline && e.label === label);
-        };
+        // Get the extras only (no mains) from our temp storage
+        const savedExtras = tempSelections[regId] || [];
 
         const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
 
-        const createRow = (label, catName, discipline) => {
+        // Helper to check if an Extra is selected
+        const isExtraChecked = (discipline, label) => {
+            return savedExtras.some(e => e.discipline === discipline && e.label === label);
+        };
+
+        const createRow = (label, catName, discipline, isMain) => {
           const row = document.createElement("div");
           row.className = "extra-row";
+          
+          let checkboxHtml = '';
+          if (isMain) {
+              // Locked Main: Checked and Disabled
+              checkboxHtml = `<input type="checkbox" class="extra-checkbox" checked disabled title="Required Category">`;
+          } else {
+              // Editable Extra: Check logic applies here
+              const checked = isExtraChecked(discipline, label) ? 'checked' : '';
+              checkboxHtml = `<input type="checkbox" class="extra-checkbox" ${checked}>`;
+          }
+
           row.innerHTML = `
             <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
-            <input type="checkbox" class="extra-checkbox" ${isChecked(discipline, label) ? 'checked' : ''}>
+            ${checkboxHtml}
           `;
-          const checkbox = row.querySelector('input');
-          checkbox.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // We pass the displayList as a snapshot, but updateSelection fetches fresh state too
-            updateSelection(regId, discipline, label, catName, checkbox.checked);
-          });
+          
+          // Only add listener for extras
+          if (!isMain) {
+              const checkbox = row.querySelector('input');
+              checkbox.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  toggleExtra(regId, discipline, label, catName, checkbox.checked);
+              });
+          }
+          
           return row;
         };
 
         // --- SPARRING ---
+        // 1. Main Sparring (LOCKED)
         if (person.sparring === "Yes" && sparringCat) {
-          panel.appendChild(createRow("Sparring: Main", sparringCat, "sparring"));
+          panel.appendChild(createRow("Sparring: Main", sparringCat, "sparring", true));
         }
+        // 2. Sparring Extras
         if (person.sparring === "Yes" && sparringCat) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
             const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
-            if (nextAgWC) panel.appendChild(createRow("Sparring: Age +1", `${nextAg} - ${nextAgWC}kg`, "sparring"));
+            if (nextAgWC) panel.appendChild(createRow("Sparring: Age +1", `${nextAg} - ${nextAgWC}kg`, "sparring", false));
           }
         }
         if (person.sparring === "Yes" && sparringWc) {
           const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
-          if (nextW) panel.appendChild(createRow("Sparring: Weight +1", `${ageGroup} - ${nextW}kg`, "sparring"));
+          if (nextW) panel.appendChild(createRow("Sparring: Weight +1", `${ageGroup} - ${nextW}kg`, "sparring", false));
         }
         if (person.sparring === "Yes" && sparringWc) {
           const nextAg = getHigherAgeGroup(ageGroup);
@@ -856,21 +874,23 @@
                const baseIdx = nextAgClasses.indexOf(nextAgBaseCat);
                if (baseIdx !== -1 && baseIdx < nextAgClasses.length - 1) {
                   const bothUpCat = nextAgClasses[baseIdx + 1];
-                  panel.appendChild(createRow("Sparring: Both +1", `${nextAg} - ${bothUpCat}kg`, "sparring"));
+                  panel.appendChild(createRow("Sparring: Both +1", `${nextAg} - ${bothUpCat}kg`, "sparring", false));
                }
             }
           }
         }
 
         // --- PATTERNS ---
+        // 5. Main Patterns (LOCKED)
         if (person.patterns === "Yes" && patternCat) {
-          panel.appendChild(createRow("Patterns: Main", patternCat, "patterns"));
+          panel.appendChild(createRow("Patterns: Main", patternCat, "patterns", true));
         }
+        // 6. Patterns Extras
         if (person.patterns === "Yes") {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
             const beltGroup = getBeltGroup(person.belt);
-            panel.appendChild(createRow("Patterns: Age +1", `${nextAg} - ${beltGroup}`, "patterns"));
+            panel.appendChild(createRow("Patterns: Age +1", `${nextAg} - ${beltGroup}`, "patterns", false));
           }
         }
 
@@ -879,7 +899,7 @@
         const saveBtn = document.createElement("button");
         saveBtn.className = "btn-save-extras";
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
-        saveBtn.onclick = (e) => { e.stopPropagation(); saveExtrasToDB(regId); };
+        saveBtn.onclick = (e) => { e.stopPropagation(); saveFinal(regId, person); };
         footerDiv.appendChild(saveBtn);
         panel.appendChild(footerDiv);
 
@@ -887,53 +907,54 @@
       }
 
       // ==========================================
-      // DUPLICATE-FREE UPDATE LOGIC
+      // LOGIC FOR EXTRAS TOGGLE
       // ==========================================
-      function updateSelection(regId, discipline, label, catName, isChecked) {
-         // 1. Always grab the current list from state to ensure we are working on the latest version
-         let currentList = tempSelections[regId] || [];
-
-         // 2. Validation
-         if (isChecked && label !== "Main") {
-            const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
-            if (!hasMain) {
-               alert("You must select the Main category first.");
-               return; 
-            }
-         }
-
-         // 3. Remove any existing entry matching this EXACT criteria first (Prevents Duplicates)
-         // This acts as a "toggle" regardless of previous state
-         let newList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
-
-         // 4. Add it back if checked
+      function toggleExtra(regId, discipline, label, catName, isChecked) {
+         // We only work with the Extras array here. Mains are handled in saveFinal.
+         let extras = tempSelections[regId] || [];
+         
+         // 1. Filter out this specific entry (remove it)
+         let newExtras = extras.filter(e => !(e.discipline === discipline && e.label === label));
+         
+         // 2. If checked, add it back
          if (isChecked) {
-            newList.push({ discipline, label, full_cat: catName });
+            newExtras.push({ discipline, label, full_cat: catName });
          }
 
-         // 5. Update Global State
-         tempSelections[regId] = newList;
+         tempSelections[regId] = newExtras;
       }
 
       // ==========================================
-      // ROBUST SAVE LOGIC
+      // FINAL SAVE LOGIC (MERGE MAINS + EXTRAS)
       // ==========================================
-      async function saveExtrasToDB(regId) {
+      async function saveFinal(regId, person) {
          loadingOverlay.style.display = "flex";
          
-         // 1. Get local state
-         let listToSave = tempSelections[regId] || [];
-         
-         // 2. FINAL CLEANUP: Remove any accidental duplicates before sending to DB
-         // This ensures database integrity even if JS logic had a hiccup
+         // 1. Calculate Mains (Forced) based on current person profile
+         const { sparringCat, patternCat } = getPersonCategories(person);
+         const forcedMains = [];
+         if (person.sparring === "Yes" && sparringCat) {
+             forcedMains.push({ discipline: "sparring", label: "Main", full_cat: sparringCat });
+         }
+         if (person.patterns === "Yes" && patternCat) {
+             forcedMains.push({ discipline: "patterns", label: "Main", full_cat: patternCat });
+         }
+
+         // 2. Get Extras (User selected)
+         const savedExtras = tempSelections[regId] || [];
+
+         // 3. Combine
+         const finalList = [...forcedMains, ...savedExtras];
+
+         // 4. Deduplicate (Safety Net) using a Map
          const uniqueMap = new Map();
-         listToSave.forEach(item => {
-            const key = `${item.discipline}-${item.label}`;
+         finalList.forEach(item => {
+            const key = `${item.discipline}-${item.label}`; // Ensure unique by type and name
             uniqueMap.set(key, item);
          });
-         listToSave = Array.from(uniqueMap.values());
+         const listToSave = Array.from(uniqueMap.values());
 
-         // 3. Update DB
+         // 5. Update DB
          const { data: existingData } = await client.from("final_registrations").select("*").eq("id", regId).single();
          
          const { error: updateError } = await client.from("final_registrations").update({
@@ -948,7 +969,7 @@
          if (updateError) {
             alert("Error saving categories: " + updateError.message);
          } else {
-            // Success: Reload to sync everything perfectly
+            // Reload to ensure UI reflects new merged state
             const { data: { session } } = await client.auth.getSession();
             if(session) loadAllData(session.user.id);
          }
@@ -963,10 +984,9 @@
 
         const { sparringCat, patternCat } = getPersonCategories(person);
         
+        // Initially, only add Mains. No extras.
         const entriesList = [];
-        
         if (type === 'comp') {
-           // Automatically add Mains
            if (person.sparring === "Yes" && sparringCat) {
               entriesList.push({ discipline: "sparring", label: "Main", full_cat: sparringCat });
            }
@@ -1140,19 +1160,18 @@
                    entriesList = entriesList.filter(e => e.discipline !== "patterns");
                }
                
-               if (weightChanged || birthChanged) {
-                  entriesList = entriesList.filter(e => e.discipline !== "sparring");
-                  if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
+               // Recalculate Mains
+               entriesList = entriesList.filter(e => e.label !== "Main"); // Remove old mains
+               
+               if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
-                  }
+               }
+               if (newPersonData.patterns === "Yes" && newCats.patternCat) {
+                     entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patternCat });
                }
                
-               if (beltChanged || birthChanged) {
-                  entriesList = entriesList.filter(e => e.discipline !== "patterns");
-                  if (newPersonData.patterns === "Yes" && newCats.patternCat) {
-                     entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patternCat });
-                  }
-               }
+               // Note: We do NOT remove Extras here, as "Age+1" might still be valid depending on logic.
+               // But we do force a full save.
 
                await client.from("final_registrations").update({
                   entry_data: { entries_list: entriesList }
