@@ -36,7 +36,7 @@
 
       header {
         background-color: var(--bg-panel);
-        padding: 1rem 2rem;
+        padding:1rem 2rem;
         border-bottom: 1px solid rgba(255,255,255, 0.1);
         display: flex;
         justify-content: space-between;
@@ -233,11 +233,6 @@
       .extra-label { flex: 1; color: var(--text-muted); }
       .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 5px; }
       .extra-checkbox { width: 18px; height: 18px; accent-color: var(--accent-secondary); cursor: pointer; }
-      .extra-checkbox:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        accent-color: var(--text-muted);
-      }
 
       /* Unregister Button */
       .btn-unregister {
@@ -248,6 +243,29 @@
         cursor: pointer; transition: 0.2s; z-index: 10;
       }
       .btn-unregister:hover { background: var(--accent-alert); color: white; }
+
+      /* Extras Footer (Save Button) */
+      .extras-footer {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        justify-content: flex-end;
+      }
+      .btn-save-extras {
+        background-color: var(--accent-secondary);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-save-extras:hover { background-color: #059669; transform: translateY(-2px); }
 
       /* Modal */
       .modal-overlay {
@@ -466,8 +484,7 @@
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
       
-      // Temporary storage for Extras Selection (Fixes "Doesn't Save" & "Kick out")
-      // Stores: { "regId": [ { discipline, label, full_cat }, ... ] }
+      // Temporary storage for Extras Selection
       let tempSelections = {}; 
 
       // ==========================================
@@ -642,9 +659,6 @@
         const regMap = new Map();
         if (regData) regData.forEach(r => regMap.set(String(r.entry_id), r));
 
-        // IMPORTANT: Clear temp storage when loading fresh data to prevent stale state
-        tempSelections = {};
-
         renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
         renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
         renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], regMap);
@@ -712,8 +726,6 @@
               e.stopPropagation();
               if(confirm(`Unregister ${person.name}?`)) {
                 await client.from("final_registrations").delete().eq("id", registration.id);
-                // Remove from temp storage so we don't try to render it
-                delete tempSelections[personIdStr];
                 const { data: { session } } = await client.auth.getSession();
                 if(session) loadAllData(session.user.id);
               }
@@ -734,17 +746,6 @@
               const savedList = registration.entry_data?.entries_list || [];
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
-              
-              if (savedList.length > 0) {
-                 // Add a small label to show it's active
-                 const activeLabel = document.createElement("div");
-                 activeLabel.style.fontSize = "0.7rem";
-                 activeLabel.style.color = "var(--accent-secondary)";
-                 activeLabel.style.marginBottom = "5px";
-                 activeLabel.innerHTML = '<i class="fas fa-check-circle"></i> Selected Categories:';
-                 catDiv.appendChild(activeLabel);
-              }
-              
               savedList.forEach(entry => {
                 const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
                 const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
@@ -800,32 +801,19 @@
         const isChecked = (discipline, label) => currentList.some(e => e.discipline === discipline && e.label === label);
 
         const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
-        
-        // Logic to determine if Main is selected
-        const hasMainSparring = currentList.some(e => e.discipline === "sparring" && e.label === "Main");
-        const hasMainPatterns = currentList.some(e => e.discipline === "patterns" && e.label === "Main");
 
         const createRow = (label, catName, key, discipline, checked = false) => {
           const row = document.createElement("div");
           row.className = "extra-row";
-          
-          // Check if this checkbox should be disabled (No Main present)
-          const isDisabled = (label !== "Main" && (discipline === "sparring" ? !hasMainSparring : !hasMainPatterns));
-          const disabledAttr = isDisabled ? "disabled" : "";
-
           row.innerHTML = `
             <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
-            <input type="checkbox" class="extra-checkbox" ${checked ? 'checked' : ''} ${disabledAttr}>
+            <input type="checkbox" class="extra-checkbox" ${checked ? 'checked' : ''}>
           `;
-          
           const checkbox = row.querySelector('input');
-          // If disabled, don't add click listener
-          if (!isDisabled) {
-            checkbox.addEventListener('click', (e) => {
-              e.stopPropagation();
-              updateSelection(regId, person, discipline, label, catName, checkbox.checked);
-            });
-          }
+          checkbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            updateSelection(regId, person, discipline, label, catName, checkbox.checked);
+          });
           return row;
         };
 
@@ -857,7 +845,7 @@
           }
         }
 
-        // 4. Both + 1 (Next Age AND Next Weight)
+        // 4. Both +1 (Next Age AND Next Weight)
         if (person.sparring === "Yes" && sparringWc) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
@@ -910,7 +898,7 @@
       }
 
       // ==========================================
-      // NEW: LOCAL SELECTION UPDATE (Fixes Visual Sync & "Doesn't Save")
+      // NEW: LOCAL SELECTION UPDATE (Fixes "Doesn't Save" & "Duplicates")
       // ==========================================
       function updateSelection(regId, person, discipline, label, catName, isChecked) {
          // Validation: Main must be selected before Extras
@@ -919,20 +907,6 @@
             const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
             if (!hasMain) {
                alert("You must select the Main category first.");
-               // Force visual refresh of this specific card to fix UI state
-               // Reload just this person's registration data
-               client.from("final_registrations").select("entry_data").eq("entry_id", regId).single().then(({data}) => {
-                   if(data) {
-                       tempSelections[regId] = data.entry_data?.entries_list || [];
-                       // Force re-render of the panel by finding the card
-                       const card = document.querySelector(`.person-card.expanded`);
-                       if (card) {
-                           const newPanel = createExtrasPanel(person, { entry_data: data });
-                           const oldPanel = card.querySelector('.extra-options-panel');
-                           if (oldPanel) card.replaceChild(newPanel);
-                       }
-                   }
-               });
                return; 
             }
          }
@@ -952,7 +926,7 @@
       }
 
       // ==========================================
-      // NEW: SAVE TO DB (Fixes Immediate State Sync)
+      // NEW: SAVE TO DB (Fixes Visual Sync)
       // ==========================================
       async function saveExtrasToDB(regId) {
          loadingOverlay.style.display = "flex";
@@ -970,11 +944,8 @@
          if (updateError) {
             alert("Error saving categories: " + updateError.message);
          } else {
-            // FIX: IMMEDIATELY SYNC STATE WITH DB
-            // This ensures that the next time the UI renders, it uses the correct data
-            tempSelections[regId] = currentList;
-            
-            // Reload ONLY after explicit save to show updated checkboxes
+            // FIX: FORCE UI RELOAD
+            // This makes sure checkboxes re-render using the REAL DB data
             const { data: { session } } = await client.auth.getSession();
             if(session) loadAllData(session.user.id);
          }
@@ -1039,7 +1010,7 @@
       });
 
       // ==========================================
-      // MODAL & EDIT PROFILE (WITH RECALCULATION FIX)
+      // MODAL & EDIT PROFILE
       // ==========================================
       function openPersonModal(personData, type, personId) {
         currentEditingPerson = { id: personId, type: type, data: personData };
@@ -1170,12 +1141,6 @@
 
                // 2. If Critical Calc Factors changed (Weight, Belt, Birth), 
                // we MUST update stored strings to match reality.
-               // However, we should preserve "Extras" if they are still valid.
-               
-               // Simple Strategy: Clear Main categories if they existed, re-add them with new calculated strings.
-               // Keep Extras? If Weight changed, "Weight+1" might be invalid now. 
-               // Safest: Clear Sparring if Weight/Age/Gender changed. Clear Patterns if Belt/Age/Gender changed.
-               
                if (weightChanged || birthChanged) {
                   // Remove all sparring entries
                   entriesList = entriesList.filter(e => e.discipline !== "sparring");
@@ -1183,7 +1148,6 @@
                   if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
                   }
-                  // Note: User has to manually re-check Age+1 etc because logic is tricky
                }
                
                if (beltChanged || birthChanged) {
