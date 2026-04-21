@@ -19,7 +19,7 @@
         --accent-alert: #ef4444;
         --radius-md: 12px;
         --radius-lg: 20px;
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        --shadow: 0 4px 6 -1px rgba(0, 0, 0, 0.3);
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -244,29 +244,6 @@
       }
       .btn-unregister:hover { background: var(--accent-alert); color: white; }
 
-      /* Extras Footer (Save Button) */
-      .extras-footer {
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid rgba(255,255,255,0.1);
-        display: flex;
-        justify-content: flex-end;
-      }
-      .btn-save-extras {
-        background-color: var(--accent-secondary);
-        color: white;
-        border: none;
-        padding: 0.6rem 1.2rem;
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .btn-save-extras:hover { background-color: #059669; transform: translateY(-2px); }
-
       /* Modal */
       .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -328,8 +305,7 @@
       }
     </style>
   </head>
-  <body>
- 
+  <body> 
     <header>
       <div class="header-left">
         <div class="logo" style="font-weight:bold; color:white; font-size:1.2rem;">Team Registration</div>
@@ -719,9 +695,7 @@
             card.className = "person-card";
             
             // Unregister Button (Top Right)
-            // FIX: Safety check to prevent accidental deletion
-            // Only show Unregister button if MORE than 1 category is selected (Main + Extras)
-            // If only 1 category, it's likely just "Main", so user shouldn't unregister
+            // Only show if MORE than 1 category (Main + Extras)
             const entriesList = registration.entry_data?.entries_list || [];
             if (entriesList.length > 1) {
                 const btnUnreg = document.createElement("div");
@@ -799,10 +773,12 @@
         panel.className = "extra-options-panel";
         const regId = registration.id;
         
-        // Initialize temporary selection if not exists
-        if (!tempSelections[regId]) {
-            tempSelections[regId] = registration.entry_data?.entries_list ? [...registration.entry_data.entries_list] : [];
-        }
+        // 🔥 FIX 1: Always sync fresh from DB to ensure checkboxes match text under name
+        // This prevents "ghost" checks and ensures accuracy
+        tempSelections[regId] = registration.entry_data?.entries_list 
+          ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) 
+          : [];
+
         const currentList = tempSelections[regId];
         const isChecked = (discipline, label) => currentList.some(e => e.discipline === discipline && e.label === label);
 
@@ -818,6 +794,7 @@
           const checkbox = row.querySelector('input');
           checkbox.addEventListener('click', (e) => {
             e.stopPropagation();
+            // We pass the whole 'person' object so we can validate logic later
             updateSelection(regId, person, discipline, label, catName, checkbox.checked);
           });
           return row;
@@ -830,7 +807,7 @@
           panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isChecked("sparring", "Main")));
         }
 
-        // 2. Age + 1 (Next Age, Same Weight logic)
+        // 2. Age + 1
         if (person.sparring === "Yes" && sparringCat) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
@@ -842,7 +819,7 @@
           }
         }
 
-        // 3. Weight + 1 (Same Age, Next Weight)
+        // 3. Weight + 1
         if (person.sparring === "Yes" && sparringWc) {
           const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
           if (nextW) {
@@ -851,7 +828,7 @@
           }
         }
 
-        // 4. Both + 1 (Next Age AND Next Weight)
+        // 4. Both + 1
         if (person.sparring === "Yes" && sparringWc) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
@@ -887,26 +864,14 @@
           }
         }
 
-        // --- NEW: SAVE BUTTON FOOTER ---
-        const footerDiv = document.createElement("div");
-        footerDiv.className = "extras-footer";
-        const saveBtn = document.createElement("button");
-        saveBtn.className = "btn-save-extras";
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
-        saveBtn.onclick = (e) => {
-            e.stopPropagation();
-            saveExtrasToDB(regId);
-        };
-        footerDiv.appendChild(saveBtn);
-        panel.appendChild(footerDiv);
-
+        // ❌ REMOVED THE SAVE BUTTON FOOTER because we now save instantly on click
         return panel;
       }
 
       // ==========================================
-      // LOCAL SELECTION UPDATE (Fixes Logic Dependencies)
+      // LOCAL SELECTION UPDATE (Instant Save Logic)
       // ==========================================
-      function updateSelection(regId, person, discipline, label, catName, isChecked) {
+      async function updateSelection(regId, person, discipline, label, catName, isChecked) {
          
          // RULE 1: You cannot check Extras without Main.
          if (isChecked && label !== "Main") {
@@ -914,7 +879,6 @@
             const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
             if (!hasMain) {
                alert("You must select the Main category first.");
-               // FIX: DO NOT update local state or DB if validation fails
                return; 
             }
          }
@@ -924,47 +888,37 @@
             const currentList = tempSelections[regId];
             const hasExtras = currentList.some(e => e.label !== "Main");
             if (hasExtras) {
-               alert("You cannot uncheck Main because additional categories are selected. Uncheck the additional categories first.");
-               // FIX: DO NOT update local state or DB if validation fails
-               return;
+               alert("You cannot uncheck Main because additional categories are selected. Uncheck additional categories first.");
+               return; 
             }
          }
 
          let currentList = tempSelections[regId];
 
+         // 3. Update the list locally
          if (isChecked) {
            const exists = currentList.some(e => e.discipline === discipline && e.label === label);
            if (!exists) {
               currentList.push({ discipline, label, full_cat: catName });
            }
          } else {
+           // If unchecked, filter it out (Delete it)
            currentList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
          }
          
          tempSelections[regId] = currentList;
-      }
 
-      // ==========================================
-      // SAVE TO DB (Syncs UI)
-      // ==========================================
-      async function saveExtrasToDB(regId) {
-         loadingOverlay.style.display = "flex";
-         
-         // Get local selections
-         const currentList = tempSelections[regId] || [];
-         
-         // Update DB
+         // 🔥 4. INSTANT SAVE TO DB
+         // We do not wait for a "Save" button. We save immediately on click.
          const { error: updateError } = await client.from("final_registrations").update({
            entry_data: { entries_list: currentList }
          }).eq("id", regId);
 
-         loadingOverlay.style.display = "none";
-
          if (updateError) {
-            alert("Error saving categories: " + updateError.message);
+            alert("Error saving: " + updateError.message);
          } else {
-            // FIX: FORCE UI RELOAD
-            // This makes sure checkboxes re-render using the REAL DB data
+            // 5. INSTANT RELOAD
+            // This forces the UI to redraw. The text under the name will update immediately.
             const { data: { session } } = await client.auth.getSession();
             if(session) loadAllData(session.user.id);
          }
