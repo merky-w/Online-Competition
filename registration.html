@@ -173,7 +173,7 @@
       }
 
       .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
-      .card-name { font-size: 1.1rem; font-weight: 700; padding-right: 35px; /* Space for Unregister X */ }
+      .card-name { font-size: 1.1rem; font-weight: 700; padding-right: 35px; }
 
       /* Buttons Container for Registered Cards */
       .card-actions {
@@ -233,6 +233,22 @@
       .extra-label { flex: 1; color: var(--text-muted); }
       .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 5px; }
       .extra-checkbox { width: 18px; height: 18px; accent-color: var(--accent-secondary); cursor: pointer; }
+
+      /* Save Button Style inside Panel */
+      .btn-save-panel {
+        margin-top: 10px;
+        width: 100%;
+        background-color: var(--accent-primary);
+        color: white;
+        padding: 8px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-save-panel:hover { background-color: #2563eb; }
+      .btn-save-panel:disabled { background-color: var(--text-muted); cursor: not-allowed; }
 
       /* Unregister Button */
       .btn-unregister {
@@ -694,8 +710,10 @@
             const card = document.createElement("div");
             card.className = "person-card";
             
+            // IMPORTANT: Store Registration ID on the DOM element so we can find it later
+            card.setAttribute("data-reg-id", registration.id);
+
             // Unregister Button (Top Right)
-            // Only show if MORE than 1 category (Main + Extras)
             const entriesList = registration.entry_data?.entries_list || [];
             if (entriesList.length > 1) {
                 const btnUnreg = document.createElement("div");
@@ -726,11 +744,14 @@
               const savedList = registration.entry_data?.entries_list || [];
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
-              savedList.forEach(entry => {
-                const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-                const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-                catDiv.innerHTML += `<div class="cat-tag ${color}"><i class="fas ${icon}"></i> ${entry.full_cat}</div>`;
-              });
+              
+              // Use helper to generate HTML
+              catDiv.innerHTML = savedList.map(entry => {
+                 const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
+                 const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+                 return `<div class="cat-tag ${color}"><i class="fas ${icon}"></i> ${entry.full_cat}</div>`;
+              }).join('');
+
               card.appendChild(catDiv);
             }
 
@@ -773,11 +794,14 @@
         panel.className = "extra-options-panel";
         const regId = registration.id;
         
-        // 🔥 FIX 1: Always sync fresh from DB to ensure checkboxes match text under name
-        // This prevents "ghost" checks and ensures accuracy
-        tempSelections[regId] = registration.entry_data?.entries_list 
-          ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) 
-          : [];
+        // 🔥 FIX: Only initialize tempSelections ONCE. 
+        // If it already exists, it means the user has toggled checkboxes locally but not saved yet.
+        // We DO NOT want to overwrite their changes with the old DB data.
+        if (!tempSelections[regId]) {
+          tempSelections[regId] = registration.entry_data?.entries_list 
+            ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) 
+            : [];
+        }
 
         const currentList = tempSelections[regId];
         const isChecked = (discipline, label) => currentList.some(e => e.discipline === discipline && e.label === label);
@@ -794,7 +818,7 @@
           const checkbox = row.querySelector('input');
           checkbox.addEventListener('click', (e) => {
             e.stopPropagation();
-            // We pass the whole 'person' object so we can validate logic later
+            // Pass the whole card reference so we can update the text under the name instantly
             updateSelection(regId, person, discipline, label, catName, checkbox.checked);
           });
           return row;
@@ -864,14 +888,41 @@
           }
         }
 
-        // ❌ REMOVED THE SAVE BUTTON FOOTER because we now save instantly on click
+        // ✅ NEW SAVE BUTTON
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "btn-save-panel";
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
+        
+        saveBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const btn = e.currentTarget;
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+          btn.disabled = true;
+
+          const { error } = await client.from("final_registrations").update({
+            entry_data: { entries_list: tempSelections[regId] }
+          }).eq("id", regId);
+
+          if (error) {
+            alert("Error saving: " + error.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          } else {
+            // Success - reload data to ensure everything is synced cleanly
+            const { data: { session } } = await client.auth.getSession();
+            if(session) loadAllData(session.user.id);
+          }
+        });
+
+        panel.appendChild(saveBtn);
         return panel;
       }
 
       // ==========================================
-      // LOCAL SELECTION UPDATE (Instant Save Logic)
+      // LOCAL SELECTION UPDATE (Instant UI Only)
       // ==========================================
-      async function updateSelection(regId, person, discipline, label, catName, isChecked) {
+      function updateSelection(regId, person, discipline, label, catName, isChecked) {
          
          // RULE 1: You cannot check Extras without Main.
          if (isChecked && label !== "Main") {
@@ -908,20 +959,22 @@
          
          tempSelections[regId] = currentList;
 
-         // 🔥 4. INSTANT SAVE TO DB
-         // We do not wait for a "Save" button. We save immediately on click.
-         const { error: updateError } = await client.from("final_registrations").update({
-           entry_data: { entries_list: currentList }
-         }).eq("id", regId);
-
-         if (updateError) {
-            alert("Error saving: " + updateError.message);
-         } else {
-            // 5. INSTANT RELOAD
-            // This forces the UI to redraw. The text under the name will update immediately.
-            const { data: { session } } = await client.auth.getSession();
-            if(session) loadAllData(session.user.id);
+         // ✅ 4. INSTANT UI UPDATE (Update text under name immediately)
+         const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
+         if (card) {
+            const catDiv = card.querySelector(".card-categories");
+            if (catDiv) {
+               catDiv.innerHTML = tempSelections[regId].map(entry => {
+                  const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
+                  const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+                  return `<div class="cat-tag ${color}">
+                            <i class="fas ${icon}"></i> ${entry.full_cat}
+                          </div>`;
+               }).join('');
+            }
          }
+         
+         // ❌ NO DB SAVE HERE - Removed as requested
       }
 
       // ==========================================
@@ -1088,7 +1141,7 @@
           return;
         }
 
-        // FIX: Recalculate categories if critical fields changed
+        // Recalculate categories if critical fields changed
         if (currentEditingPerson.type === 'comp') {
            const weightChanged = (updateData.weight !== currentEditingPerson.data.weight);
            const beltChanged = (updateData.belt !== currentEditingPerson.data.belt);
