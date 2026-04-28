@@ -202,7 +202,10 @@
         display: flex; align-items: center; justify-content: space-between;
         gap: 8px; padding: 4px 8px; border-radius: 6px;
         background: rgba(255,255,255,0.05);
+        animation: fadeIn 0.3s ease;
       }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+      
       .cat-tag-left { display: flex; align-items: center; gap: 6px; }
       .cat-spar { color: #a78bfa; }
       .cat-pat { color: #fcd34d; }
@@ -322,7 +325,7 @@
         background: var(--bg-panel); border: 1px solid rgba(255,255,255,0.2);
         padding: 12px 24px; border-radius: 10px; z-index: 3000;
         box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: transform 0.4s ease;
-        font-size: 0.9rem;
+        font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
       }
       .toast.show { transform: translateX(-50%) translateY(0); }
       .toast.success { border-color: var(--accent-secondary); color: var(--accent-secondary); }
@@ -492,6 +495,8 @@
       
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
+      // TEMP STORAGE: This keeps the UI state in sync before saving to DB
+      // Structure: { regId: [ { discipline, label, full_cat }, ... ] }
       let tempSelections = {}; 
 
       const RULES = {
@@ -658,7 +663,7 @@
       // ==========================================
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
-        tempSelections = {};
+        tempSelections = {}; // Reset on load
 
         const { data: settings } = await supaClient.from("site_settings").select("tournament_date").eq("id",1).single();
         if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
@@ -737,7 +742,7 @@
                 btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
                 btnUnreg.addEventListener("click", async (e) => {
                   e.stopPropagation();
-                  if(confirm(`Remove ${person.name} completely?`)) {
+                  if(confirm(`Remove ${person.name} completely from registration?`)) {
                     await supaClient.from("final_registrations").delete().eq("id", registration.id);
                     const { data: { session } } = await supaClient.auth.getSession();
                     if(session) loadAllData(session.user.id);
@@ -817,19 +822,22 @@
       }
 
       // ==========================================
-      // REMOVE SINGLE CATEGORY INSTANTLY
+      // REMOVE SINGLE CATEGORY (From Tag Button)
       // ==========================================
       async function removeSingleCategory(regId, entryToRemove) {
         if (!confirm(`Remove "${entryToRemove.full_cat}"?`)) return;
         
+        // We must fetch the latest data first to avoid race conditions
         const { data: regData } = await supaClient.from("final_registrations").select("*").eq("id", regId).single();
         if (!regData) return;
 
         let currentList = regData.entry_data?.entries_list || [];
+        // Remove the entry
         currentList = currentList.filter(e => 
           !(e.discipline === entryToRemove.discipline && e.label === entryToRemove.label)
         );
 
+        // If list empty, delete registration entirely
         if (currentList.length === 0) {
           await supaClient.from("final_registrations").delete().eq("id", regId);
         } else {
@@ -838,47 +846,49 @@
           }).eq("id", regId);
         }
 
+        // Reload to refresh everything
         const { data: { session } } = await supaClient.auth.getSession();
         if (session) loadAllData(session.user.id);
       }
 
       // ==========================================
-      // CREATE EXTRAS PANEL
+      // CREATE EXTRAS PANEL (Checkboxes)
       // ==========================================
       function createExtrasPanel(person, registration) {
         const panel = document.createElement("div");
         panel.className = "extra-options-panel";
         const regId = registration.id;
 
-        // ALWAYS load fresh from DB to avoid stale state
-        let currentList = registration.entry_data?.entries_list ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) : [];
-        tempSelections[regId] = currentList;
+        // ✅ CRITICAL FIX: Initialize tempSelections from DB data
+        // This ensures the checkboxes and the displayed list start in sync.
+        const savedList = registration.entry_data?.entries_list || [];
+        tempSelections[regId] = JSON.parse(JSON.stringify(savedList));
         
         const { sparringCat, sparringWc, ageGroup, genderChar } = computePersonCategories(person);
 
-        const isChecked = (discipline, label) => {
-          return currentList.some(e => e.discipline === discipline && e.label === label);
-        };
+        // Helper to check state against tempSelections
+        const isEntrySelected = (disc, lbl) => tempSelections[regId].some(e => e.discipline === disc && e.label === lbl);
 
-        const createRow = (label, catName, key, discipline, checked = false) => {
+        const createRow = (label, catName, key, discipline, isChecked = false) => {
           const row = document.createElement("div");
           row.className = "extra-row";
           row.innerHTML = `
             <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
-            <input type="checkbox" class="extra-checkbox" ${checked ? 'checked' : ''}>
+            <input type="checkbox" class="extra-checkbox" ${isChecked ? 'checked' : ''}>
           `;
           const checkbox = row.querySelector('input');
+          
           checkbox.addEventListener('change', (e) => {
             e.stopPropagation();
             const newChecked = checkbox.checked;
-            updateSelection(regId, person, discipline, label, catName, newChecked);
+            toggleCategorySelection(regId, person, discipline, label, catName, newChecked);
           });
           return row;
         };
 
-        // SPARRING ROWS
+        // --- SPARRING ROWS ---
         if (person.sparring === "Yes" && sparringCat) {
-          panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isChecked("sparring", "Main")));
+          panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isEntrySelected("sparring", "Main")));
         }
 
         if (person.sparring === "Yes" && sparringCat) {
@@ -887,7 +897,7 @@
             const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
             if (nextAgWC) {
               const catUp = `${nextAg} - ${nextAgWC}kg`;
-              panel.appendChild(createRow("Sparring: Age +1", catUp, "spar_age_up", "sparring", isChecked("sparring", "Age +1")));
+              panel.appendChild(createRow("Sparring: Age +1", catUp, "spar_age_up", "sparring", isEntrySelected("sparring", "Age +1")));
             }
           }
         }
@@ -896,7 +906,7 @@
           const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
           if (nextW) {
             const catUp = `${ageGroup} - ${nextW}kg`;
-            panel.appendChild(createRow("Sparring: Weight +1", catUp, "spar_weight_up", "sparring", isChecked("sparring", "Weight +1")));
+            panel.appendChild(createRow("Sparring: Weight +1", catUp, "spar_weight_up", "sparring", isEntrySelected("sparring", "Weight +1")));
           }
         }
 
@@ -910,17 +920,17 @@
                if (baseIdx !== -1 && baseIdx < nextAgClasses.length - 1) {
                   const bothUpCat = nextAgClasses[baseIdx + 1];
                   const labelFull = `${nextAg} - ${bothUpCat}kg`;
-                  panel.appendChild(createRow("Sparring: Both +1", labelFull, "spar_both_up", "sparring", isChecked("sparring", "Both +1")));
+                  panel.appendChild(createRow("Sparring: Both +1", labelFull, "spar_both_up", "sparring", isEntrySelected("sparring", "Both +1")));
                }
             }
           }
         }
 
-        // PATTERNS ROWS
+        // --- PATTERNS ROWS ---
         if (person.patterns === "Yes") {
           const beltGroup = getBeltGroup(person.belt);
           const patCatMain = `${ageGroup} - ${beltGroup}`;
-          panel.appendChild(createRow("Patterns: Main", patCatMain, "pat_main", "patterns", isChecked("patterns", "Main")));
+          panel.appendChild(createRow("Patterns: Main", patCatMain, "pat_main", "patterns", isEntrySelected("patterns", "Main")));
         }
 
         if (person.patterns === "Yes") {
@@ -928,7 +938,7 @@
           if (nextAg) {
             const beltGroup = getBeltGroup(person.belt);
             const catUp = `${nextAg} - ${beltGroup}`;
-            panel.appendChild(createRow("Patterns: Age +1", catUp, "pat_age_up", "patterns", isChecked("patterns", "Age +1")));
+            panel.appendChild(createRow("Patterns: Age +1", catUp, "pat_age_up", "patterns", isEntrySelected("patterns", "Age +1")));
           }
         }
 
@@ -943,6 +953,7 @@
           btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
           btn.disabled = true;
 
+          // Remove duplicates
           const uniqueList = [];
           const seen = new Set();
           for (const ent of tempSelections[regId]) {
@@ -953,19 +964,25 @@
              }
           }
 
-          const { error } = await supaClient.from("final_registrations").update({
-            entry_data: { entries_list: uniqueList }
-          }).eq("id", regId);
-
-          if (error) {
-            showToast("Error saving: " + error.message, "error");
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+          // If empty, delete registration
+          if (uniqueList.length === 0) {
+             await supaClient.from("final_registrations").delete().eq("id", regId);
           } else {
-            showToast("Categories saved!", "success");
-            const { data: { session } } = await supaClient.auth.getSession();
-            if(session) loadAllData(session.user.id);
+             const { error } = await supaClient.from("final_registrations").update({
+               entry_data: { entries_list: uniqueList }
+             }).eq("id", regId);
+
+             if (error) {
+               showToast("Error saving: " + error.message, "error");
+               btn.innerHTML = originalText;
+               btn.disabled = false;
+               return;
+             }
           }
+          
+          showToast("Categories updated successfully!", "success");
+          const { data: { session } } = await supaClient.auth.getSession();
+          if(session) loadAllData(session.user.id);
         });
 
         panel.appendChild(saveBtn);
@@ -973,80 +990,79 @@
       }
 
       // ==========================================
-      // LOCAL SELECTION UPDATE
+      // LOCAL SELECTION UPDATE (Instant Sync)
       // ==========================================
-      function updateSelection(regId, personObj, discipline, label, catName, isChecked) {
+      function toggleCategorySelection(regId, personObj, discipline, label, catName, isChecked) {
+         
+         // RULE 1: Cannot check Extras without Main
          if (isChecked && label !== "Main") {
             const list = tempSelections[regId];
             const hasMain = list.some(e => e.discipline === discipline && e.label === "Main");
             if (!hasMain) {
                showToast("You must select the Main category first.", "error");
-               const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
-               if(card) {
-                 const cb = card.querySelector(`input[onclick*="${label}"], .extra-row:has(span:contains("${label}")) input`);
-                 if(cb) cb.checked = false;
-               }
                return; 
             }
          }
 
+         // RULE 2: Cannot uncheck Main if Extras are present
          if (!isChecked && label === "Main") {
             const list = tempSelections[regId];
-            const hasExtras = list.some(e => e.label !== "Main");
+            const hasExtras = list.some(e => e.discipline === discipline && e.label !== "Main");
             if (hasExtras) {
                showToast("Uncheck additional categories first.", "error");
-               const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
-               if(card) {
-                 const rows = card.querySelectorAll('.extra-row');
-                 rows.forEach(r => {
-                   if(r.querySelector('input').checked && !r.querySelector('span').textContent.includes("Main")) {
-                     r.querySelector('input').checked = false;
-                   }
-                 });
-               }
                return; 
             }
          }
 
          let list = tempSelections[regId];
+         // Remove existing
          list = list.filter(e => !(e.discipline === discipline && e.label === label));
 
+         // Add if checked
          if (isChecked) {
            list.push({ discipline, label, full_cat: catName });
          }
          
          tempSelections[regId] = list;
 
-         // Update display under name immediately
-         const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
-         if (card) {
-            const catDiv = card.querySelector(".card-categories");
-            if (catDiv) {
-               catDiv.innerHTML = "";
-               tempSelections[regId].forEach(entry => {
-                  const tagDiv = document.createElement("div");
-                  tagDiv.className = "cat-tag";
-                  
-                  const leftDiv = document.createElement("div");
-                  leftDiv.className = "cat-tag-left";
-                  const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-                  const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-                  leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat}`;
-                  
-                  const removeBtn = document.createElement("button");
-                  removeBtn.className = "btn-remove-cat";
-                  removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                  removeBtn.addEventListener("click", async (e) => {
-                    e.stopPropagation();
-                    await removeSingleCategory(regId, entry);
-                  });
-                  
-                  tagDiv.appendChild(leftDiv);
-                  tagDiv.appendChild(removeBtn);
-                  catDiv.appendChild(tagDiv);
-               });
-            }
-         }
+         // INSTANT UI UPDATE: Update tags under name
+         updateCategoryTagsDisplay(regId, list);
+      }
+
+      function updateCategoryTagsDisplay(regId, list) {
+        const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
+        if (!card) return;
+        const catDiv = card.querySelector(".card-categories");
+        if (!catDiv) return;
+
+        // Clear current tags
+        catDiv.innerHTML = "";
+
+        // Re-render based on list
+        list.forEach(entry => {
+           const tagDiv = document.createElement("div");
+           tagDiv.className = "cat-tag";
+           
+           const leftDiv = document.createElement("div");
+           leftDiv.className = "cat-tag-left";
+           
+           const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
+           const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+           
+           leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat}`;
+           
+           const removeBtn = document.createElement("button");
+           removeBtn.className = "btn-remove-cat";
+           removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+           removeBtn.addEventListener("click", async (e) => {
+             e.stopPropagation();
+             await removeSingleCategory(regId, entry);
+           });
+           
+           tagDiv.appendChild(leftDiv);
+           tagDiv.appendChild(removeBtn);
+           catDiv.appendChild(tagDiv);
+        });
       }
 
       // ==========================================
