@@ -82,7 +82,6 @@
       input:checked + .slider { background-color: var(--accent-primary); }
       input:checked + .slider:before { transform: translateX(14px); }
 
-      /* Auth Section */
       .auth-container {
         max-width: 400px;
         margin: 3rem auto;
@@ -102,7 +101,6 @@
       .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 1.5rem; }
       .btn-full { width: 100%; justify-content: center; }
 
-      /* Main Content */
       main {
         flex: 1;
         padding: 2rem 1rem;
@@ -146,7 +144,6 @@
         border-bottom: 1px solid rgba(255,255,255, 0.05); 
       }
 
-      /* Person Card */
       .person-card {
         background-color: var(--bg-card); border: 2px solid transparent;
         border-radius: var(--radius-md); padding: 1rem;
@@ -175,7 +172,6 @@
       .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
       .card-name { font-size: 1.1rem; font-weight: 700; padding-right: 35px; }
 
-      /* Buttons Container for Registered Cards */
       .card-actions {
         display: flex;
         gap: 8px;
@@ -199,21 +195,34 @@
       }
       .btn-categories:hover { background: #059669; }
 
-      /* Category Tags */
-      .card-categories { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; margin-top: 4px; }
+      .card-categories { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; margin-top: 6px; }
       body.hide-categories .card-categories { display: none; }
-      .cat-tag { display: flex; align-items: center; gap: 6px; padding: 2px 0; color: var(--text-muted); }
-      .cat-tag i { width: 14px; text-align: center; }
+      
+      .cat-tag { 
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 8px; padding: 4px 8px; border-radius: 6px;
+        background: rgba(255,255,255,0.05);
+      }
+      .cat-tag-left { display: flex; align-items: center; gap: 6px; }
       .cat-spar { color: #a78bfa; }
       .cat-pat { color: #fcd34d; }
+      .btn-remove-cat {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: var(--accent-alert);
+        width: 22px; height: 22px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: 0.2s; font-size: 0.7rem;
+        flex-shrink: 0;
+      }
+      .btn-remove-cat:hover { background: var(--accent-alert); color: white; }
 
       .card-details { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
 
-      /* Extras Options Panel */
       .extra-options-panel {
         display: none;
-        margin-top: 10px;
-        padding-top: 10px;
+        margin-top: 12px;
+        padding-top: 12px;
         border-top: 1px dashed rgba(255,255,255,0.2);
         flex-direction: column;
         gap: 8px;
@@ -226,31 +235,30 @@
       .extra-row {
         display: flex; align-items: center; justify-content: space-between;
         font-size: 0.85rem; background: rgba(0,0,0,0.2);
-        padding: 6px 10px; border-radius: 6px;
+        padding: 8px 12px; border-radius: 8px;
         border: 1px solid transparent; transition: 0.2s;
       }
       .extra-row:hover { border-color: rgba(59, 130, 246, 0.3); }
       .extra-label { flex: 1; color: var(--text-muted); }
-      .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 5px; }
+      .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 6px; }
       .extra-checkbox { width: 18px; height: 18px; accent-color: var(--accent-secondary); cursor: pointer; }
 
-      /* Save Button Style inside Panel */
       .btn-save-panel {
-        margin-top: 10px;
+        margin-top: 12px;
         width: 100%;
         background-color: var(--accent-primary);
         color: white;
-        padding: 8px;
+        padding: 10px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
         transition: background 0.2s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
       }
       .btn-save-panel:hover { background-color: #2563eb; }
       .btn-save-panel:disabled { background-color: var(--text-muted); cursor: not-allowed; }
 
-      /* Unregister Button */
       .btn-unregister {
         position: absolute; top: 5px; right: 5px;
         background: rgba(239, 68, 68, 0.2); color: var(--accent-alert);
@@ -260,7 +268,6 @@
       }
       .btn-unregister:hover { background: var(--accent-alert); color: white; }
 
-      /* Modal */
       .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.8); display: flex;
@@ -300,8 +307,7 @@
       .modal-box.editing .btn-edit { display: none; }
       .modal-box.editing .btn-save { display: inline-block; }
 
-      /* Loading */
-      .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; display: none; }
+      .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; justify-content: center; align-items: center; z-index: 2000; }
       .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--accent-secondary); border-radius: 50%; animation: spin 1s infinite linear; }
       @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -310,6 +316,17 @@
       .btn-primary:hover { background-color: #2563eb; }
       .btn-secondary { background-color: rgba(255, 255, 255, 0.1); color: var(--text-main); }
       .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.2); }
+
+      .toast {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+        background: var(--bg-panel); border: 1px solid rgba(255,255,255,0.2);
+        padding: 12px 24px; border-radius: 10px; z-index: 3000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: transform 0.4s ease;
+        font-size: 0.9rem;
+      }
+      .toast.show { transform: translateX(-50%) translateY(0); }
+      .toast.success { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+      .toast.error { border-color: var(--accent-alert); color: var(--accent-alert); }
 
       @media (max-width: 768px) {
         .split-grid { grid-template-columns: 1fr; gap: 0.5rem; }
@@ -369,7 +386,6 @@
     <main id="competitionSection" class="hidden">
       <h1>Select Participants</h1>
 
-      <!-- COMPETITORS SECTION -->
       <div class="category-section" id="sec-competitors">
         <div class="category-header" onclick="toggleSection('sec-competitors')">
           <div class="category-title">
@@ -392,7 +408,6 @@
         </div>
       </div>
 
-      <!-- JUDGES SECTION -->
       <div class="category-section" id="sec-judges">
         <div class="category-header" onclick="toggleSection('sec-judges')">
           <div class="category-title">
@@ -415,7 +430,6 @@
         </div>
       </div>
 
-      <!-- COACHES SECTION -->
       <div class="category-section" id="sec-coaches">
         <div class="category-header" onclick="toggleSection('sec-coaches')">
           <div class="category-title">
@@ -461,11 +475,14 @@
       </div>
     </div>
 
+    <!-- TOAST -->
+    <div id="toast" class="toast"></div>
+
     <script>
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 
-      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      const supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: { storage: window.sessionStorage }
       });
 
@@ -475,13 +492,8 @@
       
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
-      
-      // Temporary storage for Extras Selection
       let tempSelections = {}; 
 
-      // ==========================================
-      // RULES & LOGIC HELPERS
-      // ==========================================
       const RULES = {
         SPARRING: {
           KIDS: { time: "2 x 1 min", M: ["-20", "-25", "-30", "-35", "+35"], F: ["-20", "-25", "-30", "-35", "+35"] },
@@ -492,30 +504,30 @@
         AGE_ORDER: ["KIDS", "YOUTH", "OLDER_YOUTH", "JUNIORS"]
       };
 
-      function extractBeltNumber(belt) {
-        if (!belt) return -1;
-        const match = belt.match(/(\d+)/);
-        return match ? parseInt(match[1]) : -1;
+      function extractBeltNumber(beltStr) {
+        if (!beltStr) return -1;
+        const m = beltStr.match(/(\d+)/);
+        return m ? parseInt(m[1]) : -1;
       }
 
-      function getBeltGroup(belt) {
-        if (!belt) return "Unknown";
-        const beltUpper = belt.toUpperCase();
-        if (beltUpper.includes("DAN")) { 
-           const num = extractBeltNumber(belt);
+      function getBeltGroup(beltStr) {
+        if (!beltStr) return "Unknown";
+        const bu = beltStr.toUpperCase();
+        if (bu.includes("DAN")) { 
+           const num = extractBeltNumber(beltStr);
            if (num > 0) return `${num} Dan`;
            return "Dan Grades"; 
         }
-        const num = extractBeltNumber(belt);
+        const num = extractBeltNumber(beltStr);
         if (num === 10 || num === 9) return "10-9 Kup";
         if (num === 8 || num === 7) return "8-7 Kup";
         if (num === 6 || num === 5) return "6-5 Kup";
         if (num === 4 || num === 3) return "4-3 Kup";
         if (num === 2 || num === 1) return "2-1 Kup";
-        return belt;
+        return beltStr;
       }
 
-      function getAge(birth) {
+      function calcAge(birth) {
         if (!birth) return 0;
         const b = new Date(birth);
         if (isNaN(b.getTime())) return 0;
@@ -533,20 +545,20 @@
         return "OTHER";
       }
 
-      function getSparringWeightClass(ageGroup, gender, weight) {
-        if (!RULES.SPARRING[ageGroup]) return null;
-        const classes = RULES.SPARRING[ageGroup][gender];
+      function getSparringWeightClass(ageGrp, genderChar, weightVal) {
+        if (!RULES.SPARRING[ageGrp]) return null;
+        const classes = RULES.SPARRING[ageGrp][genderChar];
         if (!classes) return null;
         for (let i = 0; i < classes.length; i++) {
           const cls = classes[i];
           if (cls.startsWith("-")) {
             const upper = parseInt(cls.replace("-", ""));
             const lower = i === 0 ? 0 : parseInt(classes[i - 1].replace(/[^0-9]/g, ""));
-            if (weight > lower && weight <= upper) return cls;
+            if (weightVal > lower && weightVal <= upper) return cls;
           }
           if (cls.startsWith("+")) {
             const lower = parseInt(cls.replace("+", ""));
-            if (weight > lower) return cls;
+            if (weightVal > lower) return cls;
           }
         }
         return null;
@@ -558,51 +570,50 @@
         return null;
       }
 
-      function getHigherWeightClass(currentWc, ageGroup, gender) {
-        if (!RULES.SPARRING[ageGroup]) return null;
-        const classes = RULES.SPARRING[ageGroup][gender];
+      function getHigherWeightClass(currentWc, ageGrp, genderChar) {
+        if (!RULES.SPARRING[ageGrp]) return null;
+        const classes = RULES.SPARRING[ageGrp][genderChar];
         if (!classes) return null;
         const idx = classes.indexOf(currentWc);
         if (idx !== -1 && idx < classes.length - 1) return classes[idx + 1];
         return null;
       }
 
-      function getPersonCategories(person) {
-        const age = getAge(person.birthdate);
-        const ageGroup = getAgeGroup(age);
-        const genderChar = (person.gender || "").trim().toUpperCase().startsWith("M") ? "M" : "F";
+      function computePersonCategories(personObj) {
+        const age = calcAge(personObj.birthdate);
+        const ageGrp = getAgeGroup(age);
+        const gChar = (personObj.gender || "").trim().toUpperCase().startsWith("M") ? "M" : "F";
         
-        let sparringCat = "";
-        let sparringWc = null;
-        // Edge case check for invalid weight
-        if (person.sparring === "Yes" && person.weight > 0) {
-          sparringWc = getSparringWeightClass(ageGroup, genderChar, person.weight);
-          sparringCat = `${ageGroup} - ${sparringWc || "N/A"}kg`;
+        let sparCat = "";
+        let sparWc = null;
+        if (personObj.sparring === "Yes" && personObj.weight > 0) {
+          sparWc = getSparringWeightClass(ageGrp, gChar, personObj.weight);
+          sparCat = `${ageGrp} - ${sparWc || "N/A"}kg`;
         }
 
-        let patternCat = "";
-        if (person.patterns === "Yes") {
-          const beltGroup = getBeltGroup(person.belt);
-          patternCat = `${ageGroup} - ${beltGroup}`;
+        let patCat = "";
+        if (personObj.patterns === "Yes") {
+          const bGroup = getBeltGroup(personObj.belt);
+          patCat = `${ageGrp} - ${bGroup}`;
         }
 
-        return { sparringCat, sparringWc, patternCat, ageGroup, genderChar };
+        return { sparringCat: sparCat, sparringWc: sparWc, patternCat: patCat, ageGroup: ageGrp, genderChar: gChar };
       }
 
       // ==========================================
-      // AUTHENTICATION
+      // AUTH
       // ==========================================
       async function checkSession() {
-        const { data: { session } } = await client.auth.getSession();
+        const { data: { session } } = await supaClient.auth.getSession();
         handleAuthChange(session);
       }
-      client.auth.onAuthStateChange((event, session) => handleAuthChange(session));
+      supaClient.auth.onAuthStateChange((_evt, sess) => handleAuthChange(sess));
 
-      function handleAuthChange(session) {
-        if (session) {
+      function handleAuthChange(sess) {
+        if (sess) {
           authSection.classList.add('hidden');
           competitionSection.classList.remove('hidden');
-          loadAllData(session.user.id);
+          loadAllData(sess.user.id);
         } else {
           authSection.classList.remove('hidden');
           competitionSection.classList.add('hidden');
@@ -610,27 +621,36 @@
       }
 
       document.getElementById('signinBtn').addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        if(!email || !password) return showMessage("Please fill in all fields.", "error");
-        const { error } = await client.auth.signInWithPassword({ email, password });
-        if (error) showMessage(error.message, "error");
-        else showMessage("Signed in successfully!", "success");
+        const em = document.getElementById('email').value;
+        const pw = document.getElementById('password').value;
+        if(!em || !pw) return showToast("Please fill in all fields.", "error");
+        const { error } = await supaClient.auth.signInWithPassword({ email: em, password: pw });
+        if (error) showToast(error.message, "error");
+        else showToast("Signed in successfully!", "success");
       });
 
       document.getElementById('signupBtn').addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        if(!email || !password) return showMessage("Please fill in all fields.", "error");
-        const { error } = await client.auth.signUp({ email, password });
-        if (error) showMessage(error.message, "error");
-        else showMessage("Check email for confirmation link.", "success");
+        const em = document.getElementById('email').value;
+        const pw = document.getElementById('password').value;
+        if(!em || !pw) return showToast("Please fill in all fields.", "error");
+        const { error } = await supaClient.auth.signUp({ email: em, password: pw });
+        if (error) showToast(error.message, "error");
+        else showToast("Check email for confirmation link.", "success");
       });
 
-      function showMessage(msg, type) {
-        const el = document.getElementById('authMessage');
-        el.textContent = msg;
-        el.style.color = type === 'error' ? 'var(--accent-alert)' : 'var(--accent-secondary)';
+      document.getElementById('forgotBtn').addEventListener('click', async () => {
+        const em = document.getElementById('email').value;
+        if(!em) return showToast("Please enter your email.", "error");
+        const { error } = await supaClient.auth.resetPasswordForEmail(em);
+        if (error) showToast(error.message, "error");
+        else showToast("Password reset email sent.", "success");
+      });
+
+      function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `toast ${type} show`;
+        setTimeout(() => t.classList.remove('show'), 3000);
       }
 
       // ==========================================
@@ -638,19 +658,17 @@
       // ==========================================
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
-        
-        // RESET LOCAL STATE
         tempSelections = {};
 
-        const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id",1).single();
+        const { data: settings } = await supaClient.from("site_settings").select("tournament_date").eq("id",1).single();
         if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
         
         const [compRes, judgeRes, coachRes] = await Promise.all([
-          client.from("competitors").select("*").eq("user_id", userId),
-          client.from("judges").select("*").eq("user_id", userId),
-          client.from("coaches").select("*").eq("user_id", userId),
+          supaClient.from("competitors").select("*").eq("user_id", userId),
+          supaClient.from("judges").select("*").eq("user_id", userId),
+          supaClient.from("coaches").select("*").eq("user_id", userId),
         ]);
-        const { data: regData } = await client.from("final_registrations").select("*").eq("user_id", userId);
+        const { data: regData } = await supaClient.from("final_registrations").select("*").eq("user_id", userId);
         
         const regMap = new Map();
         if (regData) regData.forEach(r => regMap.set(String(r.entry_id), r));
@@ -679,7 +697,6 @@
           const personIdStr = String(person.id);
           const isRegistered = !!regMap.get(personIdStr);
           
-          // --- LEFT COLUMN (Not Registered) ---
           if (!isRegistered) {
             const card = document.createElement("div");
             card.className = "person-card";
@@ -690,8 +707,8 @@
             nameDiv.className = "card-name";
             nameDiv.textContent = person.name;
             const infoBtn = document.createElement("div");
-            infoBtn.className = "btn-info";
             infoBtn.innerHTML = '<i class="fas fa-info"></i>';
+            infoBtn.style.cssText = 'color:var(--accent-primary); cursor:pointer;';
             infoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
             
             headerDiv.appendChild(nameDiv);
@@ -707,17 +724,12 @@
 
             card.addEventListener("click", () => handleRegistrationClick(card, person, typeShort));
             leftContainer.appendChild(card);
-          } 
-          // --- RIGHT COLUMN (Registered) ---
-          else {
+          } else {
             const registration = regMap.get(personIdStr);
             const card = document.createElement("div");
             card.className = "person-card";
-            
-            // IMPORTANT: Store Registration ID on the DOM element
             card.setAttribute("data-reg-id", registration.id);
 
-            // Unregister Button (Top Right)
             const entriesList = registration.entry_data?.entries_list || [];
             if (entriesList.length > 1) {
                 const btnUnreg = document.createElement("div");
@@ -725,16 +737,15 @@
                 btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
                 btnUnreg.addEventListener("click", async (e) => {
                   e.stopPropagation();
-                  if(confirm(`Unregister ${person.name}?`)) {
-                    await client.from("final_registrations").delete().eq("id", registration.id);
-                    const { data: { session } } = await client.auth.getSession();
+                  if(confirm(`Remove ${person.name} completely?`)) {
+                    await supaClient.from("final_registrations").delete().eq("id", registration.id);
+                    const { data: { session } } = await supaClient.auth.getSession();
                     if(session) loadAllData(session.user.id);
                   }
                 });
                 card.appendChild(btnUnreg);
             }
 
-            // Header (Name)
             const headerDiv = document.createElement("div");
             headerDiv.className = "card-header-row";
             const nameDiv = document.createElement("div");
@@ -743,33 +754,48 @@
             headerDiv.appendChild(nameDiv);
             card.appendChild(headerDiv);
 
-            // Display saved categories from registration
             if (typeShort === 'comp') {
-              const savedList = registration.entry_data?.entries_list || [];
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
+              catDiv.id = `cat-display-${registration.id}`;
               
-              catDiv.innerHTML = savedList.map(entry => {
+              entriesList.forEach(entry => {
+                 const tagDiv = document.createElement("div");
+                 tagDiv.className = "cat-tag";
+                 
+                 const leftDiv = document.createElement("div");
+                 leftDiv.className = "cat-tag-left";
+                 
                  const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-                 const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-                 return `<div class="cat-tag ${color}"><i class="fas ${icon}"></i> ${entry.full_cat}</div>`;
-              }).join('');
+                 const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+                 
+                 leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat}`;
+                 
+                 const removeBtn = document.createElement("button");
+                 removeBtn.className = "btn-remove-cat";
+                 removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                 removeBtn.addEventListener("click", async (e) => {
+                   e.stopPropagation();
+                   await removeSingleCategory(registration.id, entry);
+                 });
+                 
+                 tagDiv.appendChild(leftDiv);
+                 tagDiv.appendChild(removeBtn);
+                 catDiv.appendChild(tagDiv);
+              });
 
               card.appendChild(catDiv);
             }
 
-            // --- BUTTON ACTIONS ROW ---
             if (typeShort === 'comp') {
                const actionsDiv = document.createElement("div");
                actionsDiv.className = "card-actions";
 
-               // 1. Edit Info Button
                const editInfoBtn = document.createElement("button");
                editInfoBtn.className = "btn btn-edit-info";
                editInfoBtn.innerHTML = '<i class="fas fa-user-edit"></i> Edit Info';
                editInfoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
 
-               // 2. Categories Button
                const catBtn = document.createElement("button");
                catBtn.className = "btn btn-categories";
                catBtn.innerHTML = '<i class="fas fa-list-ul"></i> Additional Categories';
@@ -780,7 +806,6 @@
                card.appendChild(actionsDiv);
             }
 
-            // EXTRAS PANEL (Only for Competitors)
             if (typeShort === 'comp') {
                const extrasPanel = createExtrasPanel(person, registration);
                card.appendChild(extrasPanel);
@@ -791,30 +816,50 @@
         });
       }
 
-      // --- CREATE EXTRAS PANEL (REGISTERED PEOPLE) ---
+      // ==========================================
+      // REMOVE SINGLE CATEGORY INSTANTLY
+      // ==========================================
+      async function removeSingleCategory(regId, entryToRemove) {
+        if (!confirm(`Remove "${entryToRemove.full_cat}"?`)) return;
+        
+        const { data: regData } = await supaClient.from("final_registrations").select("*").eq("id", regId).single();
+        if (!regData) return;
+
+        let currentList = regData.entry_data?.entries_list || [];
+        currentList = currentList.filter(e => 
+          !(e.discipline === entryToRemove.discipline && e.label === entryToRemove.label)
+        );
+
+        if (currentList.length === 0) {
+          await supaClient.from("final_registrations").delete().eq("id", regId);
+        } else {
+          await supaClient.from("final_registrations").update({
+            entry_data: { entries_list: currentList }
+          }).eq("id", regId);
+        }
+
+        const { data: { session } } = await supaClient.auth.getSession();
+        if (session) loadAllData(session.user.id);
+      }
+
+      // ==========================================
+      // CREATE EXTRAS PANEL
+      // ==========================================
       function createExtrasPanel(person, registration) {
         const panel = document.createElement("div");
         panel.className = "extra-options-panel";
         const regId = registration.id;
-        
-        // ✅ FIX 1 & 2: Initialize tempSelections FIRST
-        // Only initialize if it doesn't exist to preserve unsaved edits
-        if (!tempSelections[regId]) {
-          tempSelections[regId] = registration.entry_data?.entries_list 
-            ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) 
-            : [];
-        }
 
-        // ✅ THEN use it
-        const currentList = tempSelections[regId];
+        // ALWAYS load fresh from DB to avoid stale state
+        let currentList = registration.entry_data?.entries_list ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) : [];
+        tempSelections[regId] = currentList;
         
-        // ✅ THEN define isChecked using the fresh list
+        const { sparringCat, sparringWc, ageGroup, genderChar } = computePersonCategories(person);
+
         const isChecked = (discipline, label) => {
           return currentList.some(e => e.discipline === discipline && e.label === label);
         };
 
-        const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
-
         const createRow = (label, catName, key, discipline, checked = false) => {
           const row = document.createElement("div");
           row.className = "extra-row";
@@ -823,22 +868,19 @@
             <input type="checkbox" class="extra-checkbox" ${checked ? 'checked' : ''}>
           `;
           const checkbox = row.querySelector('input');
-          checkbox.addEventListener('click', (e) => {
+          checkbox.addEventListener('change', (e) => {
             e.stopPropagation();
-            // Pass the whole card reference so we can update the text under the name instantly
-            updateSelection(regId, person, discipline, label, catName, checkbox.checked);
+            const newChecked = checkbox.checked;
+            updateSelection(regId, person, discipline, label, catName, newChecked);
           });
           return row;
         };
 
-        // --- SPARRING (4 ROWS) ---
-        
-        // 1. Main Sparring
+        // SPARRING ROWS
         if (person.sparring === "Yes" && sparringCat) {
           panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isChecked("sparring", "Main")));
         }
 
-        // 2. Age + 1
         if (person.sparring === "Yes" && sparringCat) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
@@ -850,7 +892,6 @@
           }
         }
 
-        // 3. Weight + 1
         if (person.sparring === "Yes" && sparringWc) {
           const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
           if (nextW) {
@@ -859,16 +900,13 @@
           }
         }
 
-        // 4. Both + 1
         if (person.sparring === "Yes" && sparringWc) {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
             const nextAgBaseCat = getSparringWeightClass(nextAg, genderChar, person.weight);
-            
             if (nextAgBaseCat) {
                const nextAgClasses = RULES.SPARRING[nextAg][genderChar];
                const baseIdx = nextAgClasses.indexOf(nextAgBaseCat);
-               
                if (baseIdx !== -1 && baseIdx < nextAgClasses.length - 1) {
                   const bothUpCat = nextAgClasses[baseIdx + 1];
                   const labelFull = `${nextAg} - ${bothUpCat}kg`;
@@ -878,1231 +916,13 @@
           }
         }
 
-        // --- PATTERNS (2 ROWS) ---
-        
-        // 5. Main Patterns
-        if (person.patterns === "Yes" && patternCat) {
-          panel.appendChild(createRow("Patterns: Main", patternCat, "pat_main", "patterns", isChecked("patterns", "Main")));
-        }
-
-        // 6. Age + 1 Patterns
-        if (person.patterns === "Yes") {
-          const nextAg = getHigherAgeGroup(ageGroup);
-          if (nextAg) {
-            const beltGroup = getBeltGroup(person.belt);
-            const catUp = `${nextAg} - ${beltGroup}`;
-            panel.appendChild(createRow("Patterns: Age +1", catUp, "pat_age_up", "patterns", isChecked("patterns", "Age +1")));
-          }
-        }
-
-        // ✅ SAVE BUTTON WITH CLEANUP
-        const saveBtn = document.createElement("button");
-        saveBtn.className = "btn-save-panel";
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
-        
-        saveBtn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          const btn = e.currentTarget;
-          const originalText = btn.innerHTML;
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-          btn.disabled = true;
-
-          // ✅ CLEANUP: Prevent DB duplicates
-          const uniqueList = [];
-          const seen = new Set();
-
-          for (const e of tempSelections[regId]) {
-             const key = `${e.discipline}-${e.label}`;
-             if (!seen.has(key)) {
-                seen.add(key);
-                uniqueList.push(e);
-             }
-          }
-
-          const { error } = await client.from("final_registrations").update({
-            entry_data: { entries_list: uniqueList }
-          }).eq("id", regId);
-
-          if (error) {
-            alert("Error saving: " + error.message);
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-          } else {
-            // Success - reload data to ensure everything is synced cleanly
-            const { data: { session } } = await client.auth.getSession();
-            if(session) loadAllData(session.user.id);
-          }
-        });
-
-        panel.appendChild(saveBtn);
-        return panel;
-      }
-
-      // ==========================================
-      // LOCAL SELECTION UPDATE (Instant UI Only)
-      // ==========================================
-      function updateSelection(regId, person, discipline, label, catName, isChecked) {
-         
-         // RULE 1: You cannot check Extras without Main.
-         if (isChecked && label !== "Main") {
-            const currentList = tempSelections[regId];
-            const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
-            if (!hasMain) {
-               alert("You must select the Main category first.");
-               return; 
-            }
-         }
-
-         // RULE 2: You cannot uncheck Main if Extras are present.
-         if (!isChecked && label === "Main") {
-            const currentList = tempSelections[regId];
-            const hasExtras = currentList.some(e => e.label !== "Main");
-            if (hasExtras) {
-               alert("You cannot uncheck Main because additional categories are selected. Uncheck additional categories first.");
-               return; 
-            }
-         }
-
-         let currentList = tempSelections[regId];
-
-         // ✅ FIX: Enforce uniqueness by discipline + label
-         if (isChecked) {
-           // Remove any existing entry with same discipline + label
-           currentList = currentList.filter(
-             e => !(e.discipline === discipline && e.label === label)
-           );
-           
-           // Add updated one
-           currentList.push({ discipline, label, full_cat: catName });
-         } else {
-           // If unchecked, filter it out (Delete it)
-           currentList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
-         }
-         
-         tempSelections[regId] = currentList;
-
-         // 4. INSTANT UI UPDATE (Update text under name immediately)
-         const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
-         if (card) {
-            const catDiv = card.querySelector(".card-categories");
-            if (catDiv) {
-               catDiv.innerHTML = tempSelections[regId].map(entry => {
-                  const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-                  const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-                  return `<div class="cat-tag ${color}">
-                            <i class="fas ${icon}"></i> ${entry.full_cat}
-                          </div>`;
-               }).join('');
-            }
-         }
-      }
-
-      // ==========================================
-      // REGISTRATION LOGIC (Left Column)
-      // ==========================================
-      async function handleRegistrationClick(card, person, type) {
-        const { data: { session } } = await client.auth.getSession();
-        if(!session) return;
-
-        const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
-        
-        const entriesList = [];
-        
-        if (type === 'comp') {
-           if (person.sparring === "Yes" && sparringCat) {
-              entriesList.push({ discipline: "sparring", label: "Main", full_cat: sparringCat });
-           }
-           if (person.patterns === "Yes" && patternCat) {
-              entriesList.push({ discipline: "patterns", label: "Main", full_cat: patternCat });
-           }
-        }
-
-        const payload = {
-          user_id: session.user.id,
-          entry_type: type,
-          entry_id: String(person.id),
-          entry_data: {
-             entries_list: entriesList
-          }
-        };
-
-        loadingOverlay.style.display = "flex";
-        const { error } = await client.from("final_registrations").insert([payload]);
-        loadingOverlay.style.display = "none";
-
-        if (error) alert("Error registering: " + error.message);
-        else loadAllData(session.user.id);
-      }
-
-      // ==========================================
-      // UI HELPERS
-      // ==========================================
-      function toggleSection(sectionId) {
-        document.querySelectorAll(".split-content").forEach(el => el.classList.remove("open"));
-        document.querySelectorAll(".category-header i.fa-chevron-up").forEach(el => {
-            el.classList.remove("fa-chevron-up"); el.classList.add("fa-chevron-down");
-        });
-        const content = document.getElementById(`content-${sectionId}`);
-        const icon = document.getElementById(`icon-${sectionId}`);
-        if (!content.classList.contains("open")) {
-          content.classList.add("open");
-          icon.classList.remove("fa-chevron-down"); icon.classList.add("fa-chevron-up");
-        }
-      }
-
-      document.getElementById('catToggle').addEventListener('change', (e) => {
-        if(e.target.checked) document.body.classList.remove('hide-categories');
-        else document.body.classList.add('hide-categories');
-      });
-
-      // ==========================================
-      // MODAL & EDIT PROFILE
-      // ==========================================
-      function openPersonModal(personData, type, personId) {
-        currentEditingPerson = { id: personId, type: type, data: personData };
-        const modal = document.getElementById("infoModal");
-        const title = document.getElementById("modalPersonTitle");
-        const container = document.getElementById("modalStatsContainer");
-        const box = document.getElementById("infoModalBox");
-        box.classList.remove("editing");
-        container.innerHTML = "";
-        title.textContent = personData.name;
-
-        if (type === 'comp') {
-          createStatField(container, "Name", "name", personData.name);
-          createStatField(container, "Birth Date", "birthdate", personData.birthdate, "date");
-          createStatField(container, "Gender", "gender", personData.gender, "select", ["Male", "Female"]);
-          createStatField(container, "Belt", "belt", personData.belt, "belt-select");
-          createStatField(container, "Weight (kg)", "weight", personData.weight, "number");
-          createStatField(container, "Sparring", "sparring", personData.sparring, "select", ["Yes", "No"]);
-          createStatField(container, "Patterns", "patterns", personData.patterns, "select", ["Yes", "No"]);
-        } else if (type === 'judge' || type === 'coach') {
-          createStatField(container, "Name", "name", personData.name);
-          createStatField(container, "Belt", "belt", personData.belt, "belt-select");
-          createStatField(container, "Team", "team", personData.team);
-        }
-        modal.classList.add("active");
-      }
-
-      function closeModal() {
-        document.getElementById("infoModal").classList.remove("active");
-        currentEditingPerson = null;
-      }
-
-      function createStatField(container, label, key, value, inputType = "text", options = []) {
-        const wrapper = document.createElement("div");
-        if (label === "Weight (kg)" || label === "Name" || label === "Team") wrapper.className = "full-width";
-
-        const labelEl = document.createElement("label");
-        labelEl.className = "stat-label";
-        labelEl.textContent = label;
-        wrapper.appendChild(labelEl);
-        const valEl = document.createElement("div");
-        valEl.className = "stat-value";
-        valEl.id = `val-${key}`;
-        valEl.textContent = value || "-";
-        wrapper.appendChild(valEl);
-        const inpEl = document.createElement(inputType === "select" || inputType === "belt-select" ? "select" : "input");
-        inpEl.className = "stat-input";
-        inpEl.id = `inp-${key}`;
-        inpEl.dataset.key = key;
-        
-        if (inputType === "number") inpEl.type = "number";
-        if (inputType === "date") inpEl.type = "date";
-        if (inputType === "select") {
-          options.forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt; o.textContent = opt;
-            if (opt === value) o.selected = true;
-            inpEl.appendChild(o);
-          });
-        } else if (inputType === "belt-select") {
-          const belts = ["10 kup","9 kup","8 kup","7 kup","6 kup","5 kup","4 kup","3 kup","2 kup","1 kup","1 dan","2 dan","3 dan","4 dan","5 dan","6 dan"];
-          belts.forEach(b => {
-            const o = document.createElement("option");
-            o.value = b; o.textContent = b;
-            if (b === value) o.selected = true;
-            inpEl.appendChild(o);
-          });
-        } else {
-          inpEl.value = value;
-        }
-        wrapper.appendChild(inpEl);
-        container.appendChild(wrapper);
-      }
-
-      function toggleEditMode() {
-        document.getElementById("infoModalBox").classList.add("editing");
-      }
-
-      async function savePersonChanges() {
-        if (!currentEditingPerson) return;
-        const inputs = document.querySelectorAll(".stat-input");
-        const updateData = {};
-        inputs.forEach(inp => { updateData[inp.dataset.key] = inp.value; });
-        
-        if (!updateData.name || !updateData.belt) { alert("Name and Belt are required."); return; }
-        if (currentEditingPerson.type === 'comp' && (!updateData.weight || updateData.weight <= 0)) { alert("Weight is required and must be greater than 0."); return; }
-        
-        const btn = document.querySelector(".btn-save");
-        const originalText = btn.textContent;
-        btn.textContent = "Saving..."; btn.disabled = true;
-        
-        let tableName = "";
-        if (currentEditingPerson.type === 'comp') tableName = "competitors";
-        else if (currentEditingPerson.type === 'judge') tableName = "judges";
-        else if (currentEditingPerson.type === 'coach') tableName = "coaches";
-        
-        // Update person table
-        const { error } = await client.from(tableName).update(updateData).eq("id", currentEditingPerson.id);
-        if (error) {
-          alert("Error saving: " + error.message); 
-          btn.textContent = originalText; btn.disabled = false; 
-          return;
-        }
-
-        // Recalculate categories if critical fields changed
-        if (currentEditingPerson.type === 'comp') {
-           const weightChanged = (updateData.weight !== currentEditingPerson.data.weight);
-           const beltChanged = (updateData.belt !== currentEditingPerson.data.belt);
-           const birthChanged = (updateData.birthdate !== currentEditingPerson.data.birthdate);
-           const sparringPrefChanged = (updateData.sparring !== currentEditingPerson.data.sparring);
-           const patternPrefChanged = (updateData.patterns !== currentEditingPerson.data.patterns);
-
-           const newPersonData = { ...currentEditingPerson.data, ...updateData };
-           const newCats = getPersonCategories(newPersonData);
-
-           const { data: regData } = await client.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).single();
-
-           if (regData) {
-               let entriesList = regData.entry_data?.entries_list || [];
-
-               // 1. If preferences changed to "No", remove all entries for that discipline
-               if (sparringPrefChanged && updateData.sparring === "No") {
-                   entriesList = entriesList.filter(e => e.discipline !== "sparring");
-               }
-               if (patternPrefChanged && updateData.patterns === "No") {
-                   entriesList = entriesList.filter(e => e.discipline !== "patterns");
-               }
-
-               // 2. If Critical Calc Factors changed (Weight, Belt, Birth), 
-               // we MUST update stored strings to match reality.
-               if (weightChanged || birthChanged) {
-                  // Remove all sparring entries
-                  entriesList = entriesList.filter(e => e.discipline !== "sparring");
-                  // Re-add Main if Yes
-                  if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
-                     entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
-                  }
-                  // Note: User has to manually re-check Age+1 etc because logic is tricky
-               }
-               
-               if (beltChanged || birthChanged) {
-                  // Remove all pattern entries
-                  entriesList = entriesList.filter(e => e.discipline !== "patterns");
-                  // Re-add Main if Yes
-                  if (newPersonData.patterns === "Yes" && newCats.patternCat) {
-                     entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patternCat });
-                  }
-               }
-
-               // Update DB
-               await client.from("final_registrations").update({
-                  entry_data: { entries_list: entriesList }
-               }).eq("id", regData.id);
-           }
-        }
-
-        btn.textContent = originalText; btn.disabled = false;
-        closeModal();
-        const { data: { session } } = await client.auth.getSession();
-        if(session) loadAllData(session.user.id);
-      }
-
-      document.addEventListener("DOMContentLoaded", checkSession);
-    </script>
-  </body>
-</html><!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Team Registration</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style>
-      :root {
-        --bg-body: #0f172a;
-        --bg-panel: #1e293b;
-        --bg-card: #334155;
-        --text-main: #f1f5f9;
-        --text-muted: #94a3b8;
-        --accent-secondary: #10b981;
-        --accent-warning: #f59e0b;
-        --accent-primary: #3b82f6;
-        --accent-alert: #ef4444;
-        --radius-md: 12px;
-        --radius-lg: 20px;
-        --shadow: 0 4px 6 -1px rgba(0, 0, 0, 0.3);
-      }
-
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      .hidden { display: none !important; }
-
-      body {
-        font-family: "Segoe UI", Roboto, sans-serif;
-        background-color: var(--bg-body);
-        color: var(--text-main);
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      header {
-        background-color: var(--bg-panel);
-        padding: 1rem 2rem;
-        border-bottom: 1px solid rgba(255,255,255, 0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-      }
-
-      .header-left { display: flex; align-items: center; gap: 1rem; }
-      .header-right { display: flex; align-items: center; gap: 1rem; }
-
-      .back-link {
-        color: var(--text-muted);
-        text-decoration: none;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .back-link:hover { color: white; }
-
-      .cat-toggle-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        background: rgba(255,255,255,0.05);
-        padding: 5px 10px;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.1);
-      }
-      .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
-      .switch input { opacity: 0; width: 0; height: 0; }
-      .slider {
-        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #ccc; transition: .4s; border-radius: 20px;
-      }
-      .slider:before {
-        position: absolute; content: ""; height: 14px; width: 14px;
-        left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
-      }
-      input:checked + .slider { background-color: var(--accent-primary); }
-      input:checked + .slider:before { transform: translateX(14px); }
-
-      /* Auth Section */
-      .auth-container {
-        max-width: 400px;
-        margin: 3rem auto;
-        background: var(--bg-panel);
-        padding: 2rem;
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow);
-      }
-      .auth-title { text-align: center; margin-bottom: 1.5rem; color: var(--accent-primary); }
-      .form-group { margin-bottom: 1rem; }
-      .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; }
-      .form-input {
-        width: 100%; padding: 0.8rem;
-        background: var(--bg-body); border: 1px solid rgba(255,255,255,0.2);
-        border-radius: var(--radius-md); color: white;
-      }
-      .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 1.5rem; }
-      .btn-full { width: 100%; justify-content: center; }
-
-      /* Main Content */
-      main {
-        flex: 1;
-        padding: 2rem 1rem;
-        max-width: 1400px;
-        margin: 0 auto;
-        width: 100%;
-      }
-      h1 { margin-bottom: 1rem; font-size: 1.8rem; text-align: center; }
-
-      .category-section {
-        background-color: var(--bg-panel);
-        border: 1px solid rgba(255,255,255, 0.1);
-        border-radius: var(--radius-lg);
-        margin-bottom: 1.5rem;
-        overflow: hidden;
-      }
-      .category-header {
-        background: var(--bg-card);
-        padding: 1rem 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.2s;
-      }
-      .category-header:hover { background: #3f4e68; }
-      .category-title { font-weight: 700; font-size: 1.3rem; color: var(--text-main); display: flex; align-items: center; gap: 12px; }
-      .category-icon { color: var(--accent-primary); width: 24px; text-align: center; }
-
-      .split-content { display: none; border-top: 1px solid rgba(255,255,255, 0.1); }
-      .split-content.open { display: block; }
-      .split-grid {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
-        padding: 1.5rem; background-color: var(--bg-body); min-height: 100px;
-      }
-      .col-header { 
-        text-align: center; font-size: 0.9rem; font-weight: 700; 
-        margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; 
-        color: var(--text-muted); padding-bottom: 0.5rem; 
-        border-bottom: 1px solid rgba(255,255,255, 0.05); 
-      }
-
-      /* Person Card */
-      .person-card {
-        background-color: var(--bg-card); border: 2px solid transparent;
-        border-radius: var(--radius-md); padding: 1rem;
-        transition: all 0.2s ease;
-        position: relative; margin-bottom: 1rem;
-        display: flex; flex-direction: column; gap: 0.5rem;
-      }
-      
-      .col-left .person-card {
-        cursor: pointer;
-      }
-      .col-left .person-card:hover {
-        transform: translateY(-3px); border-color: var(--accent-primary);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      }
-
-      .col-right .person-card {
-        border-color: rgba(16, 185, 129, 0.3);
-        background-color: rgba(16, 185, 129, 0.05);
-      }
-      .col-right .person-card.expanded {
-        border-color: var(--accent-primary);
-        background-color: #2b3a50;
-      }
-
-      .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
-      .card-name { font-size: 1.1rem; font-weight: 700; padding-right: 35px; }
-
-      /* Buttons Container for Registered Cards */
-      .card-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 8px;
-      }
-      .btn-edit-info {
-        flex: 1;
-        justify-content: center;
-        background: rgba(255,255,255,0.1); 
-        color: var(--text-main);
-        border: 1px solid rgba(255,255,255,0.1);
-      }
-      .btn-edit-info:hover { background: rgba(255,255,255,0.2); }
-      
-      .btn-categories {
-        flex: 1;
-        justify-content: center;
-        background: var(--accent-secondary); 
-        color: white;
-        border: 1px solid transparent;
-      }
-      .btn-categories:hover { background: #059669; }
-
-      /* Category Tags */
-      .card-categories { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; margin-top: 4px; }
-      body.hide-categories .card-categories { display: none; }
-      .cat-tag { display: flex; align-items: center; gap: 6px; padding: 2px 0; color: var(--text-muted); }
-      .cat-tag i { width: 14px; text-align: center; }
-      .cat-spar { color: #a78bfa; }
-      .cat-pat { color: #fcd34d; }
-
-      .card-details { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
-
-      /* Extras Options Panel */
-      .extra-options-panel {
-        display: none;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px dashed rgba(255,255,255,0.2);
-        flex-direction: column;
-        gap: 8px;
-        animation: slideDown 0.3s ease;
-      }
-      .person-card.expanded .extra-options-panel { display: flex; }
-
-      @keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
-
-      .extra-row {
-        display: flex; align-items: center; justify-content: space-between;
-        font-size: 0.85rem; background: rgba(0,0,0,0.2);
-        padding: 6px 10px; border-radius: 6px;
-        border: 1px solid transparent; transition: 0.2s;
-      }
-      .extra-row:hover { border-color: rgba(59, 130, 246, 0.3); }
-      .extra-label { flex: 1; color: var(--text-muted); }
-      .extra-cat-name { color: var(--accent-primary); font-weight: 600; margin-left: 5px; }
-      .extra-checkbox { width: 18px; height: 18px; accent-color: var(--accent-secondary); cursor: pointer; }
-
-      /* Save Button Style inside Panel */
-      .btn-save-panel {
-        margin-top: 10px;
-        width: 100%;
-        background-color: var(--accent-primary);
-        color: white;
-        padding: 8px;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .btn-save-panel:hover { background-color: #2563eb; }
-      .btn-save-panel:disabled { background-color: var(--text-muted); cursor: not-allowed; }
-
-      /* Unregister Button */
-      .btn-unregister {
-        position: absolute; top: 5px; right: 5px;
-        background: rgba(239, 68, 68, 0.2); color: var(--accent-alert);
-        border: 1px solid var(--accent-alert); width: 26px; height: 26px;
-        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: 0.2s; z-index: 10;
-      }
-      .btn-unregister:hover { background: var(--accent-alert); color: white; }
-
-      /* Modal */
-      .modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.8); display: flex;
-        justify-content: center; align-items: center; z-index: 2000;
-        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        backdrop-filter: blur(5px);
-      }
-      .modal-overlay.active { opacity: 1; pointer-events: all; }
-      .modal-box {
-        background: var(--bg-panel); width: 90%; max-width: 600px;
-        border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-        transform: scale(0.9); transition: transform 0.3s ease;
-        display: flex; flex-direction: column; max-height: 90vh;
-      }
-      .modal-overlay.active .modal-box { transform: scale(1); }
-      .modal-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
-      .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--accent-primary); }
-      .modal-close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
-      .modal-close-btn:hover { color: white; }
-      .modal-body { padding: 2rem; overflow-y: auto; }
-      .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-      .full-width { grid-column: span 2; }
-      .stat-label { display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 0.5rem; }
-      .stat-value { font-size: 1.2rem; font-weight: 600; color: var(--text-main); padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid transparent; }
-      .stat-input { display: none; width: 100%; padding: 0.6rem; background: var(--bg-body); border: 1px solid var(--accent-primary); color: white; border-radius: 8px; font-size: 1.1rem; font-family: inherit; }
-      .modal-box.editing .stat-value { display: none; }
-      .modal-box.editing .stat-input { display: block; }
-      .modal-footer { padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; gap: 1rem; }
-      .btn-modal { padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
-      .btn-cancel { background: rgba(255,255,255,0.1); color: var(--text-main); }
-      .btn-cancel:hover { background: rgba(255,255,255,0.2); }
-      .btn-edit { background: var(--accent-warning); color: #1a1a1a; }
-      .btn-edit:hover { background: #d97706; }
-      .btn-save { background: var(--accent-secondary); color: white; display: none; }
-      .btn-save:hover { background: #059669; }
-      .modal-box.editing .btn-edit { display: none; }
-      .modal-box.editing .btn-save { display: inline-block; }
-
-      /* Loading */
-      .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; display: none; }
-      .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--accent-secondary); border-radius: 50%; animation: spin 1s infinite linear; }
-      @keyframes spin { 100% { transform: rotate(360deg); } }
-
-      .btn { padding: 0.6rem 1.2rem; border: none; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-      .btn-primary { background-color: var(--accent-primary); color: white; }
-      .btn-primary:hover { background-color: #2563eb; }
-      .btn-secondary { background-color: rgba(255, 255, 255, 0.1); color: var(--text-main); }
-      .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.2); }
-
-      @media (max-width: 768px) {
-        .split-grid { grid-template-columns: 1fr; gap: 0.5rem; }
-        .category-header { flex-direction: column; align-items: flex-start; gap: 5px; }
-        .stat-grid { grid-template-columns: 1fr; }
-        .full-width { grid-column: span 1; }
-        header { flex-direction: column; align-items: stretch; }
-        .header-right { flex-direction: column; }
-      }
-    </style>
-  </head>
-  <body> 
-    <header>
-      <div class="header-left">
-        <div class="logo" style="font-weight:bold; color:white; font-size:1.2rem;">Team Registration</div>
-        <a href="index.html" class="back-link">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          Back
-        </a>
-      </div>
-
-      <div class="header-right">
-        <div class="cat-toggle-container">
-          <i class="fas fa-tags"></i> Categories
-          <label class="switch">
-            <input type="checkbox" id="catToggle" checked>
-            <span class="slider"></span>
-          </label>
-        </div>
-                
-        <a href="register.html" class="btn btn-primary" id="addTeamLink">
-          <i class="fas fa-user-plus"></i> Add Person
-        </a>
-      </div>
-    </header>
-
-    <!-- AUTH SECTION -->
-    <div id="authSection" class="auth-container">
-      <h2 class="auth-title">Account Access</h2>
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="email" class="form-input" placeholder="Enter your email" />
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="password" class="form-input" placeholder="Enter your password" />
-      </div>
-      <div class="btn-group">
-        <button id="signinBtn" class="btn btn-primary btn-full">Sign In</button>
-        <button id="signupBtn" class="btn btn-secondary btn-full">Sign Up</button>
-        <button id="forgotBtn" class="btn btn-secondary btn-full" style="font-size:0.8rem; color:var(--text-muted)">Forgot Password?</button>
-      </div>
-      <div id="authMessage" style="margin-top:1rem; text-align:center; font-size:0.9rem;"></div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <main id="competitionSection" class="hidden">
-      <h1>Select Participants</h1>
-
-      <!-- COMPETITORS SECTION -->
-      <div class="category-section" id="sec-competitors">
-        <div class="category-header" onclick="toggleSection('sec-competitors')">
-          <div class="category-title">
-            <span class="category-icon"><i class="fas fa-users"></i></span>
-            Competitors
-          </div>
-          <div style="color: var(--text-muted);">
-            <i class="fas fa-chevron-down" id="icon-sec-competitors"></i>
-          </div>
-        </div>
-        <div class="split-content" id="content-sec-competitors">
-          <div class="split-grid">
-            <div class="col-left" id="comp-left">
-              <div class="col-header">Available to Register</div>
-            </div>
-            <div class="col-right" id="comp-right">
-              <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- JUDGES SECTION -->
-      <div class="category-section" id="sec-judges">
-        <div class="category-header" onclick="toggleSection('sec-judges')">
-          <div class="category-title">
-            <span class="category-icon"><i class="fas fa-gavel"></i></span>
-            Judges / Referees
-          </div>
-          <div style="color: var(--text-muted);">
-            <i class="fas fa-chevron-down" id="icon-sec-judges"></i>
-          </div>
-        </div>
-        <div class="split-content" id="content-sec-judges">
-          <div class="split-grid">
-            <div class="col-left" id="judge-left">
-              <div class="col-header">Available to Register</div>
-            </div>
-            <div class="col-right" id="judge-right">
-              <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- COACHES SECTION -->
-      <div class="category-section" id="sec-coaches">
-        <div class="category-header" onclick="toggleSection('sec-coaches')">
-          <div class="category-title">
-            <span class="category-icon"><i class="fas fa-chalkboard-teacher"></i></span>
-            Coaches
-          </div>
-          <div style="color: var(--text-muted);">
-            <i class="fas fa-chevron-down" id="icon-sec-coaches"></i>
-          </div>
-        </div>
-        <div class="split-content" id="content-sec-coaches">
-          <div class="split-grid">
-            <div class="col-left" id="coach-left">
-              <div class="col-header">Available to Register</div>
-            </div>
-            <div class="col-right" id="coach-right">
-              <div class="col-header" style="color: var(--accent-secondary)">Already Registered</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <div id="loadingOverlay" class="loading-overlay">
-      <div class="spinner"></div>
-    </div>
-
-    <!-- MODAL -->
-    <div id="infoModal" class="modal-overlay">
-      <div class="modal-box" id="infoModalBox">
-        <div class="modal-header">
-          <h3 class="modal-title" id="modalPersonTitle">Person Name</h3>
-          <button class="modal-close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div id="modalStatsContainer" class="stat-grid"></div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-modal btn-cancel" onclick="closeModal()">Close</button>
-          <button class="btn-modal btn-edit" onclick="toggleEditMode()">Edit Info</button>
-          <button class="btn-modal btn-save" onclick="savePersonChanges()">Save Changes</button>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
-
-      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: { storage: window.sessionStorage }
-      });
-
-      const authSection = document.getElementById("authSection");
-      const competitionSection = document.getElementById("competitionSection");
-      const loadingOverlay = document.getElementById("loadingOverlay");
-      
-      let currentEditingPerson = null;
-      let tournamentDate = new Date().toISOString().split('T')[0];
-      
-      // Temporary storage for Extras Selection
-      let tempSelections = {}; 
-
-      // ==========================================
-      // RULES & LOGIC HELPERS
-      // ==========================================
-      const RULES = {
-        SPARRING: {
-          KIDS: { time: "2 x 1 min", M: ["-20", "-25", "-30", "-35", "+35"], F: ["-20", "-25", "-30", "-35", "+35"] },
-          YOUTH: { time: "2 x 1.30 min", M: ["-25", "-30", "-35", "-40", "+40"], F: ["-25", "-30", "-35", "-40", "+40"] },
-          OLDER_YOUTH: { time: "2 x 1.30 min", M: ["-35", "-40", "-45", "-50", "-55", "-60", "+60"], F: ["-30", "-35", "-40", "-45", "-50", "-55", "+55"] },
-          JUNIORS: { time: "2 x 2 min", M: ["-45", "-50", "-55", "-60", "-65", "-70", "+70"], F: ["-40", "-45", "-50", "-55", "-60", "-65", "+65"] },
-        },
-        AGE_ORDER: ["KIDS", "YOUTH", "OLDER_YOUTH", "JUNIORS"]
-      };
-
-      function extractBeltNumber(belt) {
-        if (!belt) return -1;
-        const match = belt.match(/(\d+)/);
-        return match ? parseInt(match[1]) : -1;
-      }
-
-      function getBeltGroup(belt) {
-        if (!belt) return "Unknown";
-        const beltUpper = belt.toUpperCase();
-        if (beltUpper.includes("DAN")) { 
-           const num = extractBeltNumber(belt);
-           if (num > 0) return `${num} Dan`;
-           return "Dan Grades"; 
-        }
-        const num = extractBeltNumber(belt);
-        if (num === 10 || num === 9) return "10-9 Kup";
-        if (num === 8 || num === 7) return "8-7 Kup";
-        if (num === 6 || num === 5) return "6-5 Kup";
-        if (num === 4 || num === 3) return "4-3 Kup";
-        if (num === 2 || num === 1) return "2-1 Kup";
-        return belt;
-      }
-
-      function getAge(birth) {
-        if (!birth) return 0;
-        const b = new Date(birth);
-        if (isNaN(b.getTime())) return 0;
-        const today = tournamentDate ? new Date(tournamentDate) : new Date();
-        let age = today.getFullYear() - b.getFullYear();
-        if (today.getMonth() < b.getMonth() || (today.getMonth() === b.getMonth() && today.getDate() < b.getDate())) age--;
-        return age;
-      }
-
-      function getAgeGroup(age) {
-        if (age >= 6 && age <= 9) return "KIDS";
-        if (age >= 10 && age <= 11) return "YOUTH";
-        if (age >= 12 && age <= 13) return "OLDER_YOUTH";
-        if (age >= 14 && age <= 16) return "JUNIORS";
-        return "OTHER";
-      }
-
-      function getSparringWeightClass(ageGroup, gender, weight) {
-        if (!RULES.SPARRING[ageGroup]) return null;
-        const classes = RULES.SPARRING[ageGroup][gender];
-        if (!classes) return null;
-        for (let i = 0; i < classes.length; i++) {
-          const cls = classes[i];
-          if (cls.startsWith("-")) {
-            const upper = parseInt(cls.replace("-", ""));
-            const lower = i === 0 ? 0 : parseInt(classes[i - 1].replace(/[^0-9]/g, ""));
-            if (weight > lower && weight <= upper) return cls;
-          }
-          if (cls.startsWith("+")) {
-            const lower = parseInt(cls.replace("+", ""));
-            if (weight > lower) return cls;
-          }
-        }
-        return null;
-      }
-
-      function getHigherAgeGroup(currentAg) {
-        const idx = RULES.AGE_ORDER.indexOf(currentAg);
-        if (idx !== -1 && idx < RULES.AGE_ORDER.length - 1) return RULES.AGE_ORDER[idx + 1];
-        return null;
-      }
-
-      function getHigherWeightClass(currentWc, ageGroup, gender) {
-        if (!RULES.SPARRING[ageGroup]) return null;
-        const classes = RULES.SPARRING[ageGroup][gender];
-        if (!classes) return null;
-        const idx = classes.indexOf(currentWc);
-        if (idx !== -1 && idx < classes.length - 1) return classes[idx + 1];
-        return null;
-      }
-
-      function getPersonCategories(person) {
-        const age = getAge(person.birthdate);
-        const ageGroup = getAgeGroup(age);
-        const genderChar = (person.gender || "").trim().toUpperCase().startsWith("M") ? "M" : "F";
-        
-        let sparringCat = "";
-        let sparringWc = null;
-        // Edge case check for invalid weight
-        if (person.sparring === "Yes" && person.weight > 0) {
-          sparringWc = getSparringWeightClass(ageGroup, genderChar, person.weight);
-          sparringCat = `${ageGroup} - ${sparringWc || "N/A"}kg`;
-        }
-
-        let patternCat = "";
+        // PATTERNS ROWS
         if (person.patterns === "Yes") {
           const beltGroup = getBeltGroup(person.belt);
-          patternCat = `${ageGroup} - ${beltGroup}`;
+          const patCatMain = `${ageGroup} - ${beltGroup}`;
+          panel.appendChild(createRow("Patterns: Main", patCatMain, "pat_main", "patterns", isChecked("patterns", "Main")));
         }
 
-        return { sparringCat, sparringWc, patternCat, ageGroup, genderChar };
-      }
-
-      // ==========================================
-      // AUTHENTICATION
-      // ==========================================
-      async function checkSession() {
-        const { data: { session } } = await client.auth.getSession();
-        handleAuthChange(session);
-      }
-      client.auth.onAuthStateChange((event, session) => handleAuthChange(session));
-
-      function handleAuthChange(session) {
-        if (session) {
-          authSection.classList.add('hidden');
-          competitionSection.classList.remove('hidden');
-          loadAllData(session.user.id);
-        } else {
-          authSection.classList.remove('hidden');
-          competitionSection.classList.add('hidden');
-        }
-      }
-
-      document.getElementById('signinBtn').addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        if(!email || !password) return showMessage("Please fill in all fields.", "error");
-        const { error } = await client.auth.signInWithPassword({ email, password });
-        if (error) showMessage(error.message, "error");
-        else showMessage("Signed in successfully!", "success");
-      });
-
-      document.getElementById('signupBtn').addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        if(!email || !password) return showMessage("Please fill in all fields.", "error");
-        const { error } = await client.auth.signUp({ email, password });
-        if (error) showMessage(error.message, "error");
-        else showMessage("Check email for confirmation link.", "success");
-      });
-
-      function showMessage(msg, type) {
-        const el = document.getElementById('authMessage');
-        el.textContent = msg;
-        el.style.color = type === 'error' ? 'var(--accent-alert)' : 'var(--accent-secondary)';
-      }
-
-      // ==========================================
-      // DATA LOADING & RENDERING
-      // ==========================================
-      async function loadAllData(userId) {
-        loadingOverlay.style.display = "flex";
-        
-        // ✅ RESET LOCAL STATE
-        tempSelections = {};
-
-        const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id",1).single();
-        if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
-        
-        const [compRes, judgeRes, coachRes] = await Promise.all([
-          client.from("competitors").select("*").eq("user_id", userId),
-          client.from("judges").select("*").eq("user_id", userId),
-          client.from("coaches").select("*").eq("user_id", userId),
-        ]);
-        const { data: regData } = await client.from("final_registrations").select("*").eq("user_id", userId);
-        
-        const regMap = new Map();
-        if (regData) regData.forEach(r => regMap.set(String(r.entry_id), r));
-
-        renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
-        renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
-        renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], regMap);
-        
-        toggleSection("sec-competitors");
-        loadingOverlay.style.display = "none";
-      }
-
-      function renderSplitSection(typeShort, typeName, iconClass, data, regMap) {
-        const leftContainer = document.getElementById(`${typeShort}-left`);
-        const rightContainer = document.getElementById(`${typeShort}-right`);
-        leftContainer.innerHTML = ""; 
-        rightContainer.innerHTML = "";
-
-        if (data.length === 0) {
-          leftContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">No ${typeName.toLowerCase()} found.</div>`;
-          rightContainer.innerHTML = `<div style="color:var(--text-muted); font-style:italic; padding:1rem;">None registered yet.</div>`;
-          return;
-        }
-
-        data.forEach(person => {
-          const personIdStr = String(person.id);
-          const isRegistered = !!regMap.get(personIdStr);
-          
-          // --- LEFT COLUMN (Not Registered) ---
-          if (!isRegistered) {
-            const card = document.createElement("div");
-            card.className = "person-card";
-            
-            const headerDiv = document.createElement("div");
-            headerDiv.className = "card-header-row";
-            const nameDiv = document.createElement("div");
-            nameDiv.className = "card-name";
-            nameDiv.textContent = person.name;
-            const infoBtn = document.createElement("div");
-            infoBtn.className = "btn-info";
-            infoBtn.innerHTML = '<i class="fas fa-info"></i>';
-            infoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
-            
-            headerDiv.appendChild(nameDiv);
-            headerDiv.appendChild(infoBtn);
-            card.appendChild(headerDiv);
-
-            if (typeShort === 'comp') {
-              const details = document.createElement("div");
-              details.className = "card-details";
-              details.innerHTML = `<div><i class="fas fa-weight"></i> ${person.weight}kg</div>`;
-              card.appendChild(details);
-            }
-
-            card.addEventListener("click", () => handleRegistrationClick(card, person, typeShort));
-            leftContainer.appendChild(card);
-          } 
-          // --- RIGHT COLUMN (Registered) ---
-          else {
-            const registration = regMap.get(personIdStr);
-            const card = document.createElement("div");
-            card.className = "person-card";
-            
-            // IMPORTANT: Store Registration ID on the DOM element so we can find it later
-            card.setAttribute("data-reg-id", registration.id);
-
-            // Unregister Button (Top Right)
-            const entriesList = registration.entry_data?.entries_list || [];
-            if (entriesList.length > 1) {
-                const btnUnreg = document.createElement("div");
-                btnUnreg.className = "btn-unregister";
-                btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
-                btnUnreg.addEventListener("click", async (e) => {
-                  e.stopPropagation();
-                  if(confirm(`Unregister ${person.name}?`)) {
-                    await client.from("final_registrations").delete().eq("id", registration.id);
-                    const { data: { session } } = await client.auth.getSession();
-                    if(session) loadAllData(session.user.id);
-                  }
-                });
-                card.appendChild(btnUnreg);
-            }
-
-            // Header (Name)
-            const headerDiv = document.createElement("div");
-            headerDiv.className = "card-header-row";
-            const nameDiv = document.createElement("div");
-            nameDiv.className = "card-name";
-            nameDiv.textContent = person.name;
-            headerDiv.appendChild(nameDiv);
-            card.appendChild(headerDiv);
-
-            // Display saved categories from registration
-            if (typeShort === 'comp') {
-              const savedList = registration.entry_data?.entries_list || [];
-              const catDiv = document.createElement("div");
-              catDiv.className = "card-categories";
-              
-              // Use helper to generate HTML
-              catDiv.innerHTML = savedList.map(entry => {
-                 const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-                 const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-                 return `<div class="cat-tag ${color}"><i class="fas ${icon}"></i> ${entry.full_cat}</div>`;
-              }).join('');
-
-              card.appendChild(catDiv);
-            }
-
-            // --- BUTTON ACTIONS ROW ---
-            if (typeShort === 'comp') {
-               const actionsDiv = document.createElement("div");
-               actionsDiv.className = "card-actions";
-
-               // 1. Edit Info Button
-               const editInfoBtn = document.createElement("button");
-               editInfoBtn.className = "btn btn-edit-info";
-               editInfoBtn.innerHTML = '<i class="fas fa-user-edit"></i> Edit Info';
-               editInfoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
-
-               // 2. Categories Button
-               const catBtn = document.createElement("button");
-               catBtn.className = "btn btn-categories";
-               catBtn.innerHTML = '<i class="fas fa-list-ul"></i> Additional Categories';
-               catBtn.addEventListener("click", (e) => { e.stopPropagation(); card.classList.toggle('expanded'); });
-
-               actionsDiv.appendChild(editInfoBtn);
-               actionsDiv.appendChild(catBtn);
-               card.appendChild(actionsDiv);
-            }
-
-            // EXTRAS PANEL (Only for Competitors)
-            if (typeShort === 'comp') {
-               const extrasPanel = createExtrasPanel(person, registration);
-               card.appendChild(extrasPanel);
-            }
-
-            rightContainer.appendChild(card);
-          }
-        });
-      }
-
-      // --- CREATE EXTRAS PANEL (REGISTERED PEOPLE) ---
-      function createExtrasPanel(person, registration) {
-        const panel = document.createElement("div");
-        panel.className = "extra-options-panel";
-        const regId = registration.id;
-        
-        // ✅ FIX 2: Force sync with DB. Overwrites local state to ensure checkboxes match DB.
-        tempSelections[regId] = registration.entry_data?.entries_list 
-          ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) 
-          : [];
-
-        const currentList = tempSelections[regId];
-        const isChecked = (discipline, label) => currentList.some(e => e.discipline === discipline && e.label === label);
-
-        const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
-
-        const createRow = (label, catName, key, discipline, checked = false) => {
-          const row = document.createElement("div");
-          row.className = "extra-row";
-          row.innerHTML = `
-            <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
-            <input type="checkbox" class="extra-checkbox" ${checked ? 'checked' : ''}>
-          `;
-          const checkbox = row.querySelector('input');
-          checkbox.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Pass the whole card reference so we can update the text under the name instantly
-            updateSelection(regId, person, discipline, label, catName, checkbox.checked);
-          });
-          return row;
-        };
-
-        // --- SPARRING (4 ROWS) ---
-        
-        // 1. Main Sparring
-        if (person.sparring === "Yes" && sparringCat) {
-          panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isChecked("sparring", "Main")));
-        }
-
-        // 2. Age + 1
-        if (person.sparring === "Yes" && sparringCat) {
-          const nextAg = getHigherAgeGroup(ageGroup);
-          if (nextAg) {
-            const nextAgWC = getSparringWeightClass(nextAg, genderChar, person.weight);
-            if (nextAgWC) {
-              const catUp = `${nextAg} - ${nextAgWC}kg`;
-              panel.appendChild(createRow("Sparring: Age +1", catUp, "spar_age_up", "sparring", isChecked("sparring", "Age +1")));
-            }
-          }
-        }
-
-        // 3. Weight + 1
-        if (person.sparring === "Yes" && sparringWc) {
-          const nextW = getHigherWeightClass(sparringWc, ageGroup, genderChar);
-          if (nextW) {
-            const catUp = `${ageGroup} - ${nextW}kg`;
-            panel.appendChild(createRow("Sparring: Weight +1", catUp, "spar_weight_up", "sparring", isChecked("sparring", "Weight +1")));
-          }
-        }
-
-        // 4. Both + 1
-        if (person.sparring === "Yes" && sparringWc) {
-          const nextAg = getHigherAgeGroup(ageGroup);
-          if (nextAg) {
-            const nextAgBaseCat = getSparringWeightClass(nextAg, genderChar, person.weight);
-            
-            if (nextAgBaseCat) {
-               const nextAgClasses = RULES.SPARRING[nextAg][genderChar];
-               const baseIdx = nextAgClasses.indexOf(nextAgBaseCat);
-               
-               if (baseIdx !== -1 && baseIdx < nextAgClasses.length - 1) {
-                  const bothUpCat = nextAgClasses[baseIdx + 1];
-                  const labelFull = `${nextAg} - ${bothUpCat}kg`;
-                  panel.appendChild(createRow("Sparring: Both +1", labelFull, "spar_both_up", "sparring", isChecked("sparring", "Both +1")));
-               }
-            }
-          }
-        }
-
-        // --- PATTERNS (2 ROWS) ---
-        
-        // 5. Main Patterns
-        if (person.patterns === "Yes" && patternCat) {
-          panel.appendChild(createRow("Patterns: Main", patternCat, "pat_main", "patterns", isChecked("patterns", "Main")));
-        }
-
-        // 6. Age + 1 Patterns
         if (person.patterns === "Yes") {
           const nextAg = getHigherAgeGroup(ageGroup);
           if (nextAg) {
@@ -2112,7 +932,6 @@
           }
         }
 
-        // ✅ SAVE BUTTON WITH CLEANUP
         const saveBtn = document.createElement("button");
         saveBtn.className = "btn-save-panel";
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
@@ -2124,29 +943,27 @@
           btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
           btn.disabled = true;
 
-          // ✅ FIX 3: Prevent DB duplicates
           const uniqueList = [];
           const seen = new Set();
-
-          for (const e of tempSelections[regId]) {
-             const key = `${e.discipline}-${e.label}`;
-             if (!seen.has(key)) {
-                seen.add(key);
-                uniqueList.push(e);
+          for (const ent of tempSelections[regId]) {
+             const sk = `${ent.discipline}-${ent.label}`;
+             if (!seen.has(sk)) {
+                seen.add(sk);
+                uniqueList.push(ent);
              }
           }
 
-          const { error } = await client.from("final_registrations").update({
+          const { error } = await supaClient.from("final_registrations").update({
             entry_data: { entries_list: uniqueList }
           }).eq("id", regId);
 
           if (error) {
-            alert("Error saving: " + error.message);
+            showToast("Error saving: " + error.message, "error");
             btn.innerHTML = originalText;
             btn.disabled = false;
           } else {
-            // Success - reload data to ensure everything is synced cleanly
-            const { data: { session } } = await client.auth.getSession();
+            showToast("Categories saved!", "success");
+            const { data: { session } } = await supaClient.auth.getSession();
             if(session) loadAllData(session.user.id);
           }
         });
@@ -2156,73 +973,90 @@
       }
 
       // ==========================================
-      // LOCAL SELECTION UPDATE (Instant UI Only)
+      // LOCAL SELECTION UPDATE
       // ==========================================
-      function updateSelection(regId, person, discipline, label, catName, isChecked) {
-         
-         // RULE 1: You cannot check Extras without Main.
+      function updateSelection(regId, personObj, discipline, label, catName, isChecked) {
          if (isChecked && label !== "Main") {
-            const currentList = tempSelections[regId];
-            const hasMain = currentList.some(e => e.discipline === discipline && e.label === "Main");
+            const list = tempSelections[regId];
+            const hasMain = list.some(e => e.discipline === discipline && e.label === "Main");
             if (!hasMain) {
-               alert("You must select the Main category first.");
+               showToast("You must select the Main category first.", "error");
+               const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
+               if(card) {
+                 const cb = card.querySelector(`input[onclick*="${label}"], .extra-row:has(span:contains("${label}")) input`);
+                 if(cb) cb.checked = false;
+               }
                return; 
             }
          }
 
-         // RULE 2: You cannot uncheck Main if Extras are present.
          if (!isChecked && label === "Main") {
-            const currentList = tempSelections[regId];
-            const hasExtras = currentList.some(e => e.label !== "Main");
+            const list = tempSelections[regId];
+            const hasExtras = list.some(e => e.label !== "Main");
             if (hasExtras) {
-               alert("You cannot uncheck Main because additional categories are selected. Uncheck additional categories first.");
+               showToast("Uncheck additional categories first.", "error");
+               const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
+               if(card) {
+                 const rows = card.querySelectorAll('.extra-row');
+                 rows.forEach(r => {
+                   if(r.querySelector('input').checked && !r.querySelector('span').textContent.includes("Main")) {
+                     r.querySelector('input').checked = false;
+                   }
+                 });
+               }
                return; 
             }
          }
 
-         let currentList = tempSelections[regId];
+         let list = tempSelections[regId];
+         list = list.filter(e => !(e.discipline === discipline && e.label === label));
 
-         // ✅ FIX 1: Enforce uniqueness by discipline + label
          if (isChecked) {
-           // Remove any existing entry with same discipline + label
-           currentList = currentList.filter(
-             e => !(e.discipline === discipline && e.label === label)
-           );
-           
-           // Add updated one
-           currentList.push({ discipline, label, full_cat: catName });
-         } else {
-           // If unchecked, filter it out (Delete it)
-           currentList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
+           list.push({ discipline, label, full_cat: catName });
          }
          
-         tempSelections[regId] = currentList;
+         tempSelections[regId] = list;
 
-         // 4. INSTANT UI UPDATE (Update text under name immediately)
+         // Update display under name immediately
          const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
          if (card) {
             const catDiv = card.querySelector(".card-categories");
             if (catDiv) {
-               catDiv.innerHTML = tempSelections[regId].map(entry => {
+               catDiv.innerHTML = "";
+               tempSelections[regId].forEach(entry => {
+                  const tagDiv = document.createElement("div");
+                  tagDiv.className = "cat-tag";
+                  
+                  const leftDiv = document.createElement("div");
+                  leftDiv.className = "cat-tag-left";
                   const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-                  const color = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-                  return `<div class="cat-tag ${color}">
-                            <i class="fas ${icon}"></i> ${entry.full_cat}
-                          </div>`;
-               }).join('');
+                  const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+                  leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat}`;
+                  
+                  const removeBtn = document.createElement("button");
+                  removeBtn.className = "btn-remove-cat";
+                  removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                  removeBtn.addEventListener("click", async (e) => {
+                    e.stopPropagation();
+                    await removeSingleCategory(regId, entry);
+                  });
+                  
+                  tagDiv.appendChild(leftDiv);
+                  tagDiv.appendChild(removeBtn);
+                  catDiv.appendChild(tagDiv);
+               });
             }
          }
       }
 
       // ==========================================
-      // REGISTRATION LOGIC (Left Column)
+      // REGISTRATION
       // ==========================================
       async function handleRegistrationClick(card, person, type) {
-        const { data: { session } } = await client.auth.getSession();
+        const { data: { session } } = await supaClient.auth.getSession();
         if(!session) return;
 
-        const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
-        
+        const { sparringCat, patternCat } = computePersonCategories(person);
         const entriesList = [];
         
         if (type === 'comp') {
@@ -2238,17 +1072,18 @@
           user_id: session.user.id,
           entry_type: type,
           entry_id: String(person.id),
-          entry_data: {
-             entries_list: entriesList
-          }
+          entry_data: { entries_list: entriesList }
         };
 
         loadingOverlay.style.display = "flex";
-        const { error } = await client.from("final_registrations").insert([payload]);
+        const { error } = await supaClient.from("final_registrations").insert([payload]);
         loadingOverlay.style.display = "none";
 
-        if (error) alert("Error registering: " + error.message);
-        else loadAllData(session.user.id);
+        if (error) showToast("Error registering: " + error.message, "error");
+        else {
+          showToast(`${person.name} registered!`, "success");
+          loadAllData(session.user.id);
+        }
       }
 
       // ==========================================
@@ -2273,7 +1108,7 @@
       });
 
       // ==========================================
-      // MODAL & EDIT PROFILE
+      // MODAL
       // ==========================================
       function openPersonModal(personData, type, personId) {
         currentEditingPerson = { id: personId, type: type, data: personData };
@@ -2293,7 +1128,7 @@
           createStatField(container, "Weight (kg)", "weight", personData.weight, "number");
           createStatField(container, "Sparring", "sparring", personData.sparring, "select", ["Yes", "No"]);
           createStatField(container, "Patterns", "patterns", personData.patterns, "select", ["Yes", "No"]);
-        } else if (type === 'judge' || type === 'coach') {
+        } else {
           createStatField(container, "Name", "name", personData.name);
           createStatField(container, "Belt", "belt", personData.belt, "belt-select");
           createStatField(container, "Team", "team", personData.team);
@@ -2314,11 +1149,13 @@
         labelEl.className = "stat-label";
         labelEl.textContent = label;
         wrapper.appendChild(labelEl);
+        
         const valEl = document.createElement("div");
         valEl.className = "stat-value";
         valEl.id = `val-${key}`;
         valEl.textContent = value || "-";
         wrapper.appendChild(valEl);
+        
         const inpEl = document.createElement(inputType === "select" || inputType === "belt-select" ? "select" : "input");
         inpEl.className = "stat-input";
         inpEl.id = `inp-${key}`;
@@ -2358,73 +1195,49 @@
         const updateData = {};
         inputs.forEach(inp => { updateData[inp.dataset.key] = inp.value; });
         
-        if (!updateData.name || !updateData.belt) { alert("Name and Belt are required."); return; }
-        if (currentEditingPerson.type === 'comp' && (!updateData.weight || updateData.weight <= 0)) { alert("Weight is required and must be greater than 0."); return; }
+        if (!updateData.name || !updateData.belt) { showToast("Name and Belt are required.", "error"); return; }
+        if (currentEditingPerson.type === 'comp' && (!updateData.weight || updateData.weight <= 0)) { showToast("Weight is required.", "error"); return; }
         
         const btn = document.querySelector(".btn-save");
         const originalText = btn.textContent;
         btn.textContent = "Saving..."; btn.disabled = true;
         
-        let tableName = "";
-        if (currentEditingPerson.type === 'comp') tableName = "competitors";
-        else if (currentEditingPerson.type === 'judge') tableName = "judges";
-        else if (currentEditingPerson.type === 'coach') tableName = "coaches";
+        let tableName = currentEditingPerson.type === 'comp' ? "competitors" : currentEditingPerson.type === 'judge' ? "judges" : "coaches";
         
-        // Update person table
-        const { error } = await client.from(tableName).update(updateData).eq("id", currentEditingPerson.id);
+        const { error } = await supaClient.from(tableName).update(updateData).eq("id", currentEditingPerson.id);
         if (error) {
-          alert("Error saving: " + error.message); 
+          showToast("Error saving: " + error.message, "error"); 
           btn.textContent = originalText; btn.disabled = false; 
           return;
         }
 
-        // Recalculate categories if critical fields changed
         if (currentEditingPerson.type === 'comp') {
-           const weightChanged = (updateData.weight !== currentEditingPerson.data.weight);
-           const beltChanged = (updateData.belt !== currentEditingPerson.data.belt);
-           const birthChanged = (updateData.birthdate !== currentEditingPerson.data.birthdate);
-           const sparringPrefChanged = (updateData.sparring !== currentEditingPerson.data.sparring);
-           const patternPrefChanged = (updateData.patterns !== currentEditingPerson.data.patterns);
-
            const newPersonData = { ...currentEditingPerson.data, ...updateData };
-           const newCats = getPersonCategories(newPersonData);
+           const newCats = computePersonCategories(newPersonData);
 
-           const { data: regData } = await client.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).single();
+           const { data: regData } = await supaClient.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).single();
 
            if (regData) {
                let entriesList = regData.entry_data?.entries_list || [];
 
-               // 1. If preferences changed to "No", remove all entries for that discipline
-               if (sparringPrefChanged && updateData.sparring === "No") {
-                   entriesList = entriesList.filter(e => e.discipline !== "sparring");
-               }
-               if (patternPrefChanged && updateData.patterns === "No") {
-                   entriesList = entriesList.filter(e => e.discipline !== "patterns");
-               }
+               if (updateData.sparring === "No") entriesList = entriesList.filter(e => e.discipline !== "sparring");
+               if (updateData.patterns === "No") entriesList = entriesList.filter(e => e.discipline !== "patterns");
 
-               // 2. If Critical Calc Factors changed (Weight, Belt, Birth), 
-               // we MUST update stored strings to match reality.
-               if (weightChanged || birthChanged) {
-                  // Remove all sparring entries
+               if (updateData.weight !== currentEditingPerson.data.weight || updateData.birthdate !== currentEditingPerson.data.birthdate) {
                   entriesList = entriesList.filter(e => e.discipline !== "sparring");
-                  // Re-add Main if Yes
                   if (newPersonData.sparring === "Yes" && newCats.sparringCat) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparringCat });
                   }
-                  // Note: User has to manually re-check Age+1 etc because logic is tricky
                }
                
-               if (beltChanged || birthChanged) {
-                  // Remove all pattern entries
+               if (updateData.belt !== currentEditingPerson.data.belt || updateData.birthdate !== currentEditingPerson.data.birthdate) {
                   entriesList = entriesList.filter(e => e.discipline !== "patterns");
-                  // Re-add Main if Yes
                   if (newPersonData.patterns === "Yes" && newCats.patternCat) {
                      entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patternCat });
                   }
                }
 
-               // Update DB
-               await client.from("final_registrations").update({
+               await supaClient.from("final_registrations").update({
                   entry_data: { entries_list: entriesList }
                }).eq("id", regData.id);
            }
@@ -2432,7 +1245,7 @@
 
         btn.textContent = originalText; btn.disabled = false;
         closeModal();
-        const { data: { session } } = await client.auth.getSession();
+        const { data: { session } } = await supaClient.auth.getSession();
         if(session) loadAllData(session.user.id);
       }
 
@@ -2440,3 +1253,4 @@
     </script>
   </body>
 </html>
+
