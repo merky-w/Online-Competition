@@ -638,6 +638,11 @@
       // ==========================================
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
+        
+        // ✅ FIX 1: RESET LOCAL STATE
+        // This clears the memory so that fresh DB data is used for initialization.
+        tempSelections = {};
+
         const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id",1).single();
         if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
         
@@ -803,7 +808,9 @@
             : [];
         }
 
-        const currentList = tempSelections[regId];
+        // ✅ FIX 2: Safety check ensures currentList is always an array
+        const currentList = tempSelections[regId] || [];
+        
         const isChecked = (discipline, label) => currentList.some(e => e.discipline === discipline && e.label === label);
 
         const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
