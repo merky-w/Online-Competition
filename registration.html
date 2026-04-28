@@ -639,8 +639,7 @@
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
         
-        // ✅ FIX 1: RESET LOCAL STATE
-        // This clears the memory so that fresh DB data is used for initialization.
+        // ✅ RESET LOCAL STATE
         tempSelections = {};
 
         const { data: settings } = await client.from("site_settings").select("tournament_date").eq("id",1).single();
@@ -799,18 +798,12 @@
         panel.className = "extra-options-panel";
         const regId = registration.id;
         
-        // 🔥 FIX: Only initialize tempSelections ONCE. 
-        // If it already exists, it means the user has toggled checkboxes locally but not saved yet.
-        // We DO NOT want to overwrite their changes with the old DB data.
-        if (!tempSelections[regId]) {
-          tempSelections[regId] = registration.entry_data?.entries_list 
-            ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) 
-            : [];
-        }
+        // ✅ FIX 2: Force sync with DB. Overwrites local state to ensure checkboxes match DB.
+        tempSelections[regId] = registration.entry_data?.entries_list 
+          ? JSON.parse(JSON.stringify(registration.entry_data.entries_list)) 
+          : [];
 
-        // ✅ FIX 2: Safety check ensures currentList is always an array
-        const currentList = tempSelections[regId] || [];
-        
+        const currentList = tempSelections[regId];
         const isChecked = (discipline, label) => currentList.some(e => e.discipline === discipline && e.label === label);
 
         const { sparringCat, sparringWc, patternCat, ageGroup, genderChar } = getPersonCategories(person);
@@ -895,7 +888,7 @@
           }
         }
 
-        // ✅ NEW SAVE BUTTON
+        // ✅ SAVE BUTTON WITH CLEANUP
         const saveBtn = document.createElement("button");
         saveBtn.className = "btn-save-panel";
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
@@ -907,8 +900,20 @@
           btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
           btn.disabled = true;
 
+          // ✅ FIX 3: Prevent DB duplicates
+          const uniqueList = [];
+          const seen = new Set();
+
+          for (const e of tempSelections[regId]) {
+             const key = `${e.discipline}-${e.label}`;
+             if (!seen.has(key)) {
+                seen.add(key);
+                uniqueList.push(e);
+             }
+          }
+
           const { error } = await client.from("final_registrations").update({
-            entry_data: { entries_list: tempSelections[regId] }
+            entry_data: { entries_list: uniqueList }
           }).eq("id", regId);
 
           if (error) {
@@ -953,12 +958,15 @@
 
          let currentList = tempSelections[regId];
 
-         // 3. Update the list locally
+         // ✅ FIX 1: Enforce uniqueness by discipline + label
          if (isChecked) {
-           const exists = currentList.some(e => e.discipline === discipline && e.label === label);
-           if (!exists) {
-              currentList.push({ discipline, label, full_cat: catName });
-           }
+           // Remove any existing entry with same discipline + label
+           currentList = currentList.filter(
+             e => !(e.discipline === discipline && e.label === label)
+           );
+           
+           // Add updated one
+           currentList.push({ discipline, label, full_cat: catName });
          } else {
            // If unchecked, filter it out (Delete it)
            currentList = currentList.filter(e => !(e.discipline === discipline && e.label === label));
@@ -966,7 +974,7 @@
          
          tempSelections[regId] = currentList;
 
-         // ✅ 4. INSTANT UI UPDATE (Update text under name immediately)
+         // 4. INSTANT UI UPDATE (Update text under name immediately)
          const card = document.querySelector(`.person-card[data-reg-id="${regId}"]`);
          if (card) {
             const catDiv = card.querySelector(".card-categories");
@@ -980,8 +988,6 @@
                }).join('');
             }
          }
-         
-         // ❌ NO DB SAVE HERE - Removed as requested
       }
 
       // ==========================================
