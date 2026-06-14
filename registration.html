@@ -495,9 +495,8 @@
       
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
-      // TEMP STORAGE: This keeps the UI state in sync before saving to DB
-      // Structure: { regId: [ { discipline, label, full_cat }, ... ] }
       let tempSelections = {}; 
+      let currentCategoryCounts = {};
 
       const RULES = {
         SPARRING: {
@@ -663,20 +662,30 @@
       // ==========================================
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
-        tempSelections = {}; // Reset on load
+        tempSelections = {}; 
 
         const { data: settings } = await supaClient.from("site_settings").select("tournament_date").eq("id",1).single();
         if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
         
-        const [compRes, judgeRes, coachRes] = await Promise.all([
+        // Optimized: Fetch everything in parallel, including the new category_counts view
+        const [compRes, judgeRes, coachRes, countsRes, regRes] = await Promise.all([
           supaClient.from("competitors").select("*").eq("user_id", userId),
           supaClient.from("judges").select("*").eq("user_id", userId),
           supaClient.from("coaches").select("*").eq("user_id", userId),
+          supaClient.from("category_counts").select("category_name, competitor_count"),
+          supaClient.from("final_registrations").select("*").eq("user_id", userId)
         ]);
-        const { data: regData } = await supaClient.from("final_registrations").select("*").eq("user_id", userId);
-        
+
+        // Populate global counts map
+        currentCategoryCounts = {};
+        if (countsRes.data) {
+          countsRes.data.forEach(c => {
+            currentCategoryCounts[c.category_name] = c.competitor_count;
+          });
+        }
+
         const regMap = new Map();
-        if (regData) regData.forEach(r => regMap.set(String(r.entry_id), r));
+        if (regRes.data) regRes.data.forEach(r => regMap.set(String(r.entry_id), r));
 
         renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
         renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
@@ -743,8 +752,8 @@
                 btnUnreg.addEventListener("click", async (e) => {
                   e.stopPropagation();
                   if(confirm(`Remove ${person.name} completely from registration?`)) {
-                    await supaClient.from("final_registrations").delete().eq("id", registration.id);
                     const { data: { session } } = await supaClient.auth.getSession();
+                    await supaClient.from("final_registrations").delete().eq("id", registration.id).eq("user_id", session.user.id);
                     if(session) loadAllData(session.user.id);
                   }
                 });
@@ -773,8 +782,9 @@
                  
                  const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
                  const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+                 const count = currentCategoryCounts[entry.full_cat] || 0;
                  
-                 leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat}`;
+                 leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat} <span style="opacity:0.7; font-size:0.75rem;">(${count})</span>`;
                  
                  const removeBtn = document.createElement("button");
                  removeBtn.className = "btn-remove-cat";
@@ -827,28 +837,25 @@
       async function removeSingleCategory(regId, entryToRemove) {
         if (!confirm(`Remove "${entryToRemove.full_cat}"?`)) return;
         
-        // We must fetch the latest data first to avoid race conditions
-        const { data: regData } = await supaClient.from("final_registrations").select("*").eq("id", regId).single();
+        const { data: { session } } = await supaClient.auth.getSession();
+        const { data: regData } = await supaClient.from("final_registrations").select("*").eq("id", regId).eq("user_id", session.user.id).single();
         if (!regData) return;
 
         let currentList = regData.entry_data?.entries_list || [];
-        // Remove the entry
         currentList = currentList.filter(e => 
           !(e.discipline === entryToRemove.discipline && e.label === entryToRemove.label)
         );
 
-        // If list empty, delete registration entirely
         if (currentList.length === 0) {
-          await supaClient.from("final_registrations").delete().eq("id", regId);
+          await supaClient.from("final_registrations").delete().eq("id", regId).eq("user_id", session.user.id);
         } else {
           await supaClient.from("final_registrations").update({
             entry_data: { entries_list: currentList }
-          }).eq("id", regId);
+          }).eq("id", regId).eq("user_id", session.user.id);
         }
 
-        // Reload to refresh everything
-        const { data: { session } } = await supaClient.auth.getSession();
-        if (session) loadAllData(session.user.id);
+        const { data: { session: newSession } } = await supaClient.auth.getSession();
+        if (newSession) loadAllData(newSession.user.id);
       }
 
       // ==========================================
@@ -859,21 +866,19 @@
         panel.className = "extra-options-panel";
         const regId = registration.id;
 
-        // ✅ CRITICAL FIX: Initialize tempSelections from DB data
-        // This ensures the checkboxes and the displayed list start in sync.
         const savedList = registration.entry_data?.entries_list || [];
         tempSelections[regId] = JSON.parse(JSON.stringify(savedList));
         
         const { sparringCat, sparringWc, ageGroup, genderChar } = computePersonCategories(person);
 
-        // Helper to check state against tempSelections
         const isEntrySelected = (disc, lbl) => tempSelections[regId].some(e => e.discipline === disc && e.label === lbl);
 
         const createRow = (label, catName, key, discipline, isChecked = false) => {
           const row = document.createElement("div");
           row.className = "extra-row";
+          const count = currentCategoryCounts[catName] || 0;
           row.innerHTML = `
-            <span class="extra-label">${label} <span class="extra-cat-name">${catName}</span></span>
+            <span class="extra-label">${label} <span class="extra-cat-name">${catName} <span style="opacity:0.7; font-size:0.8em;">(${count})</span></span></span>
             <input type="checkbox" class="extra-checkbox" ${isChecked ? 'checked' : ''}>
           `;
           const checkbox = row.querySelector('input');
@@ -881,12 +886,34 @@
           checkbox.addEventListener('change', (e) => {
             e.stopPropagation();
             const newChecked = checkbox.checked;
+            
+            // Validation: Cannot check Extras without Main
+            if (newChecked && label !== "Main") {
+               const list = tempSelections[regId];
+               const hasMain = list.some(e => e.discipline === discipline && e.label === "Main");
+               if (!hasMain) {
+                  checkbox.checked = false; // Revert UI
+                  showToast("You must select the Main category first.", "error");
+                  return; 
+               }
+            }
+
+            // Validation: Cannot uncheck Main if Extras are present
+            if (!newChecked && label === "Main") {
+               const list = tempSelections[regId];
+               const hasExtras = list.some(e => e.discipline === discipline && e.label !== "Main");
+               if (hasExtras) {
+                  checkbox.checked = true; // Revert UI
+                  showToast("Uncheck additional categories first.", "error");
+                  return; 
+               }
+            }
+
             toggleCategorySelection(regId, person, discipline, label, catName, newChecked);
           });
           return row;
         };
 
-        // --- SPARRING ROWS ---
         if (person.sparring === "Yes" && sparringCat) {
           panel.appendChild(createRow("Sparring: Main", sparringCat, "spar_main", "sparring", isEntrySelected("sparring", "Main")));
         }
@@ -926,7 +953,6 @@
           }
         }
 
-        // --- PATTERNS ROWS ---
         if (person.patterns === "Yes") {
           const beltGroup = getBeltGroup(person.belt);
           const patCatMain = `${ageGroup} - ${beltGroup}`;
@@ -953,7 +979,6 @@
           btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
           btn.disabled = true;
 
-          // Remove duplicates
           const uniqueList = [];
           const seen = new Set();
           for (const ent of tempSelections[regId]) {
@@ -964,7 +989,6 @@
              }
           }
 
-          // If empty, delete registration
           if (uniqueList.length === 0) {
              await supaClient.from("final_registrations").delete().eq("id", regId);
           } else {
@@ -993,39 +1017,14 @@
       // LOCAL SELECTION UPDATE (Instant Sync)
       // ==========================================
       function toggleCategorySelection(regId, personObj, discipline, label, catName, isChecked) {
-         
-         // RULE 1: Cannot check Extras without Main
-         if (isChecked && label !== "Main") {
-            const list = tempSelections[regId];
-            const hasMain = list.some(e => e.discipline === discipline && e.label === "Main");
-            if (!hasMain) {
-               showToast("You must select the Main category first.", "error");
-               return; 
-            }
-         }
-
-         // RULE 2: Cannot uncheck Main if Extras are present
-         if (!isChecked && label === "Main") {
-            const list = tempSelections[regId];
-            const hasExtras = list.some(e => e.discipline === discipline && e.label !== "Main");
-            if (hasExtras) {
-               showToast("Uncheck additional categories first.", "error");
-               return; 
-            }
-         }
-
          let list = tempSelections[regId];
-         // Remove existing
          list = list.filter(e => !(e.discipline === discipline && e.label === label));
 
-         // Add if checked
          if (isChecked) {
            list.push({ discipline, label, full_cat: catName });
          }
          
          tempSelections[regId] = list;
-
-         // INSTANT UI UPDATE: Update tags under name
          updateCategoryTagsDisplay(regId, list);
       }
 
@@ -1035,10 +1034,8 @@
         const catDiv = card.querySelector(".card-categories");
         if (!catDiv) return;
 
-        // Clear current tags
         catDiv.innerHTML = "";
 
-        // Re-render based on list
         list.forEach(entry => {
            const tagDiv = document.createElement("div");
            tagDiv.className = "cat-tag";
@@ -1048,8 +1045,9 @@
            
            const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
            const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+           const count = currentCategoryCounts[entry.full_cat] || 0;
            
-           leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat}`;
+           leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat} <span style="opacity:0.7; font-size:0.75rem;">(${count})</span>`;
            
            const removeBtn = document.createElement("button");
            removeBtn.className = "btn-remove-cat";
@@ -1231,7 +1229,9 @@
            const newPersonData = { ...currentEditingPerson.data, ...updateData };
            const newCats = computePersonCategories(newPersonData);
 
-           const { data: regData } = await supaClient.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).single();
+           const { data: { session } } = await supaClient.auth.getSession();
+           // SECURITY FIX: Added user_id filter to prevent cross-user data leaks
+           const { data: regData } = await supaClient.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).eq("user_id", session.user.id).single();
 
            if (regData) {
                let entriesList = regData.entry_data?.entries_list || [];
