@@ -1,5 +1,4 @@
-
-                        <!DOCTYPE html>
+<!DOCTYPE html>
                         <html lang="en">
                         <head>
                             <meta charset="UTF-8">
@@ -8,8 +7,6 @@
                 body {
                   background-color: white; /* Ensure the iframe has a white background */
                 }
-
-                
               </style>
                         </head>
                         <body>
@@ -212,6 +209,11 @@
         <p class="subtitle">Tournament Manager & Category System</p>
       </header>
       <nav class="nav">
+        <!-- NEW: Back Button -->
+        <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">
+          <i class="fas fa-arrow-left"></i> Back to Main
+        </a>
+        
         <button id="btnPatterns" class="btn btn-primary" onclick="showPatterns()">
           <i class="fas fa-chess-board"></i> Patterns (Tul)
         </button>
@@ -244,6 +246,13 @@
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
       const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // 🔒 ADMIN ACCESS CHECK
+      // Checks if the user is logged in as admin. If not, redirects to index.html.
+      if (localStorage.getItem('isAdmin') !== 'true') {
+        alert('Admin access required. Redirecting to main page...');
+        window.location.href = 'index.html';
+      }
 
       // 🔥 NEW: unified table name
       const REG_TABLE = "final_registration";
@@ -983,4 +992,3 @@
               </script>
                         </body>
                         </html>
-                    
