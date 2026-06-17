@@ -240,7 +240,6 @@
         window.location.href = 'index.html';
       }
 
-      // 🔥 Table name (with the 's')
       const REG_TABLE = "final_registrations";
 
       let competitors = [], judges = [], coaches = [], tournamentDate = null;
@@ -571,12 +570,12 @@
                 const p1Id = `p1-${key}-${r}-${matchIndex}-0`;
                 const p2Id = `p2-${key}-${r}-${matchIndex}-1`;
                 html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}">`;
-                html += `<div class="player-row" data-draggable="true" data-player-id="${p1Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || ""}</span></div>`;
+                html += `<div class="player-row" data-draggable="true" data-player-id="${p1Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
                 if (p1.name && p1.name !== "BYE" && p1.name !== "________________") {
                   html += `<button class="delete-btn" title="Delete player" onclick="deletePlayerFromBracket('${p1.name.replace(/'/g,"\\'")}', '${(p1.team||"").replace(/'/g,"\\'")}', '${key.replace(/'/g,"\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
                 }
                 html += `</div><div class="vs-divider">VS</div>`;
-                html += `<div class="player-row" data-draggable="true" data-player-id="${p2Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || ""}</span></div>`;
+                html += `<div class="player-row" data-draggable="true" data-player-id="${p2Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || "N/A"}</span></div>`;
                 if (p2.name && p2.name !== "BYE" && p2.name !== "________________") {
                   html += `<button class="delete-btn" title="Delete player" onclick="deletePlayerFromBracket('${p2.name.replace(/'/g,"\\'")}', '${(p2.team||"").replace(/'/g,"\\'")}', '${key.replace(/'/g,"\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
                 }
@@ -652,81 +651,83 @@
         active.classList.add("btn-primary", "btn-active");
       }
 
-      function getAge(birth) {
-        if (!birth) return 0;
-        const b = new Date(birth);
-        if (isNaN(b.getTime())) return 0;
-        const today = tournamentDate ? new Date(tournamentDate) : new Date();
-        let age = today.getFullYear() - b.getFullYear();
-        if (today.getMonth() < b.getMonth() || (today.getMonth() === b.getMonth() && today.getDate() < b.getDate())) age--;
-        return age;
-      }
-      function getAgeGroup(age) {
-        if (age >= 6 && age <= 9) return "KIDS";
-        if (age >= 10 && age <= 11) return "YOUTH";
-        if (age >= 12 && age <= 13) return "OLDER_YOUTH";
-        if (age >= 14 && age <= 16) return "JUNIORS";
-        return "OTHER";
-      }
-      function getSparringWeightClass(ageGroup, gender, weight) {
-        if (!RULES.SPARRING[ageGroup]) return null;
-        const classes = RULES.SPARRING[ageGroup][gender];
-        if (!classes) return null;
-        for (let i = 0; i < classes.length; i++) {
-          const cls = classes[i];
-          if (cls.startsWith("-")) {
-            const upper = parseInt(cls.replace("-", ""));
-            const lower = i === 0 ? 0 : parseInt(classes[i - 1].replace(/[^0-9]/g, ""));
-            if (weight > lower && weight <= upper) return cls;
-          }
-          if (cls.startsWith("+")) {
-            const lower = parseInt(cls.replace("+", ""));
-            if (weight > lower) return cls;
-          }
-        }
-        return null;
-      }
-
       /* ============================================================
-         🔥🔥🔥  fetchData() - reads from final_registrations
+         🔥🔥🔥  CORE FIX: fetchData() now merges registrations with person details
          ============================================================ */
       async function fetchData() {
         try {
-          const { data: allRows, error } = await sb
-            .from(REG_TABLE)
-            .select("id, user_id, entry_type, entry_id, entry_data, created_at");
+          // 1. Fetch all registrations
+          const { data: allRegs, error: regError } = await sb.from(REG_TABLE).select("*");
+          if (regError) throw regError;
 
-          if (error) throw error;
+          // 2. Separate registrations by type
+          const compRegs = (allRegs || []).filter(r => r.entry_type === 'comp' || r.entry_type === 'competitor');
+          const judgeRegs = (allRegs || []).filter(r => r.entry_type === 'judge');
+          const coachRegs = (allRegs || []).filter(r => r.entry_type === 'coach');
 
+          // 3. Get unique IDs to fetch person details
+          const compIds = [...new Set(compRegs.map(r => r.entry_id))];
+          const judgeIds = [...new Set(judgeRegs.map(r => r.entry_id))];
+          const coachIds = [...new Set(coachRegs.map(r => r.entry_id))];
+
+          let compDetails = [], judgeDetails = [], coachDetails = [];
+
+          // 4. Fetch person details from their respective tables
+          if (compIds.length > 0) {
+            const { data, error } = await sb.from("competitors").select("*").in("id", compIds);
+            if (!error) compDetails = data || [];
+          }
+          if (judgeIds.length > 0) {
+            const { data, error } = await sb.from("judges").select("*").in("id", judgeIds);
+            if (!error) judgeDetails = data || [];
+          }
+          if (coachIds.length > 0) {
+            const { data, error } = await sb.from("coaches").select("*").in("id", coachIds);
+            if (!error) coachDetails = data || [];
+          }
+
+          // 5. Merge registrations with details
           competitors = [];
           judges = [];
           coaches = [];
 
-          (allRows || []).forEach((row) => {
-            const d = row.entry_data || {};
-            const flat = {
-              _reg_id: row.id,
-              _user_id: row.user_id,
-              _entry_id: row.entry_id,
-              _created_at: row.created_at,
-              ...d,
-            };
-            // 🔥 FIX: Accepts both "competitor" and "comp" (and other variations)
-            const type = (row.entry_type || "").toLowerCase().trim();
-            if (type === "competitor" || type === "comp" || type === "c") {
-              competitors.push(flat);
-            } else if (type === "judge" || type === "j") {
-              judges.push(flat);
-            } else if (type === "coach" || type === "co") {
-              coaches.push(flat);
-            } else {
-              console.warn("Unknown entry_type:", row.entry_type, row);
-            }
+          // For competitors, create an entry for EACH event they registered for
+          compDetails.forEach(person => {
+            const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
+            personRegs.forEach(reg => {
+              const entries = reg.entry_data?.entries_list || [];
+              entries.forEach(entry => {
+                const parts = (entry.full_cat || "").split(" - ");
+                const comp = {
+                  ...person,
+                  _reg_id: reg.id,
+                  _discipline: entry.discipline,
+                  _label: entry.label,
+                  _full_cat: entry.full_cat,
+                  _actual_age_group: parts[0] || "OTHER",
+                  _actual_sub_cat: parts[1] || ""
+                };
+                competitors.push(comp);
+              });
+            });
           });
 
-          console.log(
-            `Loaded ${competitors.length} competitors, ${judges.length} judges, ${coaches.length} coaches from ${REG_TABLE}`
-          );
+          judgeDetails.forEach(person => {
+            const personRegs = judgeRegs.filter(r => String(r.entry_id) === String(person.id));
+            personRegs.forEach(reg => {
+              judges.push({ ...person, _reg_id: reg.id });
+            });
+          });
+
+          coachDetails.forEach(person => {
+            const personRegs = coachRegs.filter(r => String(r.entry_id) === String(person.id));
+            personRegs.forEach(reg => {
+              coaches.push({ ...person, _reg_id: reg.id });
+            });
+          });
+
+          console.log(`Loaded ${competitors.length} competitor entries, ${judges.length} judges, ${coaches.length} coaches`);
+
         } catch (error) {
           console.error("fetchData error:", error);
           document.getElementById("content").innerHTML =
@@ -759,23 +760,31 @@
         const age = document.getElementById("pAge").value,
           gen = document.getElementById("pGen").value,
           belt = document.getElementById("pBelt").value;
+          
         const filtered = competitors.filter((c) => {
-          const a = getAge(c.birthdate), ag = getAgeGroup(a);
+          if (c._discipline !== "patterns") return false;
+          
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen =
             gen === "ALL" ||
             dbGender === gen ||
             (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) ||
             (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
-          if ((c.patterns || "").toString() === "No") return false;
-          return (age === "ALL" || ag === age) && mGen && (belt === "ALL" || getBeltGroup(c.belt) === belt);
+            
+          if (!mGen) return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          if (belt !== "ALL" && c._actual_sub_cat !== belt) return false;
+          
+          return true;
         });
+        
         const groups = {};
         filtered.forEach((c) => {
-          const k = `${getAgeGroup(getAge(c.birthdate))} - ${getBeltGroup(c.belt)} - ${c.gender}`;
+          const k = `${c._full_cat} - ${c.gender}`;
           if (!groups[k]) groups[k] = [];
           groups[k].push(c);
         });
+        
         const t = document.getElementById("listTarget");
         t.innerHTML = "";
         for (const k in groups) t.innerHTML += createParallelCard(`Pattern: ${k}`, groups[k]);
@@ -786,20 +795,26 @@
         const age = document.getElementById("pAge").value,
           gen = document.getElementById("pGen").value,
           belt = document.getElementById("pBelt").value;
+          
         const filtered = competitors.filter((c) => {
-          const a = getAge(c.birthdate), ag = getAgeGroup(a);
+          if (c._discipline !== "patterns") return false;
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen =
             gen === "ALL" ||
             dbGender === gen ||
             (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) ||
             (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
-          if ((c.patterns || "").toString() === "No") return false;
-          return (age === "ALL" || ag === age) && mGen && (belt === "ALL" || getBeltGroup(c.belt) === belt);
+            
+          if (!mGen) return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          if (belt !== "ALL" && c._actual_sub_cat !== belt) return false;
+          
+          return true;
         });
+        
         const groups = {};
         filtered.forEach((c) => {
-          const k = `${getAgeGroup(getAge(c.birthdate))} - ${getBeltGroup(c.belt)} - ${c.gender}`;
+          const k = `${c._full_cat} - ${c.gender}`;
           if (!groups[k]) groups[k] = [];
           groups[k].push(c);
         });
@@ -826,13 +841,40 @@
           wDrop = document.getElementById("sWeight"),
           info = document.getElementById("sparringInfo");
         wDrop.innerHTML = '<option value="ALL">All</option>';
+        
+        const relevantComps = competitors.filter(c => {
+          if (c._discipline !== "sparring") return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          const dbGender = (c.gender || "").trim().toUpperCase();
+          const mGen =
+            gen === "ALL" ||
+            dbGender === gen ||
+            (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) ||
+            (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+          return mGen;
+        });
+        
+        const weights = new Set();
+        relevantComps.forEach(c => {
+          const w = c._actual_sub_cat.replace("kg", "");
+          if (w && w !== "N/A") weights.add(w);
+        });
+        
+        Array.from(weights).sort((a, b) => {
+           const numA = parseFloat(a.replace(/[^0-9.-]/g, ''));
+           const numB = parseFloat(b.replace(/[^0-9.-]/g, ''));
+           if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+           return a.localeCompare(b);
+        }).forEach(w => {
+          wDrop.innerHTML += `<option value="${w}">${w}kg</option>`;
+        });
+        
         if (age !== "ALL" && gen !== "ALL" && age !== "OTHER" && RULES.SPARRING[age]) {
-          const g = gen === "MALE" ? "M" : "F";
-          if (RULES.SPARRING[age][g]) {
-            RULES.SPARRING[age][g].forEach((w) => (wDrop.innerHTML += `<option value="${w}">${w}kg</option>`));
-            info.innerHTML = `<i class="far fa-clock"></i> Match Time: ${RULES.SPARRING[age].time}`;
-          } else info.innerHTML = "No weight classes defined.";
-        } else info.innerHTML = `<i class="fas fa-info-circle"></i> Select Age and Gender to see round times.`;
+           info.innerHTML = `<i class="far fa-clock"></i> Match Time: ${RULES.SPARRING[age].time}`;
+        } else {
+           info.innerHTML = `<i class="fas fa-info-circle"></i> Select Age and Gender to see round times.`;
+        }
+        
         runSparringFilter();
       }
 
@@ -840,9 +882,12 @@
         const age = document.getElementById("sAge").value,
           gen = document.getElementById("sGen").value,
           weightReq = document.getElementById("sWeight").value;
+          
         const filtered = competitors.filter((c) => {
-          const a = getAge(c.birthdate), ag = getAgeGroup(a);
-          if (age !== "ALL" && ag !== age) return false;
+          if (c._discipline !== "sparring") return false;
+          
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen =
             gen === "ALL" ||
@@ -850,22 +895,20 @@
             (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) ||
             (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
           if (!mGen) return false;
-          const g = dbGender.startsWith("M") ? "M" : "F";
-          const wc = getSparringWeightClass(ag, g, c.weight);
-          if ((c.sparring || "").toString() === "No") return false;
-          if (weightReq !== "ALL") return wc === weightReq;
+          
+          const cWeight = c._actual_sub_cat.replace("kg", "");
+          if (weightReq !== "ALL" && cWeight !== weightReq) return false;
+          
           return true;
         });
+        
         const groups = {};
         filtered.forEach((c) => {
-          const a = getAge(c.birthdate), ag = getAgeGroup(a);
-          const dbG = (c.gender || "").trim().toUpperCase();
-          const g = dbG.startsWith("M") ? "M" : "F";
-          const wc = getSparringWeightClass(ag, g, c.weight);
-          const k = `${ag} - ${wc || "N/A"}kg - ${c.gender}`;
+          const k = `${c._full_cat} - ${c.gender}`;
           if (!groups[k]) groups[k] = [];
           groups[k].push(c);
         });
+        
         const t = document.getElementById("listTarget");
         t.innerHTML = "";
         for (const k in groups) t.innerHTML += createParallelCard(`Sparring: ${k}`, groups[k]);
@@ -876,9 +919,10 @@
         const age = document.getElementById("sAge").value,
           gen = document.getElementById("sGen").value,
           weightReq = document.getElementById("sWeight").value;
+          
         const filtered = competitors.filter((c) => {
-          const a = getAge(c.birthdate), ag = getAgeGroup(a);
-          if (age !== "ALL" && ag !== age) return false;
+          if (c._discipline !== "sparring") return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen =
             gen === "ALL" ||
@@ -886,19 +930,14 @@
             (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) ||
             (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
           if (!mGen) return false;
-          const g = dbGender.startsWith("M") ? "M" : "F";
-          const wc = getSparringWeightClass(ag, g, c.weight);
-          if ((c.sparring || "").toString() === "No") return false;
-          if (weightReq !== "ALL") return wc === weightReq;
+          const cWeight = c._actual_sub_cat.replace("kg", "");
+          if (weightReq !== "ALL" && cWeight !== weightReq) return false;
           return true;
         });
+        
         const groups = {};
         filtered.forEach((c) => {
-          const a = getAge(c.birthdate), ag = getAgeGroup(a);
-          const dbG = (c.gender || "").trim().toUpperCase();
-          const g = dbG.startsWith("M") ? "M" : "F";
-          const wc = getSparringWeightClass(ag, g, c.weight);
-          const k = `${ag} - ${wc || "N/A"}kg - ${c.gender}`;
+          const k = `${c._full_cat} - ${c.gender}`;
           if (!groups[k]) groups[k] = [];
           groups[k].push(c);
         });
@@ -911,7 +950,7 @@
         let n = "", t = "";
         list.forEach((c) => {
           n += `<div class="row-item">${c.name}</div>`;
-          t += `<div class="row-item">${c.team}</div>`;
+          t += `<div class="row-item">${c.team || "N/A"}</div>`;
         });
         return `<div class="category-card"><div class="category-header">${title} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
       }
@@ -919,7 +958,11 @@
       function renderTeamSummary(list, type) {
         const s = {};
         let total = 0;
-        list.forEach((c) => { s[c.team] = (s[c.team] || 0) + 1; total++; });
+        list.forEach((c) => { 
+          const teamName = c.team || "Unassigned";
+          s[teamName] = (s[teamName] || 0) + 1; 
+          total++; 
+        });
         let h = `<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (${type})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">`;
         const k = Object.keys(s).sort();
         if (!k.length) {
@@ -935,9 +978,9 @@
         setActiveBtn("btnJudges");
         await fetchData();
         const g = {};
-        judges.forEach((j) => (g[j.team] = (g[j.team] || 0) + 1));
+        judges.forEach((j) => (g[j.team || "Unassigned"] = (g[j.team || "Unassigned"] || 0) + 1));
         let h = `<div class="category-card"><div class="category-header">Judges List</div><table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
-        judges.forEach((j) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${j.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.team}</td></tr>`));
+        judges.forEach((j) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${j.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.team || "N/A"}</td></tr>`));
         h += `</table></div><div class="team-summary-box"><h3>Teams Registered</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px">`;
         Object.keys(g).sort().forEach((t) => (h += `<div style="background:#f8f9fa;padding:10px;border-radius:4px"><strong>${t}</strong>: ${g[t]} judges</div>`));
         document.getElementById("content").innerHTML = h + `</div></div>`;
@@ -947,9 +990,9 @@
         setActiveBtn("btnCoaches");
         await fetchData();
         const g = {};
-        coaches.forEach((c) => (g[c.team] = (g[c.team] || 0) + 1));
+        coaches.forEach((c) => (g[c.team || "Unassigned"] = (g[c.team || "Unassigned"] || 0) + 1));
         let h = `<div class="category-card"><div class="category-header">Coaches List</div><table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
-        coaches.forEach((c) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${c.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.team}</td></tr>`));
+        coaches.forEach((c) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${c.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.team || "N/A"}</td></tr>`));
         h += `</table></div><div class="team-summary-box"><h3>Teams Registered</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px">`;
         Object.keys(g).sort().forEach((t) => (h += `<div style="background:#f8f9fa;padding:10px;border-radius:4px"><strong>${t}</strong>: ${g[t]} coaches</div>`));
         document.getElementById("content").innerHTML = h + `</div></div>`;
