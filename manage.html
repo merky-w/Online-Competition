@@ -197,7 +197,6 @@
         <p class="subtitle">Tournament Manager & Category System</p>
       </header>
       <nav class="nav">
-        <!-- Back Button -->
         <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">
           <i class="fas fa-arrow-left"></i> Back to Main
         </a>
@@ -241,7 +240,7 @@
         window.location.href = 'index.html';
       }
 
-      // 🔥 FIXED: Added the "s" to match your actual database table name
+      // 🔥 Table name (with the 's')
       const REG_TABLE = "final_registrations";
 
       let competitors = [], judges = [], coaches = [], tournamentDate = null;
@@ -689,7 +688,7 @@
       }
 
       /* ============================================================
-         🔥🔥🔥  CORE CHANGE: fetchData() now reads from final_registrations
+         🔥🔥🔥  fetchData() - reads from final_registrations
          ============================================================ */
       async function fetchData() {
         try {
@@ -712,18 +711,16 @@
               _created_at: row.created_at,
               ...d,
             };
-            switch ((row.entry_type || "").toLowerCase()) {
-              case "competitor":
-                competitors.push(flat);
-                break;
-              case "judge":
-                judges.push(flat);
-                break;
-              case "coach":
-                coaches.push(flat);
-                break;
-              default:
-                console.warn("Unknown entry_type:", row.entry_type, row);
+            // 🔥 FIX: Accepts both "competitor" and "comp" (and other variations)
+            const type = (row.entry_type || "").toLowerCase().trim();
+            if (type === "competitor" || type === "comp" || type === "c") {
+              competitors.push(flat);
+            } else if (type === "judge" || type === "j") {
+              judges.push(flat);
+            } else if (type === "coach" || type === "co") {
+              coaches.push(flat);
+            } else {
+              console.warn("Unknown entry_type:", row.entry_type, row);
             }
           });
 
