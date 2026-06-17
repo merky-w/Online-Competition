@@ -1,16 +1,4 @@
-<!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body {
-                  background-color: white; /* Ensure the iframe has a white background */
-                }
-              </style>
-                        </head>
-                        <body>
-                            <!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -209,7 +197,7 @@
         <p class="subtitle">Tournament Manager & Category System</p>
       </header>
       <nav class="nav">
-        <!-- NEW: Back Button -->
+        <!-- Back Button -->
         <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">
           <i class="fas fa-arrow-left"></i> Back to Main
         </a>
@@ -248,14 +236,13 @@
       const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       // 🔒 ADMIN ACCESS CHECK
-      // Checks if the user is logged in as admin. If not, redirects to index.html.
       if (localStorage.getItem('isAdmin') !== 'true') {
         alert('Admin access required. Redirecting to main page...');
         window.location.href = 'index.html';
       }
 
-      // 🔥 NEW: unified table name
-      const REG_TABLE = "final_registration";
+      // 🔥 FIXED: Added the "s" to match your actual database table name
+      const REG_TABLE = "final_registrations";
 
       let competitors = [], judges = [], coaches = [], tournamentDate = null;
       let currentGroups = null, currentBracketType = null, selectedSwap = null;
@@ -702,26 +689,22 @@
       }
 
       /* ============================================================
-         🔥🔥🔥  CORE CHANGE: fetchData() now reads from final_registration
+         🔥🔥🔥  CORE CHANGE: fetchData() now reads from final_registrations
          ============================================================ */
       async function fetchData() {
         try {
-          // One single query — fetch ALL rows from the unified table
           const { data: allRows, error } = await sb
             .from(REG_TABLE)
             .select("id, user_id, entry_type, entry_id, entry_data, created_at");
 
           if (error) throw error;
 
-          // Normalize: flatten entry_data into each row so the rest of the
-          // app can keep using c.name, c.team, c.belt, etc.
           competitors = [];
           judges = [];
           coaches = [];
 
           (allRows || []).forEach((row) => {
             const d = row.entry_data || {};
-            // Build a flat object combining row metadata + entry_data fields
             const flat = {
               _reg_id: row.id,
               _user_id: row.user_id,
@@ -982,13 +965,3 @@
     </script>
   </body>
 </html>
-
-
-
-              <script>
-                              const flat = { _reg_id: row.id, _user_id: row.user_id, ...row.entry_data };
-
-
-              </script>
-                        </body>
-                        </html>
