@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="en">
   <head>
@@ -570,6 +571,17 @@
             Admin
           </button>
 
+          <!-- NEW: Manage Button (Hidden by default) -->
+          <a href="manage.html" id="btnManage" class="nav-link nav-admin" style="display: none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Manage
+          </a>
+
           <div class="admin-controls" id="adminControls">
             <span class="status-text" id="statusText">Checking...</span>
             <label class="switch">
@@ -679,6 +691,7 @@
       const btnCancelEdit = document.getElementById("btnCancelEdit");
       const editTournamentError = document.getElementById("editTournamentError");
       const btnAdminLogin = document.getElementById("btnAdminLogin");
+      const btnManage = document.getElementById("btnManage"); // NEW: Get Manage button
       const loginModal = document.getElementById("loginModal");
       const btnCancelLogin = document.getElementById("btnCancelLogin");
       const btnConfirmLogin = document.getElementById("btnConfirmLogin");
@@ -866,6 +879,7 @@
           adminControls.classList.add("visible");
           btnAdminLogin.style.display = "none";
           btnEditTournament.style.display = "flex";
+          btnManage.style.display = "flex"; // NEW: Show Manage button
           adminToggle.checked = currentDbState;
         } else {
           loginError.style.display = "block";
@@ -882,3 +896,4 @@
     </script>
   </body>
 </html>
+```
