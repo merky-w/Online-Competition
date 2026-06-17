@@ -330,13 +330,114 @@
         return data && data.length ? data : null;
       }
 
-      async function generateBracketData(list, categoryKey, type) {
-        let useList = list;
-        if (categoryKey && type) {
-          const saved = await getSavedOrder(categoryKey, type);
-          if (saved && saved.length > 0) {
-            useList = saved.map((item) => ({ name: item.name, team: item.team, id: item.id || null }));
+      // NEW FUNCTION: Load a saved bracket structure from the DB
+      async function loadSavedBracket(categoryKey, type) {
+        const { data, error } = await sb
+          .from("saved_brackets")
+          .select("*")
+          .eq("category", categoryKey)
+          .eq("bracket_type", type)
+          .order("round_number", { ascending: true })
+          .order("match_number", { ascending: true });
+
+        if (error) {
+          console.error("Error loading saved bracket:", error);
+          return null;
+        }
+
+        if (!data || data.length === 0) {
+          return null;
+        }
+
+        // Reconstruct the rounds array
+        const rounds = [];
+        let currentRound = -1;
+        let currentMatches = [];
+
+        data.forEach(match => {
+          if (match.round_number !== currentRound) {
+            if (currentRound !== -1) {
+              rounds.push(currentMatches);
+            }
+            currentRound = match.round_number;
+            currentMatches = [];
           }
+          currentMatches.push({
+            p1: { name: match.player1_name || "", team: match.player1_team || "" },
+            p2: { name: match.player2_name || "", team: match.player2_team || "" }
+          });
+        });
+        if (currentMatches.length > 0) {
+          rounds.push(currentMatches);
+        }
+
+        return { rounds, totalRounds: rounds.length };
+      }
+
+      // NEW FUNCTION: Save the current bracket structure to the DB
+      async function saveBracketStructure(categoryKey, type) {
+        const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
+        if (!page) return;
+
+        const matchesToSave = [];
+        const tables = page.querySelectorAll(".bracket-table");
+
+        tables.forEach((table, roundIndex) => {
+          const rows = table.querySelectorAll("tbody tr");
+          let matchNumber = 1;
+          rows.forEach(row => {
+            const cells = row.querySelectorAll("td");
+            cells.forEach(cell => {
+              if (cell.getAttribute("rowspan")) {
+                const p1Name = cell.querySelector('.player-row:nth-child(1) .p-name')?.innerText.trim() || "";
+                const p1Team = cell.querySelector('.player-row:nth-child(1) .p-team')?.innerText.trim() || "";
+                const p2Name = cell.querySelector('.player-row:nth-child(2) .p-name')?.innerText.trim() || "";
+                const p2Team = cell.querySelector('.player-row:nth-child(2) .p-team')?.innerText.trim() || "";
+
+                matchesToSave.push({
+                  category: categoryKey,
+                  bracket_type: type,
+                  round_number: roundIndex + 1,
+                  match_number: matchNumber++,
+                  player1_name: p1Name,
+                  player1_team: p1Team,
+                  player2_name: p2Name,
+                  player2_team: p2Team
+                });
+              }
+            });
+          });
+        });
+
+        // First, delete any existing bracket for this category/type
+        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+
+        // Then, insert the new matches
+        if (matchesToSave.length > 0) {
+          const { error } = await sb.from("saved_brackets").insert(matchesToSave);
+          if (error) {
+            console.error("Error saving bracket structure:", error);
+            alert("❌ Failed to save bracket structure.");
+            return false;
+          }
+        }
+
+        alert("✅ Bracket structure saved successfully!");
+        return true;
+      }
+
+      async function generateBracketData(list, categoryKey, type) {
+        // First, try to load a saved bracket structure
+        const savedBracket = await loadSavedBracket(categoryKey, type);
+        if (savedBracket) {
+          return savedBracket;
+        }
+
+        // If no saved bracket, generate a new one
+        let useList = list;
+        const savedOrder = await getSavedOrder(categoryKey, type);
+        if (savedOrder && savedOrder.length > 0) {
+          useList = savedOrder.map((item) => ({ name: item.name, team: item.team, id: item.id || null }));
         }
         const size = getBracketSize(useList.length);
         if (size === 1) return { rounds: [[{ p1: useList[0], p2: { name: "", team: "" } }]], totalRounds: 1 };
@@ -344,9 +445,8 @@
         const totalRounds = Math.log2(size);
         const rounds = [];
         let slots;
-        const saved = categoryKey && type ? await getSavedOrder(categoryKey, type) : null;
-        if (saved && saved.length > 0) {
-          slots = saved.map((p) => ({ name: p.name, team: p.team }));
+        if (savedOrder && savedOrder.length > 0) {
+          slots = savedOrder.map((p) => ({ name: p.name, team: p.team }));
           while (slots.length < size) slots.push({ name: "BYE", team: "" });
         } else {
           const shuffled = shuffle(useList);
@@ -393,6 +493,8 @@
         await sb.from(delTable).insert([{ name, team, category, type, deleted_at: new Date().toISOString() }]);
         const catTable = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         await sb.from(catTable).delete().eq("category", category).eq("name", name);
+        // Also delete from saved_brackets
+        await sb.from("saved_brackets").delete().eq("category", category).eq("bracket_type", type);
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(category)}"][data-type="${type}"]`);
         if (page) {
           const playerRows = page.querySelectorAll(".player-row");
@@ -415,6 +517,7 @@
         const nextPos = existing && existing[0] ? existing[0].position_number + 1 : 1;
         await sb.from(catTable).insert([{ name, team, category, position_number: nextPos }]);
         await sb.from(delTable).delete().eq("name", name).eq("category", category);
+        // This will force a re-generation of the bracket
         alert(`♻️ "${name}" restored to ${category}.`);
         showDeleted();
       }
@@ -548,7 +651,8 @@
 <span style="font-size:14px;color:var(--secondary);font-weight:bold">${list.length} Competitors</span>
 <div style="text-align:right;margin-top:5px">
 <button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory('${safeKey}', '${type}')"><i class="fas fa-random"></i> Shuffle</button>
-<button class="btn btn-success btn-sm" onclick="saveCategoryOrder('${safeKey}', '${type}')"><i class="fas fa-save"></i> Save</button>
+<button class="btn btn-success btn-sm" onclick="saveCategoryOrder('${safeKey}', '${type}')"><i class="fas fa-save"></i> Save Order</button>
+<button class="btn btn-primary btn-sm" onclick="saveBracketStructure('${safeKey}', '${type}')"><i class="fas fa-database"></i> Save Bracket</button>
 </div>
 </div>
 <table class="bracket-table"><thead><tr>`;
@@ -599,6 +703,8 @@
         if (!currentGroups || !currentGroups[categoryKey]) return;
         const newGroups = { ...currentGroups };
         newGroups[categoryKey] = shuffle([...newGroups[categoryKey]]);
+        // Delete the saved bracket before re-rendering
+        sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
         renderBracketView(newGroups, type);
       }
 
