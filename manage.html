@@ -423,6 +423,25 @@
         display: flex;
         gap: 5px;
       }
+      .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+      }
+      .toast.success { background: var(--success); }
+      .toast.error { background: var(--danger); }
+      .toast.info { background: var(--primary); }
+      @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
       @media print {
         @page {
           size: A4;
@@ -591,6 +610,18 @@
       };
 
       /* ---------------- HELPER FUNCTIONS ---------------- */
+      function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(400px)';
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
       function extractBeltNumber(belt) {
         if (!belt) return -1;
         const match = belt.match(/(\d+)/);
@@ -663,15 +694,20 @@
       async function getSavedOrder(categoryKey, type) {
         const table =
           type === "Patterns" ? "patterns_categories" : "sparring_categories";
-        const { data } = await sb
+        const { data, error } = await sb
           .from(table)
           .select("*")
           .eq("category", categoryKey)
           .order("position_number", { ascending: true });
+        
+        if (error) {
+          console.error("Error getting saved order:", error);
+          return null;
+        }
         return data && data.length ? data : null;
       }
 
-      // NEW FUNCTION: Load a saved bracket structure from the DB
+      // Load a saved bracket structure from the DB
       async function loadSavedBracket(categoryKey, type) {
         const { data, error } = await sb
           .from("saved_brackets")
@@ -721,12 +757,15 @@
         return { rounds, totalRounds: rounds.length };
       }
 
-      // NEW FUNCTION: Save the current bracket structure to the DB
+      // Save the current bracket structure to the DB
       async function saveBracketStructure(categoryKey, type) {
         const page = document.querySelector(
           `.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`,
         );
-        if (!page) return;
+        if (!page) {
+          showToast("Page not found", "error");
+          return;
+        }
 
         const matchesToSave = [];
         const tables = page.querySelectorAll(".bracket-table");
@@ -738,58 +777,67 @@
             const cells = row.querySelectorAll("td");
             cells.forEach((cell) => {
               if (cell.getAttribute("rowspan")) {
-                const p1Name =
-                  cell
-                    .querySelector(".player-row:nth-child(1) .p-name")
-                    ?.innerText.trim() || "";
-                const p1Team =
-                  cell
-                    .querySelector(".player-row:nth-child(1) .p-team")
-                    ?.innerText.trim() || "";
-                const p2Name =
-                  cell
-                    .querySelector(".player-row:nth-child(2) .p-name")
-                    ?.innerText.trim() || "";
-                const p2Team =
-                  cell
-                    .querySelector(".player-row:nth-child(2) .p-team")
-                    ?.innerText.trim() || "";
+                const playerRows = cell.querySelectorAll(".player-row");
+                if (playerRows.length >= 2) {
+                  const p1Name =
+                    playerRows[0].querySelector(".p-name")?.innerText.trim() || "";
+                  const p1Team =
+                    playerRows[0].querySelector(".p-team")?.innerText.trim() || "";
+                  const p2Name =
+                    playerRows[1].querySelector(".p-name")?.innerText.trim() || "";
+                  const p2Team =
+                    playerRows[1].querySelector(".p-team")?.innerText.trim() || "";
 
-                matchesToSave.push({
-                  category: categoryKey,
-                  bracket_type: type,
-                  round_number: roundIndex + 1,
-                  match_number: matchNumber++,
-                  player1_name: p1Name,
-                  player1_team: p1Team,
-                  player2_name: p2Name,
-                  player2_team: p2Team,
-                });
+                  matchesToSave.push({
+                    category: categoryKey,
+                    bracket_type: type,
+                    round_number: roundIndex + 1,
+                    match_number: matchNumber++,
+                    player1_name: p1Name,
+                    player1_team: p1Team,
+                    player2_name: p2Name,
+                    player2_team: p2Team,
+                  });
+                }
               }
             });
           });
         });
 
+        if (matchesToSave.length === 0) {
+          showToast("No matches found to save", "error");
+          return;
+        }
+
+        console.log("Saving bracket structure:", matchesToSave);
+
         // First, delete any existing bracket for this category/type
-        await sb
+        const { error: deleteError } = await sb
           .from("saved_brackets")
           .delete()
           .eq("category", categoryKey)
           .eq("bracket_type", type);
 
-        // Then, insert the new matches
-        if (matchesToSave.length > 0) {
-          const { error } = await sb
-            .from("saved_brackets")
-            .insert(matchesToSave);
-          if (error) {
-            console.error("Error saving bracket structure:", error);
-            alert("❌ Failed to save bracket structure.");
-            return false;
-          }
+        if (deleteError) {
+          console.error("Error deleting old bracket:", deleteError);
+          showToast("Failed to clear old bracket data", "error");
+          return;
         }
 
-        alert("✅ Bracket structure saved successfully!");
+        // Then, insert the new matches
+        const { data, error } = await sb
+          .from("saved_brackets")
+          .insert(matchesToSave)
+          .select();
+
+        if (error) {
+          console.error("Error saving bracket structure:", error);
+          showToast(`Failed to save: ${error.message}`, "error");
+          return;
+        }
+
+        console.log("Saved bracket data:", data);
+        showToast(`✅ Bracket structure saved! (${matchesToSave.length} matches)`, "success");
         return true;
       }
 
@@ -797,6 +845,7 @@
         // First, try to load a saved bracket structure
         const savedBracket = await loadSavedBracket(categoryKey, type);
         if (savedBracket) {
+          console.log("Loaded saved bracket for:", categoryKey);
           return savedBracket;
         }
 
@@ -858,13 +907,28 @@
         const page = document.querySelector(
           `.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`,
         );
-        if (!page) return;
-        const players = page.querySelectorAll(".match-box .player-row");
+        if (!page) {
+          if (!silent) showToast("Page not found", "error");
+          return;
+        }
+        
+        // Get all player rows from the first round (first table)
+        const firstTable = page.querySelector(".bracket-table");
+        if (!firstTable) {
+          if (!silent) showToast("No bracket table found", "error");
+          return;
+        }
+        
+        const playerRows = firstTable.querySelectorAll("tbody tr td .player-row");
         let dataToSave = [];
         let position = 1;
-        players.forEach((row) => {
-          const name = row.querySelector(".p-name").innerText.trim();
-          const team = row.querySelector(".p-team").innerText.trim();
+        
+        playerRows.forEach((row) => {
+          const nameEl = row.querySelector(".p-name");
+          const teamEl = row.querySelector(".p-team");
+          const name = nameEl ? nameEl.innerText.trim() : "";
+          const team = teamEl ? teamEl.innerText.trim() : "";
+          
           if (name && name !== "BYE" && name !== "________________") {
             dataToSave.push({
               name,
@@ -874,22 +938,47 @@
             });
           }
         });
-        if (dataToSave.length === 0) return;
-        await sb.from(table).delete().eq("category", categoryKey);
-        const { error } = await sb.from(table).insert(dataToSave);
-        if (error) {
-          console.error(error);
-          alert("❌ Error saving.");
+
+        if (dataToSave.length === 0) {
+          if (!silent) showToast("No players found to save", "error");
           return;
         }
-        if (!silent) alert("✅ Order saved and position_number updated.");
+
+        console.log("Saving order:", dataToSave);
+
+        // Delete existing records for this category
+        const { error: deleteError } = await sb
+          .from(table)
+          .delete()
+          .eq("category", categoryKey);
+
+        if (deleteError) {
+          console.error("Error deleting old order:", deleteError);
+          if (!silent) showToast("Failed to clear old data", "error");
+          return;
+        }
+
+        // Insert new records
+        const { data, error } = await sb
+          .from(table)
+          .insert(dataToSave)
+          .select();
+
+        if (error) {
+          console.error("Error saving order:", error);
+          if (!silent) showToast(`Failed to save: ${error.message}`, "error");
+          return;
+        }
+
+        console.log("Saved order data:", data);
+        if (!silent) showToast(`✅ Order saved! (${dataToSave.length} players)`, "success");
       }
 
       async function deletePlayerFromBracket(name, team, category, type) {
         if (!confirm(`Delete "${name}" from ${category}?`)) return;
         const delTable =
           type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
-        await sb
+        const { error: insertError } = await sb
           .from(delTable)
           .insert([
             {
@@ -900,6 +989,13 @@
               deleted_at: new Date().toISOString(),
             },
           ]);
+        
+        if (insertError) {
+          console.error("Error inserting deleted player:", insertError);
+          showToast("Failed to move to deleted", "error");
+          return;
+        }
+
         const catTable =
           type === "Patterns" ? "patterns_categories" : "sparring_categories";
         await sb
@@ -907,12 +1003,14 @@
           .delete()
           .eq("category", category)
           .eq("name", name);
+        
         // Also delete from saved_brackets
         await sb
           .from("saved_brackets")
           .delete()
           .eq("category", category)
           .eq("bracket_type", type);
+        
         const page = document.querySelector(
           `.a4-page[data-category="${CSS.escape(category)}"][data-type="${type}"]`,
         );
@@ -926,7 +1024,7 @@
             }
           });
         }
-        alert(`🗑️ "${name}" moved to Deleted.`);
+        showToast(`🗑️ "${name}" moved to Deleted.`, "success");
       }
 
       async function restorePlayer(name, team, category, type) {
@@ -943,16 +1041,27 @@
           .limit(1);
         const nextPos =
           existing && existing[0] ? existing[0].position_number + 1 : 1;
-        await sb
+        const { error: insertError } = await sb
           .from(catTable)
           .insert([{ name, team, category, position_number: nextPos }]);
-        await sb
+        
+        if (insertError) {
+          console.error("Error restoring player:", insertError);
+          showToast("Failed to restore player", "error");
+          return;
+        }
+
+        const { error: deleteError } = await sb
           .from(delTable)
           .delete()
           .eq("name", name)
           .eq("category", category);
-        // This will force a re-generation of the bracket
-        alert(`♻️ "${name}" restored to ${category}.`);
+        
+        if (deleteError) {
+          console.error("Error deleting from deleted table:", deleteError);
+        }
+
+        showToast(`♻️ "${name}" restored to ${category}.`, "success");
         showDeleted();
       }
 
@@ -1015,8 +1124,13 @@
           return;
         const table =
           type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
-        await sb.from(table).delete().eq("name", name).eq("category", category);
-        alert(`🗑️ "${name}" permanently deleted.`);
+        const { error } = await sb.from(table).delete().eq("name", name).eq("category", category);
+        if (error) {
+          console.error("Error permanently deleting:", error);
+          showToast("Failed to permanently delete", "error");
+          return;
+        }
+        showToast(`🗑️ "${name}" permanently deleted.`, "success");
         showDeleted();
       }
 
@@ -1187,15 +1301,17 @@
         sb.from("saved_brackets")
           .delete()
           .eq("category", categoryKey)
-          .eq("bracket_type", type);
+          .eq("bracket_type", type)
+          .then(({ error }) => {
+            if (error) console.error("Error clearing saved bracket:", error);
+          });
         renderBracketView(newGroups, type);
       }
 
       function exportAllToExcel(type) {
-        alert("Exporting... (Simulated CSV download)");
         const pages = document.querySelectorAll(".a4-page");
         if (pages.length === 0) {
-          alert("Please generate brackets first.");
+          showToast("Please generate brackets first.", "error");
           return;
         }
         let csvContent =
@@ -1240,6 +1356,7 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        showToast("✅ CSV exported successfully!", "success");
       }
 
       function setActiveBtn(id) {
@@ -1248,12 +1365,14 @@
           b.classList.add("btn-secondary");
         });
         const active = document.getElementById(id);
-        active.classList.remove("btn-secondary");
-        active.classList.add("btn-primary", "btn-active");
+        if (active) {
+          active.classList.remove("btn-secondary");
+          active.classList.add("btn-primary", "btn-active");
+        }
       }
 
       /* ============================================================
-         🔥🔥🔥  CORE FIX: fetchData() now merges registrations with person details
+         🔥🔥  CORE FIX: fetchData() now merges registrations with person details
          ============================================================ */
       async function fetchData() {
         try {
@@ -1668,3 +1787,4 @@
     </script>
   </body>
 </html>
+
