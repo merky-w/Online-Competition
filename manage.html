@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tournament Manager - 9-th Vojvodina Open ITF</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       :root {
         --primary: #1a3a6c;
@@ -40,7 +37,6 @@
         margin-bottom: 30px;
         padding-bottom: 20px;
         border-bottom: 2px solid var(--secondary);
-        position: relative;
       }
       h1 { font-size: 2rem; color: var(--primary); margin-bottom: 5px; font-weight: 700; }
       .subtitle { color: var(--gray); font-size: 1rem; }
@@ -51,7 +47,7 @@
         top: 15px;
         right: 15px;
         z-index: 500;
-        width: 320px;
+        width: 340px;
         background: white;
         border-radius: 10px;
         box-shadow: 0 6px 20px rgba(0,0,0,0.15);
@@ -68,7 +64,7 @@
         gap: 8px;
       }
       .global-search-header i { font-size: 0.9rem; }
-      .global-search-header span { font-size: 0.85rem; font-weight: 600; flex: 1; }
+      .global-search-header span.search-title { font-size: 0.85rem; font-weight: 600; flex: 1; }
       .global-search-context {
         font-size: 0.7rem;
         background: var(--secondary);
@@ -79,10 +75,10 @@
       }
       .global-search input {
         width: 100%;
-        padding: 10px 12px;
+        padding: 12px;
         border: none;
         outline: none;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         border-radius: 0 0 8px 8px;
       }
       .global-search-results {
@@ -90,7 +86,7 @@
         top: 100%;
         left: 0;
         right: 0;
-        max-height: 400px;
+        max-height: 450px;
         overflow-y: auto;
         background: white;
         border-radius: 0 0 10px 10px;
@@ -100,25 +96,27 @@
         border-top: none;
       }
       .global-search-results.active { display: block; }
+      /* 🔥 BIGGER HITBOX for search results */
       .search-result-item {
-        padding: 10px 12px;
+        padding: 14px 14px;
         border-bottom: 1px solid #f0f0f0;
         cursor: grab;
         transition: background 0.15s;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        min-height: 56px;
       }
       .search-result-item:hover { background: #f0f7ff; }
       .search-result-item:active { cursor: grabbing; }
       .search-result-item.dragging-search { opacity: 0.5; background: #ffe082; }
       .search-result-info { flex: 1; min-width: 0; }
-      .search-result-name { font-weight: 600; font-size: 0.9rem; color: var(--dark); }
-      .search-result-meta { font-size: 0.75rem; color: var(--gray); margin-top: 2px; }
+      .search-result-name { font-weight: 600; font-size: 0.95rem; color: var(--dark); }
+      .search-result-meta { font-size: 0.78rem; color: var(--gray); margin-top: 3px; }
       .search-result-badge {
-        font-size: 0.7rem;
-        padding: 2px 8px;
+        font-size: 0.72rem;
+        padding: 3px 10px;
         border-radius: 10px;
         background: var(--light-gray);
         color: var(--primary);
@@ -149,7 +147,7 @@
         font-size: 0.95rem;
       }
       .btn-sm { padding: 5px 12px; font-size: 0.85rem; }
-      .btn-xs { padding: 2px 6px; font-size: 0.75rem; }
+      .btn-xs { padding: 3px 8px; font-size: 0.75rem; }
       .btn-primary { background: var(--primary); color: white; }
       .btn-primary:hover { background: var(--primary-dark); }
       .btn-secondary { background: var(--light-gray); color: var(--dark); }
@@ -158,14 +156,73 @@
       .btn-danger { background: var(--danger); color: white; }
       .btn-warning { background: var(--warning); color: #212529; }
       .btn-warning:hover { background: #e0a800; }
-      .btn-undo { background: #6f42c1; color: white; }
-      .btn-undo:hover { background: #5a32a3; }
+      .btn-info { background: #17a2b8; color: white; }
+      .btn-info:hover { background: #138496; }
       .btn-undo:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
       .btn-active {
         background: var(--secondary);
         color: #fff;
         box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
       }
+
+      /* 🔥 Fixed Undo Button - bottom right */
+      .undo-floating {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        z-index: 600;
+        padding: 14px 22px;
+        background: #6f42c1;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+      }
+      .undo-floating:hover:not(:disabled) {
+        background: #5a32a3;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(111, 66, 193, 0.5);
+      }
+      .undo-floating:disabled {
+        background: #aaa;
+        cursor: not-allowed;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+      }
+      .undo-floating .undo-count {
+        background: white;
+        color: #6f42c1;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+      }
+      .undo-floating .undo-tooltip {
+        position: absolute;
+        bottom: 110%;
+        right: 0;
+        background: #333;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .undo-floating:hover .undo-tooltip { opacity: 1; }
+
       .filters-card {
         background: white;
         border-radius: 12px;
@@ -300,7 +357,7 @@
         background: #fff;
         border: 1px solid #ccc;
         border-left: 3px solid var(--primary);
-        padding: 4px 8px;
+        padding: 6px 10px;
         font-size: 0.85rem;
         border-radius: 4px;
         height: 100%;
@@ -327,30 +384,32 @@
         cursor: text;
       }
       .p-name:focus { background-color: #fffbe6; border-radius: 2px; }
+      /* 🔥 BIGGER HITBOX for player rows */
       .player-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2px;
-        padding: 2px 4px;
+        margin-bottom: 3px;
+        padding: 6px 8px;
         border-radius: 4px;
         transition: background 0.2s;
-        gap: 4px;
+        gap: 6px;
         cursor: grab;
+        min-height: 36px;
       }
       .player-row:active { cursor: grabbing; }
       .player-row.dragging { opacity: 0.6; background: #ffe082 !important; transform: scale(1.02); }
       .player-row.drag-over { background: #c8e6c9 !important; border: 2px dashed var(--success); }
       .player-row .player-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
       .p-name { font-weight: 600; }
-      .p-team { font-size: 0.75rem; color: #666; }
+      .p-team { font-size: 0.78rem; color: #666; }
       .delete-btn {
         background: var(--danger);
         color: white;
         border: none;
         border-radius: 4px;
-        padding: 2px 6px;
-        font-size: 0.7rem;
+        padding: 4px 8px;
+        font-size: 0.75rem;
         cursor: pointer;
         opacity: 0;
         transition: opacity 0.2s;
@@ -361,8 +420,8 @@
         color: white;
         border: none;
         border-radius: 4px;
-        padding: 2px 6px;
-        font-size: 0.7rem;
+        padding: 4px 8px;
+        font-size: 0.75rem;
         cursor: pointer;
         opacity: 0;
         transition: opacity 0.2s;
@@ -392,6 +451,48 @@
         justify-content: center;
         flex-wrap: wrap;
       }
+
+      /* 🔥 Bracket size controls */
+      .bracket-size-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f0f4f8;
+        padding: 4px 8px;
+        border-radius: 20px;
+        margin-left: 10px;
+      }
+      .bracket-size-controls .size-label {
+        font-size: 0.75rem;
+        color: var(--gray);
+        font-weight: 600;
+      }
+      .bracket-size-controls .size-value {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--primary);
+        min-width: 30px;
+        text-align: center;
+      }
+      .size-btn {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+      .size-btn.plus { background: var(--success); color: white; }
+      .size-btn.plus:hover { background: #218838; }
+      .size-btn.minus { background: var(--warning); color: #212529; }
+      .size-btn.minus:hover { background: #e0a800; }
+      .size-btn:disabled { background: #ccc; color: #888; cursor: not-allowed; }
+
       .deleted-card {
         background: white;
         border-radius: 12px;
@@ -410,21 +511,22 @@
       .toast {
         position: fixed;
         top: 20px;
-        right: 20px;
-        padding: 15px 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px 24px;
         border-radius: 8px;
         color: white;
         font-weight: 600;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 9999;
-        animation: slideIn 0.3s ease;
+        animation: slideDown 0.3s ease;
       }
       .toast.success { background: var(--success); }
       .toast.error { background: var(--danger); }
       .toast.info { background: var(--primary); }
-      @keyframes slideIn {
-        from { transform: translateX(400px); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+      @keyframes slideDown {
+        from { transform: translate(-50%, -40px); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
       }
       .modal {
         display: none;
@@ -457,20 +559,76 @@
       .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray); }
       .modal-body { max-height: 400px; overflow-y: auto; }
       .player-select-item {
-        padding: 10px;
+        padding: 12px;
         border: 1px solid var(--border);
         border-radius: 6px;
         margin-bottom: 8px;
         cursor: pointer;
         transition: all 0.2s;
+        min-height: 48px;
       }
       .player-select-item:hover { background: var(--light-gray); border-color: var(--primary); }
       .player-select-item.selected { background: #c8e6c9; border-color: var(--success); }
+
+      /* Team Distribution View */
+      .team-dist-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+        overflow: hidden;
+        border-top: 4px solid var(--secondary);
+      }
+      .team-dist-header {
+        background: var(--secondary);
+        color: #222;
+        padding: 12px 20px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .team-dist-body { padding: 15px 20px; }
+      .team-dist-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px dashed #e0e0e0;
+        align-items: center;
+      }
+      .team-dist-row:last-child { border-bottom: none; }
+      .team-dist-name { font-weight: 600; color: var(--primary); }
+      .team-dist-cats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 4px;
+      }
+      .team-dist-cat-tag {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: #e3f2fd;
+        color: #1565c0;
+        font-weight: 600;
+      }
+      .team-dist-cat-tag.sparring { background: #ffebee; color: #c62828; }
+      .team-dist-count {
+        background: var(--primary);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+      }
+
       @media print {
         @page { size: A4; margin: 10mm; }
         body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
         * { box-sizing: border-box; }
-        .nav, .filters-card, .controls, .subtitle, .modal, .global-search { display: none !important; }
+        .nav, .filters-card, .controls, .subtitle, .modal, .global-search, .undo-floating { display: none !important; }
         .container { max-width: none; width: 100%; margin: 0; padding: 0; }
         .a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
         .p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
@@ -488,17 +646,20 @@
     <div class="global-search" id="globalSearch">
       <div class="global-search-header">
         <i class="fas fa-search"></i>
-        <span>Search & Drag Players</span>
+        <span class="search-title">Search & Drag Players</span>
         <span class="global-search-context" id="searchContext" style="display:none;">ALL</span>
       </div>
-      <input
-        type="text"
-        id="globalSearchInput"
-        placeholder="Type name to search..."
-        autocomplete="off"
-      />
+      <input type="text" id="globalSearchInput" placeholder="Type name to search..." autocomplete="off" />
       <div class="global-search-results" id="globalSearchResults"></div>
     </div>
+
+    <!-- 🔥 Floating Undo Button - bottom right -->
+    <button class="undo-floating" id="undoBtn" onclick="performUndo()" disabled>
+      <i class="fas fa-undo"></i>
+      <span>Undo</span>
+      <span class="undo-count" id="undoCount">0</span>
+      <span class="undo-tooltip" id="undoTooltip">Nothing to undo</span>
+    </button>
 
     <div class="container">
       <header>
@@ -514,6 +675,9 @@
         </button>
         <button id="btnSparring" class="btn btn-secondary" onclick="showSparring()">
           <i class="fas fa-fist-raised"></i> Sparring (Matsogi)
+        </button>
+        <button id="btnTeamDist" class="btn btn-secondary" onclick="showTeamDistribution()">
+          <i class="fas fa-sitemap"></i> Team Distribution
         </button>
         <button id="btnDeleted" class="btn btn-secondary" onclick="showDeleted()">
           <i class="fas fa-trash-alt"></i> Deleted
@@ -567,18 +731,18 @@
       }
 
       const REG_TABLE = "final_registrations";
+      const CATEGORY_COUNTS_TABLE = "category_counts";
       let competitors = [], judges = [], coaches = [], tournamentDate = null;
       let currentGroups = null, currentBracketType = null;
       let currentModalTarget = null, selectedPlayerForModal = null;
-
-      // Track if we're currently viewing brackets (for search filtering)
       let isViewingBrackets = false;
 
-      // UNDO STACK
+      // Track current bracket sizes per category (for +/- controls)
+      let bracketSizes = {};
+
       let undoStack = [];
       const MAX_UNDO = 50;
 
-      // AUTO-SCROLL state
       let autoScrollRaf = null;
       let autoScrollSpeed = 0;
       const SCROLL_ZONE = 60;
@@ -601,9 +765,43 @@
         document.body.appendChild(toast);
         setTimeout(() => {
           toast.style.opacity = '0';
-          toast.style.transform = 'translateX(400px)';
           setTimeout(() => toast.remove(), 300);
         }, 3000);
+      }
+
+      /* ============== CATEGORY COUNTS (category_counts table) ============== */
+      async function adjustCategoryCount(categoryName, delta) {
+        if (!categoryName || delta === 0) return;
+        try {
+          const { data: existing, error: selErr } = await sb
+            .from(CATEGORY_COUNTS_TABLE)
+            .select("competitor_count")
+            .eq("category_name", categoryName)
+            .maybeSingle();
+
+          if (selErr) {
+            console.error("Error reading category count:", selErr);
+            return;
+          }
+
+          const current = existing ? (existing.competitor_count || 0) : 0;
+          const newCount = Math.max(0, current + delta);
+
+          if (existing) {
+            const { error: updErr } = await sb
+              .from(CATEGORY_COUNTS_TABLE)
+              .update({ competitor_count: newCount })
+              .eq("category_name", categoryName);
+            if (updErr) console.error("Error updating category count:", updErr);
+          } else {
+            const { error: insErr } = await sb
+              .from(CATEGORY_COUNTS_TABLE)
+              .insert({ category_name: categoryName, competitor_count: newCount });
+            if (insErr) console.error("Error inserting category count:", insErr);
+          }
+        } catch (err) {
+          console.error("adjustCategoryCount error:", err);
+        }
       }
 
       /* ============== UNDO SYSTEM ============== */
@@ -615,11 +813,16 @@
 
       function updateUndoButton() {
         const btn = document.getElementById('undoBtn');
+        const countEl = document.getElementById('undoCount');
+        const tooltipEl = document.getElementById('undoTooltip');
         if (!btn) return;
         btn.disabled = undoStack.length === 0;
-        btn.title = undoStack.length > 0
-          ? `Undo: ${undoStack[undoStack.length - 1].description}`
-          : 'Nothing to undo';
+        if (countEl) countEl.textContent = undoStack.length;
+        if (tooltipEl) {
+          tooltipEl.textContent = undoStack.length > 0
+            ? `Undo: ${undoStack[undoStack.length - 1].description}`
+            : 'Nothing to undo';
+        }
       }
 
       async function performUndo() {
@@ -632,11 +835,15 @@
 
         try {
           await reverseAction(action);
+
+          // 🔥 Reverse the category_counts change if recorded
+          if (action.categoryCountDelta) {
+            await adjustCategoryCount(action.categoryCountDelta.category, -action.categoryCountDelta.delta);
+          }
+
           showToast(`↶ Undone: ${action.description}`, "success");
 
-          // 🔥 AUTO-SAVE after undo so the change persists
           if (action.category && action.bracketType) {
-            showToast("💾 Auto-saving...", "info");
             await saveBracketStructure(action.category, action.bracketType, true);
           }
         } catch (err) {
@@ -701,20 +908,14 @@
         };
         autoScrollRaf = requestAnimationFrame(loop);
       }
-
       function stopAutoScrollLoop() {
-        if (autoScrollRaf) {
-          cancelAnimationFrame(autoScrollRaf);
-          autoScrollRaf = null;
-        }
+        if (autoScrollRaf) { cancelAnimationFrame(autoScrollRaf); autoScrollRaf = null; }
         autoScrollSpeed = 0;
       }
-
       function updateAutoScroll(clientY) {
         const vh = window.innerHeight;
         const scrollTop = window.scrollY || document.documentElement.scrollTop;
         const docHeight = document.documentElement.scrollHeight;
-
         if (clientY < SCROLL_ZONE) {
           const intensity = 1 - (clientY / SCROLL_ZONE);
           autoScrollSpeed = -Math.round(intensity * MAX_SCROLL_SPEED);
@@ -803,7 +1004,6 @@
         return { rounds, totalRounds: rounds.length };
       }
 
-      // 🔥 Added silent parameter to suppress success toast when auto-saving
       async function saveBracketStructure(categoryKey, type, silent = false) {
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
         if (!page) { if (!silent) showToast("Page not found", "error"); return false; }
@@ -849,18 +1049,19 @@
         return true;
       }
 
-      async function generateBracketData(list, categoryKey, type) {
+      // 🔥 Now accepts an optional forcedSize parameter
+      async function generateBracketData(list, categoryKey, type, forcedSize = null) {
         const savedBracket = await loadSavedBracket(categoryKey, type);
-        if (savedBracket) return savedBracket;
+        if (savedBracket && forcedSize === null) return savedBracket;
 
         let useList = list;
         const savedOrder = await getSavedOrder(categoryKey, type);
         if (savedOrder && savedOrder.length > 0) {
           useList = savedOrder.map((item) => ({ name: item.name, team: item.team, id: item.id || null }));
         }
-        const size = getBracketSize(useList.length);
-        if (size === 1) return { rounds: [[{ p1: useList[0], p2: { name: "", team: "" } }]], totalRounds: 1 };
-        if (size === 2) return { rounds: [[{ p1: useList[0], p2: useList[1] }]], totalRounds: 1 };
+        const size = forcedSize !== null ? forcedSize : getBracketSize(useList.length);
+        if (size === 1) return { rounds: [[{ p1: useList[0] || {name:"",team:""}, p2: { name: "", team: "" } }]], totalRounds: 1 };
+        if (size === 2) return { rounds: [[{ p1: useList[0] || {name:"",team:""}, p2: useList[1] || {name:"",team:""} }]], totalRounds: 1 };
 
         const totalRounds = Math.log2(size);
         const rounds = [];
@@ -910,6 +1111,29 @@
         if (!silent) showToast(`✅ Order saved! (${dataToSave.length} players)`, "success");
       }
 
+      // 🔥 Helper: count real (non-BYE, non-empty) players in a category from the DOM
+      function countRealPlayersInCategory(categoryKey, type) {
+        const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
+        if (!page) return 0;
+        const firstTable = page.querySelector(".bracket-table");
+        if (!firstTable) return 0;
+        let count = 0;
+        // Only count Round 1 slots (first column)
+        const rows = firstTable.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+          const cells = row.querySelectorAll("td");
+          const cell = cells[0];
+          if (cell) {
+            const playerRows = cell.querySelectorAll(".player-row");
+            playerRows.forEach(pr => {
+              const name = pr.querySelector(".p-name")?.innerText.trim() || "";
+              if (name && name !== "BYE" && name !== "________________") count++;
+            });
+          }
+        });
+        return count;
+      }
+
       async function deletePlayerFromBracket(name, team, category, type, slotId) {
         if (!confirm(`Delete "${name}" from ${category}?`)) return;
         const delTable = type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
@@ -934,6 +1158,9 @@
           });
         }
 
+        // 🔥 Decrement category_counts
+        await adjustCategoryCount(category, -1);
+
         pushUndo({
           type: 'delete',
           description: `Restore "${name}" to bracket`,
@@ -942,6 +1169,7 @@
           category,
           bracketType: type,
           deletedFromTable: delTable,
+          categoryCountDelta: { category, delta: -1 },
         });
 
         showToast(`🗑️ "${name}" moved to Deleted.`, "success");
@@ -1025,32 +1253,27 @@
         e.dataTransfer.setData("application/x-drag-type", "internal");
         startAutoScrollLoop();
       }
-
       function handleDragEnd(e) {
         e.target.classList.remove("dragging");
         document.querySelectorAll(".player-row.drag-over").forEach((el) => el.classList.remove("drag-over"));
         document.querySelectorAll(".match-box.drop-target").forEach((el) => el.classList.remove("drop-target"));
         stopAutoScrollLoop();
       }
-
       function handleDragOver(e) {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
         updateAutoScroll(e.clientY);
         return false;
       }
-
       function handleDragEnter(e) {
         e.preventDefault();
         if (e.target.classList.contains("player-row") && !e.target.classList.contains("dragging")) {
           e.target.classList.add("drag-over");
         }
       }
-
       function handleDragLeave(e) {
         if (e.target.classList.contains("player-row")) e.target.classList.remove("drag-over");
       }
-
       function handleDrop(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -1105,6 +1328,7 @@
         if (targetRow) handleSearchDrop(e, targetRow);
       }
 
+      // 🔥 handleSearchDrop now updates category_counts
       function handleSearchDrop(e, targetRow) {
         const playerName = e.dataTransfer.getData("application/x-player-name");
         const playerTeam = e.dataTransfer.getData("application/x-player-team");
@@ -1115,15 +1339,25 @@
           team: targetRow.querySelector(".p-team").innerText.trim(),
         };
 
+        // Determine if this is an addition (slot was empty) or replacement (slot had someone)
+        const wasEmpty = !before.name || before.name === "BYE" || before.name === "________________";
+
         targetRow.querySelector(".p-name").innerText = playerName;
         targetRow.querySelector(".p-team").innerText = playerTeam || "N/A";
         targetRow.style.background = "#c8e6c9";
         setTimeout(() => { targetRow.style.background = ""; }, 400);
 
-        // Find the category this slot belongs to
         const page = targetRow.closest('.a4-page');
         const category = page ? page.dataset.category : '';
         const type = page ? page.dataset.type : '';
+
+        let countDelta = null;
+        if (wasEmpty) {
+          // 🔥 Increment category count (new player added)
+          adjustCategoryCount(category, 1);
+          countDelta = { category, delta: 1 };
+        }
+        // If slot had a player and was replaced, count stays same
 
         pushUndo({
           type: 'search_drop',
@@ -1132,6 +1366,7 @@
           before,
           category,
           bracketType: type,
+          categoryCountDelta: countDelta,
         });
 
         showToast(`✅ Added ${playerName}`, "success");
@@ -1156,7 +1391,6 @@
         row2.style.background = "#c8e6c9";
         setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 300);
 
-        // Find the category this slot belongs to
         const page = row1.closest('.a4-page');
         const category = page ? page.dataset.category : '';
         const type = page ? page.dataset.type : '';
@@ -1170,11 +1404,11 @@
           before2,
           category,
           bracketType: type,
+          // Swaps don't change category_counts
         });
       }
 
       /* ============== GLOBAL SEARCH ============== */
-      // 🔥 Now context-aware: filters by current discipline when in bracket view
       let searchDebounceTimer = null;
       function initGlobalSearch() {
         const input = document.getElementById('globalSearchInput');
@@ -1183,7 +1417,6 @@
         input.addEventListener('focus', () => {
           if (input.value.trim().length > 0) performSearch(input.value);
         });
-
         input.addEventListener('input', () => {
           clearTimeout(searchDebounceTimer);
           const q = input.value.trim();
@@ -1194,11 +1427,9 @@
           }
           searchDebounceTimer = setTimeout(() => performSearch(q), 150);
         });
-
         input.addEventListener('blur', () => {
           setTimeout(() => { results.classList.remove('active'); }, 200);
         });
-
         document.addEventListener('click', (e) => {
           if (!document.getElementById('globalSearch').contains(e.target)) {
             results.classList.remove('active');
@@ -1206,7 +1437,6 @@
         });
       }
 
-      // 🔥 Update the context badge in search header
       function updateSearchContextBadge() {
         const badge = document.getElementById('searchContext');
         if (isViewingBrackets && currentBracketType) {
@@ -1223,7 +1453,6 @@
         const results = document.getElementById('globalSearchResults');
         const q = query.toLowerCase();
 
-        // 🔥 Filter by current discipline if in bracket view
         let pool = competitors;
         if (isViewingBrackets && currentBracketType) {
           const targetDiscipline = currentBracketType === 'Patterns' ? 'patterns' : 'sparring';
@@ -1245,7 +1474,6 @@
           return;
         }
 
-        // Dedupe by name+team+discipline
         const seen = new Set();
         const unique = [];
         matches.forEach(c => {
@@ -1358,8 +1586,16 @@
             name: targetRow.querySelector(".p-name").innerText.trim(),
             team: targetRow.querySelector(".p-team").innerText.trim(),
           };
+          const wasEmpty = !before.name || before.name === "BYE" || before.name === "________________";
+
           targetRow.querySelector(".p-name").innerText = selectedPlayerForModal.name;
           targetRow.querySelector(".p-team").innerText = selectedPlayerForModal.team;
+
+          let countDelta = null;
+          if (wasEmpty) {
+            adjustCategoryCount(categoryKey, 1);
+            countDelta = { category: categoryKey, delta: 1 };
+          }
 
           pushUndo({
             type: 'add',
@@ -1368,6 +1604,7 @@
             before,
             category: categoryKey,
             bracketType: type,
+            categoryCountDelta: countDelta,
           });
 
           showToast(`✅ Player added to Round ${roundNum}, Match ${matchNum}`, "success");
@@ -1377,36 +1614,89 @@
         }
       }
 
+      /* ============== 🔥 BRACKET SIZE CONTROLS ============== */
+      async function changeBracketSize(categoryKey, type, direction) {
+        const currentSize = bracketSizes[categoryKey] || 2;
+        let newSize;
+
+        if (direction === 'up') {
+          newSize = currentSize * 2;
+          if (newSize > 64) {
+            showToast("Maximum bracket size is 64", "error");
+            return;
+          }
+        } else {
+          newSize = currentSize / 2;
+          if (newSize < 2) {
+            showToast("Minimum bracket size is 2", "error");
+            return;
+          }
+          // 🔥 Can only shrink if real players fit in smaller bracket
+          const realCount = countRealPlayersInCategory(categoryKey, type);
+          if (realCount > newSize) {
+            showToast(`Cannot shrink: ${realCount} players won't fit in ${newSize} slots`, "error");
+            return;
+          }
+          if (!confirm(`Shrink bracket from ${currentSize} to ${newSize}? Players will be preserved.`)) return;
+        }
+
+        // Delete saved bracket so it regenerates with new size
+        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+
+        // Update tracked size
+        bracketSizes[categoryKey] = newSize;
+
+        // Re-render
+        if (currentGroups && currentGroups[categoryKey]) {
+          await renderBracketView(currentGroups, type);
+          showToast(`✅ Bracket resized to ${newSize}`, "success");
+        }
+      }
+
       /* ============== RENDER BRACKET ============== */
       async function renderBracketView(groups, type) {
         currentGroups = groups;
         currentBracketType = type;
         isViewingBrackets = true;
         updateSearchContextBadge();
-        // Reset undo stack when loading new bracket view
         undoStack = [];
 
         let html = `<div class="controls">
 <button class="btn btn-secondary" onclick="${type === "Patterns" ? "showPatterns()" : "showSparring()"}"><i class="fas fa-arrow-left"></i> Back to List</button>
-<button class="btn btn-undo" id="undoBtn" onclick="performUndo()" disabled title="Nothing to undo"><i class="fas fa-undo"></i> Undo</button>
 <button class="btn btn-success" onclick="exportAllToExcel('${type}')"><i class="fas fa-file-excel"></i> Download All to Excel</button>
 <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print All Brackets</button>
 </div>`;
         let categoryIndex = 0;
         for (const key in groups) {
           const list = groups[key];
-          const data = await generateBracketData(list, key, type);
+          // 🔥 Use tracked size if exists, otherwise calculate
+          const forcedSize = bracketSizes[key] || null;
+          const data = await generateBracketData(list, key, type, forcedSize);
+          const actualSize = data.rounds[0].length * 2;
+          bracketSizes[key] = actualSize;
+
           const existing = await getSavedOrder(key, type);
           if (!existing) await saveCategoryOrder(key, type, true);
           const rowsCount = data.rounds[0].length;
           const pageId = `page-${categoryIndex}`;
           const safeKey = key.replace(/'/g, "\\'");
+
+          // 🔥 Bracket size controls
+          const canShrink = actualSize > 2;
+          const canGrow = actualSize < 64;
+
           html += `<div class="a4-page" id="${pageId}" data-category="${key}" data-type="${type}" style="--row-count:${rowsCount}">
 <div class="bracket-header">
 <span style="font-size:12px;text-transform:uppercase;color:#666">${type}</span>
 <h2>${key}</h2>
 <span style="font-size:14px;color:var(--secondary);font-weight:bold">${list.length} Competitors</span>
-<div style="text-align:right;margin-top:5px">
+<div style="text-align:right;margin-top:5px;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;align-items:center">
+<div class="bracket-size-controls">
+  <span class="size-label">Bracket:</span>
+  <button class="size-btn minus" onclick="changeBracketSize('${safeKey}', '${type}', 'down')" ${canShrink ? '' : 'disabled'} title="Shrink bracket"><i class="fas fa-minus"></i></button>
+  <span class="size-value">${actualSize}</span>
+  <button class="size-btn plus" onclick="changeBracketSize('${safeKey}', '${type}', 'up')" ${canGrow ? '' : 'disabled'} title="Expand bracket"><i class="fas fa-plus"></i></button>
+</div>
 <button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory('${safeKey}', '${type}')"><i class="fas fa-random"></i> Shuffle</button>
 <button class="btn btn-success btn-sm" onclick="saveCategoryOrder('${safeKey}', '${type}')"><i class="fas fa-save"></i> Save Order</button>
 <button class="btn btn-primary btn-sm" onclick="saveBracketStructure('${safeKey}', '${type}')"><i class="fas fa-database"></i> Save Bracket</button>
@@ -1502,6 +1792,8 @@
         if (!currentGroups || !currentGroups[categoryKey]) return;
         const newGroups = { ...currentGroups };
         newGroups[categoryKey] = shuffle([...newGroups[categoryKey]]);
+        // Reset size so it recalculates
+        delete bracketSizes[categoryKey];
         sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type)
           .then(({ error }) => { if (error) console.error("Error clearing saved bracket:", error); });
         renderBracketView(newGroups, type);
@@ -1657,6 +1949,8 @@
         });
         const groups = {};
         filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        // 🔥 Reset tracked sizes for fresh generation
+        bracketSizes = {};
         await renderBracketView(groups, "Patterns");
       }
 
@@ -1735,6 +2029,7 @@
         });
         const groups = {};
         filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        bracketSizes = {};
         await renderBracketView(groups, "Sparring");
       }
 
@@ -1754,6 +2049,85 @@
         else k.forEach((t) => (h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">${t}</strong><span style="font-size:0.85rem;color:var(--gray)">${s[t]} members</span></div>`));
         h += `</div><div style="margin-top:15px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center">Total: ${total}</div>`;
         document.getElementById("teamSummary").innerHTML = h;
+      }
+
+      /* ============== 🔥 TEAM DISTRIBUTION VIEW ============== */
+      async function showTeamDistribution() {
+        setActiveBtn("btnTeamDist");
+        isViewingBrackets = false;
+        updateSearchContextBadge();
+        await fetchData();
+
+        // Build: team -> { patterns: Set of categories, sparring: Set of categories }
+        const teamMap = {};
+        competitors.forEach(c => {
+          const team = c.team || "Unassigned";
+          if (!teamMap[team]) teamMap[team] = { patterns: new Set(), sparring: new Set(), totalEntries: 0 };
+          if (c._discipline === 'patterns') teamMap[team].patterns.add(c._full_cat);
+          else if (c._discipline === 'sparring') teamMap[team].sparring.add(c._full_cat);
+          teamMap[team].totalEntries++;
+        });
+
+        let html = `<div class="controls">
+<button class="btn btn-info" onclick="refreshTeamDistribution()"><i class="fas fa-sync"></i> Refresh</button>
+</div>`;
+
+        html += `<div style="background:white;padding:15px 20px;border-radius:8px;margin-bottom:20px;box-shadow:var(--shadow);border-left:5px solid var(--secondary)">
+<i class="fas fa-info-circle" style="color:var(--primary)"></i>
+<strong style="color:var(--primary)">Team Distribution</strong> — Shows how many different categories each team's competitors are spread across.
+</div>`;
+
+        const teams = Object.keys(teamMap).sort();
+        if (teams.length === 0) {
+          html += `<div class="empty-state" style="text-align:center;padding:40px;color:var(--gray);">No competitors found.</div>`;
+        } else {
+          teams.forEach(team => {
+            const data = teamMap[team];
+            const patternsCount = data.patterns.size;
+            const sparringCount = data.sparring.size;
+            const totalCategories = patternsCount + sparringCount;
+
+            html += `<div class="team-dist-card">
+<div class="team-dist-header">
+  <span><i class="fas fa-users"></i> ${team}</span>
+  <span class="team-dist-count">${totalCategories} categor${totalCategories === 1 ? 'y' : 'ies'} • ${data.totalEntries} entries</span>
+</div>
+<div class="team-dist-body">`;
+
+            if (patternsCount > 0) {
+              html += `<div style="margin-bottom:12px">
+<div style="font-weight:600;color:#1565c0;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-chess-board"></i> Patterns (${patternsCount})</div>
+<div class="team-dist-cats">`;
+              Array.from(data.patterns).sort().forEach(cat => {
+                html += `<span class="team-dist-cat-tag">${cat}</span>`;
+              });
+              html += `</div></div>`;
+            }
+
+            if (sparringCount > 0) {
+              html += `<div>
+<div style="font-weight:600;color:#c62828;margin-bottom:6px;font-size:0.9rem"><i class="fas fa-fist-raised"></i> Sparring (${sparringCount})</div>
+<div class="team-dist-cats">`;
+              Array.from(data.sparring).sort().forEach(cat => {
+                html += `<span class="team-dist-cat-tag sparring">${cat}</span>`;
+              });
+              html += `</div></div>`;
+            }
+
+            if (patternsCount === 0 && sparringCount === 0) {
+              html += `<div style="color:var(--gray);font-style:italic">No category entries.</div>`;
+            }
+
+            html += `</div></div>`;
+          });
+        }
+
+        document.getElementById("content").innerHTML = html;
+      }
+
+      function refreshTeamDistribution() {
+        dataLoaded = false;
+        showTeamDistribution();
       }
 
       async function showJudges() {
@@ -1784,7 +2158,6 @@
         document.getElementById("content").innerHTML = h + `</div></div>`;
       }
 
-      // Keyboard shortcut: Ctrl+Z to undo
       document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
           const active = document.activeElement;
