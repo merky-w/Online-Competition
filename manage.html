@@ -634,7 +634,6 @@
       <div id="content"></div>
     </div>
 
-    <!-- Modal for adding player to specific round -->
     <div id="addPlayerModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -656,13 +655,11 @@
     </div>
 
     <script>
-      /* ---------------- CONFIG ---------------- */
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
       const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // 🔒 ADMIN ACCESS CHECK
       if (localStorage.getItem("isAdmin") !== "true") {
         alert("Admin access required. Redirecting to main page...");
         window.location.href = "index.html";
@@ -677,7 +674,7 @@
       let currentGroups = null,
         currentBracketType = null,
         selectedSwap = null;
-      let currentModalTarget = null; // Track which slot we're adding to
+      let currentModalTarget = null;
       let selectedPlayerForModal = null;
 
       const RULES = {
@@ -705,7 +702,6 @@
         },
       };
 
-      /* ---------------- HELPER FUNCTIONS ---------------- */
       function showToast(message, type = 'info') {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
@@ -803,7 +799,6 @@
         return data && data.length ? data : null;
       }
 
-      // Load a saved bracket structure from the DB
       async function loadSavedBracket(categoryKey, type) {
         const { data, error } = await sb
           .from("saved_brackets")
@@ -822,7 +817,6 @@
           return null;
         }
 
-        // Reconstruct the rounds array
         const rounds = [];
         let currentRound = -1;
         let currentMatches = [];
@@ -853,7 +847,7 @@
         return { rounds, totalRounds: rounds.length };
       }
 
-      // Save the current bracket structure to the DB - NOW SAVES ALL ROUNDS
+      // FIXED: Save bracket structure - now correctly identifies rounds by column index
       async function saveBracketStructure(categoryKey, type) {
         const page = document.querySelector(
           `.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`,
@@ -863,43 +857,51 @@
           return;
         }
 
-        const matchesToSave = [];
-        const tables = page.querySelectorAll(".bracket-table");
+        const table = page.querySelector(".bracket-table");
+        if (!table) {
+          showToast("No bracket table found", "error");
+          return;
+        }
 
-        tables.forEach((table, roundIndex) => {
+        const matchesToSave = [];
+        const headerCells = table.querySelectorAll("thead th");
+        const totalRounds = headerCells.length;
+
+        // Iterate through each round (column)
+        for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
           const rows = table.querySelectorAll("tbody tr");
           let matchNumber = 1;
+          
           rows.forEach((row) => {
             const cells = row.querySelectorAll("td");
-            cells.forEach((cell) => {
-              if (cell.getAttribute("rowspan")) {
-                const playerRows = cell.querySelectorAll(".player-row");
-                if (playerRows.length >= 2) {
-                  const p1Name =
-                    playerRows[0].querySelector(".p-name")?.innerText.trim() || "";
-                  const p1Team =
-                    playerRows[0].querySelector(".p-team")?.innerText.trim() || "";
-                  const p2Name =
-                    playerRows[1].querySelector(".p-name")?.innerText.trim() || "";
-                  const p2Team =
-                    playerRows[1].querySelector(".p-team")?.innerText.trim() || "";
+            const cell = cells[roundIndex];
+            
+            if (cell && cell.getAttribute("rowspan")) {
+              const playerRows = cell.querySelectorAll(".player-row");
+              if (playerRows.length >= 2) {
+                const p1Name =
+                  playerRows[0].querySelector(".p-name")?.innerText.trim() || "";
+                const p1Team =
+                  playerRows[0].querySelector(".p-team")?.innerText.trim() || "";
+                const p2Name =
+                  playerRows[1].querySelector(".p-name")?.innerText.trim() || "";
+                const p2Team =
+                  playerRows[1].querySelector(".p-team")?.innerText.trim() || "";
 
-                  // Save ALL matches, including those in round 2+
-                  matchesToSave.push({
-                    category: categoryKey,
-                    bracket_type: type,
-                    round_number: roundIndex + 1,
-                    match_number: matchNumber++,
-                    player1_name: p1Name,
-                    player1_team: p1Team,
-                    player2_name: p2Name,
-                    player2_team: p2Team,
-                  });
-                }
+                matchesToSave.push({
+                  category: categoryKey,
+                  bracket_type: type,
+                  round_number: roundIndex + 1,
+                  match_number: matchNumber++,
+                  player1_name: p1Name,
+                  player1_team: p1Team,
+                  player2_name: p2Name,
+                  player2_team: p2Team,
+                });
               }
-            });
+            }
           });
-        });
+        }
 
         if (matchesToSave.length === 0) {
           showToast("No matches found to save", "error");
@@ -908,7 +910,6 @@
 
         console.log("Saving bracket structure:", matchesToSave);
 
-        // First, delete any existing bracket for this category/type
         const { error: deleteError } = await sb
           .from("saved_brackets")
           .delete()
@@ -921,7 +922,6 @@
           return;
         }
 
-        // Then, insert the new matches
         const { data, error } = await sb
           .from("saved_brackets")
           .insert(matchesToSave)
@@ -939,14 +939,12 @@
       }
 
       async function generateBracketData(list, categoryKey, type) {
-        // First, try to load a saved bracket structure
         const savedBracket = await loadSavedBracket(categoryKey, type);
         if (savedBracket) {
           console.log("Loaded saved bracket for:", categoryKey);
           return savedBracket;
         }
 
-        // If no saved bracket, generate a new one
         let useList = list;
         const savedOrder = await getSavedOrder(categoryKey, type);
         if (savedOrder && savedOrder.length > 0) {
@@ -1009,7 +1007,6 @@
           return;
         }
         
-        // Get all player rows from the first round (first table)
         const firstTable = page.querySelector(".bracket-table");
         if (!firstTable) {
           if (!silent) showToast("No bracket table found", "error");
@@ -1043,7 +1040,6 @@
 
         console.log("Saving order:", dataToSave);
 
-        // Delete existing records for this category
         const { error: deleteError } = await sb
           .from(table)
           .delete()
@@ -1055,7 +1051,6 @@
           return;
         }
 
-        // Insert new records
         const { data, error } = await sb
           .from(table)
           .insert(dataToSave)
@@ -1101,7 +1096,6 @@
           .eq("category", category)
           .eq("name", name);
         
-        // Also delete from saved_brackets
         await sb
           .from("saved_brackets")
           .delete()
@@ -1303,7 +1297,6 @@
         }, 300);
       }
 
-      // Modal functions for adding players to specific rounds
       function openAddPlayerModal(roundNum, matchNum, playerSlot, categoryKey, type) {
         currentModalTarget = { roundNum, matchNum, playerSlot, categoryKey, type };
         selectedPlayerForModal = null;
@@ -1322,7 +1315,6 @@
         const listDiv = document.getElementById('playerList');
         const categoryKey = currentModalTarget.categoryKey;
         
-        // Get all competitors for this category
         const allPlayers = competitors.filter(c => {
           const discipline = currentModalTarget.type === 'Patterns' ? 'patterns' : 'sparring';
           return c._discipline === discipline && c._full_cat === categoryKey.split(' - ')[0];
@@ -1373,11 +1365,10 @@
           return;
         }
 
-        const tables = page.querySelectorAll(".bracket-table");
-        const table = tables[roundNum - 1];
+        const table = page.querySelector(".bracket-table");
         
         if (!table) {
-          showToast("Round not found", "error");
+          showToast("Table not found", "error");
           return;
         }
 
@@ -1387,19 +1378,19 @@
 
         rows.forEach(row => {
           const cells = row.querySelectorAll("td");
-          cells.forEach(cell => {
-            if (cell.getAttribute("rowspan") && !matchFound) {
-              matchCount++;
-              if (matchCount === matchNum) {
-                matchFound = true;
-                const playerRows = cell.querySelectorAll(".player-row");
-                if (playerRows[playerSlot]) {
-                  playerRows[playerSlot].querySelector(".p-name").innerText = selectedPlayerForModal.name;
-                  playerRows[playerSlot].querySelector(".p-team").innerText = selectedPlayerForModal.team;
-                }
+          const cell = cells[roundNum - 1];
+          
+          if (cell && cell.getAttribute("rowspan") && !matchFound) {
+            matchCount++;
+            if (matchCount === matchNum) {
+              matchFound = true;
+              const playerRows = cell.querySelectorAll(".player-row");
+              if (playerRows[playerSlot]) {
+                playerRows[playerSlot].querySelector(".p-name").innerText = selectedPlayerForModal.name;
+                playerRows[playerSlot].querySelector(".p-team").innerText = selectedPlayerForModal.team;
               }
             }
-          });
+          }
         });
 
         if (matchFound) {
@@ -1465,7 +1456,6 @@
                 const p2Id = `p2-${key}-${r}-${matchIndex}-1`;
                 html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}">`;
                 
-                // Player 1
                 html += `<div class="player-row" data-draggable="true" data-player-id="${p1Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
                 if (p1.name && p1.name !== "BYE" && p1.name !== "________________") {
                   html += `<button class="delete-btn" title="Delete player" onclick="deletePlayerFromBracket('${p1.name.replace(/'/g, "\\'")}', '${(p1.team || "").replace(/'/g, "\\'")}', '${key.replace(/'/g, "\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
@@ -1474,7 +1464,6 @@
                 }
                 html += `</div><div class="vs-divider">VS</div>`;
                 
-                // Player 2
                 html += `<div class="player-row" data-draggable="true" data-player-id="${p2Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || "N/A"}</span></div>`;
                 if (p2.name && p2.name !== "BYE" && p2.name !== "________________") {
                   html += `<button class="delete-btn" title="Delete player" onclick="deletePlayerFromBracket('${p2.name.replace(/'/g, "\\'")}', '${(p2.team || "").replace(/'/g, "\\'")}', '${key.replace(/'/g, "\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
@@ -1502,7 +1491,6 @@
         if (!currentGroups || !currentGroups[categoryKey]) return;
         const newGroups = { ...currentGroups };
         newGroups[categoryKey] = shuffle([...newGroups[categoryKey]]);
-        // Delete the saved bracket before re-rendering
         sb.from("saved_brackets")
           .delete()
           .eq("category", categoryKey)
