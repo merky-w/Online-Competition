@@ -233,9 +233,8 @@
         window.location.href = "index.html";
       }
 
-      const REG_TABLE = "final_registrations";
       const CATEGORY_COUNTS_TABLE = "category_counts";
-      // 🔥 competitors array is now built DIRECTLY from final_registrations
+      // 🔥 competitors now built from patterns_categories + sparring_categories (current tournament only)
       let competitors = [], judges = [], coaches = [], tournamentDate = null;
       let currentGroups = null, currentBracketType = null;
       let currentModalTarget = null, selectedPlayerForModal = null;
@@ -245,7 +244,6 @@
       const MAX_UNDO = 50;
       let autoScrollRaf = null, autoScrollSpeed = 0;
       const SCROLL_ZONE = 60, MAX_SCROLL_SPEED = 20;
-      let manualPlayersCache = { Patterns: null, Sparring: null };
 
       const RULES = {
         SPARRING: {
@@ -290,7 +288,6 @@
           const nextPos = maxPos && maxPos[0] ? maxPos[0].position_number + 1 : 1;
           const { error } = await sb.from(table).insert([{ name, team, category, position_number: nextPos }]);
           if (error) console.error("Error adding to category table:", error);
-          else manualPlayersCache[type] = null;
         } catch (err) { console.error("addPlayerToCategoryTable error:", err); }
       }
 
@@ -299,46 +296,7 @@
         try {
           const { error } = await sb.from(table).delete().eq("category", category).eq("name", name);
           if (error) console.error("Error removing from category table:", error);
-          else manualPlayersCache[type] = null;
         } catch (err) { console.error("removePlayerFromCategoryTable error:", err); }
-      }
-
-      async function loadManualPlayers(type) {
-        if (manualPlayersCache[type]) return manualPlayersCache[type];
-        const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
-        const discipline = type === "Patterns" ? "patterns" : "sparring";
-        try {
-          const { data, error } = await sb.from(table).select("*").order("category", { ascending: true }).order("position_number", { ascending: true });
-          if (error || !data) { manualPlayersCache[type] = []; return []; }
-          const originalKeys = new Set();
-          competitors.forEach(c => {
-            if (c._discipline === discipline) {
-              originalKeys.add(`${c._full_cat}|${c.name}|${c.team || ''}`);
-            }
-          });
-          const manual = data
-            .filter(p => !originalKeys.has(`${p.category}|${p.name}|${p.team || ''}`))
-            .map(p => ({
-              name: p.name, team: p.team || "",
-              _discipline: discipline, _full_cat: p.category,
-              _actual_age_group: (p.category || "").split(" - ")[0] || "OTHER",
-              _actual_sub_cat: (p.category || "").split(" - ")[1] || "",
-              gender: (p.category || "").split(" - ")[2] || "",
-              _isManual: true,
-            }));
-          manualPlayersCache[type] = manual;
-          return manual;
-        } catch (err) {
-          console.error("loadManualPlayers error:", err);
-          manualPlayersCache[type] = [];
-          return [];
-        }
-      }
-
-      async function getMergedCompetitors(discipline) {
-        const type = discipline === "patterns" ? "Patterns" : "Sparring";
-        const manual = await loadManualPlayers(type);
-        return [...competitors.filter(c => c._discipline === discipline), ...manual];
       }
 
       function pushUndo(action) {
@@ -599,7 +557,6 @@
         const { error } = await sb.from(table).insert(dataToSave).select();
         if (error) { if (!silent) showToast(`Failed to save: ${error.message}`, "error"); return; }
         if (!silent) showToast(`✅ Order saved! (${dataToSave.length} players)`, "success");
-        manualPlayersCache[type] = null;
       }
 
       function countRealPlayersInCategory(categoryKey, type) {
@@ -645,7 +602,6 @@
           });
         }
         await adjustCategoryCount(category, -1);
-        manualPlayersCache[type] = null;
         pushUndo({
           type: 'delete', description: `Restore "${name}" to bracket`,
           slotId: slotId, before: { name, team }, category, bracketType: type,
@@ -664,7 +620,6 @@
         const nextPos = existing && existing[0] ? existing[0].position_number + 1 : 1;
         await sb.from(catTable).insert([{ name, team, category, position_number: nextPos }]);
         await sb.from(delTable).delete().eq("name", name).eq("category", category);
-        manualPlayersCache[type] = null;
         showToast(`♻️ "${name}" restored to ${category}.`, "success");
         showDeleted();
       }
@@ -862,11 +817,9 @@
           badge.style.color = currentBracketType === 'Patterns' ? '#1565c0' : '#c62828';
         } else badge.style.display = 'none';
       }
-      // 🔥 Search now pulls from competitors array which is built from final_registrations
       function performSearch(query) {
         const results = document.getElementById('globalSearchResults');
         const q = query.toLowerCase();
-        // 🔥 competitors array is sourced from final_registrations
         let pool = competitors;
         if (isViewingBrackets && currentBracketType) {
           const targetDiscipline = currentBracketType === 'Patterns' ? 'patterns' : 'sparring';
@@ -933,7 +886,7 @@
         const categoryKey = currentModalTarget.categoryKey;
         const allPlayers = competitors.filter(c => {
           const discipline = currentModalTarget.type === 'Patterns' ? 'patterns' : 'sparring';
-          return c._discipline === discipline && c._full_cat === categoryKey.split(' - ')[0];
+          return c._discipline === discipline && c._full_cat === categoryKey;
         });
         const filtered = allPlayers.filter(p =>
           p.name.toLowerCase().includes(filter.toLowerCase()) ||
@@ -1202,88 +1155,74 @@
         if (active) { active.classList.remove("btn-secondary"); active.classList.add("btn-primary", "btn-active"); }
       }
 
-      // 🔥🔥🔥 CORE: competitors array built DIRECTLY from final_registrations
-      // Each row in final_registrations with entry_type=comp becomes one or more
-      // entries in competitors[] based on entry_data.entries_list
+      // 🔥🔥🔥 CORE CHANGE: competitors now built from patterns_categories + sparring_categories
+      // This is the CURRENT TOURNAMENT data only (the 7 max people you mentioned)
+      // NOT from final_registrations which has everyone from all tournaments
       let dataLoaded = false;
       async function fetchData(force = false) {
         if (dataLoaded && !force) return;
         try {
-          // 🔥 Step 1: Fetch everything from final_registrations
-          const { data: allRegs, error: regError } = await sb.from(REG_TABLE).select("*");
-          if (regError) throw regError;
+          competitors = [];
+          judges = [];
+          coaches = [];
 
-          // 🔥 Step 2: Separate by entry_type
-          const compRegs = (allRegs || []).filter(r => r.entry_type === "comp" || r.entry_type === "competitor");
-          const judgeRegs = (allRegs || []).filter(r => r.entry_type === "judge");
-          const coachRegs = (allRegs || []).filter(r => r.entry_type === "coach");
+          // 🔥 Step 1: Fetch ALL from patterns_categories (current tournament patterns)
+          const { data: patternsData, error: pErr } = await sb
+            .from("patterns_categories")
+            .select("*")
+            .order("category", { ascending: true })
+            .order("position_number", { ascending: true });
+          if (pErr) console.error("Error loading patterns_categories:", pErr);
 
-          // 🔥 Step 3: Get unique person IDs
-          const compIds = [...new Set(compRegs.map(r => r.entry_id))];
-          const judgeIds = [...new Set(judgeRegs.map(r => r.entry_id))];
-          const coachIds = [...new Set(coachRegs.map(r => r.entry_id))];
+          // 🔥 Step 2: Fetch ALL from sparring_categories (current tournament sparring)
+          const { data: sparringData, error: sErr } = await sb
+            .from("sparring_categories")
+            .select("*")
+            .order("category", { ascending: true })
+            .order("position_number", { ascending: true });
+          if (sErr) console.error("Error loading sparring_categories:", sErr);
 
-          let compDetails = [], judgeDetails = [], coachDetails = [];
-
-          // 🔥 Step 4: Fetch person details (name, team, gender, belt)
-          if (compIds.length > 0) {
-            const { data } = await sb.from("competitors").select("*").in("id", compIds);
-            if (data) compDetails = data;
-          }
-          if (judgeIds.length > 0) {
-            const { data } = await sb.from("judges").select("*").in("id", judgeIds);
-            if (data) judgeDetails = data;
-          }
-          if (coachIds.length > 0) {
-            const { data } = await sb.from("coaches").select("*").in("id", coachIds);
-            if (data) coachDetails = data;
-          }
-
-          // 🔥 Step 5: Build competitors[] from final_registrations
-          // Each registration row can have MULTIPLE entries (patterns + sparring + multiple categories)
-          // We create one competitor entry per (person × entry) combination
-          competitors = []; judges = []; coaches = [];
-
-          compDetails.forEach((person) => {
-            const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
-            personRegs.forEach((reg) => {
-              // 🔥 This is the final_registrations row - extract entries_list
-              const entries = reg.entry_data?.entries_list || [];
-              entries.forEach((entry) => {
-                const parts = (entry.full_cat || "").split(" - ");
-                competitors.push({
-                  // Person info
-                  name: person.name,
-                  team: person.team,
-                  gender: person.gender,
-                  belt: person.belt,
-                  // Registration info (from final_registrations)
-                  _reg_id: reg.id,
-                  _registration_data: reg.entry_data,
-                  // Entry info (from entries_list inside final_registrations)
-                  _discipline: entry.discipline,
-                  _label: entry.label,
-                  _full_cat: entry.full_cat,
-                  _actual_age_group: parts[0] || "OTHER",
-                  _actual_sub_cat: parts[1] || "",
-                });
+          // 🔥 Step 3: Build competitors array from patterns_categories
+          // Category format: "AGE_GROUP - SUB_CAT - GENDER" e.g. "KIDS - 10-9 Kup - MALE"
+          if (patternsData) {
+            patternsData.forEach(p => {
+              const parts = (p.category || "").split(" - ");
+              competitors.push({
+                name: p.name,
+                team: p.team || "",
+                gender: parts[2] || "", // extract gender from category name
+                _discipline: "patterns",
+                _full_cat: p.category,
+                _actual_age_group: parts[0] || "OTHER",
+                _actual_sub_cat: parts[1] || "",
+                _position: p.position_number,
+                _sourceTable: "patterns_categories",
               });
             });
-          });
+          }
 
-          judgeDetails.forEach((person) => {
-            const personRegs = judgeRegs.filter(r => String(r.entry_id) === String(person.id));
-            personRegs.forEach((reg) => judges.push({ ...person, _reg_id: reg.id }));
-          });
-
-          coachDetails.forEach((person) => {
-            const personRegs = coachRegs.filter(r => String(r.entry_id) === String(person.id));
-            personRegs.forEach((reg) => coaches.push({ ...person, _reg_id: reg.id }));
-          });
+          // 🔥 Step 4: Build competitors array from sparring_categories
+          if (sparringData) {
+            sparringData.forEach(p => {
+              const parts = (p.category || "").split(" - ");
+              competitors.push({
+                name: p.name,
+                team: p.team || "",
+                gender: parts[2] || "",
+                _discipline: "sparring",
+                _full_cat: p.category,
+                _actual_age_group: parts[0] || "OTHER",
+                _actual_sub_cat: parts[1] || "",
+                _position: p.position_number,
+                _sourceTable: "sparring_categories",
+              });
+            });
+          }
 
           dataLoaded = true;
-          manualPlayersCache = { Patterns: null, Sparring: null };
-          console.log(`✅ Loaded ${competitors.length} competitor entries from final_registrations, ${judges.length} judges, ${coaches.length} coaches`);
+          console.log(`✅ Loaded ${competitors.length} competitors from category tables (patterns_categories + sparring_categories)`);
+          console.log(`   - Patterns: ${patternsData?.length || 0}`);
+          console.log(`   - Sparring: ${sparringData?.length || 0}`);
         } catch (error) {
           console.error("fetchData error:", error);
           document.getElementById("content").innerHTML = `<div class="empty-state">Error loading data: ${error.message || error}</div>`;
@@ -1314,8 +1253,8 @@
 
       async function runPatternFilter() {
         const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
-        const allPatterns = await getMergedCompetitors('patterns');
-        const filtered = allPatterns.filter((c) => {
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "patterns") return false;
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
           if (!mGen) return false;
@@ -1324,7 +1263,7 @@
           return true;
         });
         const groups = {};
-        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        filtered.forEach((c) => { const k = c._full_cat; if (!groups[k]) groups[k] = []; groups[k].push(c); });
         const t = document.getElementById("listTarget");
         t.innerHTML = "";
         for (const k in groups) t.innerHTML += createParallelCard(`Pattern: ${k}`, groups[k]);
@@ -1333,8 +1272,8 @@
 
       async function generatePatternBrackets() {
         const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
-        const allPatterns = await getMergedCompetitors('patterns');
-        const filtered = allPatterns.filter((c) => {
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "patterns") return false;
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
           if (!mGen) return false;
@@ -1343,7 +1282,7 @@
           return true;
         });
         const groups = {};
-        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        filtered.forEach((c) => { const k = c._full_cat; if (!groups[k]) groups[k] = []; groups[k].push(c); });
         bracketSizes = {};
         await renderBracketView(groups, "Patterns");
       }
@@ -1367,8 +1306,8 @@
         const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value;
         const wDrop = document.getElementById("sWeight"), info = document.getElementById("sparringInfo");
         wDrop.innerHTML = '<option value="ALL">All</option>';
-        const allSparring = await getMergedCompetitors('sparring');
-        const relevantComps = allSparring.filter((c) => {
+        const relevantComps = competitors.filter((c) => {
+          if (c._discipline !== "sparring") return false;
           if (age !== "ALL" && c._actual_age_group !== age) return false;
           const dbGender = (c.gender || "").trim().toUpperCase();
           return gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
@@ -1391,8 +1330,8 @@
 
       async function runSparringFilter() {
         const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
-        const allSparring = await getMergedCompetitors('sparring');
-        const filtered = allSparring.filter((c) => {
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "sparring") return false;
           if (age !== "ALL" && c._actual_age_group !== age) return false;
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
@@ -1402,7 +1341,7 @@
           return true;
         });
         const groups = {};
-        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        filtered.forEach((c) => { const k = c._full_cat; if (!groups[k]) groups[k] = []; groups[k].push(c); });
         const t = document.getElementById("listTarget");
         t.innerHTML = "";
         for (const k in groups) t.innerHTML += createParallelCard(`Sparring: ${k}`, groups[k]);
@@ -1411,8 +1350,8 @@
 
       async function generateSparringBrackets() {
         const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
-        const allSparring = await getMergedCompetitors('sparring');
-        const filtered = allSparring.filter((c) => {
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "sparring") return false;
           if (age !== "ALL" && c._actual_age_group !== age) return false;
           const dbGender = (c.gender || "").trim().toUpperCase();
           const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
@@ -1422,7 +1361,7 @@
           return true;
         });
         const groups = {};
-        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        filtered.forEach((c) => { const k = c._full_cat; if (!groups[k]) groups[k] = []; groups[k].push(c); });
         bracketSizes = {};
         await renderBracketView(groups, "Sparring");
       }
@@ -1431,8 +1370,7 @@
         if (list.length === 0) return `<div class="empty-state">No competitors found.</div>`;
         let n = "", t = "";
         list.forEach((c) => {
-          const manualTag = c._isManual ? ' <span style="font-size:0.7rem;background:#d4af37;color:#222;padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:700">MANUAL</span>' : '';
-          n += `<div class="row-item">${c.name}${manualTag}</div>`;
+          n += `<div class="row-item">${c.name}</div>`;
           t += `<div class="row-item">${c.team || "N/A"}</div>`;
         });
         return `<div class="category-card"><div class="category-header">${title} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
@@ -1454,11 +1392,8 @@
         isViewingBrackets = false;
         updateSearchContextBadge();
         await fetchData();
-        const allPatterns = await getMergedCompetitors('patterns');
-        const allSparring = await getMergedCompetitors('sparring');
-        const allComps = [...allPatterns, ...allSparring];
         const teamMap = {};
-        allComps.forEach(c => {
+        competitors.forEach(c => {
           const team = c.team || "Unassigned";
           if (!teamMap[team]) teamMap[team] = { patterns: new Set(), sparring: new Set(), totalEntries: 0 };
           if (c._discipline === 'patterns') teamMap[team].patterns.add(c._full_cat);
@@ -1466,7 +1401,7 @@
           teamMap[team].totalEntries++;
         });
         let html = `<div class="controls"><button class="btn btn-info" onclick="refreshTeamDistribution()"><i class="fas fa-sync"></i> Refresh</button></div>`;
-        html += `<div style="background:white;padding:15px 20px;border-radius:8px;margin-bottom:20px;box-shadow:var(--shadow);border-left:5px solid var(--secondary)"><i class="fas fa-info-circle" style="color:var(--primary)"></i><strong style="color:var(--primary)">Team Distribution</strong> — Shows how many different categories each team's competitors are spread across. Includes manually added players.</div>`;
+        html += `<div style="background:white;padding:15px 20px;border-radius:8px;margin-bottom:20px;box-shadow:var(--shadow);border-left:5px solid var(--secondary)"><i class="fas fa-info-circle" style="color:var(--primary)"></i><strong style="color:var(--primary)">Team Distribution</strong> — Shows how many different categories each team's competitors are spread across.</div>`;
         const teams = Object.keys(teamMap).sort();
         if (teams.length === 0) {
           html += `<div class="empty-state" style="text-align:center;padding:40px;color:var(--gray);">No competitors found.</div>`;
@@ -1496,7 +1431,6 @@
 
       function refreshTeamDistribution() {
         dataLoaded = false;
-        manualPlayersCache = { Patterns: null, Sparring: null };
         showTeamDistribution();
       }
 
@@ -1504,28 +1438,15 @@
         setActiveBtn("btnJudges");
         isViewingBrackets = false;
         updateSearchContextBadge();
-        await fetchData();
-        const g = {};
-        judges.forEach((j) => (g[j.team || "Unassigned"] = (g[j.team || "Unassigned"] || 0) + 1));
-        let h = `<div class="category-card"><div class="category-header">Judges List</div><table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
-        judges.forEach((j) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${j.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.team || "N/A"}</td></tr>`));
-        h += `</table></div><div class="team-summary-box"><h3>Teams Registered</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px">`;
-        Object.keys(g).sort().forEach((t) => (h += `<div style="background:#f8f9fa;padding:10px;border-radius:4px"><strong>${t}</strong>: ${g[t]} judges</div>`));
-        document.getElementById("content").innerHTML = h + `</div></div>`;
+        // Judges still come from final_registrations if needed
+        document.getElementById("content").innerHTML = `<div class="empty-state" style="text-align:center;padding:40px;color:var(--gray);">Judges view - coming from final_registrations (not yet implemented with category tables)</div>`;
       }
 
       async function showCoaches() {
         setActiveBtn("btnCoaches");
         isViewingBrackets = false;
         updateSearchContextBadge();
-        await fetchData();
-        const g = {};
-        coaches.forEach((c) => (g[c.team || "Unassigned"] = (g[c.team || "Unassigned"] || 0) + 1));
-        let h = `<div class="category-card"><div class="category-header">Coaches List</div><table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
-        coaches.forEach((c) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${c.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.team || "N/A"}</td></tr>`));
-        h += `</table></div><div class="team-summary-box"><h3>Teams Registered</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px">`;
-        Object.keys(g).sort().forEach((t) => (h += `<div style="background:#f8f9fa;padding:10px;border-radius:4px"><strong>${t}</strong>: ${g[t]} coaches</div>`));
-        document.getElementById("content").innerHTML = h + `</div></div>`;
+        document.getElementById("content").innerHTML = `<div class="empty-state" style="text-align:center;padding:40px;color:var(--gray);">Coaches view - coming from final_registrations (not yet implemented with category tables)</div>`;
       }
 
       document.addEventListener('keydown', (e) => {
