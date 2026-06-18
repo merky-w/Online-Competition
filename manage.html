@@ -68,7 +68,15 @@
         gap: 8px;
       }
       .global-search-header i { font-size: 0.9rem; }
-      .global-search-header span { font-size: 0.85rem; font-weight: 600; }
+      .global-search-header span { font-size: 0.85rem; font-weight: 600; flex: 1; }
+      .global-search-context {
+        font-size: 0.7rem;
+        background: var(--secondary);
+        color: #222;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 700;
+      }
       .global-search input {
         width: 100%;
         padding: 10px 12px;
@@ -481,6 +489,7 @@
       <div class="global-search-header">
         <i class="fas fa-search"></i>
         <span>Search & Drag Players</span>
+        <span class="global-search-context" id="searchContext" style="display:none;">ALL</span>
       </div>
       <input
         type="text"
@@ -562,14 +571,17 @@
       let currentGroups = null, currentBracketType = null;
       let currentModalTarget = null, selectedPlayerForModal = null;
 
-      // UNDO STACK - tracks actions for undo
+      // Track if we're currently viewing brackets (for search filtering)
+      let isViewingBrackets = false;
+
+      // UNDO STACK
       let undoStack = [];
       const MAX_UNDO = 50;
 
       // AUTO-SCROLL state
       let autoScrollRaf = null;
       let autoScrollSpeed = 0;
-      const SCROLL_ZONE = 60; // px from edge to start scrolling
+      const SCROLL_ZONE = 60;
       const MAX_SCROLL_SPEED = 20;
 
       const RULES = {
@@ -621,6 +633,12 @@
         try {
           await reverseAction(action);
           showToast(`↶ Undone: ${action.description}`, "success");
+
+          // 🔥 AUTO-SAVE after undo so the change persists
+          if (action.category && action.bracketType) {
+            showToast("💾 Auto-saving...", "info");
+            await saveBracketStructure(action.category, action.bracketType, true);
+          }
         } catch (err) {
           console.error("Undo error:", err);
           showToast("Undo failed: " + err.message, "error");
@@ -630,7 +648,6 @@
       async function reverseAction(action) {
         switch (action.type) {
           case 'swap': {
-            // Swap back the two slots
             const slot1 = document.querySelector(`.player-row[data-player-id="${action.slot1Id}"]`);
             const slot2 = document.querySelector(`.player-row[data-player-id="${action.slot2Id}"]`);
             if (slot1 && slot2) {
@@ -641,17 +658,8 @@
             }
             break;
           }
-          case 'add': {
-            // Clear the slot that was added to
-            const slot = document.querySelector(`.player-row[data-player-id="${action.slotId}"]`);
-            if (slot) {
-              slot.querySelector(".p-name").innerText = action.before.name;
-              slot.querySelector(".p-team").innerText = action.before.team;
-            }
-            break;
-          }
+          case 'add':
           case 'search_drop': {
-            // Clear the slot that received the search drop
             const slot = document.querySelector(`.player-row[data-player-id="${action.slotId}"]`);
             if (slot) {
               slot.querySelector(".p-name").innerText = action.before.name;
@@ -660,13 +668,11 @@
             break;
           }
           case 'delete': {
-            // Restore the deleted player to their original slot
             const slot = document.querySelector(`.player-row[data-player-id="${action.slotId}"]`);
             if (slot) {
               slot.querySelector(".p-name").innerText = action.before.name;
               slot.querySelector(".p-team").innerText = action.before.team;
             }
-            // Also remove from deleted_patterns/deleted_sparring if inserted
             if (action.deletedFromTable) {
               await sb.from(action.deletedFromTable)
                 .delete()
@@ -676,7 +682,6 @@
             break;
           }
           case 'edit': {
-            // Restore edited name/team
             const slot = document.querySelector(`.player-row[data-player-id="${action.slotId}"]`);
             if (slot) {
               slot.querySelector(".p-name").innerText = action.before.name;
@@ -691,9 +696,7 @@
       function startAutoScrollLoop() {
         if (autoScrollRaf) return;
         const loop = () => {
-          if (autoScrollSpeed !== 0) {
-            window.scrollBy(0, autoScrollSpeed);
-          }
+          if (autoScrollSpeed !== 0) window.scrollBy(0, autoScrollSpeed);
           autoScrollRaf = requestAnimationFrame(loop);
         };
         autoScrollRaf = requestAnimationFrame(loop);
@@ -713,14 +716,11 @@
         const docHeight = document.documentElement.scrollHeight;
 
         if (clientY < SCROLL_ZONE) {
-          // Near top - scroll up
           const intensity = 1 - (clientY / SCROLL_ZONE);
           autoScrollSpeed = -Math.round(intensity * MAX_SCROLL_SPEED);
         } else if (clientY > vh - SCROLL_ZONE) {
-          // Near bottom - scroll down
           const intensity = (clientY - (vh - SCROLL_ZONE)) / SCROLL_ZONE;
           autoScrollSpeed = Math.round(intensity * MAX_SCROLL_SPEED);
-          // Don't scroll past document end
           if (scrollTop + vh >= docHeight) autoScrollSpeed = 0;
         } else {
           autoScrollSpeed = 0;
@@ -803,11 +803,12 @@
         return { rounds, totalRounds: rounds.length };
       }
 
-      async function saveBracketStructure(categoryKey, type) {
+      // 🔥 Added silent parameter to suppress success toast when auto-saving
+      async function saveBracketStructure(categoryKey, type, silent = false) {
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
-        if (!page) { showToast("Page not found", "error"); return; }
+        if (!page) { if (!silent) showToast("Page not found", "error"); return false; }
         const table = page.querySelector(".bracket-table");
-        if (!table) { showToast("No bracket table found", "error"); return; }
+        if (!table) { if (!silent) showToast("No bracket table found", "error"); return false; }
 
         const matchesToSave = [];
         const headerCells = table.querySelectorAll("thead th");
@@ -837,14 +838,15 @@
           });
         }
 
-        if (matchesToSave.length === 0) { showToast("No matches found to save", "error"); return; }
+        if (matchesToSave.length === 0) { if (!silent) showToast("No matches found to save", "error"); return false; }
 
         const { error: deleteError } = await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
-        if (deleteError) { showToast("Failed to clear old bracket data", "error"); return; }
+        if (deleteError) { if (!silent) showToast("Failed to clear old bracket data", "error"); return false; }
 
         const { error } = await sb.from("saved_brackets").insert(matchesToSave).select();
-        if (error) { showToast(`Failed to save: ${error.message}`, "error"); return; }
-        showToast(`✅ Bracket saved! (${matchesToSave.length} matches)`, "success");
+        if (error) { if (!silent) showToast(`Failed to save: ${error.message}`, "error"); return false; }
+        if (!silent) showToast(`✅ Bracket saved! (${matchesToSave.length} matches)`, "success");
+        return true;
       }
 
       async function generateBracketData(list, categoryKey, type) {
@@ -932,13 +934,13 @@
           });
         }
 
-        // Record undo
         pushUndo({
           type: 'delete',
           description: `Restore "${name}" to bracket`,
           slotId: slotId,
           before: { name, team },
           category,
+          bracketType: type,
           deletedFromTable: delTable,
         });
 
@@ -959,6 +961,8 @@
 
       async function showDeleted() {
         setActiveBtn("btnDeleted");
+        isViewingBrackets = false;
+        updateSearchContextBadge();
         let html = `<div class="controls"><button class="btn btn-secondary" onclick="showPatterns()"><i class="fas fa-arrow-left"></i> Back</button></div>`;
         let delPatterns = [], delSparring = [];
         try {
@@ -1007,7 +1011,6 @@
           row.addEventListener("drop", handleDrop);
         });
 
-        // Also make match-boxes valid drop targets (for search bar drops)
         document.querySelectorAll(".match-box").forEach((box) => {
           box.addEventListener("dragover", handleMatchBoxDragOver);
           box.addEventListener("dragleave", handleMatchBoxDragLeave);
@@ -1057,19 +1060,16 @@
         targetRow.classList.remove("drag-over");
 
         if (dragType === "search") {
-          // Drop from global search
           handleSearchDrop(e, targetRow);
           return;
         }
 
-        // Internal swap
         const draggedId = e.dataTransfer.getData("text/plain");
         const draggedRow = document.querySelector(`.player-row[data-player-id="${draggedId}"]`);
         if (!draggedRow || draggedRow === targetRow) return;
         swapPlayerRows(draggedRow, targetRow);
       }
 
-      // Drop on match-box (when dropping on empty area of a match)
       function handleMatchBoxDragOver(e) {
         const dragType = e.dataTransfer.getData("application/x-drag-type");
         if (dragType === "search") {
@@ -1091,7 +1091,6 @@
         e.stopPropagation();
         e.currentTarget.classList.remove("drop-target");
 
-        // Find first empty player-row in this match-box
         const matchBox = e.currentTarget;
         const playerRows = matchBox.querySelectorAll(".player-row");
         let targetRow = null;
@@ -1121,11 +1120,18 @@
         targetRow.style.background = "#c8e6c9";
         setTimeout(() => { targetRow.style.background = ""; }, 400);
 
+        // Find the category this slot belongs to
+        const page = targetRow.closest('.a4-page');
+        const category = page ? page.dataset.category : '';
+        const type = page ? page.dataset.type : '';
+
         pushUndo({
           type: 'search_drop',
           description: `Remove "${playerName}" from slot`,
           slotId: targetRow.dataset.playerId,
           before,
+          category,
+          bracketType: type,
         });
 
         showToast(`✅ Added ${playerName}`, "success");
@@ -1150,6 +1156,11 @@
         row2.style.background = "#c8e6c9";
         setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 300);
 
+        // Find the category this slot belongs to
+        const page = row1.closest('.a4-page');
+        const category = page ? page.dataset.category : '';
+        const type = page ? page.dataset.type : '';
+
         pushUndo({
           type: 'swap',
           description: `Undo swap`,
@@ -1157,10 +1168,13 @@
           slot2Id: row2.dataset.playerId,
           before1,
           before2,
+          category,
+          bracketType: type,
         });
       }
 
       /* ============== GLOBAL SEARCH ============== */
+      // 🔥 Now context-aware: filters by current discipline when in bracket view
       let searchDebounceTimer = null;
       function initGlobalSearch() {
         const input = document.getElementById('globalSearchInput');
@@ -1182,10 +1196,7 @@
         });
 
         input.addEventListener('blur', () => {
-          // Delay to allow click on result
-          setTimeout(() => {
-            results.classList.remove('active');
-          }, 200);
+          setTimeout(() => { results.classList.remove('active'); }, 200);
         });
 
         document.addEventListener('click', (e) => {
@@ -1195,19 +1206,41 @@
         });
       }
 
+      // 🔥 Update the context badge in search header
+      function updateSearchContextBadge() {
+        const badge = document.getElementById('searchContext');
+        if (isViewingBrackets && currentBracketType) {
+          badge.textContent = currentBracketType.toUpperCase();
+          badge.style.display = 'inline-block';
+          badge.style.background = currentBracketType === 'Patterns' ? '#e3f2fd' : '#ffebee';
+          badge.style.color = currentBracketType === 'Patterns' ? '#1565c0' : '#c62828';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
       function performSearch(query) {
         const results = document.getElementById('globalSearchResults');
         const q = query.toLowerCase();
 
-        // Search across all competitors
-        const matches = competitors.filter(c => {
+        // 🔥 Filter by current discipline if in bracket view
+        let pool = competitors;
+        if (isViewingBrackets && currentBracketType) {
+          const targetDiscipline = currentBracketType === 'Patterns' ? 'patterns' : 'sparring';
+          pool = competitors.filter(c => c._discipline === targetDiscipline);
+        }
+
+        const matches = pool.filter(c => {
           const name = (c.name || '').toLowerCase();
           const team = (c.team || '').toLowerCase();
           return name.includes(q) || team.includes(q);
-        }).slice(0, 30); // limit results
+        }).slice(0, 30);
 
         if (matches.length === 0) {
-          results.innerHTML = '<div class="search-empty"><i class="fas fa-search"></i> No players found</div>';
+          const contextMsg = isViewingBrackets && currentBracketType
+            ? `No ${currentBracketType} players found`
+            : 'No players found';
+          results.innerHTML = `<div class="search-empty"><i class="fas fa-search"></i> ${contextMsg}</div>`;
           results.classList.add('active');
           return;
         }
@@ -1238,7 +1271,6 @@
           </div>`;
         }).join('');
 
-        // Attach drag handlers to search results
         results.querySelectorAll('.search-result-item').forEach(item => {
           item.addEventListener('dragstart', (e) => {
             e.dataTransfer.setData("application/x-drag-type", "search");
@@ -1334,6 +1366,8 @@
             description: `Remove "${selectedPlayerForModal.name}" from slot`,
             slotId: targetRow.dataset.playerId,
             before,
+            category: categoryKey,
+            bracketType: type,
           });
 
           showToast(`✅ Player added to Round ${roundNum}, Match ${matchNum}`, "success");
@@ -1347,6 +1381,8 @@
       async function renderBracketView(groups, type) {
         currentGroups = groups;
         currentBracketType = type;
+        isViewingBrackets = true;
+        updateSearchContextBadge();
         // Reset undo stack when loading new bracket view
         undoStack = [];
 
@@ -1422,7 +1458,6 @@
         }
         document.getElementById("content").innerHTML = html;
 
-        // Track contenteditable edits for undo
         setTimeout(() => {
           initDragAndDrop();
           initEditTracking();
@@ -1430,7 +1465,6 @@
         }, 100);
       }
 
-      // Track manual edits to player names (contenteditable)
       function initEditTracking() {
         document.querySelectorAll('.player-row .p-name[contenteditable="true"]').forEach(el => {
           el.addEventListener('focus', (e) => {
@@ -1447,11 +1481,16 @@
             const afterName = e.target.innerText.trim();
             const afterTeam = row.querySelector(".p-team").innerText.trim();
             if (afterName !== row._editBefore.name || afterTeam !== row._editBefore.team) {
+              const page = row.closest('.a4-page');
+              const category = page ? page.dataset.category : '';
+              const type = page ? page.dataset.type : '';
               pushUndo({
                 type: 'edit',
                 description: `Undo edit`,
                 slotId: row.dataset.playerId,
                 before: row._editBefore,
+                category,
+                bracketType: type,
               });
             }
             delete row._editBefore;
@@ -1516,7 +1555,6 @@
         if (active) { active.classList.remove("btn-secondary"); active.classList.add("btn-primary", "btn-active"); }
       }
 
-      /* ============== FETCH DATA (cached) ============== */
       let dataLoaded = false;
       async function fetchData(force = false) {
         if (dataLoaded && !force) return;
@@ -1574,6 +1612,8 @@
 
       async function showPatterns() {
         setActiveBtn("btnPatterns");
+        isViewingBrackets = false;
+        updateSearchContextBadge();
         await fetchData();
         document.getElementById("content").innerHTML =
           `<div class="filters-card"><div class="filters">
@@ -1622,6 +1662,8 @@
 
       async function showSparring() {
         setActiveBtn("btnSparring");
+        isViewingBrackets = false;
+        updateSearchContextBadge();
         await fetchData();
         document.getElementById("content").innerHTML =
           `<div class="filters-card"><div class="filters">
@@ -1716,6 +1758,8 @@
 
       async function showJudges() {
         setActiveBtn("btnJudges");
+        isViewingBrackets = false;
+        updateSearchContextBadge();
         await fetchData();
         const g = {};
         judges.forEach((j) => (g[j.team || "Unassigned"] = (g[j.team || "Unassigned"] || 0) + 1));
@@ -1728,6 +1772,8 @@
 
       async function showCoaches() {
         setActiveBtn("btnCoaches");
+        isViewingBrackets = false;
+        updateSearchContextBadge();
         await fetchData();
         const g = {};
         coaches.forEach((c) => (g[c.team || "Unassigned"] = (g[c.team || "Unassigned"] || 0) + 1));
@@ -1741,7 +1787,6 @@
       // Keyboard shortcut: Ctrl+Z to undo
       document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-          // Don't interfere with contenteditable
           const active = document.activeElement;
           if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
           if (undoStack.length > 0) {
