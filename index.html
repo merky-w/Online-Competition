@@ -1,4 +1,19 @@
-<!doctype html>
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                
+              </style>
+                        </head>
+                        <body>
+                            <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -312,16 +327,13 @@
         border: 1px solid rgba(16, 185, 129, 0.3);
       }
 
-      /* ===== PRICING SECTION ON CARD ===== */
       .pricing-section {
         width: 100%;
         z-index: 1;
         margin-top: 0.5rem;
       }
 
-      .pricing-group {
-        margin-bottom: 0.75rem;
-      }
+      .pricing-group { margin-bottom: 0.75rem; }
 
       .pricing-group-title {
         font-size: 0.7rem;
@@ -338,13 +350,8 @@
         gap: 6px;
       }
 
-      .pricing-grid.single {
-        grid-template-columns: 1fr;
-      }
-
-      .pricing-grid.triple {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
+      .pricing-grid.single { grid-template-columns: 1fr; }
+      .pricing-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
 
       .price-chip {
         display: flex;
@@ -497,16 +504,6 @@
         font-weight: 600;
       }
 
-      .modal-label-hint {
-        display: block;
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        margin-top: -0.5rem;
-        margin-bottom: 0.75rem;
-        font-style: italic;
-        opacity: 0.8;
-      }
-
       .modal-section-divider {
         margin: 1.25rem 0 1rem;
         padding-top: 1rem;
@@ -554,7 +551,6 @@
         display: none;
       }
 
-      /* Colored input focus per category */
       .modal-input.patterns-input:focus { border-color: var(--accent-patterns); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
       .modal-input.sparring-input:focus { border-color: var(--accent-sparring); box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
       .modal-input.headref-input:focus { border-color: var(--accent-headref); box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2); }
@@ -710,7 +706,7 @@
       </div>
     </div>
 
-    <!-- Edit Tournament Details Modal (Name + Rings only) -->
+    <!-- Edit Tournament Details Modal -->
     <div class="modal-overlay" id="editTournamentModal">
       <div class="modal-box">
         <h3 class="modal-title">
@@ -736,7 +732,7 @@
       </div>
     </div>
 
-    <!-- 🆕 PRICES MODAL -->
+    <!-- PRICES MODAL -->
     <div class="modal-overlay" id="pricesModal">
       <div class="modal-box">
         <h3 class="modal-title">
@@ -750,7 +746,6 @@
           Set entry fees for competitors and referees. Leave empty or 0 for "Free". All prices in EUR (€).
         </p>
 
-        <!-- COMPETITOR PRICES -->
         <div class="modal-section-title" style="color: var(--accent-primary);">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -778,7 +773,6 @@
         </label>
         <input type="number" id="inputSparringPrice" class="modal-input sparring-input" placeholder="e.g. 30.00" min="0" step="0.01" />
 
-        <!-- REFEREE PRICES -->
         <div class="modal-section-divider"></div>
         <div class="modal-section-title" style="color: var(--accent-headref);">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -886,7 +880,6 @@
       let currentDbState = false;
       let tournamentName = "";
       let ringsNumber = 0;
-      // Prices: null = not configured, number = configured value
       let prices = {
         patterns: null,
         sparring: null,
@@ -912,7 +905,6 @@
         return "€" + num.toFixed(2);
       }
 
-      // Build a single price chip HTML
       function buildPriceChip(label, price, cssClass, iconSvg) {
         if (price === null || price === undefined) return "";
         const formatted = formatPrice(price);
@@ -1034,7 +1026,6 @@
         DOM.btnSaveTournament.disabled = false;
       }
 
-      /* 🆕 SAVE ALL PRICES */
       async function savePrices() {
         const patternsRaw = DOM.inputPatternsPrice.value.trim();
         const sparringRaw = DOM.inputSparringPrice.value.trim();
@@ -1048,7 +1039,6 @@
         const refVal = parsePriceInput(refRaw);
         const compRefVal = parsePriceInput(compRefRaw);
 
-        // Check for invalid inputs (negative or non-numeric)
         if (patternsVal === null || sparringVal === null || headRefVal === null || refVal === null || compRefVal === null) {
           DOM.pricesError.style.display = "block";
           return;
@@ -1115,53 +1105,59 @@
         const displayTitle = tournamentName || "Untitled Tournament";
         const displayRings = ringsNumber || 0;
 
-        // SVG icons for price chips
-        const icons = {
-          patterns: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>`,
-          sparring: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M18 12h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"></path><path d="M6 4v16"></path><path d="M18 4v16"></path></svg>`,
-          headref: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path></svg>`,
-          referee: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
-          computer: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
-        };
+        /* ============================================================
+           🔒 PRICES ARE ONLY VISIBLE TO ADMIN
+           Non-admin users see the card WITHOUT any pricing info.
+           ============================================================ */
+        let pricingSectionHtml = "";
+        if (isAdmin) {
+          const icons = {
+            patterns: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>`,
+            sparring: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M18 12h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"></path><path d="M6 4v16"></path><path d="M18 4v16"></path></svg>`,
+            headref: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path></svg>`,
+            referee: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+            computer: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+          };
 
-        // Build competitor pricing group
-        const hasCompetitorPrices = prices.patterns !== null || prices.sparring !== null;
-        let competitorPricingHtml = "";
-        if (hasCompetitorPrices) {
-          const chips = [];
-          if (prices.patterns !== null) chips.push(buildPriceChip("Patterns", prices.patterns, "patterns", icons.patterns));
-          if (prices.sparring !== null) chips.push(buildPriceChip("Sparring", prices.sparring, "sparring", icons.sparring));
-          competitorPricingHtml = `
-            <div class="pricing-group">
-              <div class="pricing-group-title">Competitor Entry</div>
-              <div class="pricing-grid ${chips.length === 1 ? 'single' : ''}">
-                ${chips.join("")}
+          // Competitor pricing group
+          const hasCompetitorPrices = prices.patterns !== null || prices.sparring !== null;
+          let competitorPricingHtml = "";
+          if (hasCompetitorPrices) {
+            const chips = [];
+            if (prices.patterns !== null) chips.push(buildPriceChip("Patterns", prices.patterns, "patterns", icons.patterns));
+            if (prices.sparring !== null) chips.push(buildPriceChip("Sparring", prices.sparring, "sparring", icons.sparring));
+            competitorPricingHtml = `
+              <div class="pricing-group">
+                <div class="pricing-group-title">Competitor Entry</div>
+                <div class="pricing-grid ${chips.length === 1 ? 'single' : ''}">
+                  ${chips.join("")}
+                </div>
               </div>
-            </div>
-          `;
-        }
+            `;
+          }
 
-        // Build referee pricing group
-        const hasRefereePrices = prices.headReferee !== null || prices.referee !== null || prices.computerReferee !== null;
-        let refereePricingHtml = "";
-        if (hasRefereePrices) {
-          const chips = [];
-          if (prices.headReferee !== null) chips.push(buildPriceChip("Head Ref", prices.headReferee, "headref", icons.headref));
-          if (prices.referee !== null) chips.push(buildPriceChip("Referee", prices.referee, "referee", icons.referee));
-          if (prices.computerReferee !== null) chips.push(buildPriceChip("Comp. Ref", prices.computerReferee, "computer", icons.computer));
-          refereePricingHtml = `
-            <div class="pricing-group">
-              <div class="pricing-group-title">Referee Fees</div>
-              <div class="pricing-grid ${chips.length === 1 ? 'single' : chips.length === 3 ? 'triple' : ''}">
-                ${chips.join("")}
+          // Referee pricing group
+          const hasRefereePrices = prices.headReferee !== null || prices.referee !== null || prices.computerReferee !== null;
+          let refereePricingHtml = "";
+          if (hasRefereePrices) {
+            const chips = [];
+            if (prices.headReferee !== null) chips.push(buildPriceChip("Head Ref", prices.headReferee, "headref", icons.headref));
+            if (prices.referee !== null) chips.push(buildPriceChip("Referee", prices.referee, "referee", icons.referee));
+            if (prices.computerReferee !== null) chips.push(buildPriceChip("Comp. Ref", prices.computerReferee, "computer", icons.computer));
+            refereePricingHtml = `
+              <div class="pricing-group">
+                <div class="pricing-group-title">Referee Fees</div>
+                <div class="pricing-grid ${chips.length === 1 ? 'single' : chips.length === 3 ? 'triple' : ''}">
+                  ${chips.join("")}
+                </div>
               </div>
-            </div>
-          `;
-        }
+            `;
+          }
 
-        const pricingSectionHtml = (hasCompetitorPrices || hasRefereePrices)
-          ? `<div class="pricing-section">${competitorPricingHtml}${refereePricingHtml}</div>`
-          : "";
+          if (hasCompetitorPrices || hasRefereePrices) {
+            pricingSectionHtml = `<div class="pricing-section">${competitorPricingHtml}${refereePricingHtml}</div>`;
+          }
+        }
 
         DOM.tournamentList.innerHTML = `
           <a href="registration.html" class="tournament-card">
@@ -1201,6 +1197,8 @@
         DOM.btnEditTournament.style.display = "flex";
         DOM.btnPrices.style.display = "flex";
         DOM.btnManage.style.display = "flex";
+        // 🔒 Re-render card so admin sees the prices immediately
+        renderTournamentCard();
       }
 
       /* ============================================================
@@ -1257,7 +1255,6 @@
         updateSetting(e.target.checked);
       });
 
-      // Configure Tournament modal
       DOM.btnEditTournament.addEventListener("click", () => {
         DOM.inputTournamentName.value = tournamentName;
         DOM.inputRingsNumber.value = ringsNumber || "";
@@ -1269,7 +1266,6 @@
       DOM.btnCancelEdit.addEventListener("click", closeEditModal);
       DOM.btnSaveTournament.addEventListener("click", saveTournamentDetails);
 
-      // 🆕 Prices modal
       DOM.btnPrices.addEventListener("click", () => {
         DOM.inputPatternsPrice.value = prices.patterns !== null ? prices.patterns : "";
         DOM.inputSparringPrice.value = prices.sparring !== null ? prices.sparring : "";
@@ -1284,7 +1280,6 @@
       DOM.btnCancelPrices.addEventListener("click", closePricesModal);
       DOM.btnSavePrices.addEventListener("click", savePrices);
 
-      // Enter key submits
       DOM.inputRingsNumber.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
       DOM.inputTournamentName.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
 
@@ -1296,7 +1291,6 @@
         if (inp) inp.addEventListener("keypress", (e) => { if (e.key === "Enter") savePrices(); });
       });
 
-      // Admin login
       DOM.btnAdminLogin.addEventListener("click", () => {
         if (isAdmin) return;
         DOM.loginModal.classList.add("active");
@@ -1309,7 +1303,6 @@
       DOM.btnConfirmLogin.addEventListener("click", attemptLogin);
       DOM.adminPasswordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") attemptLogin(); });
 
-      // Close modals by clicking outside
       [DOM.loginModal, DOM.editTournamentModal, DOM.pricesModal].forEach(modal => {
         modal.addEventListener("click", (e) => {
           if (e.target === modal) modal.classList.remove("active");
@@ -1328,3 +1321,16 @@
   </body>
 </html>
 
+
+
+              <script>
+                              let pricingSectionHtml = "";
+if (isAdmin) {
+    // ... build all the price chips ...
+}
+
+
+              </script>
+                        </body>
+                        </html>
+                    
