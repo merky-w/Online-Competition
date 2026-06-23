@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tournament Manager - 9-th Vojvodina Open ITF</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
       :root {
         --primary: #1a3a6c;
@@ -38,32 +35,14 @@
         padding: 20px;
       }
       .container { max-width: 1200px; margin: 0 auto; }
-      header {
-        text-align: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid var(--secondary);
-      }
+      header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--secondary); }
       h1 { font-size: 2rem; color: var(--primary); margin-bottom: 5px; font-weight: 700; }
       .subtitle { color: var(--gray); font-size: 1rem; }
-      .nav {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 25px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
+      .nav { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; justify-content: center; }
       .btn {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.95rem;
+        padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600;
+        cursor: pointer; transition: var(--transition); display: inline-flex;
+        align-items: center; gap: 8px; font-size: 0.95rem;
       }
       .btn-sm { padding: 5px 12px; font-size: 0.85rem; }
       .btn-xs { padding: 2px 6px; font-size: 0.75rem; }
@@ -77,169 +56,83 @@
       .btn-warning:hover { background: #e0a800; }
       .btn-info { background: #17a2b8; color: white; }
       .btn-info:hover { background: #138496; }
-      .btn-undo { background: #6f42c1; color: white; }
-      .btn-undo:hover { background: #5a32a3; }
-      .btn-undo:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
       .btn-add { background: var(--success); color: white; }
       .btn-add:hover { background: #218838; }
       .btn-remove { background: #fd7e14; color: white; }
       .btn-remove:hover { background: #e36c09; }
-      .btn-active {
-        background: var(--secondary);
-        color: #fff;
-        box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
-      }
+      .btn-active { background: var(--secondary); color: #fff; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
       .filters-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        padding: 20px;
-        margin-bottom: 20px;
-        border-left: 5px solid var(--secondary);
+        background: white; border-radius: 12px; box-shadow: var(--shadow);
+        padding: 20px; margin-bottom: 20px; border-left: 5px solid var(--secondary);
       }
       .filters { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
       .filter-group { flex: 1; min-width: 150px; }
-      label {
-        display: block;
-        margin-bottom: 6px;
-        font-weight: 600;
-        color: var(--gray);
-        font-size: 0.85rem;
-      }
+      label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--gray); font-size: 0.85rem; }
       select, input[type="date"], input[type="text"], input[type="number"] {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        font-size: 0.95rem;
-        outline: none;
-        transition: var(--transition);
+        width: 100%; padding: 10px; border: 1px solid var(--border);
+        border-radius: 6px; font-size: 0.95rem; outline: none; transition: var(--transition);
         font-family: inherit;
       }
       .info-banner {
-        background: #e7f3ff;
-        color: var(--primary);
-        padding: 12px;
-        border-radius: 6px;
-        margin-top: 15px;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        background: #e7f3ff; color: var(--primary); padding: 12px; border-radius: 6px;
+        margin-top: 15px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
       }
       .category-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        margin-bottom: 25px;
-        overflow: hidden;
-        border-top: 4px solid var(--primary);
+        background: white; border-radius: 12px; box-shadow: var(--shadow);
+        margin-bottom: 25px; overflow: hidden; border-top: 4px solid var(--primary);
       }
       .category-header {
-        background: var(--primary);
-        color: white;
-        padding: 12px 20px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        background: var(--primary); color: white; padding: 12px 20px;
+        font-size: 1.1rem; font-weight: 700; display: flex;
+        justify-content: space-between; align-items: center;
       }
-      .parallel-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0;
-        border-bottom: 1px solid var(--border);
-      }
+      .parallel-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid var(--border); }
       .col-header {
-        background: var(--light-gray);
-        padding: 10px;
-        text-align: center;
-        font-weight: 700;
-        color: var(--primary);
-        border-bottom: 2px solid var(--border);
-        text-transform: uppercase;
-        font-size: 0.85rem;
+        background: var(--light-gray); padding: 10px; text-align: center;
+        font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--border);
+        text-transform: uppercase; font-size: 0.85rem;
       }
-      .row-item {
-        padding: 10px 15px;
-        border-bottom: 1px dashed #e0e0e0;
-        font-size: 0.95rem;
-        color: var(--dark);
-        display: flex;
-        align-items: center;
-      }
+      .row-item { padding: 10px 15px; border-bottom: 1px dashed #e0e0e0; font-size: 0.95rem; color: var(--dark); display: flex; align-items: center; }
       .row-item:last-child { border-bottom: none; }
       .col-list:nth-child(2) .row-item { background-color: #fafafa; }
       .col-list:nth-child(2) .row-item:hover { background-color: #f0f0f0; }
       .a4-page {
-        background: white;
-        width: 210mm;
-        min-height: 297mm;
-        margin: 20px auto;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        padding: 15mm;
-        display: flex;
-        flex-direction: column;
-        page-break-after: always;
+        background: white; width: 210mm; min-height: 297mm; margin: 20px auto;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); padding: 15mm;
+        display: flex; flex-direction: column; page-break-after: always;
       }
-      .bracket-header {
-        text-align: center;
-        border-bottom: 2px solid var(--secondary);
-        padding-bottom: 10px;
-        margin-bottom: 10px;
-      }
+      .bracket-header { text-align: center; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; margin-bottom: 10px; }
       .bracket-header h2 { color: var(--primary); margin: 0; text-transform: uppercase; }
       .bracket-table { width: 100%; border-collapse: collapse; flex: 1; table-layout: fixed; }
       .bracket-table tbody { height: 100%; }
       .bracket-table th {
-        background-color: var(--light-gray);
-        color: var(--primary);
-        padding: 8px;
-        font-size: 0.9rem;
-        border: 1px solid var(--border);
-        text-align: center;
-        width: 1%;
+        background-color: var(--light-gray); color: var(--primary); padding: 8px;
+        font-size: 0.9rem; border: 1px solid var(--border); text-align: center; width: 1%;
       }
       .bracket-table td { border: 1px solid var(--border); padding: 0; vertical-align: middle; }
       .bracket-table tbody tr { height: calc(100% / var(--row-count)); }
-      .match-cell {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        padding: 2px;
-      }
+      .match-cell { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; padding: 2px; }
       .match-box {
-        background: #fff;
-        border: 1px solid #ccc;
-        border-left: 3px solid var(--primary);
-        padding: 4px 8px;
-        font-size: 0.85rem;
-        border-radius: 4px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow: hidden;
+        background: #fff; border: 1px solid #ccc; border-left: 3px solid var(--primary);
+        padding: 4px 8px; font-size: 0.85rem; border-radius: 4px; height: 100%;
+        display: flex; flex-direction: column; justify-content: center; overflow: hidden;
       }
       .match-box.bye { background: #f9f9f9; border-left: 3px solid #ccc; color: #999; font-style: italic; }
       .match-box.empty { background: #fcfcfc; border-left: 3px dashed #bbb; border: 1px dashed #ddd; }
+      /* Drop target highlight for BYE slots */
+      .match-box.drop-hover {
+        background: #c8e6c9 !important;
+        border: 2px dashed var(--success) !important;
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+      }
       .p-name:empty::before { content: "________________"; color: #ccc; display: block; white-space: pre; }
       .p-name:empty:focus::before { content: ""; }
       .p-name { min-width: 80px; min-height: 1.2em; display: inline-block; outline: none; cursor: text; }
       .p-name:focus { background-color: #fffbe6; border-radius: 2px; }
       .player-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2px;
-        padding: 2px 4px;
-        border-radius: 4px;
-        transition: background 0.2s;
-        gap: 4px;
-        cursor: grab;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 2px; padding: 2px 4px; border-radius: 4px;
+        transition: background 0.2s; gap: 4px; cursor: grab;
       }
       .player-row:active { cursor: grabbing; }
       .player-row.dragging { opacity: 0.6; background: #ffe082 !important; transform: scale(1.02); }
@@ -248,209 +141,217 @@
       .p-name { font-weight: 600; }
       .p-team { font-size: 0.75rem; color: #666; }
       .delete-btn {
-        background: var(--danger);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 2px 6px;
-        font-size: 0.7rem;
-        cursor: pointer;
-        opacity: 0;
-        transition: opacity 0.2s;
+        background: var(--danger); color: white; border: none; border-radius: 4px;
+        padding: 2px 6px; font-size: 0.7rem; cursor: pointer; opacity: 0; transition: opacity 0.2s;
       }
       .player-row:hover .delete-btn { opacity: 1; }
-      .vs-divider {
-        display: flex;
-        align-items: center;
-        text-align: center;
-        margin: 4px 0;
-        font-size: 10px;
-        color: #999;
-        font-weight: 700;
-      }
+      .vs-divider { display: flex; align-items: center; text-align: center; margin: 4px 0; font-size: 10px; color: #999; font-weight: 700; }
       .vs-divider::before, .vs-divider::after { content: ""; flex: 1; border-bottom: 1px solid #ccc; }
       .vs-divider:not(:empty)::before { margin-right: 6px; }
       .vs-divider:not(:empty)::after { margin-left: 6px; }
-      .controls {
-        text-align: center;
-        margin-bottom: 20px;
-        padding: 15px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: var(--shadow);
-      }
+      .controls { text-align: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: var(--shadow); }
 
-      /* ===== NEW: Bracket Controls Bar ===== */
+      /* ===== Bracket Controls Bar ===== */
       .bracket-controls-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 15px;
-        padding: 12px 15px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: var(--shadow);
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 10px; flex-wrap: wrap; margin-bottom: 15px; padding: 12px 15px;
+        background: white; border-radius: 8px; box-shadow: var(--shadow);
         border-left: 4px solid var(--secondary);
       }
-      .bracket-controls-left {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-      .bracket-controls-right {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
+      .bracket-controls-left { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .bracket-controls-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-      /* ===== NEW: Search Box ===== */
+      /* Inline search (highlight existing players in brackets) */
       .search-box {
-        position: relative;
-        display: flex;
-        align-items: center;
-        background: white;
-        border: 2px solid var(--border);
-        border-radius: 20px;
-        padding: 4px 12px;
-        transition: var(--transition);
-        min-width: 220px;
+        position: relative; display: flex; align-items: center;
+        background: white; border: 2px solid var(--border); border-radius: 20px;
+        padding: 4px 12px; transition: var(--transition); min-width: 220px;
       }
-      .search-box:focus-within {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(26, 58, 108, 0.15);
-      }
-      .search-box i {
-        color: var(--gray);
-        margin-right: 8px;
-      }
-      .search-box input {
-        border: none;
-        outline: none;
-        padding: 6px 4px;
-        font-size: 0.9rem;
-        flex: 1;
-        background: transparent;
-        min-width: 150px;
-      }
-      .search-clear {
-        background: none;
-        border: none;
-        color: var(--gray);
-        cursor: pointer;
-        padding: 2px 6px;
-        font-size: 0.85rem;
-        display: none;
-      }
+      .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26, 58, 108, 0.15); }
+      .search-box i { color: var(--gray); margin-right: 8px; }
+      .search-box input { border: none; outline: none; padding: 6px 4px; font-size: 0.9rem; flex: 1; background: transparent; min-width: 150px; }
+      .search-clear { background: none; border: none; color: var(--gray); cursor: pointer; padding: 2px 6px; font-size: 0.85rem; display: none; }
       .search-clear.visible { display: inline-block; }
       .search-clear:hover { color: var(--danger); }
-      .search-count {
-        font-size: 0.75rem;
-        color: var(--gray);
-        font-weight: 600;
-        padding: 2px 8px;
-        background: var(--light-gray);
-        border-radius: 10px;
-        margin-left: 6px;
-        display: none;
-      }
+      .search-count { font-size: 0.75rem; color: var(--gray); font-weight: 600; padding: 2px 8px; background: var(--light-gray); border-radius: 10px; margin-left: 6px; display: none; }
       .search-count.visible { display: inline-block; }
 
-      /* ===== NEW: Highlight for search ===== */
-      .search-highlight {
-        background: #fff176 !important;
-        box-shadow: 0 0 0 2px #fbc02d;
-        border-radius: 3px;
-        animation: pulseHighlight 1.5s ease-in-out infinite;
-      }
-      .search-match-row {
-        background: #fff9c4 !important;
-        border-left: 3px solid #fbc02d !important;
-      }
+      .search-highlight { background: #fff176 !important; box-shadow: 0 0 0 2px #fbc02d; border-radius: 3px; animation: pulseHighlight 1.5s ease-in-out infinite; }
+      .search-match-row { background: #fff9c4 !important; border-left: 3px solid #fbc02d !important; }
       @keyframes pulseHighlight {
         0%, 100% { box-shadow: 0 0 0 2px #fbc02d; }
         50% { box-shadow: 0 0 0 4px #fbc02d, 0 0 8px rgba(251, 192, 45, 0.5); }
       }
 
-      /* ===== NEW: Undo badge ===== */
-      .undo-badge {
-        background: rgba(255,255,255,0.25);
-        color: white;
-        padding: 1px 7px;
-        border-radius: 10px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        margin-left: 4px;
+      /* ===== Bracket header actions (plus/minus) ===== */
+      .bracket-header-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; flex-wrap: wrap; }
+      .bracket-header-actions .btn { font-size: 0.8rem; padding: 4px 10px; }
+      .bracket-size-indicator {
+        display: inline-block; padding: 2px 10px; border-radius: 12px;
+        background: var(--light-gray); color: var(--primary); font-size: 0.75rem;
+        font-weight: 700; margin-left: 8px;
       }
 
-      /* ===== NEW: Bracket +/- buttons on header ===== */
-      .bracket-header-actions {
-        display: flex;
-        gap: 6px;
-        justify-content: flex-end;
-        margin-top: 8px;
-        flex-wrap: wrap;
-      }
-      .bracket-header-actions .btn {
-        font-size: 0.8rem;
-        padding: 4px 10px;
-      }
-
-      /* ===== NEW: Add Player Modal ===== */
-      .mini-modal-overlay {
+      /* ===== FLOATING UNDO BUTTON (bottom-right) ===== */
+      .floating-undo-btn {
         position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.6);
+        bottom: 30px;
+        right: 30px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5);
         display: flex;
-        justify-content: center;
         align-items: center;
-        z-index: 2000;
-        backdrop-filter: blur(3px);
+        justify-content: center;
+        font-size: 1.5rem;
+        z-index: 999;
+        transition: all 0.3s ease;
       }
-      .mini-modal {
+      .floating-undo-btn:hover:not(:disabled) {
+        transform: scale(1.1) rotate(-15deg);
+        box-shadow: 0 8px 25px rgba(111, 66, 193, 0.7);
+      }
+      .floating-undo-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        opacity: 0.7;
+      }
+      .floating-undo-btn .undo-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: var(--danger);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 12px;
+        min-width: 24px;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      .floating-undo-btn .undo-tooltip {
+        position: absolute;
+        right: 75px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--dark);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .floating-undo-btn:hover .undo-tooltip { opacity: 1; }
+
+      /* ===== FLOATING AUTOCOMPLETE SEARCH (top-right) ===== */
+      .floating-search {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 340px;
+        z-index: 998;
         background: white;
         border-radius: 12px;
-        padding: 25px;
-        width: 90%;
-        max-width: 400px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border: 2px solid var(--primary);
+        overflow: visible;
       }
-      .mini-modal h3 {
-        color: var(--primary);
-        margin-bottom: 15px;
+      .floating-search-header {
+        background: var(--primary);
+        color: white;
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
         display: flex;
         align-items: center;
         gap: 8px;
+        border-radius: 10px 10px 0 0;
       }
-      .mini-modal .form-group {
-        margin-bottom: 12px;
-      }
-      .mini-modal .form-group label {
-        color: var(--dark);
-        font-size: 0.85rem;
-        margin-bottom: 4px;
-      }
-      .mini-modal .form-actions {
+      .floating-search-input-wrap {
         display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-        margin-top: 15px;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .floating-search-input-wrap i { color: var(--gray); margin-right: 8px; }
+      .floating-search-input-wrap input {
+        border: none;
+        outline: none;
+        flex: 1;
+        font-size: 0.95rem;
+        padding: 4px;
+        background: transparent;
+      }
+      .autocomplete-dropdown {
+        max-height: 320px;
+        overflow-y: auto;
+        display: none;
+      }
+      .autocomplete-dropdown.visible { display: block; }
+      .autocomplete-item {
+        padding: 8px 14px;
+        cursor: grab;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .autocomplete-item:hover { background: #e3f2fd; }
+      .autocomplete-item:active { cursor: grabbing; background: #bbdefb; }
+      .autocomplete-item.dragging-item { opacity: 0.5; background: #fff3cd; }
+      .autocomplete-item-name {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 0.9rem;
+      }
+      .autocomplete-item-meta {
+        font-size: 0.72rem;
+        color: var(--gray);
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .autocomplete-item-meta .disc-tag {
+        padding: 1px 6px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.65rem;
+      }
+      .disc-tag.patterns { background: #e3f2fd; color: #1565c0; }
+      .disc-tag.sparring { background: #fce4ec; color: #c2185b; }
+      .autocomplete-empty {
+        padding: 20px;
+        text-align: center;
+        color: var(--gray);
+        font-style: italic;
+        font-size: 0.85rem;
+      }
+      .autocomplete-hint {
+        padding: 6px 14px;
+        background: #fff3cd;
+        color: #856404;
+        font-size: 0.72rem;
+        text-align: center;
+        border-top: 1px dashed #ffe082;
       }
 
       .deleted-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        margin-bottom: 15px;
-        padding: 12px 15px;
-        border-left: 4px solid var(--danger);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        background: white; border-radius: 12px; box-shadow: var(--shadow);
+        margin-bottom: 15px; padding: 12px 15px; border-left: 4px solid var(--danger);
+        display: flex; justify-content: space-between; align-items: center;
       }
       .deleted-info { flex: 1; }
       .deleted-info strong { display: block; color: var(--primary); }
@@ -458,264 +359,127 @@
       .deleted-actions { display: flex; gap: 5px; }
 
       .team-overview-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        margin-bottom: 20px;
-        overflow: hidden;
-        border-left: 5px solid var(--primary);
+        background: white; border-radius: 12px; box-shadow: var(--shadow);
+        margin-bottom: 20px; overflow: hidden; border-left: 5px solid var(--primary);
         transition: var(--transition);
       }
-      .team-overview-card:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        transform: translateY(-2px);
-      }
+      .team-overview-card:hover { box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); transform: translateY(-2px); }
       .team-overview-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 22px;
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-bottom: 1px solid var(--border);
-        flex-wrap: wrap;
-        gap: 12px;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 18px 22px; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;
       }
-      .team-name-block {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex: 1;
-        min-width: 200px;
-      }
+      .team-name-block { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px; }
       .team-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: var(--primary);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.1rem;
-        flex-shrink: 0;
+        width: 44px; height: 44px; border-radius: 50%; background: var(--primary);
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
       }
-      .team-name {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: var(--primary);
-      }
-      .team-stats {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
+      .team-name { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+      .team-stats { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
       .stat-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        background: var(--light-gray);
-        color: var(--dark);
+        display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+        border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+        background: var(--light-gray); color: var(--dark);
       }
       .stat-pill.patterns { background: #e3f2fd; color: #1565c0; }
       .stat-pill.sparring { background: #fce4ec; color: #c2185b; }
       .stat-pill.total { background: #fff3e0; color: #e65100; }
       .stat-pill.entries { background: #f3e5f5; color: #6a1b9a; }
       .stat-pill .stat-num {
-        background: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 700;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        background: white; padding: 2px 8px; border-radius: 12px;
+        font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       }
-      .team-actions {
-        display: flex;
-        gap: 8px;
-        padding: 12px 22px;
-        background: #fafafa;
-        border-top: 1px solid var(--border);
-        flex-wrap: wrap;
-      }
+      .team-actions { display: flex; gap: 8px; padding: 12px 22px; background: #fafafa; border-top: 1px solid var(--border); flex-wrap: wrap; }
       .team-price-summary {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        padding: 12px 22px;
-        background: linear-gradient(90deg, #fffde7 0%, #fff8e1 50%, #fffde7 100%);
-        border-top: 1px dashed #ffe082;
-        border-bottom: 1px dashed #ffe082;
-        flex-wrap: wrap;
-        font-weight: 600;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        padding: 12px 22px; background: linear-gradient(90deg, #fffde7 0%, #fff8e1 50%, #fffde7 100%);
+        border-top: 1px dashed #ffe082; border-bottom: 1px dashed #ffe082;
+        flex-wrap: wrap; font-weight: 600;
       }
       .price-segment {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 700;
+        display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+        border-radius: 20px; font-size: 0.9rem; font-weight: 700;
       }
-      .price-segment.patterns-price {
-        background: #e3f2fd;
-        color: var(--price-patterns);
-        border: 1px solid #90caf9;
-      }
-      .price-segment.sparring-price {
-        background: #fce4ec;
-        color: var(--price-sparring);
-        border: 1px solid #f48fb1;
-      }
+      .price-segment.patterns-price { background: #e3f2fd; color: var(--price-patterns); border: 1px solid #90caf9; }
+      .price-segment.sparring-price { background: #fce4ec; color: var(--price-sparring); border: 1px solid #f48fb1; }
       .price-segment.total-price {
-        background: linear-gradient(135deg, #ff8a65 0%, #ff6e40 100%);
-        color: white;
-        border: 1px solid #e64a19;
-        font-size: 1rem;
-        padding: 6px 18px;
+        background: linear-gradient(135deg, #ff8a65 0%, #ff6e40 100%); color: white;
+        border: 1px solid #e64a19; font-size: 1rem; padding: 6px 18px;
         box-shadow: 0 2px 6px rgba(230, 74, 25, 0.3);
       }
-      .price-operator {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--gray);
-      }
+      .price-operator { font-size: 1.3rem; font-weight: 700; color: var(--gray); }
       .price-unavailable {
-        padding: 10px 22px;
-        background: #fff3cd;
-        color: #856404;
-        font-size: 0.85rem;
-        text-align: center;
-        border-top: 1px dashed #ffe082;
-        font-style: italic;
+        padding: 10px 22px; background: #fff3cd; color: #856404;
+        font-size: 0.85rem; text-align: center; border-top: 1px dashed #ffe082; font-style: italic;
       }
 
-      .team-detail-modal {
-        background: white;
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        margin-bottom: 20px;
-        overflow: hidden;
-      }
+      .team-detail-modal { background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
       .team-detail-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        color: white;
-        padding: 18px 22px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
+        color: white; padding: 18px 22px; display: flex;
+        justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
       }
-      .team-detail-header.patterns-header {
-        background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
-      }
-      .team-detail-header.sparring-header {
-        background: linear-gradient(135deg, #c2185b 0%, #880e4f 100%);
-      }
-      .team-detail-header h3 {
-        margin: 0;
-        font-size: 1.3rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+      .team-detail-header.patterns-header { background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%); }
+      .team-detail-header.sparring-header { background: linear-gradient(135deg, #c2185b 0%, #880e4f 100%); }
+      .team-detail-header h3 { margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
       .competitor-detail-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        margin: 12px 22px;
-        overflow: hidden;
-        transition: var(--transition);
+        background: white; border: 1px solid var(--border); border-radius: 8px;
+        margin: 12px 22px; overflow: hidden; transition: var(--transition);
       }
-      .competitor-detail-card:hover {
-        border-color: var(--secondary);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      }
+      .competitor-detail-card:hover { border-color: var(--secondary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
       .competitor-detail-header {
-        padding: 10px 15px;
-        background: #f8f9fa;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
+        padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
       }
-      .competitor-detail-name {
-        font-weight: 700;
-        color: var(--primary);
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+      .competitor-detail-name { font-weight: 700; color: var(--primary); font-size: 1rem; display: flex; align-items: center; gap: 8px; }
       .category-count-badge {
-        background: var(--secondary);
-        color: white;
-        padding: 2px 10px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 700;
+        background: var(--secondary); color: white; padding: 2px 10px;
+        border-radius: 12px; font-size: 0.75rem; font-weight: 700;
       }
-      .category-list {
-        padding: 10px 15px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
+      .category-list { padding: 10px 15px; display: flex; flex-wrap: wrap; gap: 6px; }
       .category-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        background: #e8eaf6;
-        color: #283593;
-        border-left: 3px solid var(--primary);
+        display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px;
+        border-radius: 4px; font-size: 0.8rem; font-weight: 600;
+        background: #e8eaf6; color: #283593; border-left: 3px solid var(--primary);
       }
-      .category-tag.sparring-tag {
-        background: #fce4ec;
-        color: #880e4f;
-        border-left-color: #c2185b;
-      }
-      .category-tag.patterns-tag {
-        background: #e3f2fd;
-        color: #0d47a1;
-        border-left-color: #1565c0;
-      }
-      .empty-team-detail {
-        padding: 30px;
-        text-align: center;
-        color: var(--gray);
-        font-style: italic;
+      .category-tag.sparring-tag { background: #fce4ec; color: #880e4f; border-left-color: #c2185b; }
+      .category-tag.patterns-tag { background: #e3f2fd; color: #0d47a1; border-left-color: #1565c0; }
+      .empty-team-detail { padding: 30px; text-align: center; color: var(--gray); font-style: italic; }
+      .debug-box {
+        background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;
+        padding: 10px; margin: 10px 0; font-family: monospace; font-size: 0.8rem;
+        max-height: 200px; overflow: auto; white-space: pre-wrap;
       }
 
-      .debug-box {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        border-radius: 6px;
-        padding: 10px;
-        margin: 10px 0;
-        font-family: monospace;
-        font-size: 0.8rem;
-        max-height: 200px;
-        overflow: auto;
-        white-space: pre-wrap;
+      /* Toast notification */
+      .toast {
+        position: fixed;
+        bottom: 110px;
+        right: 30px;
+        background: var(--dark);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s;
+        pointer-events: none;
       }
+      .toast.show { opacity: 1; transform: translateY(0); }
+      .toast.success { background: var(--success); }
+      .toast.error { background: var(--danger); }
 
       @media print {
         @page { size: A4; margin: 10mm; }
         body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
         * { box-sizing: border-box; }
-        .nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box { display: none !important; }
+        .nav, .filters-card, .controls, .subtitle, .debug-box,
+        .bracket-controls-bar, .bracket-header-actions, .search-box,
+        .floating-undo-btn, .floating-search { display: none !important; }
         .container { max-width: none; width: 100%; margin: 0; padding: 0; }
         .a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
         .p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
@@ -729,10 +493,41 @@
         .bracket-controls-bar { flex-direction: column; align-items: stretch; }
         .bracket-controls-right { justify-content: center; }
         .search-box { min-width: 100%; }
+        .floating-search { width: calc(100% - 40px); right: 20px; top: 10px; }
+        .floating-undo-btn { width: 54px; height: 54px; bottom: 20px; right: 20px; font-size: 1.2rem; }
       }
     </style>
   </head>
   <body>
+    <!-- ===== FLOATING AUTOCOMPLETE SEARCH (top-right) ===== -->
+    <div class="floating-search" id="floatingSearch">
+      <div class="floating-search-header">
+        <i class="fas fa-search"></i>
+        <span>Drag players into brackets</span>
+      </div>
+      <div class="floating-search-input-wrap">
+        <i class="fas fa-user"></i>
+        <input type="text" id="autocompleteInput" placeholder="Type name or team..." oninput="updateAutocomplete(this.value)" onfocus="updateAutocomplete(this.value)" />
+        <button class="search-clear" id="autocompleteClear" onclick="clearAutocomplete()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+      <div class="autocomplete-hint">
+        <i class="fas fa-info-circle"></i> Drag a player onto an empty (BYE) slot in any bracket
+      </div>
+    </div>
+
+    <!-- ===== FLOATING UNDO BUTTON (bottom-right) ===== -->
+    <button class="floating-undo-btn" id="floatingUndoBtn" onclick="performUndo()" disabled title="Undo last action (Ctrl+Z)">
+      <i class="fas fa-undo"></i>
+      <span class="undo-count" id="undoCountBadge">0</span>
+      <span class="undo-tooltip" id="undoTooltip">Nothing to undo</span>
+    </button>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
     <div class="container">
       <header>
         <h1>9-th Vojvodina Open ITF</h1>
@@ -774,11 +569,11 @@
       </div>
       <div id="content"></div>
     </div>
+
     <script>
       /* ---------------- CONFIG ---------------- */
       const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
-      const SUPABASE_ANON_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
       const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       if (localStorage.getItem("isAdmin") !== "true") {
@@ -793,281 +588,370 @@
       let tournamentPrices = { patterns: null, sparring: null };
 
       /* ============================================================
-         🆕 UNDO STACK — tracks all bracket actions for undo
+         🆕 BRACKET SIZE OVERRIDES (for plus/minus buttons)
+         Maps categoryKey → forced bracket size
          ============================================================ */
-      let undoStack = []; // { type, category, bracketType, description, reverse: async fn }
+      let bracketSizeOverrides = {};
 
-      function pushUndo(action) {
-        undoStack.push(action);
-        updateUndoButton();
-        // Save to DB (fire-and-forget)
-        sb.from("undo_history").insert([{
-          category: action.category,
-          bracket_type: action.bracketType,
-          action_type: action.type,
-          description: action.description,
-          before_state: action.beforeState || null,
-          after_state: action.afterState || null,
-        }]).then(({ error }) => {
-          if (error) console.warn("Undo history save failed:", error.message);
+      function getEffectiveBracketSize(categoryKey, playerCount) {
+        if (bracketSizeOverrides[categoryKey]) {
+          return bracketSizeOverrides[categoryKey];
+        }
+        return getBracketSize(playerCount);
+      }
+
+      async function saveBracketSizeOverride(categoryKey, type, size) {
+        // Persist to DB
+        await sb.from("bracket_overrides").delete().eq("category", categoryKey).eq("bracket_type", type);
+        if (size) {
+          await sb.from("bracket_overrides").insert([{
+            category: categoryKey, bracket_type: type, forced_size: size
+          }]);
+        }
+      }
+
+      async function loadBracketSizeOverrides() {
+        const { data, error } = await sb.from("bracket_overrides").select("*");
+        if (error) { console.warn("Could not load bracket overrides:", error.message); return; }
+        bracketSizeOverrides = {};
+        (data || []).forEach(row => {
+          bracketSizeOverrides[row.category] = row.forced_size;
         });
+      }
+
+      /* ============================================================
+         🆕 SNAPSHOT-BASED UNDO SYSTEM
+         ============================================================ */
+      let undoStack = [];
+
+      async function takeSnapshot(description) {
+        if (!currentBracketType) return;
+        // Capture current state of all visible categories
+        const snapshots = {};
+        for (const categoryKey in (currentGroups || {})) {
+          const type = currentBracketType;
+          const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
+
+          // Get current bracket structure
+          const { data: bracketData } = await sb.from("saved_brackets")
+            .select("*")
+            .eq("category", categoryKey)
+            .eq("bracket_type", type);
+
+          // Get current category order
+          const { data: orderData } = await sb.from(table)
+            .select("*")
+            .eq("category", categoryKey);
+
+          snapshots[categoryKey] = {
+            savedBrackets: bracketData || [],
+            categoryOrder: orderData || []
+          };
+        }
+
+        undoStack.push({
+          description,
+          bracketType: currentBracketType,
+          snapshots,
+          groupsSnapshot: JSON.parse(JSON.stringify(currentGroups)),
+          overridesSnapshot: { ...bracketSizeOverrides },
+          timestamp: new Date().toISOString()
+        });
+
+        updateUndoButton();
+
+        // Also save to undo_history for auditing
+        sb.from("undo_history").insert([{
+          category: "ALL",
+          bracket_type: currentBracketType,
+          action_type: "snapshot",
+          description,
+          before_state: snapshots,
+          created_at: new Date().toISOString()
+        }]).catch(err => console.warn("Undo history save failed:", err.message));
       }
 
       function updateUndoButton() {
-        const btn = document.getElementById("undoBtn");
+        const btn = document.getElementById("floatingUndoBtn");
+        const badge = document.getElementById("undoCountBadge");
+        const tooltip = document.getElementById("undoTooltip");
         if (!btn) return;
         const count = undoStack.length;
         btn.disabled = count === 0;
-        const badge = btn.querySelector(".undo-badge");
-        if (badge) badge.textContent = count;
+        badge.textContent = count;
+        if (count > 0) {
+          const last = undoStack[undoStack.length - 1];
+          tooltip.textContent = `Undo: ${last.description}`;
+        } else {
+          tooltip.textContent = "Nothing to undo";
+        }
       }
 
       async function performUndo() {
-        if (undoStack.length === 0) return;
-        const action = undoStack.pop();
-        console.log("🔙 Undoing:", action.description);
+        if (undoStack.length === 0) {
+          showToast("Nothing to undo", "error");
+          return;
+        }
+        const snapshot = undoStack.pop();
+        console.log("🔙 Undoing:", snapshot.description);
+
         try {
-          await action.reverse();
-          // Mark as undone in DB
-          sb.from("undo_history")
-            .update({ undone: true })
-            .eq("category", action.category)
-            .eq("bracket_type", action.bracketType)
-            .eq("action_type", action.type)
-            .order("created_at", { ascending: false })
-            .limit(1);
-          updateUndoButton();
-          // Re-render the bracket view to reflect changes
-          if (currentGroups && currentBracketType) {
-            await renderBracketView(currentGroups, currentBracketType);
+          // Restore each category
+          for (const categoryKey in snapshot.snapshots) {
+            const catSnap = snapshot.snapshots[categoryKey];
+            const type = snapshot.bracketType;
+            const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
+
+            // Restore saved_brackets
+            await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+            if (catSnap.savedBrackets.length > 0) {
+              await sb.from("saved_brackets").insert(catSnap.savedBrackets);
+            }
+
+            // Restore category order
+            await sb.from(table).delete().eq("category", categoryKey);
+            if (catSnap.categoryOrder.length > 0) {
+              await sb.from(table).insert(catSnap.categoryOrder);
+            }
           }
-          alert(`✅ Undone: ${action.description}`);
+
+          // Restore currentGroups and overrides
+          currentGroups = snapshot.groupsSnapshot;
+          bracketSizeOverrides = snapshot.overridesSnapshot;
+
+          // Re-render
+          await renderBracketView(currentGroups, snapshot.bracketType);
+          updateUndoButton();
+          showToast(`✅ Undone: ${snapshot.description}`, "success");
         } catch (err) {
           console.error("Undo failed:", err);
-          alert("❌ Undo failed: " + err.message);
+          showToast("❌ Undo failed: " + err.message, "error");
         }
       }
 
       /* ============================================================
-         🆕 SEARCH FUNCTIONALITY
+         🆕 TOAST NOTIFICATION
          ============================================================ */
-      let currentSearchTerm = "";
-
-      function performSearch(term) {
-        currentSearchTerm = term.trim().toLowerCase();
-        // Clear all highlights
-        document.querySelectorAll(".search-highlight").forEach(el => el.classList.remove("search-highlight"));
-        document.querySelectorAll(".search-match-row").forEach(el => el.classList.remove("search-match-row"));
-
-        const countEl = document.getElementById("searchCount");
-        if (!currentSearchTerm) {
-          if (countEl) countEl.classList.remove("visible");
-          return;
-        }
-
-        let matchCount = 0;
-        const allPlayerRows = document.querySelectorAll(".player-row");
-        allPlayerRows.forEach(row => {
-          const nameEl = row.querySelector(".p-name");
-          const teamEl = row.querySelector(".p-team");
-          if (!nameEl) return;
-          const name = nameEl.innerText.toLowerCase();
-          const team = teamEl ? teamEl.innerText.toLowerCase() : "";
-          if (name.includes(currentSearchTerm) || team.includes(currentSearchTerm)) {
-            nameEl.classList.add("search-highlight");
-            row.classList.add("search-match-row");
-            matchCount++;
-          }
-        });
-
-        if (countEl) {
-          countEl.textContent = `${matchCount} match${matchCount !== 1 ? "es" : ""}`;
-          countEl.classList.add("visible");
-        }
-
-        // Scroll to first match
-        const firstMatch = document.querySelector(".search-highlight");
-        if (firstMatch) {
-          firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+      function showToast(message, type = "") {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.className = "toast show " + type;
+        setTimeout(() => { toast.className = "toast"; }, 2500);
       }
 
       /* ============================================================
-         🆕 ADD / REMOVE PLAYER FROM CATEGORY
+         🆕 AUTOCOMPLETE SEARCH (top-right floating)
          ============================================================ */
-      function openAddPlayerModal(categoryKey, type) {
-        const overlay = document.createElement("div");
-        overlay.className = "mini-modal-overlay";
-        overlay.id = "addPlayerModal";
-        overlay.innerHTML = `
-          <div class="mini-modal">
-            <h3><i class="fas fa-user-plus" style="color:var(--success);"></i> Add Player to Category</h3>
-            <p style="color:var(--gray);font-size:0.85rem;margin-bottom:15px;">
-              Category: <strong style="color:var(--primary);">${categoryKey}</strong>
-            </p>
-            <div class="form-group">
-              <label>Player Name *</label>
-              <input type="text" id="newPlayerName" placeholder="e.g. John Doe" />
-            </div>
-            <div class="form-group">
-              <label>Team</label>
-              <input type="text" id="newPlayerTeam" placeholder="e.g. Team Alpha" />
-            </div>
-            <div class="form-actions">
-              <button class="btn btn-secondary btn-sm" onclick="closeAddPlayerModal()">Cancel</button>
-              <button class="btn btn-add btn-sm" onclick="confirmAddPlayer('${categoryKey.replace(/'/g, "\\'")}', '${type}')">
-                <i class="fas fa-plus"></i> Add Player
-              </button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(overlay);
-        setTimeout(() => document.getElementById("newPlayerName").focus(), 100);
-        // Enter key submits
-        overlay.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") confirmAddPlayer(categoryKey, type);
-        });
-      }
+      function updateAutocomplete(term) {
+        const dropdown = document.getElementById("autocompleteDropdown");
+        const clearBtn = document.getElementById("autocompleteClear");
+        const lower = (term || "").trim().toLowerCase();
 
-      function closeAddPlayerModal() {
-        const modal = document.getElementById("addPlayerModal");
-        if (modal) modal.remove();
-      }
+        clearBtn.classList.toggle("visible", lower.length > 0);
 
-      async function confirmAddPlayer(categoryKey, type) {
-        const nameInput = document.getElementById("newPlayerName");
-        const teamInput = document.getElementById("newPlayerTeam");
-        const name = nameInput.value.trim();
-        const team = teamInput.value.trim();
-        if (!name) {
-          alert("⚠️ Player name is required.");
-          nameInput.focus();
+        if (!lower) {
+          dropdown.classList.remove("visible");
+          dropdown.innerHTML = "";
           return;
         }
 
+        // Filter competitors
+        const matches = competitors.filter(c => {
+          const name = (c.name || "").toLowerCase();
+          const team = (c.team || "").toLowerCase();
+          return name.includes(lower) || team.includes(lower);
+        }).slice(0, 30);
+
+        if (matches.length === 0) {
+          dropdown.innerHTML = `<div class="autocomplete-empty"><i class="fas fa-search"></i> No matches for "${term}"</div>`;
+        } else {
+          dropdown.innerHTML = matches.map((c, idx) => {
+            const safeName = (c.name || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeTeam = (c.team || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const discClass = c._discipline === "patterns" ? "patterns" : "sparring";
+            const discLabel = c._discipline === "patterns" ? "Patterns" : "Sparring";
+            return `
+              <div class="autocomplete-item" draggable="true"
+                   ondragstart="dragAutocompleteItem(event, '${safeName}', '${safeTeam}')"
+                   ondragend="this.classList.remove('dragging-item')">
+                <span class="autocomplete-item-name">${c.name}</span>
+                <span class="autocomplete-item-meta">
+                  <span>${c.team || "N/A"}</span>
+                  <span class="disc-tag ${discClass}">${discLabel}</span>
+                  <span>${c._full_cat || ""}</span>
+                </span>
+              </div>
+            `;
+          }).join("");
+        }
+        dropdown.classList.add("visible");
+      }
+
+      function clearAutocomplete() {
+        const input = document.getElementById("autocompleteInput");
+        input.value = "";
+        updateAutocomplete("");
+        input.focus();
+      }
+
+      function dragAutocompleteItem(e, name, team) {
+        e.dataTransfer.setData("application/player", JSON.stringify({ name, team }));
+        e.dataTransfer.effectAllowed = "copy";
+        e.target.classList.add("dragging-item");
+      }
+
+      // Close autocomplete when clicking outside
+      document.addEventListener("click", (e) => {
+        const search = document.getElementById("floatingSearch");
+        if (search && !search.contains(e.target)) {
+          document.getElementById("autocompleteDropdown").classList.remove("visible");
+        }
+      });
+
+      /* ============================================================
+         🆕 DROP HANDLER for BYE/empty slots
+         ============================================================ */
+      async function handleByeSlotDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const matchBox = e.currentTarget;
+        matchBox.classList.remove("drop-hover");
+
+        const data = e.dataTransfer.getData("application/player");
+        if (!data) return;
+
+        let player;
+        try { player = JSON.parse(data); } catch { return; }
+
+        const page = matchBox.closest(".a4-page");
+        if (!page) return;
+
+        const categoryKey = page.dataset.category;
+        const type = page.dataset.type;
+
+        await addPlayerToCategoryFromDrag(player.name, player.team, categoryKey, type);
+      }
+
+      function handleByeSlotDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        e.currentTarget.classList.add("drop-hover");
+      }
+
+      function handleByeSlotDragLeave(e) {
+        e.currentTarget.classList.remove("drop-hover");
+      }
+
+      async function addPlayerToCategoryFromDrag(name, team, categoryKey, type) {
         const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
 
-        // Get next position number
+        // Check if already in category
         const { data: existing } = await sb.from(table)
+          .select("name")
+          .eq("category", categoryKey)
+          .eq("name", name);
+
+        if (existing && existing.length > 0) {
+          showToast(`⚠️ "${name}" is already in ${categoryKey}`, "error");
+          return;
+        }
+
+        // Take snapshot before change
+        await takeSnapshot(`Add "${name}" to ${categoryKey}`);
+
+        // Get next position
+        const { data: posData } = await sb.from(table)
           .select("position_number")
           .eq("category", categoryKey)
           .order("position_number", { ascending: false })
           .limit(1);
-        const nextPos = existing && existing[0] ? existing[0].position_number + 1 : 1;
+        const nextPos = posData && posData[0] ? posData[0].position_number + 1 : 1;
 
-        // Insert new player
+        // Insert
         const { error } = await sb.from(table).insert([{
           name, team, category: categoryKey, position_number: nextPos
         }]);
 
         if (error) {
-          alert("❌ Failed to add player: " + error.message);
+          showToast("❌ Failed to add: " + error.message, "error");
           return;
         }
-
-        // Push undo action (reverse = delete this player)
-        pushUndo({
-          type: "add_player",
-          category: categoryKey,
-          bracketType: type,
-          description: `Add player "${name}" to ${categoryKey}`,
-          beforeState: null,
-          afterState: { name, team, category: categoryKey, position_number: nextPos },
-          reverse: async () => {
-            await sb.from(table).delete().eq("category", categoryKey).eq("name", name).eq("position_number", nextPos);
-            // Also delete from saved_brackets to force re-render
-            await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
-            // Update currentGroups if this category exists
-            if (currentGroups && currentGroups[categoryKey]) {
-              currentGroups[categoryKey].push({ name, team });
-            }
-          }
-        });
-
-        // Also delete saved bracket to force regeneration
-        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
 
         // Update currentGroups
         if (currentGroups && currentGroups[categoryKey]) {
           currentGroups[categoryKey].push({ name, team });
         }
 
-        closeAddPlayerModal();
-        alert(`✅ "${name}" added to ${categoryKey}`);
+        // Delete saved bracket to force regeneration
+        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+
+        // Clear autocomplete
+        clearAutocomplete();
+
         // Re-render
-        if (currentGroups && currentBracketType) {
-          await renderBracketView(currentGroups, currentBracketType);
-        }
+        await renderBracketView(currentGroups, type);
+        showToast(`✅ "${name}" added to ${categoryKey}`, "success");
       }
 
-      async function removeLastPlayerFromCategory(categoryKey, type) {
-        const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
-
-        // Get the last player in this category
-        const { data: players, error } = await sb.from(table)
-          .select("*")
-          .eq("category", categoryKey)
-          .order("position_number", { ascending: false })
-          .limit(1);
-
-        if (error || !players || players.length === 0) {
-          alert("⚠️ No players to remove from this category.");
+      /* ============================================================
+         🆕 PLUS/MINUS BRACKET SIZE
+         ============================================================ */
+      async function increaseBracketSize(categoryKey, type) {
+        const list = currentGroups[categoryKey] || [];
+        const currentSize = getEffectiveBracketSize(categoryKey, list.length);
+        const newSize = currentSize * 2;
+        if (newSize > 64) {
+          showToast("⚠️ Maximum bracket size is 64", "error");
           return;
         }
 
-        const lastPlayer = players[0];
-        if (!confirm(`Remove "${lastPlayer.name}" from ${categoryKey}?`)) return;
+        await takeSnapshot(`Expand ${categoryKey} to ${newSize} slots`);
 
-        // Delete
-        const { error: delErr } = await sb.from(table)
-          .delete()
-          .eq("category", categoryKey)
-          .eq("position_number", lastPlayer.position_number);
-
-        if (delErr) {
-          alert("❌ Failed to remove: " + delErr.message);
-          return;
-        }
-
-        // Push undo action (reverse = re-add this player)
-        pushUndo({
-          type: "remove_player",
-          category: categoryKey,
-          bracketType: type,
-          description: `Remove player "${lastPlayer.name}" from ${categoryKey}`,
-          beforeState: lastPlayer,
-          afterState: null,
-          reverse: async () => {
-            await sb.from(table).insert([{
-              name: lastPlayer.name,
-              team: lastPlayer.team,
-              category: categoryKey,
-              position_number: lastPlayer.position_number
-            }]);
-            await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
-            if (currentGroups && currentGroups[categoryKey]) {
-              currentGroups[categoryKey].push({ name: lastPlayer.name, team: lastPlayer.team });
-            }
-          }
-        });
+        bracketSizeOverrides[categoryKey] = newSize;
+        await saveBracketSizeOverride(categoryKey, type, newSize);
 
         // Delete saved bracket to force regeneration
         await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
 
-        // Update currentGroups
-        if (currentGroups && currentGroups[categoryKey]) {
-          const idx = currentGroups[categoryKey].findIndex(c => c.name === lastPlayer.name);
-          if (idx >= 0) currentGroups[categoryKey].splice(idx, 1);
+        await renderBracketView(currentGroups, type);
+        showToast(`📈 Bracket expanded to ${newSize} slots`, "success");
+      }
+
+      async function decreaseBracketSize(categoryKey, type) {
+        const list = currentGroups[categoryKey] || [];
+        const currentSize = getEffectiveBracketSize(categoryKey, list.length);
+        const newSize = Math.max(2, Math.floor(currentSize / 2));
+
+        if (newSize < list.length) {
+          showToast(`⚠️ Cannot shrink below player count (${list.length})`, "error");
+          return;
         }
 
-        alert(`🗑️ "${lastPlayer.name}" removed from ${categoryKey}`);
-        if (currentGroups && currentBracketType) {
-          await renderBracketView(currentGroups, currentBracketType);
+        if (newSize === currentSize && !bracketSizeOverrides[categoryKey]) {
+          showToast("⚠️ Already at minimum size", "error");
+          return;
         }
+
+        await takeSnapshot(`Shrink ${categoryKey} to ${newSize} slots`);
+
+        if (newSize === getBracketSize(list.length)) {
+          // Back to auto size, remove override
+          delete bracketSizeOverrides[categoryKey];
+          await saveBracketSizeOverride(categoryKey, type, null);
+        } else {
+          bracketSizeOverrides[categoryKey] = newSize;
+          await saveBracketSizeOverride(categoryKey, type, newSize);
+        }
+
+        // Delete saved bracket to force regeneration
+        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+
+        await renderBracketView(currentGroups, type);
+        showToast(`📉 Bracket shrunk to ${newSize} slots`, "success");
       }
 
       /* ============================================================
-         HELPER FUNCTIONS (unchanged)
+         HELPER FUNCTIONS
          ============================================================ */
       function extractBeltNumber(belt) {
         if (!belt) return -1;
@@ -1138,11 +1022,8 @@
 
       async function fetchTournamentPrices() {
         try {
-          const { data, error } = await sb
-            .from("site_settings")
-            .select("patterns_price, sparring_price")
-            .eq("id", 1)
-            .single();
+          const { data, error } = await sb.from("site_settings")
+            .select("patterns_price, sparring_price").eq("id", 1).single();
           if (error) { tournamentPrices = { patterns: null, sparring: null }; return; }
           if (data) {
             tournamentPrices.patterns = data.patterns_price !== null && data.patterns_price !== undefined ? parseFloat(data.patterns_price) : null;
@@ -1215,7 +1096,7 @@
           const { error: insError } = await sb.from("saved_brackets").insert(matchesToSave);
           if (insError) { alert("❌ Failed to save bracket structure: " + insError.message); return false; }
         }
-        alert("✅ Bracket structure saved successfully! (" + matchesToSave.length + " matches)");
+        showToast(`✅ Bracket saved (${matchesToSave.length} matches)`, "success");
         return true;
       }
 
@@ -1227,7 +1108,8 @@
         if (savedOrder && savedOrder.length > 0) {
           useList = savedOrder.map((item) => ({ name: item.name, team: item.team, id: item.id || null }));
         }
-        const size = getBracketSize(useList.length);
+        // 🆕 Use effective size (respects overrides)
+        const size = getEffectiveBracketSize(categoryKey, useList.length);
         if (size === 1) return { rounds: [[{ p1: useList[0] || {name:"",team:""}, p2: { name: "", team: "" } }]], totalRounds: 1 };
         if (size === 2) return { rounds: [[{ p1: useList[0] || {name:"",team:""}, p2: useList[1] || {name:"",team:""} }]], totalRounds: 1 };
         const totalRounds = Math.log2(size);
@@ -1284,39 +1166,21 @@
         if (delError) { alert("❌ Error deleting old order: " + delError.message); return; }
         const { error: insError } = await sb.from(table).insert(dataToSave);
         if (insError) { alert("❌ Error saving order: " + insError.message); return; }
-        if (!silent) alert("✅ Order saved! " + dataToSave.length + " players in " + categoryKey);
+        if (!silent) showToast(`✅ Order saved (${dataToSave.length} players)`, "success");
       }
 
       async function deletePlayerFromBracket(name, team, category, type) {
         if (!confirm(`Delete "${name}" from ${category}?`)) return;
+
+        // Take snapshot before delete
+        await takeSnapshot(`Delete "${name}" from ${category}`);
+
         const delTable = type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
         const { error: insErr } = await sb.from(delTable).insert([{ name, team, category, type, deleted_at: new Date().toISOString() }]);
         if (insErr) { alert("❌ Error: " + insErr.message); return; }
         const catTable = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         await sb.from(catTable).delete().eq("category", category).eq("name", name);
         await sb.from("saved_brackets").delete().eq("category", category).eq("bracket_type", type);
-
-        // 🆕 Push undo action
-        pushUndo({
-          type: "delete_player",
-          category,
-          bracketType: type,
-          description: `Delete "${name}" from ${category}`,
-          beforeState: { name, team, category, type },
-          afterState: null,
-          reverse: async () => {
-            // Remove from deleted table
-            await sb.from(delTable).delete().eq("name", name).eq("category", category);
-            // Re-add to category table
-            const { data: existing } = await sb.from(catTable).select("position_number").eq("category", category).order("position_number", { ascending: false }).limit(1);
-            const nextPos = existing && existing[0] ? existing[0].position_number + 1 : 1;
-            await sb.from(catTable).insert([{ name, team, category, position_number: nextPos }]);
-            await sb.from("saved_brackets").delete().eq("category", category).eq("bracket_type", type);
-            if (currentGroups && currentGroups[category]) {
-              currentGroups[category].push({ name, team });
-            }
-          }
-        });
 
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(category)}"][data-type="${type}"]`);
         if (page) {
@@ -1326,12 +1190,11 @@
             if (pName === name) { row.querySelector(".p-name").innerText = ""; row.querySelector(".p-team").innerText = ""; }
           });
         }
-        // Update currentGroups
         if (currentGroups && currentGroups[category]) {
           const idx = currentGroups[category].findIndex(c => c.name === name);
           if (idx >= 0) currentGroups[category].splice(idx, 1);
         }
-        alert(`🗑️ "${name}" moved to Deleted.`);
+        showToast(`🗑️ "${name}" moved to Deleted`, "success");
       }
 
       async function restorePlayer(name, team, category, type) {
@@ -1384,7 +1247,7 @@
       }
 
       /* ============================================================
-         DRAG & DROP with UNDO tracking
+         DRAG & DROP with AUTO-SAVE
          ============================================================ */
       function initDragAndDrop() {
         const playerRows = document.querySelectorAll('.player-row[data-draggable="true"]');
@@ -1412,45 +1275,25 @@
         if (!draggedRow || draggedRow === targetRow) return;
         swapPlayerRows(draggedRow, targetRow);
       }
-      function swapPlayerRows(row1, row2) {
+
+      /* 🆕 SWAP with AUTO-SAVE and SNAPSHOT */
+      async function swapPlayerRows(row1, row2) {
         const name1 = row1.querySelector(".p-name").innerText;
         const team1 = row1.querySelector(".p-team").innerText;
         const name2 = row2.querySelector(".p-name").innerText;
         const team2 = row2.querySelector(".p-team").innerText;
 
-        // 🆕 Push undo action BEFORE swap
-        pushUndo({
-          type: "swap",
-          category: row1.dataset.category || "",
-          bracketType: row1.dataset.bracketType || "",
-          description: `Swap "${name1}" ↔ "${name2}"`,
-          beforeState: {
-            row1Id: row1.dataset.playerId, row2Id: row2.dataset.playerId,
-            row1Name: name1, row1Team: team1,
-            row2Name: name2, row2Team: team2,
-          },
-          afterState: {
-            row1Id: row1.dataset.playerId, row2Id: row2.dataset.playerId,
-            row1Name: name2, row1Team: team2,
-            row2Name: name1, row2Team: team1,
-          },
-          reverse: async () => {
-            // Find the rows by their data-player-id and swap back
-            const r1 = document.querySelector(`.player-row[data-player-id="${row1.dataset.playerId}"]`);
-            const r2 = document.querySelector(`.player-row[data-player-id="${row2.dataset.playerId}"]`);
-            if (r1 && r2) {
-              r1.querySelector(".p-name").innerText = name1;
-              r1.querySelector(".p-team").innerText = team1;
-              r2.querySelector(".p-name").innerText = name2;
-              r2.querySelector(".p-team").innerText = team2;
-              // Save the reverted state
-              const cat = r1.dataset.category;
-              const bt = r1.dataset.bracketType;
-              if (cat && bt) await saveCategoryOrder(cat, bt, true);
-            }
-          }
-        });
+        // Skip if both are BYE/empty
+        if ((!name1 || name1 === "BYE") && (!name2 || name2 === "BYE")) return;
 
+        // Take snapshot before swap
+        const category = row1.dataset.category;
+        const bracketType = row1.dataset.bracketType;
+        if (category && bracketType) {
+          await takeSnapshot(`Swap "${name1 || 'empty'}" ↔ "${name2 || 'empty'}"`);
+        }
+
+        // Perform the visual swap
         row1.querySelector(".p-name").innerText = name2;
         row2.querySelector(".p-name").innerText = name1;
         row1.querySelector(".p-team").innerText = team2;
@@ -1458,25 +1301,30 @@
         row1.style.background = "#c8e6c9";
         row2.style.background = "#c8e6c9";
         setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 300);
+
+        // 🆕 AUTO-SAVE: immediately persist to DB
+        if (category && bracketType) {
+          await saveCategoryOrder(category, bracketType, true);
+          // Also save the full bracket structure so multi-round state is preserved
+          await saveBracketStructure(category, bracketType);
+        }
       }
 
       /* ============================================================
-         🆕 RENDER BRACKET VIEW — with search, undo, +/- buttons
+         🆕 RENDER BRACKET VIEW
          ============================================================ */
       async function renderBracketView(groups, type) {
         currentGroups = groups;
         currentBracketType = type;
         // Reset undo stack when re-rendering from scratch
         undoStack = [];
+        updateUndoButton();
 
         let html = `
           <div class="bracket-controls-bar">
             <div class="bracket-controls-left">
               <button class="btn btn-secondary btn-sm" onclick="${type === "Patterns" ? "showPatterns()" : "showSparring()"}">
                 <i class="fas fa-arrow-left"></i> Back to List
-              </button>
-              <button class="btn btn-undo btn-sm" id="undoBtn" onclick="performUndo()" disabled title="Undo last action (Ctrl+Z)">
-                <i class="fas fa-undo"></i> Undo <span class="undo-badge">0</span>
               </button>
               <button class="btn btn-success btn-sm" onclick="exportAllToExcel('${type}')">
                 <i class="fas fa-file-excel"></i> Excel
@@ -1488,8 +1336,8 @@
             <div class="bracket-controls-right">
               <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="bracketSearch" placeholder="Search player or team..." oninput="performSearch(this.value)" />
-                <button class="search-clear" id="searchClearBtn" onclick="clearSearch()">
+                <input type="text" id="bracketSearch" placeholder="Highlight in brackets..." oninput="performInlineSearch(this.value)" />
+                <button class="search-clear" id="searchClearBtn" onclick="clearInlineSearch()">
                   <i class="fas fa-times"></i>
                 </button>
                 <span class="search-count" id="searchCount"></span>
@@ -1506,22 +1354,30 @@
           const rowsCount = data.rounds[0].length;
           const pageId = `page-${categoryIndex}`;
           const safeKey = key.replace(/'/g, "\\'");
+          const effectiveSize = getEffectiveBracketSize(key, list.length);
+          const autoSize = getBracketSize(list.length);
+          const isOverridden = bracketSizeOverrides[key] && bracketSizeOverrides[key] !== autoSize;
+
           html += `<div class="a4-page" id="${pageId}" data-category="${key}" data-type="${type}" style="--row-count:${rowsCount}">
 <div class="bracket-header">
 <span style="font-size:12px;text-transform:uppercase;color:#666">${type}</span>
 <h2>${key}</h2>
-<span style="font-size:14px;color:var(--secondary);font-weight:bold">${list.length} Competitors</span>
+<span style="font-size:14px;color:var(--secondary);font-weight:bold">${list.length} Competitors
+  <span class="bracket-size-indicator" title="Bracket size${isOverridden ? ' (manually overridden)' : ''}">
+    ${effectiveSize} slots${isOverridden ? ' ⚙️' : ''}
+  </span>
+</span>
 <div style="text-align:right;margin-top:5px">
 <button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory('${safeKey}', '${type}')"><i class="fas fa-random"></i> Shuffle</button>
 <button class="btn btn-success btn-sm" onclick="saveCategoryOrder('${safeKey}', '${type}')"><i class="fas fa-list-ol"></i> Save Order</button>
 <button class="btn btn-primary btn-sm" onclick="saveBracketStructure('${safeKey}', '${type}')"><i class="fas fa-sitemap"></i> Save Bracket</button>
 </div>
 <div class="bracket-header-actions">
-  <button class="btn btn-add btn-sm" onclick="openAddPlayerModal('${safeKey}', '${type}')" title="Add a new player to this category">
-    <i class="fas fa-user-plus"></i> Add Player
+  <button class="btn btn-remove btn-sm" onclick="decreaseBracketSize('${safeKey}', '${type}')" title="Shrink bracket (remove BYE slots)">
+    <i class="fas fa-minus"></i> Smaller
   </button>
-  <button class="btn btn-remove btn-sm" onclick="removeLastPlayerFromCategory('${safeKey}', '${type}')" title="Remove last player from this category">
-    <i class="fas fa-user-minus"></i> Remove Player
+  <button class="btn btn-add btn-sm" onclick="increaseBracketSize('${safeKey}', '${type}')" title="Expand bracket (add BYE slots)">
+    <i class="fas fa-plus"></i> Bigger
   </button>
 </div>
 </div>
@@ -1543,7 +1399,9 @@
                 const isEmpty = !p1.name && !p2.name;
                 const p1Id = `p1-${categoryIndex}-${r}-${matchIndex}-0`;
                 const p2Id = `p2-${categoryIndex}-${r}-${matchIndex}-1`;
-                html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}">`;
+                // 🆕 Add drop handlers to BYE/empty match boxes
+                const dropAttrs = (isBye || isEmpty) ? `ondragover="handleByeSlotDragOver(event)" ondragleave="handleByeSlotDragLeave(event)" ondrop="handleByeSlotDrop(event)"` : "";
+                html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}" ${dropAttrs}>`;
                 html += `<div class="player-row" data-draggable="true" data-player-id="${p1Id}" data-category="${key}" data-bracket-type="${type}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
                 if (p1.name && p1.name !== "BYE" && p1.name !== "________________") html += `<button class="delete-btn" title="Delete player" onclick="deletePlayerFromBracket('${p1.name.replace(/'/g, "\\'")}', '${(p1.team || "").replace(/'/g, "\\'")}', '${key.replace(/'/g, "\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
                 html += `</div><div class="vs-divider">VS</div>`;
@@ -1568,57 +1426,73 @@
         }, 100);
       }
 
-      function clearSearch() {
-        const input = document.getElementById("bracketSearch");
-        if (input) {
-          input.value = "";
-          performSearch("");
-          input.focus();
+      /* Inline search (highlight matches in brackets) */
+      function performInlineSearch(term) {
+        const lower = term.trim().toLowerCase();
+        document.querySelectorAll(".search-highlight").forEach(el => el.classList.remove("search-highlight"));
+        document.querySelectorAll(".search-match-row").forEach(el => el.classList.remove("search-match-row"));
+        const clearBtn = document.getElementById("searchClearBtn");
+        const countEl = document.getElementById("searchCount");
+        if (clearBtn) clearBtn.classList.toggle("visible", lower.length > 0);
+        if (!lower) {
+          if (countEl) countEl.classList.remove("visible");
+          return;
         }
+        let matchCount = 0;
+        document.querySelectorAll(".player-row").forEach(row => {
+          const nameEl = row.querySelector(".p-name");
+          const teamEl = row.querySelector(".p-team");
+          if (!nameEl) return;
+          const name = nameEl.innerText.toLowerCase();
+          const team = teamEl ? teamEl.innerText.toLowerCase() : "";
+          if (name.includes(lower) || team.includes(lower)) {
+            nameEl.classList.add("search-highlight");
+            row.classList.add("search-match-row");
+            matchCount++;
+          }
+        });
+        if (countEl) {
+          countEl.textContent = `${matchCount} match${matchCount !== 1 ? "es" : ""}`;
+          countEl.classList.add("visible");
+        }
+        const firstMatch = document.querySelector(".search-highlight");
+        if (firstMatch) firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
-      /* ============================================================
-         🆕 TRACK CONTENTEDITABLE CHANGES FOR UNDO
-         ============================================================ */
+      function clearInlineSearch() {
+        const input = document.getElementById("bracketSearch");
+        if (input) { input.value = ""; performInlineSearch(""); input.focus(); }
+      }
+
+      /* Track contenteditable changes for undo */
       function initContentEditableTracking() {
         const editableNames = document.querySelectorAll(".p-name[contenteditable='true']");
         editableNames.forEach(el => {
-          el.addEventListener("focus", function() {
-            this.dataset.oldValue = this.innerText;
-          });
-          el.addEventListener("blur", function() {
+          el.addEventListener("focus", function() { this.dataset.oldValue = this.innerText; });
+          el.addEventListener("blur", async function() {
             const oldVal = this.dataset.oldValue || "";
             const newVal = this.innerText;
             if (oldVal !== newVal) {
               const row = this.closest(".player-row");
               const category = row ? row.dataset.category : "";
               const bracketType = row ? row.dataset.bracketType : "";
-              pushUndo({
-                type: "edit_name",
-                category,
-                bracketType,
-                description: `Edit name "${oldVal}" → "${newVal}"`,
-                beforeState: { elementId: this.closest(".player-row").dataset.playerId, oldText: oldVal },
-                afterState: { elementId: this.closest(".player-row").dataset.playerId, newText: newVal },
-                reverse: async () => {
-                  const targetRow = document.querySelector(`.player-row[data-player-id="${this.closest(".player-row").dataset.playerId}"]`);
-                  if (targetRow) {
-                    targetRow.querySelector(".p-name").innerText = oldVal;
-                    if (category && bracketType) await saveCategoryOrder(category, bracketType, true);
-                  }
-                }
-              });
+              if (category && bracketType) {
+                await takeSnapshot(`Edit name "${oldVal}" → "${newVal}"`);
+                await saveCategoryOrder(category, bracketType, true);
+                await saveBracketStructure(category, bracketType);
+              }
             }
           });
         });
       }
 
-      function shuffleSingleCategory(categoryKey, type) {
+      async function shuffleSingleCategory(categoryKey, type) {
         if (!currentGroups || !currentGroups[categoryKey]) return;
+        await takeSnapshot(`Shuffle ${categoryKey}`);
         const newGroups = { ...currentGroups };
         newGroups[categoryKey] = shuffle([...newGroups[categoryKey]]);
-        sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
-        renderBracketView(newGroups, type);
+        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+        await renderBracketView(newGroups, type);
       }
 
       function exportAllToExcel(type) {
@@ -1681,18 +1555,9 @@
           const judgeIds = [...new Set(judgeRegs.map((r) => r.entry_id).filter(Boolean))];
           const coachIds = [...new Set(coachRegs.map((r) => r.entry_id).filter(Boolean))];
           let compDetails = [], judgeDetails = [], coachDetails = [];
-          if (compIds.length > 0) {
-            const { data, error } = await sb.from("competitors").select("*").in("id", compIds);
-            if (!error) compDetails = data || [];
-          }
-          if (judgeIds.length > 0) {
-            const { data, error } = await sb.from("judges").select("*").in("id", judgeIds);
-            if (!error) judgeDetails = data || [];
-          }
-          if (coachIds.length > 0) {
-            const { data, error } = await sb.from("coaches").select("*").in("id", coachIds);
-            if (!error) coachDetails = data || [];
-          }
+          if (compIds.length > 0) { const { data, error } = await sb.from("competitors").select("*").in("id", compIds); if (!error) compDetails = data || []; }
+          if (judgeIds.length > 0) { const { data, error } = await sb.from("judges").select("*").in("id", judgeIds); if (!error) judgeDetails = data || []; }
+          if (coachIds.length > 0) { const { data, error } = await sb.from("coaches").select("*").in("id", coachIds); if (!error) coachDetails = data || []; }
           lastDebugInfo.competitors = compDetails;
           lastDebugInfo.judges = judgeDetails;
           lastDebugInfo.coaches = coachDetails;
@@ -1752,6 +1617,8 @@
             <p><strong>Final Competitor Entries:</strong> ${competitors.length}</p>
             <p><strong>Final Judges:</strong> ${judges.length}</p>
             <p><strong>Final Coaches:</strong> ${coaches.length}</p>
+            <p><strong>💰 Patterns Price:</strong> ${tournamentPrices.patterns !== null ? formatEuro(tournamentPrices.patterns) : 'Not set'}</p>
+            <p><strong>💰 Sparring Price:</strong> ${tournamentPrices.sparring !== null ? formatEuro(tournamentPrices.sparring) : 'Not set'}</p>
           </div></div>`;
         if (lastDebugInfo.errors.length > 0) {
           html += `<div class="category-card"><div class="category-header" style="background:var(--danger);">❌ Errors</div><div style="padding:20px;">${lastDebugInfo.errors.map(e => `<div style="color:var(--danger);margin:5px 0;">• ${e}</div>`).join("")}</div></div>`;
@@ -1821,6 +1688,15 @@
         await renderBracketView(groups, "Patterns");
       }
 
+      const RULES = {
+        SPARRING: {
+          KIDS: { time: "2 x 1 min" },
+          YOUTH: { time: "2 x 1.30 min" },
+          OLDER_YOUTH: { time: "2 x 1.30 min" },
+          JUNIORS: { time: "2 x 2 min" },
+        },
+      };
+
       async function showSparring() {
         setActiveBtn("btnSparring");
         await fetchData();
@@ -1832,15 +1708,6 @@
 </div><div id="sparringInfo" class="info-banner"><i class="fas fa-info-circle"></i> Select Age and Gender to see round times.</div></div><div id="listTarget"></div><div id="teamSummary" class="team-summary-box"></div>`;
         updateWeightDropdown();
       }
-
-      const RULES = {
-        SPARRING: {
-          KIDS: { time: "2 x 1 min" },
-          YOUTH: { time: "2 x 1.30 min" },
-          OLDER_YOUTH: { time: "2 x 1.30 min" },
-          JUNIORS: { time: "2 x 2 min" },
-        },
-      };
 
       function updateWeightDropdown() {
         const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, wDrop = document.getElementById("sWeight"), info = document.getElementById("sparringInfo");
@@ -2077,14 +1944,15 @@
       }
 
       /* ============================================================
-         🆕 KEYBOARD SHORTCUT: Ctrl+Z for undo
+         KEYBOARD SHORTCUT: Ctrl+Z for undo
          ============================================================ */
       document.addEventListener("keydown", (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-          // Don't trigger if user is typing in an input
           const active = document.activeElement;
-          const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+          const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
           if (isTyping) return;
+          // Don't intercept if editing a contenteditable name
+          if (active && active.isContentEditable && active.classList.contains("p-name")) return;
           e.preventDefault();
           performUndo();
         }
