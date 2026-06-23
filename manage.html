@@ -77,6 +77,13 @@
       .btn-warning:hover { background: #e0a800; }
       .btn-info { background: #17a2b8; color: white; }
       .btn-info:hover { background: #138496; }
+      .btn-undo { background: #6f42c1; color: white; }
+      .btn-undo:hover { background: #5a32a3; }
+      .btn-undo:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
+      .btn-add { background: var(--success); color: white; }
+      .btn-add:hover { background: #218838; }
+      .btn-remove { background: #fd7e14; color: white; }
+      .btn-remove:hover { background: #e36c09; }
       .btn-active {
         background: var(--secondary);
         color: #fff;
@@ -99,7 +106,7 @@
         color: var(--gray);
         font-size: 0.85rem;
       }
-      select, input[type="date"] {
+      select, input[type="date"], input[type="text"], input[type="number"] {
         width: 100%;
         padding: 10px;
         border: 1px solid var(--border);
@@ -107,6 +114,7 @@
         font-size: 0.95rem;
         outline: none;
         transition: var(--transition);
+        font-family: inherit;
       }
       .info-banner {
         background: #e7f3ff;
@@ -271,6 +279,168 @@
         border-radius: 8px;
         box-shadow: var(--shadow);
       }
+
+      /* ===== NEW: Bracket Controls Bar ===== */
+      .bracket-controls-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+        padding: 12px 15px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--secondary);
+      }
+      .bracket-controls-left {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .bracket-controls-right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      /* ===== NEW: Search Box ===== */
+      .search-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: white;
+        border: 2px solid var(--border);
+        border-radius: 20px;
+        padding: 4px 12px;
+        transition: var(--transition);
+        min-width: 220px;
+      }
+      .search-box:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(26, 58, 108, 0.15);
+      }
+      .search-box i {
+        color: var(--gray);
+        margin-right: 8px;
+      }
+      .search-box input {
+        border: none;
+        outline: none;
+        padding: 6px 4px;
+        font-size: 0.9rem;
+        flex: 1;
+        background: transparent;
+        min-width: 150px;
+      }
+      .search-clear {
+        background: none;
+        border: none;
+        color: var(--gray);
+        cursor: pointer;
+        padding: 2px 6px;
+        font-size: 0.85rem;
+        display: none;
+      }
+      .search-clear.visible { display: inline-block; }
+      .search-clear:hover { color: var(--danger); }
+      .search-count {
+        font-size: 0.75rem;
+        color: var(--gray);
+        font-weight: 600;
+        padding: 2px 8px;
+        background: var(--light-gray);
+        border-radius: 10px;
+        margin-left: 6px;
+        display: none;
+      }
+      .search-count.visible { display: inline-block; }
+
+      /* ===== NEW: Highlight for search ===== */
+      .search-highlight {
+        background: #fff176 !important;
+        box-shadow: 0 0 0 2px #fbc02d;
+        border-radius: 3px;
+        animation: pulseHighlight 1.5s ease-in-out infinite;
+      }
+      .search-match-row {
+        background: #fff9c4 !important;
+        border-left: 3px solid #fbc02d !important;
+      }
+      @keyframes pulseHighlight {
+        0%, 100% { box-shadow: 0 0 0 2px #fbc02d; }
+        50% { box-shadow: 0 0 0 4px #fbc02d, 0 0 8px rgba(251, 192, 45, 0.5); }
+      }
+
+      /* ===== NEW: Undo badge ===== */
+      .undo-badge {
+        background: rgba(255,255,255,0.25);
+        color: white;
+        padding: 1px 7px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-left: 4px;
+      }
+
+      /* ===== NEW: Bracket +/- buttons on header ===== */
+      .bracket-header-actions {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .bracket-header-actions .btn {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+      }
+
+      /* ===== NEW: Add Player Modal ===== */
+      .mini-modal-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        backdrop-filter: blur(3px);
+      }
+      .mini-modal {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      }
+      .mini-modal h3 {
+        color: var(--primary);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .mini-modal .form-group {
+        margin-bottom: 12px;
+      }
+      .mini-modal .form-group label {
+        color: var(--dark);
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+      }
+      .mini-modal .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 15px;
+      }
+
       .deleted-card {
         background: white;
         border-radius: 12px;
@@ -371,8 +541,6 @@
         border-top: 1px solid var(--border);
         flex-wrap: wrap;
       }
-
-      /* ===== NEW: Price Summary Row ===== */
       .team-price-summary {
         display: flex;
         align-items: center;
@@ -416,12 +584,6 @@
         font-size: 1.3rem;
         font-weight: 700;
         color: var(--gray);
-      }
-      .price-breakdown {
-        font-size: 0.75rem;
-        font-weight: 500;
-        opacity: 0.85;
-        color: inherit;
       }
       .price-unavailable {
         padding: 10px 22px;
@@ -553,7 +715,7 @@
         @page { size: A4; margin: 10mm; }
         body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
         * { box-sizing: border-box; }
-        .nav, .filters-card, .controls, .subtitle, .debug-box { display: none !important; }
+        .nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box { display: none !important; }
         .container { max-width: none; width: 100%; margin: 0; padding: 0; }
         .a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
         .p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
@@ -564,8 +726,9 @@
         .a4-page { width: 100%; min-height: auto; padding: 10px; margin-bottom: 20px; }
         .team-overview-header { flex-direction: column; align-items: flex-start; }
         .team-stats { width: 100%; }
-        .team-price-summary { flex-direction: column; gap: 6px; }
-        .price-operator { font-size: 1rem; }
+        .bracket-controls-bar { flex-direction: column; align-items: stretch; }
+        .bracket-controls-right { justify-content: center; }
+        .search-box { min-width: 100%; }
       }
     </style>
   </head>
@@ -627,20 +790,285 @@
       let competitors = [], judges = [], coaches = [], tournamentDate = null;
       let currentGroups = null, currentBracketType = null, selectedSwap = null;
       let lastDebugInfo = { registrations: [], competitors: [], judges: [], coaches: [], errors: [] };
-
-      // 🆕 Cached tournament prices (fetched once per page load)
       let tournamentPrices = { patterns: null, sparring: null };
 
-      const RULES = {
-        SPARRING: {
-          KIDS: { time: "2 x 1 min", M: ["-20","-25","-30","-35","+35"], F: ["-20","-25","-30","-35","+35"] },
-          YOUTH: { time: "2 x 1.30 min", M: ["-25","-30","-35","-40","+40"], F: ["-25","-30","-35","-40","+40"] },
-          OLDER_YOUTH: { time: "2 x 1.30 min", M: ["-35","-40","-45","-50","-55","-60","+60"], F: ["-30","-35","-40","-45","-50","-55","+55"] },
-          JUNIORS: { time: "2 x 2 min", M: ["-45","-50","-55","-60","-65","-70","+70"], F: ["-40","-45","-50","-55","-60","-65","+65"] },
-        },
-      };
+      /* ============================================================
+         🆕 UNDO STACK — tracks all bracket actions for undo
+         ============================================================ */
+      let undoStack = []; // { type, category, bracketType, description, reverse: async fn }
 
-      /* ---------------- HELPER FUNCTIONS ---------------- */
+      function pushUndo(action) {
+        undoStack.push(action);
+        updateUndoButton();
+        // Save to DB (fire-and-forget)
+        sb.from("undo_history").insert([{
+          category: action.category,
+          bracket_type: action.bracketType,
+          action_type: action.type,
+          description: action.description,
+          before_state: action.beforeState || null,
+          after_state: action.afterState || null,
+        }]).then(({ error }) => {
+          if (error) console.warn("Undo history save failed:", error.message);
+        });
+      }
+
+      function updateUndoButton() {
+        const btn = document.getElementById("undoBtn");
+        if (!btn) return;
+        const count = undoStack.length;
+        btn.disabled = count === 0;
+        const badge = btn.querySelector(".undo-badge");
+        if (badge) badge.textContent = count;
+      }
+
+      async function performUndo() {
+        if (undoStack.length === 0) return;
+        const action = undoStack.pop();
+        console.log("🔙 Undoing:", action.description);
+        try {
+          await action.reverse();
+          // Mark as undone in DB
+          sb.from("undo_history")
+            .update({ undone: true })
+            .eq("category", action.category)
+            .eq("bracket_type", action.bracketType)
+            .eq("action_type", action.type)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          updateUndoButton();
+          // Re-render the bracket view to reflect changes
+          if (currentGroups && currentBracketType) {
+            await renderBracketView(currentGroups, currentBracketType);
+          }
+          alert(`✅ Undone: ${action.description}`);
+        } catch (err) {
+          console.error("Undo failed:", err);
+          alert("❌ Undo failed: " + err.message);
+        }
+      }
+
+      /* ============================================================
+         🆕 SEARCH FUNCTIONALITY
+         ============================================================ */
+      let currentSearchTerm = "";
+
+      function performSearch(term) {
+        currentSearchTerm = term.trim().toLowerCase();
+        // Clear all highlights
+        document.querySelectorAll(".search-highlight").forEach(el => el.classList.remove("search-highlight"));
+        document.querySelectorAll(".search-match-row").forEach(el => el.classList.remove("search-match-row"));
+
+        const countEl = document.getElementById("searchCount");
+        if (!currentSearchTerm) {
+          if (countEl) countEl.classList.remove("visible");
+          return;
+        }
+
+        let matchCount = 0;
+        const allPlayerRows = document.querySelectorAll(".player-row");
+        allPlayerRows.forEach(row => {
+          const nameEl = row.querySelector(".p-name");
+          const teamEl = row.querySelector(".p-team");
+          if (!nameEl) return;
+          const name = nameEl.innerText.toLowerCase();
+          const team = teamEl ? teamEl.innerText.toLowerCase() : "";
+          if (name.includes(currentSearchTerm) || team.includes(currentSearchTerm)) {
+            nameEl.classList.add("search-highlight");
+            row.classList.add("search-match-row");
+            matchCount++;
+          }
+        });
+
+        if (countEl) {
+          countEl.textContent = `${matchCount} match${matchCount !== 1 ? "es" : ""}`;
+          countEl.classList.add("visible");
+        }
+
+        // Scroll to first match
+        const firstMatch = document.querySelector(".search-highlight");
+        if (firstMatch) {
+          firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+
+      /* ============================================================
+         🆕 ADD / REMOVE PLAYER FROM CATEGORY
+         ============================================================ */
+      function openAddPlayerModal(categoryKey, type) {
+        const overlay = document.createElement("div");
+        overlay.className = "mini-modal-overlay";
+        overlay.id = "addPlayerModal";
+        overlay.innerHTML = `
+          <div class="mini-modal">
+            <h3><i class="fas fa-user-plus" style="color:var(--success);"></i> Add Player to Category</h3>
+            <p style="color:var(--gray);font-size:0.85rem;margin-bottom:15px;">
+              Category: <strong style="color:var(--primary);">${categoryKey}</strong>
+            </p>
+            <div class="form-group">
+              <label>Player Name *</label>
+              <input type="text" id="newPlayerName" placeholder="e.g. John Doe" />
+            </div>
+            <div class="form-group">
+              <label>Team</label>
+              <input type="text" id="newPlayerTeam" placeholder="e.g. Team Alpha" />
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-secondary btn-sm" onclick="closeAddPlayerModal()">Cancel</button>
+              <button class="btn btn-add btn-sm" onclick="confirmAddPlayer('${categoryKey.replace(/'/g, "\\'")}', '${type}')">
+                <i class="fas fa-plus"></i> Add Player
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => document.getElementById("newPlayerName").focus(), 100);
+        // Enter key submits
+        overlay.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") confirmAddPlayer(categoryKey, type);
+        });
+      }
+
+      function closeAddPlayerModal() {
+        const modal = document.getElementById("addPlayerModal");
+        if (modal) modal.remove();
+      }
+
+      async function confirmAddPlayer(categoryKey, type) {
+        const nameInput = document.getElementById("newPlayerName");
+        const teamInput = document.getElementById("newPlayerTeam");
+        const name = nameInput.value.trim();
+        const team = teamInput.value.trim();
+        if (!name) {
+          alert("⚠️ Player name is required.");
+          nameInput.focus();
+          return;
+        }
+
+        const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
+
+        // Get next position number
+        const { data: existing } = await sb.from(table)
+          .select("position_number")
+          .eq("category", categoryKey)
+          .order("position_number", { ascending: false })
+          .limit(1);
+        const nextPos = existing && existing[0] ? existing[0].position_number + 1 : 1;
+
+        // Insert new player
+        const { error } = await sb.from(table).insert([{
+          name, team, category: categoryKey, position_number: nextPos
+        }]);
+
+        if (error) {
+          alert("❌ Failed to add player: " + error.message);
+          return;
+        }
+
+        // Push undo action (reverse = delete this player)
+        pushUndo({
+          type: "add_player",
+          category: categoryKey,
+          bracketType: type,
+          description: `Add player "${name}" to ${categoryKey}`,
+          beforeState: null,
+          afterState: { name, team, category: categoryKey, position_number: nextPos },
+          reverse: async () => {
+            await sb.from(table).delete().eq("category", categoryKey).eq("name", name).eq("position_number", nextPos);
+            // Also delete from saved_brackets to force re-render
+            await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+            // Update currentGroups if this category exists
+            if (currentGroups && currentGroups[categoryKey]) {
+              currentGroups[categoryKey].push({ name, team });
+            }
+          }
+        });
+
+        // Also delete saved bracket to force regeneration
+        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+
+        // Update currentGroups
+        if (currentGroups && currentGroups[categoryKey]) {
+          currentGroups[categoryKey].push({ name, team });
+        }
+
+        closeAddPlayerModal();
+        alert(`✅ "${name}" added to ${categoryKey}`);
+        // Re-render
+        if (currentGroups && currentBracketType) {
+          await renderBracketView(currentGroups, currentBracketType);
+        }
+      }
+
+      async function removeLastPlayerFromCategory(categoryKey, type) {
+        const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
+
+        // Get the last player in this category
+        const { data: players, error } = await sb.from(table)
+          .select("*")
+          .eq("category", categoryKey)
+          .order("position_number", { ascending: false })
+          .limit(1);
+
+        if (error || !players || players.length === 0) {
+          alert("⚠️ No players to remove from this category.");
+          return;
+        }
+
+        const lastPlayer = players[0];
+        if (!confirm(`Remove "${lastPlayer.name}" from ${categoryKey}?`)) return;
+
+        // Delete
+        const { error: delErr } = await sb.from(table)
+          .delete()
+          .eq("category", categoryKey)
+          .eq("position_number", lastPlayer.position_number);
+
+        if (delErr) {
+          alert("❌ Failed to remove: " + delErr.message);
+          return;
+        }
+
+        // Push undo action (reverse = re-add this player)
+        pushUndo({
+          type: "remove_player",
+          category: categoryKey,
+          bracketType: type,
+          description: `Remove player "${lastPlayer.name}" from ${categoryKey}`,
+          beforeState: lastPlayer,
+          afterState: null,
+          reverse: async () => {
+            await sb.from(table).insert([{
+              name: lastPlayer.name,
+              team: lastPlayer.team,
+              category: categoryKey,
+              position_number: lastPlayer.position_number
+            }]);
+            await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+            if (currentGroups && currentGroups[categoryKey]) {
+              currentGroups[categoryKey].push({ name: lastPlayer.name, team: lastPlayer.team });
+            }
+          }
+        });
+
+        // Delete saved bracket to force regeneration
+        await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
+
+        // Update currentGroups
+        if (currentGroups && currentGroups[categoryKey]) {
+          const idx = currentGroups[categoryKey].findIndex(c => c.name === lastPlayer.name);
+          if (idx >= 0) currentGroups[categoryKey].splice(idx, 1);
+        }
+
+        alert(`🗑️ "${lastPlayer.name}" removed from ${categoryKey}`);
+        if (currentGroups && currentBracketType) {
+          await renderBracketView(currentGroups, currentBracketType);
+        }
+      }
+
+      /* ============================================================
+         HELPER FUNCTIONS (unchanged)
+         ============================================================ */
       function extractBeltNumber(belt) {
         if (!belt) return -1;
         const match = belt.match(/(\d+)/);
@@ -708,7 +1136,6 @@
         return slots;
       }
 
-      /* 🆕 FETCH PRICES from site_settings */
       async function fetchTournamentPrices() {
         try {
           const { data, error } = await sb
@@ -716,27 +1143,14 @@
             .select("patterns_price, sparring_price")
             .eq("id", 1)
             .single();
-
-          if (error) {
-            console.warn("⚠️ Could not fetch prices:", error.message);
-            tournamentPrices = { patterns: null, sparring: null };
-            return;
-          }
-
+          if (error) { tournamentPrices = { patterns: null, sparring: null }; return; }
           if (data) {
-            tournamentPrices.patterns = data.patterns_price !== null && data.patterns_price !== undefined
-              ? parseFloat(data.patterns_price) : null;
-            tournamentPrices.sparring = data.sparring_price !== null && data.sparring_price !== undefined
-              ? parseFloat(data.sparring_price) : null;
-            console.log("💰 Loaded prices:", tournamentPrices);
+            tournamentPrices.patterns = data.patterns_price !== null && data.patterns_price !== undefined ? parseFloat(data.patterns_price) : null;
+            tournamentPrices.sparring = data.sparring_price !== null && data.sparring_price !== undefined ? parseFloat(data.sparring_price) : null;
           }
-        } catch (err) {
-          console.error("fetchTournamentPrices error:", err);
-          tournamentPrices = { patterns: null, sparring: null };
-        }
+        } catch (err) { tournamentPrices = { patterns: null, sparring: null }; }
       }
 
-      /* 🆕 Format price nicely */
       function formatEuro(amount) {
         if (amount === null || amount === undefined || isNaN(amount)) return "€0.00";
         return "€" + Number(amount).toFixed(2);
@@ -751,7 +1165,7 @@
 
       async function loadSavedBracket(categoryKey, type) {
         const { data, error } = await sb.from("saved_brackets").select("*").eq("category", categoryKey).eq("bracket_type", type).order("round_number", { ascending: true }).order("match_number", { ascending: true });
-        if (error) { console.error("Error loading saved bracket:", error); lastDebugInfo.errors.push("loadSavedBracket: " + error.message); return null; }
+        if (error) { console.error("Error loading saved bracket:", error); return null; }
         if (!data || data.length === 0) return null;
         const rounds = [];
         let currentRound = -1;
@@ -795,12 +1209,11 @@
             });
           });
         });
-        console.log("Saving bracket:", categoryKey, type, matchesToSave.length, "matches");
         const { error: delError } = await sb.from("saved_brackets").delete().eq("category", categoryKey).eq("bracket_type", type);
-        if (delError) { console.error("Delete error:", delError); alert("❌ Failed to delete old bracket: " + delError.message); return false; }
+        if (delError) { alert("❌ Failed to delete old bracket: " + delError.message); return false; }
         if (matchesToSave.length > 0) {
           const { error: insError } = await sb.from("saved_brackets").insert(matchesToSave);
-          if (insError) { console.error("Insert error:", insError); alert("❌ Failed to save bracket structure: " + insError.message); lastDebugInfo.errors.push("saveBracket: " + insError.message); return false; }
+          if (insError) { alert("❌ Failed to save bracket structure: " + insError.message); return false; }
         }
         alert("✅ Bracket structure saved successfully! (" + matchesToSave.length + " matches)");
         return true;
@@ -808,7 +1221,7 @@
 
       async function generateBracketData(list, categoryKey, type) {
         const savedBracket = await loadSavedBracket(categoryKey, type);
-        if (savedBracket) { console.log("Using saved bracket for:", categoryKey); return savedBracket; }
+        if (savedBracket) return savedBracket;
         let useList = list;
         const savedOrder = await getSavedOrder(categoryKey, type);
         if (savedOrder && savedOrder.length > 0) {
@@ -866,12 +1279,11 @@
             dataToSave.push({ name, team, category: categoryKey, position_number: position++ });
           });
         });
-        console.log("saveCategoryOrder:", categoryKey, type, dataToSave.length, "players");
         if (dataToSave.length === 0) { if (!silent) alert("⚠️ No players to save for " + categoryKey); return; }
         const { error: delError } = await sb.from(table).delete().eq("category", categoryKey);
-        if (delError) { console.error("Delete error:", delError); alert("❌ Error deleting old order: " + delError.message); return; }
+        if (delError) { alert("❌ Error deleting old order: " + delError.message); return; }
         const { error: insError } = await sb.from(table).insert(dataToSave);
-        if (insError) { console.error("Insert error:", insError); alert("❌ Error saving order: " + insError.message); lastDebugInfo.errors.push("saveCategoryOrder: " + insError.message); return; }
+        if (insError) { alert("❌ Error saving order: " + insError.message); return; }
         if (!silent) alert("✅ Order saved! " + dataToSave.length + " players in " + categoryKey);
       }
 
@@ -879,10 +1291,33 @@
         if (!confirm(`Delete "${name}" from ${category}?`)) return;
         const delTable = type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
         const { error: insErr } = await sb.from(delTable).insert([{ name, team, category, type, deleted_at: new Date().toISOString() }]);
-        if (insErr) { console.error("Insert deleted error:", insErr); alert("❌ Error: " + insErr.message); return; }
+        if (insErr) { alert("❌ Error: " + insErr.message); return; }
         const catTable = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         await sb.from(catTable).delete().eq("category", category).eq("name", name);
         await sb.from("saved_brackets").delete().eq("category", category).eq("bracket_type", type);
+
+        // 🆕 Push undo action
+        pushUndo({
+          type: "delete_player",
+          category,
+          bracketType: type,
+          description: `Delete "${name}" from ${category}`,
+          beforeState: { name, team, category, type },
+          afterState: null,
+          reverse: async () => {
+            // Remove from deleted table
+            await sb.from(delTable).delete().eq("name", name).eq("category", category);
+            // Re-add to category table
+            const { data: existing } = await sb.from(catTable).select("position_number").eq("category", category).order("position_number", { ascending: false }).limit(1);
+            const nextPos = existing && existing[0] ? existing[0].position_number + 1 : 1;
+            await sb.from(catTable).insert([{ name, team, category, position_number: nextPos }]);
+            await sb.from("saved_brackets").delete().eq("category", category).eq("bracket_type", type);
+            if (currentGroups && currentGroups[category]) {
+              currentGroups[category].push({ name, team });
+            }
+          }
+        });
+
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(category)}"][data-type="${type}"]`);
         if (page) {
           const playerRows = page.querySelectorAll(".player-row");
@@ -890,6 +1325,11 @@
             const pName = row.querySelector(".p-name").innerText.trim();
             if (pName === name) { row.querySelector(".p-name").innerText = ""; row.querySelector(".p-team").innerText = ""; }
           });
+        }
+        // Update currentGroups
+        if (currentGroups && currentGroups[category]) {
+          const idx = currentGroups[category].findIndex(c => c.name === name);
+          if (idx >= 0) currentGroups[category].splice(idx, 1);
         }
         alert(`🗑️ "${name}" moved to Deleted.`);
       }
@@ -943,6 +1383,9 @@
         showDeleted();
       }
 
+      /* ============================================================
+         DRAG & DROP with UNDO tracking
+         ============================================================ */
       function initDragAndDrop() {
         const playerRows = document.querySelectorAll('.player-row[data-draggable="true"]');
         playerRows.forEach((row) => {
@@ -974,6 +1417,40 @@
         const team1 = row1.querySelector(".p-team").innerText;
         const name2 = row2.querySelector(".p-name").innerText;
         const team2 = row2.querySelector(".p-team").innerText;
+
+        // 🆕 Push undo action BEFORE swap
+        pushUndo({
+          type: "swap",
+          category: row1.dataset.category || "",
+          bracketType: row1.dataset.bracketType || "",
+          description: `Swap "${name1}" ↔ "${name2}"`,
+          beforeState: {
+            row1Id: row1.dataset.playerId, row2Id: row2.dataset.playerId,
+            row1Name: name1, row1Team: team1,
+            row2Name: name2, row2Team: team2,
+          },
+          afterState: {
+            row1Id: row1.dataset.playerId, row2Id: row2.dataset.playerId,
+            row1Name: name2, row1Team: team2,
+            row2Name: name1, row2Team: team1,
+          },
+          reverse: async () => {
+            // Find the rows by their data-player-id and swap back
+            const r1 = document.querySelector(`.player-row[data-player-id="${row1.dataset.playerId}"]`);
+            const r2 = document.querySelector(`.player-row[data-player-id="${row2.dataset.playerId}"]`);
+            if (r1 && r2) {
+              r1.querySelector(".p-name").innerText = name1;
+              r1.querySelector(".p-team").innerText = team1;
+              r2.querySelector(".p-name").innerText = name2;
+              r2.querySelector(".p-team").innerText = team2;
+              // Save the reverted state
+              const cat = r1.dataset.category;
+              const bt = r1.dataset.bracketType;
+              if (cat && bt) await saveCategoryOrder(cat, bt, true);
+            }
+          }
+        });
+
         row1.querySelector(".p-name").innerText = name2;
         row2.querySelector(".p-name").innerText = name1;
         row1.querySelector(".p-team").innerText = team2;
@@ -983,14 +1460,43 @@
         setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 300);
       }
 
+      /* ============================================================
+         🆕 RENDER BRACKET VIEW — with search, undo, +/- buttons
+         ============================================================ */
       async function renderBracketView(groups, type) {
         currentGroups = groups;
         currentBracketType = type;
-        let html = `<div class="controls">
-<button class="btn btn-secondary" onclick="${type === "Patterns" ? "showPatterns()" : "showSparring()"}"><i class="fas fa-arrow-left"></i> Back to List</button>
-<button class="btn btn-success" onclick="exportAllToExcel('${type}')"><i class="fas fa-file-excel"></i> Download All to Excel</button>
-<button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print All Brackets</button>
-</div>`;
+        // Reset undo stack when re-rendering from scratch
+        undoStack = [];
+
+        let html = `
+          <div class="bracket-controls-bar">
+            <div class="bracket-controls-left">
+              <button class="btn btn-secondary btn-sm" onclick="${type === "Patterns" ? "showPatterns()" : "showSparring()"}">
+                <i class="fas fa-arrow-left"></i> Back to List
+              </button>
+              <button class="btn btn-undo btn-sm" id="undoBtn" onclick="performUndo()" disabled title="Undo last action (Ctrl+Z)">
+                <i class="fas fa-undo"></i> Undo <span class="undo-badge">0</span>
+              </button>
+              <button class="btn btn-success btn-sm" onclick="exportAllToExcel('${type}')">
+                <i class="fas fa-file-excel"></i> Excel
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="window.print()">
+                <i class="fas fa-print"></i> Print
+              </button>
+            </div>
+            <div class="bracket-controls-right">
+              <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="bracketSearch" placeholder="Search player or team..." oninput="performSearch(this.value)" />
+                <button class="search-clear" id="searchClearBtn" onclick="clearSearch()">
+                  <i class="fas fa-times"></i>
+                </button>
+                <span class="search-count" id="searchCount"></span>
+              </div>
+            </div>
+          </div>`;
+
         let categoryIndex = 0;
         for (const key in groups) {
           const list = groups[key];
@@ -1010,6 +1516,14 @@
 <button class="btn btn-success btn-sm" onclick="saveCategoryOrder('${safeKey}', '${type}')"><i class="fas fa-list-ol"></i> Save Order</button>
 <button class="btn btn-primary btn-sm" onclick="saveBracketStructure('${safeKey}', '${type}')"><i class="fas fa-sitemap"></i> Save Bracket</button>
 </div>
+<div class="bracket-header-actions">
+  <button class="btn btn-add btn-sm" onclick="openAddPlayerModal('${safeKey}', '${type}')" title="Add a new player to this category">
+    <i class="fas fa-user-plus"></i> Add Player
+  </button>
+  <button class="btn btn-remove btn-sm" onclick="removeLastPlayerFromCategory('${safeKey}', '${type}')" title="Remove last player from this category">
+    <i class="fas fa-user-minus"></i> Remove Player
+  </button>
+</div>
 </div>
 <table class="bracket-table"><thead><tr>`;
           for (let r = 1; r <= data.totalRounds; r++) html += `<th>Round ${r}</th>`;
@@ -1027,13 +1541,13 @@
                 const p2 = match.p2 || { name: "", team: "" };
                 const isBye = p1.name === "BYE" || p2.name === "BYE";
                 const isEmpty = !p1.name && !p2.name;
-                const p1Id = `p1-${key}-${r}-${matchIndex}-0`;
-                const p2Id = `p2-${key}-${r}-${matchIndex}-1`;
+                const p1Id = `p1-${categoryIndex}-${r}-${matchIndex}-0`;
+                const p2Id = `p2-${categoryIndex}-${r}-${matchIndex}-1`;
                 html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}">`;
-                html += `<div class="player-row" data-draggable="true" data-player-id="${p1Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
+                html += `<div class="player-row" data-draggable="true" data-player-id="${p1Id}" data-category="${key}" data-bracket-type="${type}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
                 if (p1.name && p1.name !== "BYE" && p1.name !== "________________") html += `<button class="delete-btn" title="Delete player" onclick="deletePlayerFromBracket('${p1.name.replace(/'/g, "\\'")}', '${(p1.team || "").replace(/'/g, "\\'")}', '${key.replace(/'/g, "\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
                 html += `</div><div class="vs-divider">VS</div>`;
-                html += `<div class="player-row" data-draggable="true" data-player-id="${p2Id}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || "N/A"}</span></div>`;
+                html += `<div class="player-row" data-draggable="true" data-player-id="${p2Id}" data-category="${key}" data-bracket-type="${type}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || "N/A"}</span></div>`;
                 if (p2.name && p2.name !== "BYE" && p2.name !== "________________") html += `<button class="delete-btn" title="Delete player" onclick="deletePlayerFromBracket('${p2.name.replace(/'/g, "\\'")}', '${(p2.team || "").replace(/'/g, "\\'")}', '${key.replace(/'/g, "\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
                 html += `</div></div>`;
                 if (isLastRound) {
@@ -1048,7 +1562,55 @@
           categoryIndex++;
         }
         document.getElementById("content").innerHTML = html;
-        setTimeout(initDragAndDrop, 100);
+        setTimeout(() => {
+          initDragAndDrop();
+          initContentEditableTracking();
+        }, 100);
+      }
+
+      function clearSearch() {
+        const input = document.getElementById("bracketSearch");
+        if (input) {
+          input.value = "";
+          performSearch("");
+          input.focus();
+        }
+      }
+
+      /* ============================================================
+         🆕 TRACK CONTENTEDITABLE CHANGES FOR UNDO
+         ============================================================ */
+      function initContentEditableTracking() {
+        const editableNames = document.querySelectorAll(".p-name[contenteditable='true']");
+        editableNames.forEach(el => {
+          el.addEventListener("focus", function() {
+            this.dataset.oldValue = this.innerText;
+          });
+          el.addEventListener("blur", function() {
+            const oldVal = this.dataset.oldValue || "";
+            const newVal = this.innerText;
+            if (oldVal !== newVal) {
+              const row = this.closest(".player-row");
+              const category = row ? row.dataset.category : "";
+              const bracketType = row ? row.dataset.bracketType : "";
+              pushUndo({
+                type: "edit_name",
+                category,
+                bracketType,
+                description: `Edit name "${oldVal}" → "${newVal}"`,
+                beforeState: { elementId: this.closest(".player-row").dataset.playerId, oldText: oldVal },
+                afterState: { elementId: this.closest(".player-row").dataset.playerId, newText: newVal },
+                reverse: async () => {
+                  const targetRow = document.querySelector(`.player-row[data-player-id="${this.closest(".player-row").dataset.playerId}"]`);
+                  if (targetRow) {
+                    targetRow.querySelector(".p-name").innerText = oldVal;
+                    if (category && bracketType) await saveCategoryOrder(category, bracketType, true);
+                  }
+                }
+              });
+            }
+          });
+        });
       }
 
       function shuffleSingleCategory(categoryKey, type) {
@@ -1110,41 +1672,34 @@
         try {
           lastDebugInfo = { registrations: [], competitors: [], judges: [], coaches: [], errors: [] };
           const { data: allRegs, error: regError } = await sb.from(REG_TABLE).select("*");
-          if (regError) { console.error("Registration fetch error:", regError); lastDebugInfo.errors.push("REG FETCH: " + regError.message); throw regError; }
+          if (regError) { lastDebugInfo.errors.push("REG FETCH: " + regError.message); throw regError; }
           lastDebugInfo.registrations = allRegs || [];
-          console.log(`📋 Total registrations: ${(allRegs || []).length}`);
-          if (allRegs && allRegs.length > 0) {
-            console.log("📋 Sample registration:", allRegs[0]);
-            console.log("📋 Registration keys:", Object.keys(allRegs[0]));
-          }
           const compRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "comp" || t === "competitor" || t === "c"; });
           const judgeRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "judge" || t === "j"; });
           const coachRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "coach" || t === "c2"; });
-          console.log(`📊 Filtered: ${compRegs.length} comp, ${judgeRegs.length} judges, ${coachRegs.length} coaches`);
           const compIds = [...new Set(compRegs.map((r) => r.entry_id).filter(Boolean))];
           const judgeIds = [...new Set(judgeRegs.map((r) => r.entry_id).filter(Boolean))];
           const coachIds = [...new Set(coachRegs.map((r) => r.entry_id).filter(Boolean))];
           let compDetails = [], judgeDetails = [], coachDetails = [];
           if (compIds.length > 0) {
             const { data, error } = await sb.from("competitors").select("*").in("id", compIds);
-            if (error) { console.error("Competitors fetch error:", error); lastDebugInfo.errors.push("COMP FETCH: " + error.message); } else compDetails = data || [];
+            if (!error) compDetails = data || [];
           }
           if (judgeIds.length > 0) {
             const { data, error } = await sb.from("judges").select("*").in("id", judgeIds);
-            if (error) { console.error("Judges fetch error:", error); lastDebugInfo.errors.push("JUDGE FETCH: " + error.message); } else judgeDetails = data || [];
+            if (!error) judgeDetails = data || [];
           }
           if (coachIds.length > 0) {
             const { data, error } = await sb.from("coaches").select("*").in("id", coachIds);
-            if (error) { console.error("Coaches fetch error:", error); lastDebugInfo.errors.push("COACH FETCH: " + error.message); } else coachDetails = data || [];
+            if (!error) coachDetails = data || [];
           }
-          console.log(`👥 Details: ${compDetails.length} competitors, ${judgeDetails.length} judges, ${coachDetails.length} coaches`);
           lastDebugInfo.competitors = compDetails;
           lastDebugInfo.judges = judgeDetails;
           lastDebugInfo.coaches = coachDetails;
           competitors = []; judges = []; coaches = [];
           compDetails.forEach((person) => {
             const personRegs = compRegs.filter((r) => String(r.entry_id) === String(person.id));
-            if (personRegs.length === 0) { console.warn(`⚠️ No registration found for competitor:`, person); return; }
+            if (personRegs.length === 0) return;
             personRegs.forEach((reg) => {
               let entries = [];
               if (reg.entry_data?.entries_list && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
@@ -1155,7 +1710,7 @@
               } else if (reg.full_cat || reg.category || reg.discipline) {
                 entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline, label: reg.label }];
               }
-              if (entries.length === 0) { console.warn(`⚠️ No entries found for registration:`, reg); lastDebugInfo.errors.push(`No entries for reg ${reg.id}`); return; }
+              if (entries.length === 0) return;
               entries.forEach((entry) => {
                 let fullCat = entry.full_cat || entry.category || entry.fullCat || "";
                 let discipline = (entry.discipline || entry.type || "").toString().toLowerCase();
@@ -1179,11 +1734,8 @@
             if (personRegs.length === 0) coaches.push({ ...person });
             else personRegs.forEach((reg) => coaches.push({ ...person, _reg_id: reg.id }));
           });
-          console.log(`✅ Final: ${competitors.length} competitor entries, ${judges.length} judges, ${coaches.length} coaches`);
-          if (competitors.length > 0) console.log("🥋 Sample competitor entry:", competitors[0]);
         } catch (error) {
           console.error("fetchData error:", error);
-          lastDebugInfo.errors.push("fetchData: " + (error.message || error));
           document.getElementById("content").innerHTML = `<div class="empty-state" style="padding:30px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;"><h3 style="color:#856404;">⚠️ Error loading data</h3><p style="margin:10px 0;">${error.message || error}</p><button class="btn btn-primary" onclick="showDebugInfo()"><i class="fas fa-bug"></i> View Debug Info</button></div>`;
         }
       }
@@ -1197,25 +1749,15 @@
         html += `<div class="category-card"><div class="category-header">📊 Data Summary</div><div style="padding:20px;">
             <p><strong>Registrations:</strong> ${lastDebugInfo.registrations.length}</p>
             <p><strong>Competitor Details:</strong> ${lastDebugInfo.competitors.length}</p>
-            <p><strong>Judge Details:</strong> ${lastDebugInfo.judges.length}</p>
-            <p><strong>Coach Details:</strong> ${lastDebugInfo.coaches.length}</p>
             <p><strong>Final Competitor Entries:</strong> ${competitors.length}</p>
             <p><strong>Final Judges:</strong> ${judges.length}</p>
             <p><strong>Final Coaches:</strong> ${coaches.length}</p>
-            <p><strong>💰 Patterns Price:</strong> ${tournamentPrices.patterns !== null ? formatEuro(tournamentPrices.patterns) : 'Not set'}</p>
-            <p><strong>💰 Sparring Price:</strong> ${tournamentPrices.sparring !== null ? formatEuro(tournamentPrices.sparring) : 'Not set'}</p>
           </div></div>`;
         if (lastDebugInfo.errors.length > 0) {
           html += `<div class="category-card"><div class="category-header" style="background:var(--danger);">❌ Errors</div><div style="padding:20px;">${lastDebugInfo.errors.map(e => `<div style="color:var(--danger);margin:5px 0;">• ${e}</div>`).join("")}</div></div>`;
         }
         if (lastDebugInfo.registrations.length > 0) {
-          html += `<div class="category-card"><div class="category-header">📋 Sample Registration (first row)</div><div class="debug-box">${JSON.stringify(lastDebugInfo.registrations[0], null, 2)}</div></div>`;
-        }
-        if (lastDebugInfo.competitors.length > 0) {
-          html += `<div class="category-card"><div class="category-header">🥋 Sample Competitor Detail (first row)</div><div class="debug-box">${JSON.stringify(lastDebugInfo.competitors[0], null, 2)}</div></div>`;
-        }
-        if (competitors.length > 0) {
-          html += `<div class="category-card"><div class="category-header">✅ Sample Final Competitor Entry</div><div class="debug-box">${JSON.stringify(competitors[0], null, 2)}</div></div>`;
+          html += `<div class="category-card"><div class="category-header">📋 Sample Registration</div><div class="debug-box">${JSON.stringify(lastDebugInfo.registrations[0], null, 2)}</div></div>`;
         }
         document.getElementById("content").innerHTML = html;
       }
@@ -1228,7 +1770,6 @@
         if (activeBtn && activeBtn.id === "btnSparring") runSparringFilter();
       }
 
-      /* ---------------- PATTERNS UI ---------------- */
       async function showPatterns() {
         setActiveBtn("btnPatterns");
         await fetchData();
@@ -1257,7 +1798,7 @@
         const t = document.getElementById("listTarget");
         t.innerHTML = "";
         if (Object.keys(groups).length === 0) {
-          t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);"><i class="fas fa-info-circle" style="font-size:2rem;margin-bottom:10px;"></i><p>No competitors found with current filters.</p><p style="font-size:0.85rem;margin-top:10px;">Total competitors loaded: ${competitors.length}</p><button class="btn btn-warning btn-sm" onclick="showDebugInfo()" style="margin-top:10px;"><i class="fas fa-bug"></i> Debug Data</button></div>`;
+          t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found with current filters.</div>`;
         } else {
           for (const k in groups) t.innerHTML += createParallelCard(`Pattern: ${k}`, groups[k]);
         }
@@ -1280,7 +1821,6 @@
         await renderBracketView(groups, "Patterns");
       }
 
-      /* ---------------- SPARRING UI ---------------- */
       async function showSparring() {
         setActiveBtn("btnSparring");
         await fetchData();
@@ -1292,6 +1832,15 @@
 </div><div id="sparringInfo" class="info-banner"><i class="fas fa-info-circle"></i> Select Age and Gender to see round times.</div></div><div id="listTarget"></div><div id="teamSummary" class="team-summary-box"></div>`;
         updateWeightDropdown();
       }
+
+      const RULES = {
+        SPARRING: {
+          KIDS: { time: "2 x 1 min" },
+          YOUTH: { time: "2 x 1.30 min" },
+          OLDER_YOUTH: { time: "2 x 1.30 min" },
+          JUNIORS: { time: "2 x 2 min" },
+        },
+      };
 
       function updateWeightDropdown() {
         const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, wDrop = document.getElementById("sWeight"), info = document.getElementById("sparringInfo");
@@ -1336,7 +1885,7 @@
         const t = document.getElementById("listTarget");
         t.innerHTML = "";
         if (Object.keys(groups).length === 0) {
-          t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);"><i class="fas fa-info-circle" style="font-size:2rem;margin-bottom:10px;"></i><p>No competitors found with current filters.</p><p style="font-size:0.85rem;margin-top:10px;">Total competitors loaded: ${competitors.length}</p><button class="btn btn-warning btn-sm" onclick="showDebugInfo()" style="margin-top:10px;"><i class="fas fa-bug"></i> Debug Data</button></div>`;
+          t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found with current filters.</div>`;
         } else {
           for (const k in groups) t.innerHTML += createParallelCard(`Sparring: ${k}`, groups[k]);
         }
@@ -1360,59 +1909,26 @@
         await renderBracketView(groups, "Sparring");
       }
 
-      /* ============================================================
-         🆕 TEAM OVERVIEW - shows all teams with category counts + PRICES
-         ============================================================ */
       async function showTeamOverview() {
         setActiveBtn("btnTeamOverview");
         await fetchData();
-        // 🆕 Fetch prices from site_settings
         await fetchTournamentPrices();
-
         if (competitors.length === 0) {
-          document.getElementById("content").innerHTML = `
-            <div class="empty-state" style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);">
-              <i class="fas fa-users-slash" style="font-size:3rem;color:var(--gray);margin-bottom:15px;"></i>
-              <h3 style="color:var(--primary);margin-bottom:10px;">No Competitors Loaded</h3>
-              <p style="color:var(--gray);margin-bottom:20px;">There are no competitor entries in the database.</p>
-              <button class="btn btn-warning" onclick="showDebugInfo()"><i class="fas fa-bug"></i> Debug Data</button>
-            </div>`;
+          document.getElementById("content").innerHTML = `<div class="empty-state" style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);"><h3 style="color:var(--primary);margin-bottom:10px;">No Competitors Loaded</h3></div>`;
           return;
         }
-
-        // Group competitors by team
         const teamsMap = {};
         competitors.forEach((c) => {
           const teamName = c.team || "Unassigned";
           if (!teamsMap[teamName]) {
-            teamsMap[teamName] = {
-              name: teamName,
-              competitorNames: new Set(),
-              patternsCategories: new Set(),
-              sparringCategories: new Set(),
-              patternsEntries: [],
-              sparringEntries: [],
-            };
+            teamsMap[teamName] = { name: teamName, competitorNames: new Set(), patternsCategories: new Set(), sparringCategories: new Set(), patternsEntries: [], sparringEntries: [] };
           }
           teamsMap[teamName].competitorNames.add(c.name);
-          if (c._discipline === "patterns") {
-            teamsMap[teamName].patternsCategories.add(c._full_cat);
-            teamsMap[teamName].patternsEntries.push(c);
-          } else if (c._discipline === "sparring") {
-            teamsMap[teamName].sparringCategories.add(c._full_cat);
-            teamsMap[teamName].sparringEntries.push(c);
-          }
+          if (c._discipline === "patterns") { teamsMap[teamName].patternsCategories.add(c._full_cat); teamsMap[teamName].patternsEntries.push(c); }
+          else if (c._discipline === "sparring") { teamsMap[teamName].sparringCategories.add(c._full_cat); teamsMap[teamName].sparringEntries.push(c); }
         });
-
         const teamNames = Object.keys(teamsMap).sort();
-
-        let html = `
-          <div class="controls">
-            <h2 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-users-cog"></i> Team Overview</h2>
-            <p style="color:var(--gray);">Total Teams: <strong>${teamNames.length}</strong> • Total Competitor Entries: <strong>${competitors.length}</strong></p>
-          </div>`;
-
-        // Summary banner
+        let html = `<div class="controls"><h2 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-users-cog"></i> Team Overview</h2><p style="color:var(--gray);">Total Teams: <strong>${teamNames.length}</strong></p></div>`;
         const totalPatternsCats = new Set();
         const totalSparringCats = new Set();
         const totalUniqueCompetitors = new Set();
@@ -1421,32 +1937,12 @@
           teamsMap[tn].sparringCategories.forEach((c) => totalSparringCats.add(c));
           teamsMap[tn].competitorNames.forEach((n) => totalUniqueCompetitors.add(n));
         });
-
-        html += `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;">
-            <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--primary);">
-              <i class="fas fa-users" style="font-size:2rem;color:var(--primary);margin-bottom:8px;"></i>
-              <div style="font-size:2rem;font-weight:700;color:var(--primary);">${teamNames.length}</div>
-              <div style="color:var(--gray);font-size:0.9rem;">Teams</div>
-            </div>
-            <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);">
-              <i class="fas fa-user" style="font-size:2rem;color:var(--secondary);margin-bottom:8px;"></i>
-              <div style="font-size:2rem;font-weight:700;color:var(--secondary);">${totalUniqueCompetitors.size}</div>
-              <div style="color:var(--gray);font-size:0.9rem;">Unique Competitors</div>
-            </div>
-            <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #1565c0;">
-              <i class="fas fa-chess-board" style="font-size:2rem;color:#1565c0;margin-bottom:8px;"></i>
-              <div style="font-size:2rem;font-weight:700;color:#1565c0;">${totalPatternsCats.size}</div>
-              <div style="color:var(--gray);font-size:0.9rem;">Pattern Categories</div>
-            </div>
-            <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #c2185b;">
-              <i class="fas fa-fist-raised" style="font-size:2rem;color:#c2185b;margin-bottom:8px;"></i>
-              <div style="font-size:2rem;font-weight:700;color:#c2185b;">${totalSparringCats.size}</div>
-              <div style="color:var(--gray);font-size:0.9rem;">Sparring Categories</div>
-            </div>
-          </div>`;
-
-        // Team cards
+        html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;">
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--primary);"><div style="font-size:2rem;font-weight:700;color:var(--primary);">${teamNames.length}</div><div style="color:var(--gray);font-size:0.9rem;">Teams</div></div>
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);"><div style="font-size:2rem;font-weight:700;color:var(--secondary);">${totalUniqueCompetitors.size}</div><div style="color:var(--gray);font-size:0.9rem;">Unique Competitors</div></div>
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #1565c0;"><div style="font-size:2rem;font-weight:700;color:#1565c0;">${totalPatternsCats.size}</div><div style="color:var(--gray);font-size:0.9rem;">Pattern Categories</div></div>
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #c2185b;"><div style="font-size:2rem;font-weight:700;color:#c2185b;">${totalSparringCats.size}</div><div style="color:var(--gray);font-size:0.9rem;">Sparring Categories</div></div>
+        </div>`;
         teamNames.forEach((teamName) => {
           const t = teamsMap[teamName];
           const initial = teamName.charAt(0).toUpperCase();
@@ -1455,181 +1951,73 @@
           const sparringCount = t.sparringCategories.size;
           const totalCats = patternsCount + sparringCount;
           const totalEntries = t.patternsEntries.length + t.sparringEntries.length;
-
-          // 🆕 PRICE CALCULATION
           const patternsPrice = tournamentPrices.patterns;
           const sparringPrice = tournamentPrices.sparring;
-          const patternsEntriesCount = t.patternsEntries.length;
-          const sparringEntriesCount = t.sparringEntries.length;
-
-          const patternsTotal = (patternsPrice !== null && !isNaN(patternsPrice))
-            ? patternsPrice * patternsEntriesCount : null;
-          const sparringTotal = (sparringPrice !== null && !isNaN(sparringPrice))
-            ? sparringPrice * sparringEntriesCount : null;
-
+          const patternsTotal = (patternsPrice !== null && !isNaN(patternsPrice)) ? patternsPrice * t.patternsEntries.length : null;
+          const sparringTotal = (sparringPrice !== null && !isNaN(sparringPrice)) ? sparringPrice * t.sparringEntries.length : null;
           const hasAnyPrice = patternsTotal !== null || sparringTotal !== null;
           const grandTotal = (patternsTotal || 0) + (sparringTotal || 0);
-
-          // Build price summary HTML
           let priceSummaryHtml = "";
           if (!hasAnyPrice) {
-            priceSummaryHtml = `<div class="price-unavailable">
-              <i class="fas fa-info-circle"></i> Prices not configured by admin
-            </div>`;
+            priceSummaryHtml = `<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured by admin</div>`;
           } else {
             const segments = [];
-            if (patternsTotal !== null) {
-              segments.push(`
-                <span class="price-segment patterns-price" title="Patterns unit price: ${formatEuro(patternsPrice)} × ${patternsEntriesCount} entries">
-                  <i class="fas fa-chess-board"></i>
-                  ${formatEuro(patternsPrice)} × ${patternsEntriesCount} = <strong>${formatEuro(patternsTotal)}</strong>
-                </span>
-              `);
-            }
-            if (sparringTotal !== null) {
-              segments.push(`
-                <span class="price-segment sparring-price" title="Sparring unit price: ${formatEuro(sparringPrice)} × ${sparringEntriesCount} entries">
-                  <i class="fas fa-fist-raised"></i>
-                  ${formatEuro(sparringPrice)} × ${sparringEntriesCount} = <strong>${formatEuro(sparringTotal)}</strong>
-                </span>
-              `);
-            }
-
-            priceSummaryHtml = `<div class="team-price-summary">
-              <i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i>
-              ${segments.join('<span class="price-operator">+</span>')}
-              <span class="price-operator">=</span>
-              <span class="price-segment total-price" title="Total team cost">
-                <i class="fas fa-euro-sign"></i>
-                ${formatEuro(grandTotal)}
-              </span>
-            </div>`;
+            if (patternsTotal !== null) segments.push(`<span class="price-segment patterns-price"><i class="fas fa-chess-board"></i> ${formatEuro(patternsPrice)} × ${t.patternsEntries.length} = <strong>${formatEuro(patternsTotal)}</strong></span>`);
+            if (sparringTotal !== null) segments.push(`<span class="price-segment sparring-price"><i class="fas fa-fist-raised"></i> ${formatEuro(sparringPrice)} × ${t.sparringEntries.length} = <strong>${formatEuro(sparringTotal)}</strong></span>`);
+            priceSummaryHtml = `<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ${segments.join('<span class="price-operator">+</span>')} <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ${formatEuro(grandTotal)}</span></div>`;
           }
-
-          html += `
-            <div class="team-overview-card">
-              <div class="team-overview-header">
-                <div class="team-name-block">
-                  <div class="team-icon">${initial}</div>
-                  <div>
-                    <div class="team-name">${teamName}</div>
-                    <div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitor${t.competitorNames.size !== 1 ? 's' : ''} • ${totalEntries} total entries</div>
-                  </div>
-                </div>
-                <div class="team-stats">
-                  <span class="stat-pill total" title="Total unique categories">
-                    <i class="fas fa-layer-group"></i> Categories: <span class="stat-num">${totalCats}</span>
-                  </span>
-                  <span class="stat-pill entries" title="Total entries including duplicates (one person in 3 categories = 3)">
-                    <i class="fas fa-list"></i> Entries: <span class="stat-num">${totalEntries}</span>
-                  </span>
-                  <span class="stat-pill patterns">
-                    <i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">${patternsCount}</span>
-                  </span>
-                  <span class="stat-pill sparring">
-                    <i class="fas fa-fist-raised"></i> Sparring: <span class="stat-num">${sparringCount}</span>
-                  </span>
-                </div>
+          html += `<div class="team-overview-card">
+            <div class="team-overview-header">
+              <div class="team-name-block"><div class="team-icon">${initial}</div><div><div class="team-name">${teamName}</div><div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitors • ${totalEntries} total entries</div></div></div>
+              <div class="team-stats">
+                <span class="stat-pill total"><i class="fas fa-layer-group"></i> Categories: <span class="stat-num">${totalCats}</span></span>
+                <span class="stat-pill entries"><i class="fas fa-list"></i> Entries: <span class="stat-num">${totalEntries}</span></span>
+                <span class="stat-pill patterns"><i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">${patternsCount}</span></span>
+                <span class="stat-pill sparring"><i class="fas fa-fist-raised"></i> Sparring: <span class="stat-num">${sparringCount}</span></span>
               </div>
-              ${priceSummaryHtml}
-              <div class="team-actions">
-                <button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'patterns')" ${patternsCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
-                  <i class="fas fa-chess-board"></i> View Patterns (${patternsCount})
-                </button>
-                <button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'sparring')" ${sparringCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
-                  <i class="fas fa-fist-raised"></i> View Sparring (${sparringCount})
-                </button>
-              </div>
-            </div>`;
+            </div>
+            ${priceSummaryHtml}
+            <div class="team-actions">
+              <button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'patterns')" ${patternsCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fas fa-chess-board"></i> View Patterns (${patternsCount})</button>
+              <button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'sparring')" ${sparringCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fas fa-fist-raised"></i> View Sparring (${sparringCount})</button>
+            </div>
+          </div>`;
         });
-
         document.getElementById("content").innerHTML = html;
       }
 
-      /* ============================================================
-         🆕 TEAM DETAIL - shows each kid and their categories
-         ============================================================ */
       function showTeamDetail(teamName, discipline) {
         const disciplineLabel = discipline === "patterns" ? "Patterns" : "Sparring";
         const headerClass = discipline === "patterns" ? "patterns-header" : "sparring-header";
         const iconClass = discipline === "patterns" ? "fa-chess-board" : "fa-fist-raised";
         const tagClass = discipline === "patterns" ? "patterns-tag" : "sparring-tag";
-
-        const teamEntries = competitors.filter((c) => {
-          const t = c.team || "Unassigned";
-          return t === teamName && c._discipline === discipline;
-        });
-
+        const teamEntries = competitors.filter((c) => { const t = c.team || "Unassigned"; return t === teamName && c._discipline === discipline; });
         const byName = {};
-        teamEntries.forEach((c) => {
-          if (!byName[c.name]) byName[c.name] = { entries: [], gender: c.gender || "" };
-          byName[c.name].entries.push(c);
-        });
-
+        teamEntries.forEach((c) => { if (!byName[c.name]) byName[c.name] = { entries: [], gender: c.gender || "" }; byName[c.name].entries.push(c); });
         const competitorNames = Object.keys(byName).sort();
-
-        let html = `
-          <div class="controls">
-            <button class="btn btn-secondary" onclick="showTeamOverview()">
-              <i class="fas fa-arrow-left"></i> Back to Team Overview
-            </button>
-          </div>
-          <div class="team-detail-modal">
-            <div class="team-detail-header ${headerClass}">
-              <h3><i class="fas ${iconClass}"></i> ${teamName} — ${disciplineLabel}</h3>
-              <span style="background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:0.9rem;font-weight:600;">
-                ${competitorNames.length} competitor${competitorNames.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <div style="padding:15px 0;">`;
-
+        let html = `<div class="controls"><button class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-arrow-left"></i> Back to Team Overview</button></div>
+          <div class="team-detail-modal"><div class="team-detail-header ${headerClass}"><h3><i class="fas ${iconClass}"></i> ${teamName} — ${disciplineLabel}</h3><span style="background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:0.9rem;font-weight:600;">${competitorNames.length} competitors</span></div><div style="padding:15px 0;">`;
         if (competitorNames.length === 0) {
-          html += `<div class="empty-team-detail">
-            <i class="fas fa-info-circle" style="font-size:2rem;margin-bottom:10px;display:block;"></i>
-            No ${disciplineLabel} registrations for this team.
-          </div>`;
+          html += `<div class="empty-team-detail">No ${disciplineLabel} registrations for this team.</div>`;
         } else {
           competitorNames.forEach((name) => {
             const data = byName[name];
             const entries = data.entries;
             const uniqueCats = new Set(entries.map((e) => e._full_cat));
-
-            html += `
-              <div class="competitor-detail-card">
-                <div class="competitor-detail-header">
-                  <div class="competitor-detail-name">
-                    <i class="fas fa-user-circle" style="color:var(--primary);"></i>
-                    ${name}
-                    ${data.gender ? `<span style="font-size:0.75rem;padding:2px 8px;border-radius:10px;background:${data.gender.toUpperCase() === 'MALE' || data.gender.toUpperCase() === 'M' ? '#e3f2fd' : '#fce4ec'};color:${data.gender.toUpperCase() === 'MALE' || data.gender.toUpperCase() === 'M' ? '#1565c0' : '#c2185b'};font-weight:600;">${data.gender.toUpperCase() === 'MALE' || data.gender.toUpperCase() === 'M' ? '♂ Male' : '♀ Female'}</span>` : ''}
-                  </div>
-                  <span class="category-count-badge">${uniqueCats.size} categor${uniqueCats.size !== 1 ? 'ies' : 'y'}</span>
-                </div>
-                <div class="category-list">`;
-
-            entries.forEach((e) => {
-              html += `<span class="category-tag ${tagClass}">
-                <i class="fas fa-tag" style="font-size:0.7rem;"></i>
-                ${e._full_cat}
-              </span>`;
-            });
-
+            html += `<div class="competitor-detail-card"><div class="competitor-detail-header"><div class="competitor-detail-name"><i class="fas fa-user-circle" style="color:var(--primary);"></i> ${name}</div><span class="category-count-badge">${uniqueCats.size} categor${uniqueCats.size !== 1 ? 'ies' : 'y'}</span></div><div class="category-list">`;
+            entries.forEach((e) => { html += `<span class="category-tag ${tagClass}"><i class="fas fa-tag" style="font-size:0.7rem;"></i> ${e._full_cat}</span>`; });
             html += `</div></div>`;
           });
         }
-
         html += `</div></div>`;
         document.getElementById("content").innerHTML = html;
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
-      /* ---------------- UTILS ---------------- */
       function createParallelCard(title, list) {
         if (list.length === 0) return `<div class="empty-state">No competitors found.</div>`;
         let n = "", t = "";
-        list.forEach((c) => {
-          n += `<div class="row-item">${c.name}</div>`;
-          t += `<div class="row-item">${c.team || "N/A"}</div>`;
-        });
+        list.forEach((c) => { n += `<div class="row-item">${c.name}</div>`; t += `<div class="row-item">${c.team || "N/A"}</div>`; });
         return `<div class="category-card"><div class="category-header">${title} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
       }
 
@@ -1638,85 +2026,69 @@
         const entriesByTeam = {};
         list.forEach((c) => {
           const teamName = c.team || "Unassigned";
-          if (!uniqueByTeam[teamName]) {
-            uniqueByTeam[teamName] = new Set();
-            entriesByTeam[teamName] = 0;
-          }
+          if (!uniqueByTeam[teamName]) { uniqueByTeam[teamName] = new Set(); entriesByTeam[teamName] = 0; }
           uniqueByTeam[teamName].add(c.name);
           entriesByTeam[teamName]++;
         });
-
         const teamKeys = Object.keys(uniqueByTeam).sort();
-        let totalUnique = 0;
-        let totalEntries = 0;
-        teamKeys.forEach((t) => {
-          totalUnique += uniqueByTeam[t].size;
-          totalEntries += entriesByTeam[t];
-        });
-
-        let h = `<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (${type})</h3>`;
-        h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">`;
-
-        if (teamKeys.length === 0) {
-          h += `<span style="color:var(--gray);grid-column:1/-1">No data.</span>`;
-        } else {
+        let totalUnique = 0, totalEntries = 0;
+        teamKeys.forEach((t) => { totalUnique += uniqueByTeam[t].size; totalEntries += entriesByTeam[t]; });
+        let h = `<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (${type})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">`;
+        if (teamKeys.length === 0) h += `<span style="color:var(--gray);grid-column:1/-1">No data.</span>`;
+        else {
           teamKeys.forEach((t) => {
             const uniqueCount = uniqueByTeam[t].size;
             const entryCount = entriesByTeam[t];
             const diffNote = entryCount > uniqueCount ? ` <span style="font-size:0.7rem;color:#e65100;">(${entryCount} entries)</span>` : '';
-            h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)">
-              <strong style="display:block">${t}</strong>
-              <span style="font-size:0.85rem;color:var(--gray)">${uniqueCount} competitor${uniqueCount !== 1 ? 's' : ''}${diffNote}</span>
-            </div>`;
+            h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">${t}</strong><span style="font-size:0.85rem;color:var(--gray)">${uniqueCount} competitor${uniqueCount !== 1 ? 's' : ''}${diffNote}</span></div>`;
           });
         }
-        h += `</div>`;
-
-        h += `<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:150px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center">
-            <i class="fas fa-user-check"></i> Unique Competitors: ${totalUnique}
-          </div>
-          <div style="flex:1;min-width:150px;padding:10px;background:var(--secondary);color:white;border-radius:6px;font-weight:bold;text-align:center">
-            <i class="fas fa-list"></i> Total Entries: ${totalEntries}
-          </div>
+        h += `</div><div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:150px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-user-check"></i> Unique: ${totalUnique}</div>
+          <div style="flex:1;min-width:150px;padding:10px;background:var(--secondary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-list"></i> Total Entries: ${totalEntries}</div>
         </div>`;
-
         document.getElementById("teamSummary").innerHTML = h;
       }
 
       async function showJudges() {
         setActiveBtn("btnJudges");
         await fetchData();
-        const g = {};
-        judges.forEach((j) => (g[j.team || "Unassigned"] = (g[j.team || "Unassigned"] || 0) + 1));
         let h = `<div class="category-card"><div class="category-header">Judges List (${judges.length})</div>`;
-        if (judges.length === 0) { h += `<div style="padding:30px;text-align:center;color:var(--gray);">No judges loaded. <button class="btn btn-warning btn-sm" onclick="showDebugInfo()"><i class="fas fa-bug"></i> Debug</button></div>`; }
+        if (judges.length === 0) h += `<div style="padding:30px;text-align:center;color:var(--gray);">No judges loaded.</div>`;
         else {
           h += `<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
           judges.forEach((j) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${j.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.team || "N/A"}</td></tr>`));
           h += `</table>`;
         }
-        h += `</div><div class="team-summary-box"><h3>Teams Registered</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px">`;
-        Object.keys(g).sort().forEach((t) => (h += `<div style="background:#f8f9fa;padding:10px;border-radius:4px"><strong>${t}</strong>: ${g[t]} judges</div>`));
-        document.getElementById("content").innerHTML = h + `</div></div>`;
+        document.getElementById("content").innerHTML = h + `</div>`;
       }
 
       async function showCoaches() {
         setActiveBtn("btnCoaches");
         await fetchData();
-        const g = {};
-        coaches.forEach((c) => (g[c.team || "Unassigned"] = (g[c.team || "Unassigned"] || 0) + 1));
         let h = `<div class="category-card"><div class="category-header">Coaches List (${coaches.length})</div>`;
-        if (coaches.length === 0) { h += `<div style="padding:30px;text-align:center;color:var(--gray);">No coaches loaded. <button class="btn btn-warning btn-sm" onclick="showDebugInfo()"><i class="fas fa-bug"></i> Debug</button></div>`; }
+        if (coaches.length === 0) h += `<div style="padding:30px;text-align:center;color:var(--gray);">No coaches loaded.</div>`;
         else {
           h += `<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
           coaches.forEach((c) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${c.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.team || "N/A"}</td></tr>`));
           h += `</table>`;
         }
-        h += `</div><div class="team-summary-box"><h3>Teams Registered</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px">`;
-        Object.keys(g).sort().forEach((t) => (h += `<div style="background:#f8f9fa;padding:10px;border-radius:4px"><strong>${t}</strong>: ${g[t]} coaches</div>`));
-        document.getElementById("content").innerHTML = h + `</div></div>`;
+        document.getElementById("content").innerHTML = h + `</div>`;
       }
+
+      /* ============================================================
+         🆕 KEYBOARD SHORTCUT: Ctrl+Z for undo
+         ============================================================ */
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+          // Don't trigger if user is typing in an input
+          const active = document.activeElement;
+          const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+          if (isTyping) return;
+          e.preventDefault();
+          performUndo();
+        }
+      });
 
       const today = new Date();
       document.getElementById("tournamentDate").valueAsDate = today;
