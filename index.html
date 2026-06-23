@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tournament Platform Main Page</title>
 
-    <!-- 1. Import Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
     <style>
-      /* --- CSS VARIABLES & RESET --- */
       :root {
         --bg-body: #0f172a;
         --bg-panel: #1e293b;
@@ -21,6 +19,11 @@
         --accent-alert: #ef4444;
         --accent-admin: #8b5cf6;
         --accent-price: #f59e0b;
+        --accent-patterns: #3b82f6;
+        --accent-sparring: #ef4444;
+        --accent-headref: #8b5cf6;
+        --accent-referee: #10b981;
+        --accent-computer: #06b6d4;
         --radius-md: 12px;
         --radius-lg: 20px;
         --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
@@ -117,6 +120,12 @@
       .nav-admin { color: var(--accent-admin); border: 1px solid var(--accent-admin); }
       .nav-admin:hover { background-color: var(--accent-admin); color: white; }
 
+      .nav-prices {
+        color: var(--accent-price);
+        border: 1px solid var(--accent-price);
+      }
+      .nav-prices:hover { background-color: var(--accent-price); color: white; }
+
       .admin-controls {
         display: none;
         align-items: center;
@@ -181,12 +190,20 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
       }
 
       .section-title {
         font-size: 1.8rem;
         font-weight: 700;
         color: var(--text-main);
+      }
+
+      .admin-buttons-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
       }
 
       .btn-edit-tournament {
@@ -200,9 +217,26 @@
         align-items: center;
         gap: 5px;
         font-size: 0.9rem;
+        font-weight: 600;
         transition: var(--transition);
       }
       .btn-edit-tournament:hover { background: var(--accent-admin); color: white; }
+
+      .btn-prices {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--accent-price);
+        border: 1px solid var(--accent-price);
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: var(--transition);
+      }
+      .btn-prices:hover { background: var(--accent-price); color: white; }
 
       .tournaments-grid {
         display: grid;
@@ -275,36 +309,91 @@
         border-radius: 20px;
         font-weight: 600;
         font-size: 0.9rem;
-        margin-top: 0.5rem;
-        z-index: 1;
+        border: 1px solid rgba(16, 185, 129, 0.3);
       }
 
-      /* 🆕 PRICE BADGE */
-      .price-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(245, 158, 11, 0.15);
-        color: var(--accent-price);
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 1.05rem;
+      /* ===== PRICING SECTION ON CARD ===== */
+      .pricing-section {
+        width: 100%;
         z-index: 1;
-        border: 1px solid rgba(245, 158, 11, 0.3);
+        margin-top: 0.5rem;
       }
-      .price-badge.free {
-        background: rgba(16, 185, 129, 0.15);
-        color: var(--accent-secondary);
+
+      .pricing-group {
+        margin-bottom: 0.75rem;
+      }
+
+      .pricing-group-title {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+        font-weight: 700;
+      }
+
+      .pricing-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .pricing-grid.single {
+        grid-template-columns: 1fr;
+      }
+
+      .pricing-grid.triple {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .price-chip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border: 1px solid;
+        transition: var(--transition);
+      }
+
+      .price-chip .chip-label {
+        font-size: 0.7rem;
+        font-weight: 500;
+        opacity: 0.85;
+      }
+
+      .price-chip.patterns {
+        background: rgba(59, 130, 246, 0.12);
+        color: var(--accent-patterns);
+        border-color: rgba(59, 130, 246, 0.3);
+      }
+      .price-chip.sparring {
+        background: rgba(239, 68, 68, 0.12);
+        color: var(--accent-sparring);
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+      .price-chip.headref {
+        background: rgba(139, 92, 246, 0.12);
+        color: var(--accent-headref);
+        border-color: rgba(139, 92, 246, 0.3);
+      }
+      .price-chip.referee {
+        background: rgba(16, 185, 129, 0.12);
+        color: var(--accent-referee);
         border-color: rgba(16, 185, 129, 0.3);
       }
+      .price-chip.computer {
+        background: rgba(6, 182, 212, 0.12);
+        color: var(--accent-computer);
+        border-color: rgba(6, 182, 212, 0.3);
+      }
 
-      .badges-row {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        flex-wrap: wrap;
-        z-index: 1;
+      .price-chip.free {
+        opacity: 0.85;
+        font-style: italic;
       }
 
       .placeholder-card {
@@ -366,11 +455,13 @@
         padding: 2rem;
         border-radius: var(--radius-lg);
         width: 100%;
-        max-width: 400px;
+        max-width: 450px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
         transform: scale(0.9);
         transition: transform 0.3s ease;
+        max-height: 90vh;
+        overflow-y: auto;
       }
       .modal-overlay.active .modal-box { transform: scale(1); }
 
@@ -379,6 +470,9 @@
         font-size: 1.25rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         padding-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
 
       .modal-input {
@@ -394,10 +488,13 @@
       .modal-input:focus { outline: none; border-color: var(--accent-admin); }
 
       .modal-label {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 8px;
         margin-bottom: 0.5rem;
         font-size: 0.9rem;
         color: var(--text-muted);
+        font-weight: 600;
       }
 
       .modal-label-hint {
@@ -408,6 +505,24 @@
         margin-bottom: 0.75rem;
         font-style: italic;
         opacity: 0.8;
+      }
+
+      .modal-section-divider {
+        margin: 1.25rem 0 1rem;
+        padding-top: 1rem;
+        border-top: 1px dashed rgba(255, 255, 255, 0.15);
+      }
+
+      .modal-section-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
       .modal-actions {
@@ -429,6 +544,8 @@
       .btn-cancel:hover { color: white; background: rgba(255, 255, 255, 0.05); }
       .btn-confirm { background: var(--accent-admin); color: white; }
       .btn-confirm:hover { background: #7c3aed; }
+      .btn-confirm.prices-confirm { background: var(--accent-price); }
+      .btn-confirm.prices-confirm:hover { background: #d97706; }
 
       .error-msg {
         color: var(--accent-alert);
@@ -437,13 +554,20 @@
         display: none;
       }
 
+      /* Colored input focus per category */
+      .modal-input.patterns-input:focus { border-color: var(--accent-patterns); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+      .modal-input.sparring-input:focus { border-color: var(--accent-sparring); box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2); }
+      .modal-input.headref-input:focus { border-color: var(--accent-headref); box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2); }
+      .modal-input.referee-input:focus { border-color: var(--accent-referee); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+      .modal-input.computer-input:focus { border-color: var(--accent-computer); box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2); }
+
       @media (max-width: 768px) {
         .nav-container {
           flex-direction: column;
           gap: 1rem;
           padding-bottom: 1rem;
         }
-        .nav-my-team, .nav-rings, .nav-admin {
+        .nav-my-team, .nav-rings, .nav-admin, .nav-prices {
           position: static;
           transform: none;
           width: 100%;
@@ -459,6 +583,9 @@
           flex-direction: column;
           align-items: flex-start;
           gap: 0.5rem;
+        }
+        .pricing-grid.triple {
+          grid-template-columns: 1fr 1fr;
         }
       }
     </style>
@@ -529,13 +656,23 @@
           <div class="section-header">
             <h2 class="section-title">Available Tournaments</h2>
 
-            <button id="btnEditTournament" class="btn-edit-tournament">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              Configure Tournament
-            </button>
+            <div class="admin-buttons-row">
+              <button id="btnEditTournament" class="btn-edit-tournament">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Configure Tournament
+              </button>
+
+              <button id="btnPrices" class="btn-prices">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23"></line>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                Prices
+              </button>
+            </div>
 
             <span style="color: var(--text-muted); font-size: 0.9rem; width: 100%; margin-top: 0.5rem;" id="liveStatusText">Connecting to DB...</span>
           </div>
@@ -573,26 +710,119 @@
       </div>
     </div>
 
-    <!-- Edit Tournament Details Modal -->
+    <!-- Edit Tournament Details Modal (Name + Rings only) -->
     <div class="modal-overlay" id="editTournamentModal">
       <div class="modal-box">
-        <h3 class="modal-title">Configure Tournament</h3>
+        <h3 class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-admin)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Configure Tournament
+        </h3>
 
         <label class="modal-label">Tournament Name</label>
-        <input type="text" id="inputTournamentName" class="modal-input" placeholder="e.g. Summer Championship 2024" />
+        <input type="text" id="inputTournamentName" class="modal-input" placeholder="e.g. 9th Vojvodina Open ITF" />
 
         <label class="modal-label">Number of Rings</label>
         <input type="number" id="inputRingsNumber" class="modal-input" placeholder="e.g. 5" min="1" />
-
-        <label class="modal-label">Entry Price</label>
-        <input type="number" id="inputTournamentPrice" class="modal-input" placeholder="e.g. 25.00" min="0" step="0.01" />
-        <span class="modal-label-hint">Leave empty or 0 for "Free Entry". Stored in EUR (€).</span>
 
         <div class="error-msg" id="editTournamentError">Please fill in required fields correctly.</div>
 
         <div class="modal-actions">
           <button class="btn btn-cancel" id="btnCancelEdit">Cancel</button>
           <button class="btn btn-confirm" id="btnSaveTournament">Save Details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 PRICES MODAL -->
+    <div class="modal-overlay" id="pricesModal">
+      <div class="modal-box">
+        <h3 class="modal-title">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-price)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+          </svg>
+          Tournament Prices
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Set entry fees for competitors and referees. Leave empty or 0 for "Free". All prices in EUR (€).
+        </p>
+
+        <!-- COMPETITOR PRICES -->
+        <div class="modal-section-title" style="color: var(--accent-primary);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Competitor Entry Fees
+        </div>
+
+        <label class="modal-label" style="color: var(--accent-patterns);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <path d="M3 9h18"></path>
+            <path d="M9 21V9"></path>
+          </svg>
+          Patterns (Tul) Price
+        </label>
+        <input type="number" id="inputPatternsPrice" class="modal-input patterns-input" placeholder="e.g. 25.00" min="0" step="0.01" />
+
+        <label class="modal-label" style="color: var(--accent-sparring);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 11a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"></path>
+            <path d="M7 9V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"></path>
+          </svg>
+          Sparring (Matsogi) Price
+        </label>
+        <input type="number" id="inputSparringPrice" class="modal-input sparring-input" placeholder="e.g. 30.00" min="0" step="0.01" />
+
+        <!-- REFEREE PRICES -->
+        <div class="modal-section-divider"></div>
+        <div class="modal-section-title" style="color: var(--accent-headref);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <path d="M2 17l10 5 10-5"></path>
+            <path d="M2 12l10 5 10-5"></path>
+          </svg>
+          Referee Fees
+        </div>
+
+        <label class="modal-label" style="color: var(--accent-headref);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15c-3 0-5-2-5-5V7c0-3 2-5 5-5s5 2 5 5v3c0 3-2 5-5 5z"></path>
+            <path d="M12 15v7"></path>
+            <path d="M8 22h8"></path>
+          </svg>
+          Head Referee Price
+        </label>
+        <input type="number" id="inputHeadRefereePrice" class="modal-input headref-input" placeholder="e.g. 50.00" min="0" step="0.01" />
+
+        <label class="modal-label" style="color: var(--accent-referee);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Referee Price
+        </label>
+        <input type="number" id="inputRefereePrice" class="modal-input referee-input" placeholder="e.g. 35.00" min="0" step="0.01" />
+
+        <label class="modal-label" style="color: var(--accent-computer);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          Computer Referee Price
+        </label>
+        <input type="number" id="inputComputerRefereePrice" class="modal-input computer-input" placeholder="e.g. 20.00" min="0" step="0.01" />
+
+        <div class="error-msg" id="pricesError">Please enter valid prices (0 or positive numbers).</div>
+
+        <div class="modal-actions">
+          <button class="btn btn-cancel" id="btnCancelPrices">Cancel</button>
+          <button class="btn btn-confirm prices-confirm" id="btnSavePrices">Save Prices</button>
         </div>
       </div>
     </div>
@@ -612,7 +842,7 @@
       } catch (e) { console.error("Supabase init error:", e); }
 
       /* ============================================================
-         DOM CACHE (optimization: lookup once, reuse many times)
+         DOM CACHE
          ============================================================ */
       const DOM = {
         body: document.body,
@@ -624,13 +854,22 @@
         userInfoDisplay: document.getElementById("userInfoDisplay"),
         userEmailSpan: document.getElementById("userEmailSpan"),
         btnEditTournament: document.getElementById("btnEditTournament"),
+        btnPrices: document.getElementById("btnPrices"),
         editTournamentModal: document.getElementById("editTournamentModal"),
+        pricesModal: document.getElementById("pricesModal"),
         inputTournamentName: document.getElementById("inputTournamentName"),
         inputRingsNumber: document.getElementById("inputRingsNumber"),
-        inputTournamentPrice: document.getElementById("inputTournamentPrice"),
+        inputPatternsPrice: document.getElementById("inputPatternsPrice"),
+        inputSparringPrice: document.getElementById("inputSparringPrice"),
+        inputHeadRefereePrice: document.getElementById("inputHeadRefereePrice"),
+        inputRefereePrice: document.getElementById("inputRefereePrice"),
+        inputComputerRefereePrice: document.getElementById("inputComputerRefereePrice"),
         btnSaveTournament: document.getElementById("btnSaveTournament"),
+        btnSavePrices: document.getElementById("btnSavePrices"),
         btnCancelEdit: document.getElementById("btnCancelEdit"),
+        btnCancelPrices: document.getElementById("btnCancelPrices"),
         editTournamentError: document.getElementById("editTournamentError"),
+        pricesError: document.getElementById("pricesError"),
         btnAdminLogin: document.getElementById("btnAdminLogin"),
         btnManage: document.getElementById("btnManage"),
         loginModal: document.getElementById("loginModal"),
@@ -647,18 +886,44 @@
       let currentDbState = false;
       let tournamentName = "";
       let ringsNumber = 0;
-      let tournamentPrice = null; // null = not set, 0 = free, >0 = price
+      // Prices: null = not configured, number = configured value
+      let prices = {
+        patterns: null,
+        sparring: null,
+        headReferee: null,
+        referee: null,
+        computerReferee: null,
+      };
 
       /* ============================================================
          HELPERS
          ============================================================ */
-      // Format price nicely: null/undefined → "", 0 → "Free Entry", 25 → "€25.00"
+      function parsePriceInput(raw) {
+        if (raw === "" || raw === null || raw === undefined) return 0;
+        const num = parseFloat(raw);
+        return (isNaN(num) || num < 0) ? null : num;
+      }
+
       function formatPrice(price) {
         if (price === null || price === undefined || price === "") return "";
         const num = parseFloat(price);
         if (isNaN(num)) return "";
-        if (num === 0) return "Free Entry";
+        if (num === 0) return "Free";
         return "€" + num.toFixed(2);
+      }
+
+      // Build a single price chip HTML
+      function buildPriceChip(label, price, cssClass, iconSvg) {
+        if (price === null || price === undefined) return "";
+        const formatted = formatPrice(price);
+        const isFree = parseFloat(price) === 0;
+        return `
+          <div class="price-chip ${cssClass} ${isFree ? 'free' : ''}" title="${label}">
+            ${iconSvg}
+            <span class="chip-label">${label}:</span>
+            <strong>${formatted}</strong>
+          </div>
+        `;
       }
 
       /* ============================================================
@@ -669,7 +934,7 @@
 
         const { data, error } = await supabaseClient
           .from("site_settings")
-          .select("tournament_registration, tournament_name, rings_number, price")
+          .select("tournament_registration, tournament_name, rings_number, patterns_price, sparring_price, head_referee_price, referee_price, computer_referee_price")
           .eq("id", 1)
           .single();
 
@@ -683,7 +948,11 @@
           currentDbState = data.tournament_registration;
           tournamentName = data.tournament_name || "";
           ringsNumber = data.rings_number || 0;
-          tournamentPrice = data.price !== null && data.price !== undefined ? parseFloat(data.price) : null;
+          prices.patterns = data.patterns_price !== null && data.patterns_price !== undefined ? parseFloat(data.patterns_price) : null;
+          prices.sparring = data.sparring_price !== null && data.sparring_price !== undefined ? parseFloat(data.sparring_price) : null;
+          prices.headReferee = data.head_referee_price !== null && data.head_referee_price !== undefined ? parseFloat(data.head_referee_price) : null;
+          prices.referee = data.referee_price !== null && data.referee_price !== undefined ? parseFloat(data.referee_price) : null;
+          prices.computerReferee = data.computer_referee_price !== null && data.computer_referee_price !== undefined ? parseFloat(data.computer_referee_price) : null;
           updateUI(currentDbState);
 
           if (isAdmin) applyAdminUI();
@@ -716,23 +985,10 @@
       async function saveTournamentDetails() {
         const nameVal = DOM.inputTournamentName.value.trim();
         const ringsVal = parseInt(DOM.inputRingsNumber.value);
-        const priceRaw = DOM.inputTournamentPrice.value.trim();
 
-        // Validation
         if (!nameVal || isNaN(ringsVal) || ringsVal <= 0) {
           DOM.editTournamentError.style.display = "block";
           return;
-        }
-
-        // Parse price: empty or 0 → store as 0 (free), otherwise store the number
-        let priceVal = 0;
-        if (priceRaw !== "") {
-          const parsed = parseFloat(priceRaw);
-          if (isNaN(parsed) || parsed < 0) {
-            DOM.editTournamentError.style.display = "block";
-            return;
-          }
-          priceVal = parsed;
         }
 
         DOM.editTournamentError.style.display = "none";
@@ -740,11 +996,9 @@
         DOM.btnSaveTournament.disabled = true;
 
         if (!supabaseClient) {
-          // Fallback when no DB
           setTimeout(() => {
             tournamentName = nameVal;
             ringsNumber = ringsVal;
-            tournamentPrice = priceVal;
             currentDbState = true;
             closeEditModal();
             renderTournamentCard();
@@ -760,7 +1014,6 @@
           .update({
             tournament_name: nameVal,
             rings_number: ringsVal,
-            price: priceVal,
             tournament_registration: true
           })
           .eq("id", 1);
@@ -771,7 +1024,6 @@
         } else {
           tournamentName = nameVal;
           ringsNumber = ringsVal;
-          tournamentPrice = priceVal;
           currentDbState = true;
           closeEditModal();
           renderTournamentCard();
@@ -780,6 +1032,75 @@
 
         DOM.btnSaveTournament.textContent = "Save Details";
         DOM.btnSaveTournament.disabled = false;
+      }
+
+      /* 🆕 SAVE ALL PRICES */
+      async function savePrices() {
+        const patternsRaw = DOM.inputPatternsPrice.value.trim();
+        const sparringRaw = DOM.inputSparringPrice.value.trim();
+        const headRefRaw = DOM.inputHeadRefereePrice.value.trim();
+        const refRaw = DOM.inputRefereePrice.value.trim();
+        const compRefRaw = DOM.inputComputerRefereePrice.value.trim();
+
+        const patternsVal = parsePriceInput(patternsRaw);
+        const sparringVal = parsePriceInput(sparringRaw);
+        const headRefVal = parsePriceInput(headRefRaw);
+        const refVal = parsePriceInput(refRaw);
+        const compRefVal = parsePriceInput(compRefRaw);
+
+        // Check for invalid inputs (negative or non-numeric)
+        if (patternsVal === null || sparringVal === null || headRefVal === null || refVal === null || compRefVal === null) {
+          DOM.pricesError.style.display = "block";
+          return;
+        }
+
+        DOM.pricesError.style.display = "none";
+        DOM.btnSavePrices.textContent = "Saving...";
+        DOM.btnSavePrices.disabled = true;
+
+        if (!supabaseClient) {
+          setTimeout(() => {
+            prices.patterns = patternsVal;
+            prices.sparring = sparringVal;
+            prices.headReferee = headRefVal;
+            prices.referee = refVal;
+            prices.computerReferee = compRefVal;
+            closePricesModal();
+            renderTournamentCard();
+            DOM.btnSavePrices.textContent = "Save Prices";
+            DOM.btnSavePrices.disabled = false;
+            alert("✅ Prices saved (offline mode)");
+          }, 400);
+          return;
+        }
+
+        const { error } = await supabaseClient
+          .from("site_settings")
+          .update({
+            patterns_price: patternsVal,
+            sparring_price: sparringVal,
+            head_referee_price: headRefVal,
+            referee_price: refVal,
+            computer_referee_price: compRefVal,
+          })
+          .eq("id", 1);
+
+        if (error) {
+          console.error("Error saving prices:", error);
+          alert("❌ Failed to save prices: " + error.message);
+        } else {
+          prices.patterns = patternsVal;
+          prices.sparring = sparringVal;
+          prices.headReferee = headRefVal;
+          prices.referee = refVal;
+          prices.computerReferee = compRefVal;
+          closePricesModal();
+          renderTournamentCard();
+          alert("✅ Prices saved successfully!");
+        }
+
+        DOM.btnSavePrices.textContent = "Save Prices";
+        DOM.btnSavePrices.disabled = false;
       }
 
       /* ============================================================
@@ -793,17 +1114,53 @@
 
         const displayTitle = tournamentName || "Untitled Tournament";
         const displayRings = ringsNumber || 0;
-        const priceStr = formatPrice(tournamentPrice);
 
-        // Build price badge HTML (only if price is set)
-        const priceBadgeHtml = priceStr
-          ? `<div class="price-badge ${tournamentPrice === 0 ? 'free' : ''}">
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                 <line x1="12" y1="1" x2="12" y2="23"></line>
-                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-               </svg>
-               ${priceStr}
-             </div>`
+        // SVG icons for price chips
+        const icons = {
+          patterns: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>`,
+          sparring: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M18 12h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"></path><path d="M6 4v16"></path><path d="M18 4v16"></path></svg>`,
+          headref: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path></svg>`,
+          referee: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+          computer: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+        };
+
+        // Build competitor pricing group
+        const hasCompetitorPrices = prices.patterns !== null || prices.sparring !== null;
+        let competitorPricingHtml = "";
+        if (hasCompetitorPrices) {
+          const chips = [];
+          if (prices.patterns !== null) chips.push(buildPriceChip("Patterns", prices.patterns, "patterns", icons.patterns));
+          if (prices.sparring !== null) chips.push(buildPriceChip("Sparring", prices.sparring, "sparring", icons.sparring));
+          competitorPricingHtml = `
+            <div class="pricing-group">
+              <div class="pricing-group-title">Competitor Entry</div>
+              <div class="pricing-grid ${chips.length === 1 ? 'single' : ''}">
+                ${chips.join("")}
+              </div>
+            </div>
+          `;
+        }
+
+        // Build referee pricing group
+        const hasRefereePrices = prices.headReferee !== null || prices.referee !== null || prices.computerReferee !== null;
+        let refereePricingHtml = "";
+        if (hasRefereePrices) {
+          const chips = [];
+          if (prices.headReferee !== null) chips.push(buildPriceChip("Head Ref", prices.headReferee, "headref", icons.headref));
+          if (prices.referee !== null) chips.push(buildPriceChip("Referee", prices.referee, "referee", icons.referee));
+          if (prices.computerReferee !== null) chips.push(buildPriceChip("Comp. Ref", prices.computerReferee, "computer", icons.computer));
+          refereePricingHtml = `
+            <div class="pricing-group">
+              <div class="pricing-group-title">Referee Fees</div>
+              <div class="pricing-grid ${chips.length === 1 ? 'single' : chips.length === 3 ? 'triple' : ''}">
+                ${chips.join("")}
+              </div>
+            </div>
+          `;
+        }
+
+        const pricingSectionHtml = (hasCompetitorPrices || hasRefereePrices)
+          ? `<div class="pricing-section">${competitorPricingHtml}${refereePricingHtml}</div>`
           : "";
 
         DOM.tournamentList.innerHTML = `
@@ -813,13 +1170,11 @@
             </div>
             <h3 class="card-title">${displayTitle}</h3>
             <p class="card-info">Join competition and prove your skill!</p>
-            <div class="badges-row">
-              <div class="rings-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-                ${displayRings} Rings Available
-              </div>
-              ${priceBadgeHtml}
+            <div class="rings-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              ${displayRings} Rings Available
             </div>
+            ${pricingSectionHtml}
           </a>
         `;
       }
@@ -844,8 +1199,15 @@
         DOM.adminControls.classList.add("visible");
         DOM.btnAdminLogin.style.display = "none";
         DOM.btnEditTournament.style.display = "flex";
+        DOM.btnPrices.style.display = "flex";
         DOM.btnManage.style.display = "flex";
       }
+
+      /* ============================================================
+         MODAL HELPERS
+         ============================================================ */
+      function closeEditModal() { DOM.editTournamentModal.classList.remove("active"); }
+      function closePricesModal() { DOM.pricesModal.classList.remove("active"); }
 
       /* ============================================================
          AUTH
@@ -872,45 +1234,6 @@
         });
       }
 
-      /* ============================================================
-         EVENT LISTENERS
-         ============================================================ */
-      DOM.adminToggle.addEventListener("change", (e) => {
-        if (!isAdmin) return;
-        updateSetting(e.target.checked);
-      });
-
-      DOM.btnEditTournament.addEventListener("click", () => {
-        DOM.inputTournamentName.value = tournamentName;
-        DOM.inputRingsNumber.value = ringsNumber || "";
-        // Show price only if it was set (non-null)
-        DOM.inputTournamentPrice.value = (tournamentPrice !== null && tournamentPrice !== undefined) ? tournamentPrice : "";
-        DOM.editTournamentError.style.display = "none";
-        DOM.editTournamentModal.classList.add("active");
-        DOM.inputTournamentName.focus();
-      });
-
-      function closeEditModal() { DOM.editTournamentModal.classList.remove("active"); }
-      DOM.btnCancelEdit.addEventListener("click", closeEditModal);
-      DOM.btnSaveTournament.addEventListener("click", saveTournamentDetails);
-
-      // Enter key submits
-      DOM.inputRingsNumber.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
-      DOM.inputTournamentPrice.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
-      DOM.inputTournamentName.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
-
-      DOM.btnAdminLogin.addEventListener("click", () => {
-        if (isAdmin) return;
-        DOM.loginModal.classList.add("active");
-        DOM.adminPasswordInput.value = "";
-        DOM.loginError.style.display = "none";
-        DOM.adminPasswordInput.focus();
-      });
-
-      DOM.btnCancelLogin.addEventListener("click", () => { DOM.loginModal.classList.remove("active"); });
-      DOM.btnConfirmLogin.addEventListener("click", attemptLogin);
-      DOM.adminPasswordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") attemptLogin(); });
-
       function attemptLogin() {
         const pass = DOM.adminPasswordInput.value;
         if (pass === "admina") {
@@ -926,12 +1249,71 @@
         }
       }
 
-      // Close modals by clicking outside
-      DOM.loginModal.addEventListener("click", (e) => {
-        if (e.target === DOM.loginModal) DOM.loginModal.classList.remove("active");
+      /* ============================================================
+         EVENT LISTENERS
+         ============================================================ */
+      DOM.adminToggle.addEventListener("change", (e) => {
+        if (!isAdmin) return;
+        updateSetting(e.target.checked);
       });
-      DOM.editTournamentModal.addEventListener("click", (e) => {
-        if (e.target === DOM.editTournamentModal) closeEditModal();
+
+      // Configure Tournament modal
+      DOM.btnEditTournament.addEventListener("click", () => {
+        DOM.inputTournamentName.value = tournamentName;
+        DOM.inputRingsNumber.value = ringsNumber || "";
+        DOM.editTournamentError.style.display = "none";
+        DOM.editTournamentModal.classList.add("active");
+        DOM.inputTournamentName.focus();
+      });
+
+      DOM.btnCancelEdit.addEventListener("click", closeEditModal);
+      DOM.btnSaveTournament.addEventListener("click", saveTournamentDetails);
+
+      // 🆕 Prices modal
+      DOM.btnPrices.addEventListener("click", () => {
+        DOM.inputPatternsPrice.value = prices.patterns !== null ? prices.patterns : "";
+        DOM.inputSparringPrice.value = prices.sparring !== null ? prices.sparring : "";
+        DOM.inputHeadRefereePrice.value = prices.headReferee !== null ? prices.headReferee : "";
+        DOM.inputRefereePrice.value = prices.referee !== null ? prices.referee : "";
+        DOM.inputComputerRefereePrice.value = prices.computerReferee !== null ? prices.computerReferee : "";
+        DOM.pricesError.style.display = "none";
+        DOM.pricesModal.classList.add("active");
+        DOM.inputPatternsPrice.focus();
+      });
+
+      DOM.btnCancelPrices.addEventListener("click", closePricesModal);
+      DOM.btnSavePrices.addEventListener("click", savePrices);
+
+      // Enter key submits
+      DOM.inputRingsNumber.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
+      DOM.inputTournamentName.addEventListener("keypress", (e) => { if (e.key === "Enter") saveTournamentDetails(); });
+
+      const priceInputs = [
+        DOM.inputPatternsPrice, DOM.inputSparringPrice,
+        DOM.inputHeadRefereePrice, DOM.inputRefereePrice, DOM.inputComputerRefereePrice
+      ];
+      priceInputs.forEach(inp => {
+        if (inp) inp.addEventListener("keypress", (e) => { if (e.key === "Enter") savePrices(); });
+      });
+
+      // Admin login
+      DOM.btnAdminLogin.addEventListener("click", () => {
+        if (isAdmin) return;
+        DOM.loginModal.classList.add("active");
+        DOM.adminPasswordInput.value = "";
+        DOM.loginError.style.display = "none";
+        DOM.adminPasswordInput.focus();
+      });
+
+      DOM.btnCancelLogin.addEventListener("click", () => { DOM.loginModal.classList.remove("active"); });
+      DOM.btnConfirmLogin.addEventListener("click", attemptLogin);
+      DOM.adminPasswordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") attemptLogin(); });
+
+      // Close modals by clicking outside
+      [DOM.loginModal, DOM.editTournamentModal, DOM.pricesModal].forEach(modal => {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) modal.classList.remove("active");
+        });
       });
 
       /* ============================================================
