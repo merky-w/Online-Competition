@@ -284,7 +284,6 @@
       .deleted-info small { color: var(--gray); }
       .deleted-actions { display: flex; gap: 5px; }
 
-      /* ===== NEW: Team Overview Styles ===== */
       .team-overview-card {
         background: white;
         border-radius: 12px;
@@ -353,6 +352,7 @@
       .stat-pill.patterns { background: #e3f2fd; color: #1565c0; }
       .stat-pill.sparring { background: #fce4ec; color: #c2185b; }
       .stat-pill.total { background: #fff3e0; color: #e65100; }
+      .stat-pill.entries { background: #f3e5f5; color: #6a1b9a; }
       .stat-pill .stat-num {
         background: white;
         padding: 2px 8px;
@@ -1297,13 +1297,12 @@
           }
         });
 
-        // Sort teams alphabetically
         const teamNames = Object.keys(teamsMap).sort();
 
         let html = `
           <div class="controls">
             <h2 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-users-cog"></i> Team Overview</h2>
-            <p style="color:var(--gray);">Total Teams: <strong>${teamNames.length}</strong> • Total Competitors: <strong>${competitors.length}</strong> entries</p>
+            <p style="color:var(--gray);">Total Teams: <strong>${teamNames.length}</strong> • Total Competitor Entries: <strong>${competitors.length}</strong></p>
           </div>`;
 
         // Summary banner
@@ -1348,6 +1347,8 @@
           const patternsCount = t.patternsCategories.size;
           const sparringCount = t.sparringCategories.size;
           const totalCats = patternsCount + sparringCount;
+          // Total entries = all category participations (including duplicates)
+          const totalEntries = t.patternsEntries.length + t.sparringEntries.length;
 
           html += `
             <div class="team-overview-card">
@@ -1356,12 +1357,15 @@
                   <div class="team-icon">${initial}</div>
                   <div>
                     <div class="team-name">${teamName}</div>
-                    <div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitor${t.competitorNames.size !== 1 ? 's' : ''}</div>
+                    <div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitor${t.competitorNames.size !== 1 ? 's' : ''} • ${totalEntries} total entries</div>
                   </div>
                 </div>
                 <div class="team-stats">
-                  <span class="stat-pill total">
-                    <i class="fas fa-layer-group"></i> Total: <span class="stat-num">${totalCats}</span>
+                  <span class="stat-pill total" title="Total unique categories">
+                    <i class="fas fa-layer-group"></i> Categories: <span class="stat-num">${totalCats}</span>
+                  </span>
+                  <span class="stat-pill entries" title="Total entries including duplicates (one person in 3 categories = 3)">
+                    <i class="fas fa-list"></i> Entries: <span class="stat-num">${totalEntries}</span>
                   </span>
                   <span class="stat-pill patterns">
                     <i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">${patternsCount}</span>
@@ -1394,13 +1398,11 @@
         const iconClass = discipline === "patterns" ? "fa-chess-board" : "fa-fist-raised";
         const tagClass = discipline === "patterns" ? "patterns-tag" : "sparring-tag";
 
-        // Filter competitors for this team and discipline
         const teamEntries = competitors.filter((c) => {
           const t = c.team || "Unassigned";
           return t === teamName && c._discipline === discipline;
         });
 
-        // Group by competitor name (unique kids)
         const byName = {};
         teamEntries.forEach((c) => {
           if (!byName[c.name]) byName[c.name] = { entries: [], gender: c.gender || "" };
@@ -1474,15 +1476,59 @@
         return `<div class="category-card"><div class="category-header">${title} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
       }
 
+      /* ============================================================
+         🔧 FIXED: renderTeamSummary now counts UNIQUE competitors per team
+         (a person in 3 categories counts as 1, not 3)
+         ============================================================ */
       function renderTeamSummary(list, type) {
-        const s = {};
-        let total = 0;
-        list.forEach((c) => { const teamName = c.team || "Unassigned"; s[teamName] = (s[teamName] || 0) + 1; total++; });
-        let h = `<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (${type})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">`;
-        const k = Object.keys(s).sort();
-        if (!k.length) { h += `<span style="color:var(--gray);grid-column:1/-1">No data.</span>`; }
-        else { k.forEach((t) => (h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">${t}</strong><span style="font-size:0.85rem;color:var(--gray)">${s[t]} members</span></div>`)); }
-        h += `</div><div style="margin-top:15px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center">Total: ${total}</div>`;
+        const uniqueByTeam = {}; // Set of unique competitor names per team
+        const entriesByTeam = {}; // total entries per team (for reference)
+        list.forEach((c) => {
+          const teamName = c.team || "Unassigned";
+          if (!uniqueByTeam[teamName]) {
+            uniqueByTeam[teamName] = new Set();
+            entriesByTeam[teamName] = 0;
+          }
+          uniqueByTeam[teamName].add(c.name);
+          entriesByTeam[teamName]++;
+        });
+
+        const teamKeys = Object.keys(uniqueByTeam).sort();
+        let totalUnique = 0;
+        let totalEntries = 0;
+        teamKeys.forEach((t) => {
+          totalUnique += uniqueByTeam[t].size;
+          totalEntries += entriesByTeam[t];
+        });
+
+        let h = `<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (${type})</h3>`;
+        h += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">`;
+
+        if (teamKeys.length === 0) {
+          h += `<span style="color:var(--gray);grid-column:1/-1">No data.</span>`;
+        } else {
+          teamKeys.forEach((t) => {
+            const uniqueCount = uniqueByTeam[t].size;
+            const entryCount = entriesByTeam[t];
+            const diffNote = entryCount > uniqueCount ? ` <span style="font-size:0.7rem;color:#e65100;">(${entryCount} entries)</span>` : '';
+            h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)">
+              <strong style="display:block">${t}</strong>
+              <span style="font-size:0.85rem;color:var(--gray)">${uniqueCount} competitor${uniqueCount !== 1 ? 's' : ''}${diffNote}</span>
+            </div>`;
+          });
+        }
+        h += `</div>`;
+
+        // Show totals
+        h += `<div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:150px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center">
+            <i class="fas fa-user-check"></i> Unique Competitors: ${totalUnique}
+          </div>
+          <div style="flex:1;min-width:150px;padding:10px;background:var(--secondary);color:white;border-radius:6px;font-weight:bold;text-align:center">
+            <i class="fas fa-list"></i> Total Entries: ${totalEntries}
+          </div>
+        </div>`;
+
         document.getElementById("teamSummary").innerHTML = h;
       }
 
