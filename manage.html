@@ -72,15 +72,24 @@
       .p-name:empty:focus::before { content: ""; }
       .p-name { min-width: 80px; min-height: 1.2em; display: inline-block; outline: none; cursor: text; }
       .p-name:focus { background-color: #fffbe6; border-radius: 2px; }
-      .player-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; padding: 2px 4px; border-radius: 4px; transition: background 0.2s; gap: 4px; cursor: grab; }
-      .player-row:active { cursor: grabbing; }
-      .player-row.dragging { opacity: 0.6; background: #ffe082 !important; transform: scale(1.02); }
-      .player-row.drag-over { background: #c8e6c9 !important; border: 2px dashed var(--success); }
+      /* NEW: Player row with drag handle */
+      .player-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; padding: 2px 4px; border-radius: 4px; transition: background 0.15s, border 0.15s, transform 0.15s; gap: 4px; cursor: pointer; border: 2px solid transparent; position: relative; }
       .player-row .player-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
       .p-name { font-weight: 600; }
       .p-team { font-size: 0.75rem; color: #666; }
+      .drag-handle { background: transparent; border: none; color: #bbb; cursor: grab; padding: 2px 4px; font-size: 0.8rem; opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; }
+      .player-row:hover .drag-handle { opacity: 1; color: var(--primary); }
+      .drag-handle:active { cursor: grabbing; }
       .delete-btn { background: var(--danger); color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
       .player-row:hover .delete-btn { opacity: 1; }
+      /* Selection state */
+      .player-row.selected { background: #fff3cd !important; border: 2px solid var(--warning) !important; box-shadow: 0 0 8px rgba(255, 193, 7, 0.5); }
+      .player-row.selected .drag-handle { opacity: 1; color: var(--warning); }
+      /* Swap target state */
+      .player-row.swap-target { background: #c8e6c9 !important; border: 2px dashed var(--success) !important; }
+      /* BYE slot selected state */
+      .match-box.bye-selected { background: #fff3cd !important; border: 2px solid var(--warning) !important; box-shadow: 0 0 8px rgba(255, 193, 7, 0.5); }
+      .match-box.drop-hover { background: #c8e6c9 !important; border: 2px dashed var(--success) !important; box-shadow: 0 0 10px rgba(40, 167, 69, 0.4); }
       .vs-divider { display: flex; align-items: center; text-align: center; margin: 4px 0; font-size: 10px; color: #999; font-weight: 700; }
       .vs-divider::before, .vs-divider::after { content: ""; flex: 1; border-bottom: 1px solid #ccc; }
       .vs-divider:not(:empty)::before { margin-right: 6px; }
@@ -127,7 +136,7 @@
       .disc-tag.patterns { background: #e3f2fd; color: #1565c0; }
       .disc-tag.sparring { background: #fce4ec; color: #c2185b; }
       .autocomplete-empty { padding: 20px; text-align: center; color: var(--gray); font-style: italic; font-size: 0.85rem; }
-      .autocomplete-hint { padding: 6px 14px; background: #fff3cd; color: #856404; font-size: 0.72rem; text-align: center; border-top: 1px dashed #ffe082; }
+      .autocomplete-hint { padding: 6px 14px; background: #e8f5e9; color: #2e7d32; font-size: 0.72rem; text-align: center; border-top: 1px dashed #a5d6a7; }
       .deleted-card { background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 15px; padding: 12px 15px; border-left: 4px solid var(--danger); display: flex; justify-content: space-between; align-items: center; }
       .deleted-info { flex: 1; }
       .deleted-info strong { display: block; color: var(--primary); }
@@ -174,14 +183,18 @@
       .toast.show { opacity: 1; transform: translateY(0); }
       .toast.success { background: var(--success); }
       .toast.error { background: var(--danger); }
+      .selection-banner { position: fixed; top: 0; left: 0; right: 0; background: var(--warning); color: #212529; padding: 8px 20px; text-align: center; font-weight: 600; font-size: 0.9rem; z-index: 997; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: none; }
+      .selection-banner.visible { display: block; }
+      .selection-banner button { background: var(--dark); color: white; border: none; padding: 4px 12px; border-radius: 4px; margin-left: 10px; cursor: pointer; font-size: 0.8rem; }
       @media print {
         @page { size: A4; margin: 10mm; }
         body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
         * { box-sizing: border-box; }
-        .nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search { display: none !important; }
+        .nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn { display: none !important; }
         .container { max-width: none; width: 100%; margin: 0; padding: 0; }
         .a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
         .p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
+        .player-row.selected, .player-row.swap-target { background: transparent !important; border: none !important; box-shadow: none !important; }
       }
       @media (max-width: 768px) {
         .parallel-container { grid-template-columns: 1fr; border-bottom: none; }
@@ -198,7 +211,12 @@
     </style>
 </head>
 <body>
-    <!-- FLOATING AUTOCOMPLETE SEARCH (top-right) -->
+    <div class="selection-banner" id="selectionBanner">
+      <i class="fas fa-hand-pointer"></i>
+      <span id="selectionBannerText">Player selected — click another player to swap, or a BYE slot to move</span>
+      <button onclick="clearSelection()">Cancel</button>
+    </div>
+
     <div class="floating-search" id="floatingSearch">
       <div class="floating-search-header">
         <i class="fas fa-search"></i>
@@ -213,11 +231,10 @@
       </div>
       <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
       <div class="autocomplete-hint">
-        <i class="fas fa-info-circle"></i> Drag a player onto an empty (BYE) slot in any bracket
+        <i class="fas fa-info-circle"></i> <b>Click</b> players in bracket to select & swap. <b>Drag</b> from here to BYE slots to add.
       </div>
     </div>
 
-    <!-- FLOATING UNDO BUTTON (bottom-right) -->
     <button class="floating-undo-btn" id="floatingUndoBtn" onclick="performUndo()" disabled title="Undo last action (Ctrl+Z)">
       <i class="fas fa-undo"></i>
       <span class="undo-count" id="undoCountBadge">0</span>
@@ -272,6 +289,21 @@
       let undoStack = [];
 
       /* ============================================================
+         SELECTION STATE for click-to-swap
+         ============================================================ */
+      let selectedPlayerEl = null; // currently selected player-row element
+      let selectedPlayerData = null; // { name, team, category, type, slotType ('p1'|'p2'), matchBoxEl }
+
+      function clearSelection() {
+        if (selectedPlayerEl) selectedPlayerEl.classList.remove("selected");
+        selectedPlayerEl = null;
+        selectedPlayerData = null;
+        document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
+        document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
+        document.getElementById("selectionBanner").classList.remove("visible");
+      }
+
+      /* ============================================================
          SAFE DB OPERATIONS
          ============================================================ */
       async function safeInsert(table, data) {
@@ -323,7 +355,7 @@
       }
 
       /* ============================================================
-         SNAPSHOT-BASED UNDO SYSTEM
+         UNDO SYSTEM
          ============================================================ */
       async function takeSnapshot(description) {
         if (!currentBracketType) return;
@@ -331,9 +363,8 @@
         for (const categoryKey in (currentGroups || {})) {
           const type = currentBracketType;
           const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
-          const { data: bracketData } = await sb.from("saved_brackets").select("*").eq("category", categoryKey).eq("bracket_type", type);
           const { data: orderData } = await sb.from(table).select("*").eq("category", categoryKey);
-          snapshots[categoryKey] = { savedBrackets: bracketData || [], categoryOrder: orderData || [] };
+          snapshots[categoryKey] = { categoryOrder: orderData || [] };
         }
 
         undoStack.push({
@@ -346,15 +377,6 @@
         });
 
         updateUndoButton();
-
-        safeInsert("undo_history", [{
-          category: "ALL",
-          bracket_type: currentBracketType,
-          action_type: "snapshot",
-          description,
-          before_state: snapshots,
-          created_at: new Date().toISOString()
-        }]);
       }
 
       function updateUndoButton() {
@@ -380,13 +402,12 @@
             const catSnap = snapshot.snapshots[categoryKey];
             const type = snapshot.bracketType;
             const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
-            await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
-            if (catSnap.savedBrackets.length > 0) await safeInsert("saved_brackets", catSnap.savedBrackets);
             await safeDelete(table, { category: categoryKey });
             if (catSnap.categoryOrder.length > 0) await safeInsert(table, catSnap.categoryOrder);
           }
           currentGroups = snapshot.groupsSnapshot;
           bracketSizeOverrides = snapshot.overridesSnapshot;
+          clearSelection();
           await renderBracketView(currentGroups, snapshot.bracketType);
           updateUndoButton();
           showToast(`✅ Undone: ${snapshot.description}`, "success");
@@ -421,8 +442,8 @@
           dropdown.innerHTML = `<div class="autocomplete-empty"><i class="fas fa-search"></i> No matches for "${term}"</div>`;
         } else {
           dropdown.innerHTML = matches.map(c => {
-            const safeName = (c.name || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            const safeTeam = (c.team || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeName = (c.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const safeTeam = (c.team || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '&quot;');
             const discClass = c._discipline === "patterns" ? "patterns" : "sparring";
             const discLabel = c._discipline === "patterns" ? "Patterns" : "Sparring";
             return `<div class="autocomplete-item" draggable="true" ondragstart="dragAutocompleteItem(event, '${safeName}', '${safeTeam}')" ondragend="this.classList.remove('dragging-item')">
@@ -459,13 +480,21 @@
       });
 
       /* ============================================================
-         DROP HANDLER for BYE/empty slots
+         DROP HANDLER for BYE/empty slots (from search)
          ============================================================ */
-      async function handleByeSlotDrop(e) {
+      function handleByeSlotDrop(e) {
         e.preventDefault();
         e.stopPropagation();
         const matchBox = e.currentTarget;
         matchBox.classList.remove("drop-hover");
+
+        // If we have a selected player, move them here
+        if (selectedPlayerData) {
+          moveSelectedPlayerToBye(matchBox);
+          return;
+        }
+
+        // Otherwise check for drag data from search
         const data = e.dataTransfer.getData("application/player");
         if (!data) return;
         let player;
@@ -474,7 +503,7 @@
         if (!page) return;
         const categoryKey = page.dataset.category;
         const type = page.dataset.type;
-        await addPlayerToCategoryFromDrag(player.name, player.team, categoryKey, type);
+        addPlayerToCategoryFromDrag(player.name, player.team, categoryKey, type);
       }
 
       function handleByeSlotDragOver(e) {
@@ -488,6 +517,16 @@
       }
 
       async function addPlayerToCategoryFromDrag(name, team, categoryKey, type) {
+        // Verify player exists in current competitors list (from final_registrations)
+        const existsInRegistrations = competitors.some(c =>
+          (c.name || "").toLowerCase() === (name || "").toLowerCase() &&
+          c._discipline === (type === "Patterns" ? "patterns" : "sparring")
+        );
+        if (!existsInRegistrations) {
+          showToast(`⚠️ "${name}" is not in the current registrations`, "error");
+          return;
+        }
+
         const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         const { data: existing } = await sb.from(table).select("name").eq("category", categoryKey).eq("name", name);
         if (existing && existing.length > 0) {
@@ -500,8 +539,8 @@
         const { error } = await sb.from(table).insert([{ name, team, category: categoryKey, position_number: nextPos }]);
         if (error) { showToast("❌ Failed to add: " + error.message, "error"); return; }
         if (currentGroups && currentGroups[categoryKey]) currentGroups[categoryKey].push({ name, team });
-        await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
         clearAutocomplete();
+        clearSelection();
         await renderBracketView(currentGroups, type);
         showToast(`✅ "${name}" added to ${categoryKey}`, "success");
       }
@@ -517,7 +556,7 @@
         await takeSnapshot(`Expand ${categoryKey} to ${newSize} slots`);
         bracketSizeOverrides[categoryKey] = newSize;
         await saveBracketSizeOverride(categoryKey, type, newSize);
-        await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
+        clearSelection();
         await renderBracketView(currentGroups, type);
         showToast(`📈 Bracket expanded to ${newSize} slots`, "success");
       }
@@ -539,7 +578,7 @@
           bracketSizeOverrides[categoryKey] = newSize;
           await saveBracketSizeOverride(categoryKey, type, newSize);
         }
-        await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
+        clearSelection();
         await renderBracketView(currentGroups, type);
         showToast(`📉 Bracket shrunk to ${newSize} slots`, "success");
       }
@@ -611,174 +650,85 @@
         return data && data.length ? data : null;
       }
 
-      async function loadSavedBracket(categoryKey, type) {
-        const { data, error } = await sb.from("saved_brackets").select("*").eq("category", categoryKey).eq("bracket_type", type).order("round_number", { ascending: true }).order("match_number", { ascending: true });
-        if (error || !data || data.length === 0) return null;
-        const rounds = [];
-        let currentRound = -1;
-        let currentMatches = [];
-        data.forEach((match) => {
-          if (match.round_number !== currentRound) {
-            if (currentRound !== -1) rounds.push(currentMatches);
-            currentRound = match.round_number;
-            currentMatches = [];
-          }
-          currentMatches.push({
-            p1: { name: match.player1_name || "", team: match.player1_team || "" },
-            p2: { name: match.player2_name || "", team: match.player2_team || "" },
-          });
-        });
-        if (currentMatches.length > 0) rounds.push(currentMatches);
-        return { rounds, totalRounds: rounds.length };
-      }
-
       /* ============================================================
-         FIXED: saveBracketStructure - correctly tracks rowspans
-         so rounds don't get duplicated/shifted when saving
-         ============================================================ */
-      async function saveBracketStructure(categoryKey, type) {
-        const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
-        if (!page) return false;
-        const table = page.querySelector(".bracket-table");
-        if (!table) return false;
-
-        const thead = table.querySelector("thead tr");
-        const totalRounds = thead ? thead.querySelectorAll("th").length : 1;
-        const rows = table.querySelectorAll("tbody tr");
-
-        const matchesToSave = [];
-        // Track remaining rowspan occupancy for each column
-        const colOccupied = new Array(totalRounds).fill(0);
-
-        rows.forEach((row) => {
-          const cells = row.querySelectorAll("td");
-          let colIndex = 0;
-
-          cells.forEach((cell) => {
-            // Skip columns still occupied by a rowspan from a previous row
-            while (colIndex < totalRounds && colOccupied[colIndex] > 0) {
-              colOccupied[colIndex]--;
-              colIndex++;
-            }
-            if (colIndex >= totalRounds) return;
-
-            const rowspan = parseInt(cell.getAttribute("rowspan") || "1", 10);
-
-            const playerRows = cell.querySelectorAll(".player-row");
-            if (playerRows.length >= 2) {
-              const p1Name = playerRows[0].querySelector(".p-name")?.innerText.trim() || "";
-              const p1Team = playerRows[0].querySelector(".p-team")?.innerText.trim() || "";
-              const p2Name = playerRows[1].querySelector(".p-name")?.innerText.trim() || "";
-              const p2Team = playerRows[1].querySelector(".p-team")?.innerText.trim() || "";
-
-              const matchNum = matchesToSave.filter(m => m.round_number === colIndex + 1).length + 1;
-
-              matchesToSave.push({
-                category: categoryKey,
-                bracket_type: type,
-                round_number: colIndex + 1,
-                match_number: matchNum,
-                player1_name: p1Name,
-                player1_team: p1Team,
-                player2_name: p2Name,
-                player2_team: p2Team,
-              });
-            }
-
-            // Mark this column as occupied for the next (rowspan - 1) rows
-            if (rowspan > 1) {
-              colOccupied[colIndex] = rowspan - 1;
-            }
-
-            colIndex++;
-          });
-        });
-
-        await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
-        if (matchesToSave.length > 0) {
-          const { error } = await sb.from("saved_brackets").insert(matchesToSave);
-          if (error) { showToast("❌ Save failed: " + error.message, "error"); return false; }
-        }
-        return true;
-      }
-
-      /* ============================================================
-         VALIDATE SAVED BRACKET AGAINST CURRENT PLAYERS
-         If saved bracket contains players not in the current category,
-         invalidate it and regenerate fresh.
+         🔑 CRITICAL FIX: generateBracketData
+         ONLY uses the list parameter (from final_registrations).
+         If there's a saved order, uses it to reorder, but only keeps
+         names that are in the current list.
          ============================================================ */
       async function generateBracketData(list, categoryKey, type) {
-        const savedBracket = await loadSavedBracket(categoryKey, type);
+        // Start with the list as-is
+        let orderedList = [...list];
 
-        if (savedBracket) {
-          const currentPlayerNames = new Set(
-            list.map(p => (p.name || "").trim().toLowerCase())
-          );
-
-          let hasStalePlayer = false;
-          let staleNames = [];
-          savedBracket.rounds.forEach(round => {
-            round.forEach(match => {
-              [match.p1, match.p2].forEach(p => {
-                if (p && p.name && p.name !== "BYE" && p.name.trim() !== "" && p.name !== "________________") {
-                  const normalizedName = p.name.trim().toLowerCase();
-                  if (!currentPlayerNames.has(normalizedName)) {
-                    hasStalePlayer = true;
-                    staleNames.push(p.name);
-                  }
-                }
-              });
-            });
-          });
-
-          if (hasStalePlayer) {
-            console.log(`⚠️ Saved bracket for "${categoryKey}" has stale players:`, staleNames);
-            console.log(`   Regenerating bracket from current category list.`);
-            await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
-            // Fall through to regenerate
-          } else {
-            // Validate saved bracket structure matches expected round counts
-            const expectedSize = getEffectiveBracketSize(categoryKey, list.length);
-            const expectedRounds = Math.log2(expectedSize);
-            if (savedBracket.totalRounds !== expectedRounds || savedBracket.rounds[0].length !== expectedSize / 2) {
-              console.log(`⚠️ Saved bracket for "${categoryKey}" has wrong structure. Regenerating.`);
-              await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
-            } else {
-              return savedBracket;
-            }
-          }
-        }
-
-        // Generate fresh bracket
-        let useList = list;
+        // Check for saved order and use it to reorder
         const savedOrder = await getSavedOrder(categoryKey, type);
         if (savedOrder && savedOrder.length > 0) {
-          useList = savedOrder.map((item) => ({ name: item.name, team: item.team, id: item.id || null }));
+          // Build a set of current player names (lowercase)
+          const currentNames = new Set(list.map(p => (p.name || "").trim().toLowerCase()));
+
+          // Filter saved order to only include names still in current list
+          const validOrder = savedOrder.filter(item => currentNames.has((item.name || "").trim().toLowerCase()));
+
+          // Build ordered list: saved order first (in order), then any new players not in saved order
+          const orderedNames = new Set(validOrder.map(item => (item.name || "").trim().toLowerCase()));
+          const orderedPlayers = validOrder.map(item => {
+            const found = list.find(p => (p.name || "").trim().toLowerCase() === (item.name || "").trim().toLowerCase());
+            return found || { name: item.name, team: item.team };
+          });
+          const newPlayers = list.filter(p => !orderedNames.has((p.name || "").trim().toLowerCase()));
+          orderedList = [...orderedPlayers, ...newPlayers];
         }
-        const size = getEffectiveBracketSize(categoryKey, useList.length);
-        if (size === 1) return { rounds: [[{ p1: useList[0] || {name:"",team:""}, p2: { name: "", team: "" } }]], totalRounds: 1 };
-        if (size === 2) return { rounds: [[{ p1: useList[0] || {name:"",team:""}, p2: useList[1] || {name:"",team:""} }]], totalRounds: 1 };
+
+        const size = getEffectiveBracketSize(categoryKey, orderedList.length);
+
+        if (size === 1) {
+          return {
+            rounds: [[{ p1: orderedList[0] || { name: "", team: "" }, p2: { name: "", team: "" } }]],
+            totalRounds: 1
+          };
+        }
+        if (size === 2) {
+          return {
+            rounds: [[{
+              p1: orderedList[0] || { name: "", team: "" },
+              p2: orderedList[1] || { name: "", team: "" }
+            }]],
+            totalRounds: 1
+          };
+        }
+
         const totalRounds = Math.log2(size);
         const rounds = [];
-        let slots;
-        if (savedOrder && savedOrder.length > 0) {
-          slots = savedOrder.map((p) => ({ name: p.name, team: p.team }));
-          while (slots.length < size) slots.push({ name: "BYE", team: "" });
-        } else {
-          const shuffled = shuffle(useList);
+
+        // Build slots: ordered list + BYE fillers
+        let slots = orderedList.map(p => ({ name: p.name, team: p.team }));
+        while (slots.length < size) slots.push({ name: "BYE", team: "" });
+
+        // Spread teams if no saved order
+        if (!savedOrder || savedOrder.length === 0) {
+          const shuffled = shuffle(orderedList);
           slots = spreadTeams(shuffled, size);
+          slots = slots.map(p => !p || !p.name ? { name: "BYE", team: "" } : p);
         }
-        slots = slots.map((p) => !p || !p.name ? { name: "BYE", team: "" } : p);
+
+        // Build round 1 matches
         const r1Matches = [];
-        for (let i = 0; i < size; i += 2) r1Matches.push({ p1: slots[i], p2: slots[i + 1] });
+        for (let i = 0; i < size; i += 2) {
+          r1Matches.push({ p1: slots[i], p2: slots[i + 1] });
+        }
         rounds.push(r1Matches);
+
+        // Build empty later rounds
         let matchCount = size / 2;
         for (let r = 1; r < totalRounds; r++) {
           matchCount = matchCount / 2;
           const currentMatches = [];
-          for (let m = 0; m < matchCount; m++) currentMatches.push({ p1: { name: "", team: "" }, p2: { name: "", team: "" } });
+          for (let m = 0; m < matchCount; m++) {
+            currentMatches.push({ p1: { name: "", team: "" }, p2: { name: "", team: "" } });
+          }
           rounds.push(currentMatches);
         }
+
         return { rounds, totalRounds };
       }
 
@@ -814,19 +764,30 @@
         else if (!silent) showToast(`✅ Order saved (${dataToSave.length} players)`, "success");
       }
 
+      /* ============================================================
+         🔑 DELETE BUTTON - uses event delegation, works reliably
+         ============================================================ */
       async function deletePlayerFromBracket(name, team, category, type) {
         if (!confirm(`Delete "${name}" from ${category}?`)) return;
         await takeSnapshot(`Delete "${name}" from ${category}`);
+
+        // Add to deleted table
         const delTable = type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
         await sb.from(delTable).insert([{ name, team, category, type, deleted_at: new Date().toISOString() }]);
+
+        // Remove from order table
         const catTable = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         await sb.from(catTable).delete().eq("category", category).eq("name", name);
-        await safeDelete("saved_brackets", { category, bracket_type: type });
+
+        // Remove from currentGroups
         if (currentGroups && currentGroups[category]) {
-          const idx = currentGroups[category].findIndex(c => c.name === name);
+          const idx = currentGroups[category].findIndex(c => (c.name || "").toLowerCase() === (name || "").toLowerCase());
           if (idx >= 0) currentGroups[category].splice(idx, 1);
         }
+
+        clearSelection();
         showToast(`🗑️ "${name}" moved to Deleted`, "success");
+        await renderBracketView(currentGroups, type);
       }
 
       async function restorePlayer(name, team, category, type) {
@@ -857,13 +818,19 @@
           if (delPatterns.length > 0) {
             html += `<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">🎭 Deleted from Patterns</h3>`;
             delPatterns.forEach((p) => {
-              html += `<div class="deleted-card"><div class="deleted-info"><strong>${p.name || "Unknown"}</strong><small>${p.team || "N/A"} • ${p.category || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${(p.name || "").replace(/'/g, "\\'")}', '${(p.team || "").replace(/'/g, "\\'")}', '${(p.category || "").replace(/'/g, "\\'")}', 'Patterns')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
+              const safeName = (p.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+              const safeTeam = (p.team || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+              const safeCat = (p.category || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+              html += `<div class="deleted-card"><div class="deleted-info"><strong>${p.name || "Unknown"}</strong><small>${p.team || "N/A"} • ${p.category || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${safeName}', '${safeTeam}', '${safeCat}', 'Patterns')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
             });
           }
           if (delSparring.length > 0) {
             html += `<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">🥋 Deleted from Sparring</h3>`;
             delSparring.forEach((p) => {
-              html += `<div class="deleted-card"><div class="deleted-info"><strong>${p.name || "Unknown"}</strong><small>${p.team || "N/A"} • ${p.category || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${(p.name || "").replace(/'/g, "\\'")}', '${(p.team || "").replace(/'/g, "\\'")}', '${(p.category || "").replace(/'/g, "\\'")}', 'Sparring')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
+              const safeName = (p.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+              const safeTeam = (p.team || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+              const safeCat = (p.category || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+              html += `<div class="deleted-card"><div class="deleted-info"><strong>${p.name || "Unknown"}</strong><small>${p.team || "N/A"} • ${p.category || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${safeName}', '${safeTeam}', '${safeCat}', 'Sparring')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
             });
           }
         }
@@ -871,60 +838,218 @@
       }
 
       /* ============================================================
-         DRAG & DROP with AUTO-SAVE
+         🔑 NEW DRAG & DROP + CLICK-TO-SWAP SYSTEM
          ============================================================ */
-      function initDragAndDrop() {
-        const playerRows = document.querySelectorAll('.player-row[data-draggable="true"]');
-        playerRows.forEach((row) => {
-          row.addEventListener("dragstart", handleDragStart);
-          row.addEventListener("dragend", handleDragEnd);
-          row.addEventListener("dragover", handleDragOver);
-          row.addEventListener("dragenter", handleDragEnter);
-          row.addEventListener("dragleave", handleDragLeave);
-          row.addEventListener("drop", handleDrop);
+      function initInteractionHandlers() {
+        // Event delegation on the content area
+        const content = document.getElementById("content");
+        if (!content) return;
+
+        // Remove old listeners by replacing node (clean slate)
+        // We use event delegation so no need to attach per-element
+
+        // Click on player-row (not on delete-btn, drag-handle, or p-name when editing)
+        content.addEventListener("click", handleContentClick);
+
+        // Click on BYE slot when player is selected
+        content.addEventListener("click", handleByeClick);
+
+        // Escape to clear selection
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") clearSelection();
         });
       }
-      function handleDragStart(e) { e.target.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", e.target.dataset.playerId); }
-      function handleDragEnd(e) { e.target.classList.remove("dragging"); document.querySelectorAll(".player-row.drag-over").forEach((el) => el.classList.remove("drag-over")); }
-      function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; return false; }
-      function handleDragEnter(e) { e.preventDefault(); if (e.target.classList.contains("player-row") && !e.target.classList.contains("dragging")) e.target.classList.add("drag-over"); }
-      function handleDragLeave(e) { if (e.target.classList.contains("player-row")) e.target.classList.remove("drag-over"); }
-      function handleDrop(e) {
-        e.preventDefault(); e.stopPropagation();
-        const draggedId = e.dataTransfer.getData("text/plain");
-        const targetRow = e.target.closest(".player-row");
-        if (!targetRow || targetRow.classList.contains("dragging")) return;
-        targetRow.classList.remove("drag-over");
-        const draggedRow = document.querySelector(`.player-row[data-player-id="${draggedId}"]`);
-        if (!draggedRow || draggedRow === targetRow) return;
-        swapPlayerRows(draggedRow, targetRow);
+
+      function handleContentClick(e) {
+        // Ignore clicks on delete button
+        const deleteBtn = e.target.closest(".delete-btn");
+        if (deleteBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const row = deleteBtn.closest(".player-row");
+          if (!row) return;
+          const name = row.dataset.playerName;
+          const team = row.dataset.playerTeam;
+          const category = row.dataset.category;
+          const type = row.dataset.bracketType;
+          if (name && name !== "BYE" && name !== "________________") {
+            deletePlayerFromBracket(name, team, category, type);
+          }
+          return;
+        }
+
+        // Ignore clicks on drag handle
+        if (e.target.closest(".drag-handle")) return;
+
+        // Ignore clicks on contenteditable name when focused
+        const pName = e.target.closest(".p-name");
+        if (pName && pName.isContentEditable) {
+          // Let the contenteditable work normally
+          return;
+        }
+
+        const playerRow = e.target.closest(".player-row");
+        if (!playerRow) return;
+
+        const name = playerRow.dataset.playerName;
+        const team = playerRow.dataset.playerTeam;
+        const category = playerRow.dataset.category;
+        const type = playerRow.dataset.bracketType;
+
+        // Ignore BYE slots for selection
+        if (!name || name === "BYE" || name === "________________") return;
+
+        // If nothing is selected, select this player
+        if (!selectedPlayerEl) {
+          selectedPlayerEl = playerRow;
+          selectedPlayerData = {
+            name, team, category, type,
+            rowEl: playerRow
+          };
+          playerRow.classList.add("selected");
+          document.getElementById("selectionBannerText").textContent =
+            `Selected: "${name}" — click another player to swap, or drag handle to move`;
+          document.getElementById("selectionBanner").classList.add("visible");
+          return;
+        }
+
+        // If clicking the same player, deselect
+        if (playerRow === selectedPlayerEl) {
+          clearSelection();
+          return;
+        }
+
+        // If clicking a player in the SAME category, swap them
+        if (category === selectedPlayerData.category && type === selectedPlayerData.type) {
+          performSwap(selectedPlayerEl, playerRow, category, type);
+          return;
+        }
+
+        // Different category - switch selection
+        clearSelection();
+        selectedPlayerEl = playerRow;
+        selectedPlayerData = { name, team, category, type, rowEl: playerRow };
+        playerRow.classList.add("selected");
+        document.getElementById("selectionBannerText").textContent =
+          `Selected: "${name}" — click another player to swap`;
+        document.getElementById("selectionBanner").classList.add("visible");
       }
 
-      async function swapPlayerRows(row1, row2) {
+      function handleByeClick(e) {
+        if (!selectedPlayerData) return;
+        const matchBox = e.target.closest(".match-box");
+        if (!matchBox) return;
+        // Only handle BYE or empty slots
+        if (!matchBox.classList.contains("bye") && !matchBox.classList.contains("empty")) return;
+        // Don't trigger if clicking on a player row inside
+        if (e.target.closest(".player-row")) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        moveSelectedPlayerToBye(matchBox);
+      }
+
+      async function moveSelectedPlayerToBye(matchBox) {
+        if (!selectedPlayerData) return;
+        const page = matchBox.closest(".a4-page");
+        if (!page) return;
+        const targetCategory = page.dataset.category;
+        const targetType = page.dataset.type;
+
+        // Find the BYE player-row inside this match-box that we'll replace
+        const byeRow = matchBox.querySelector('.player-row[data-player-name="BYE"]') ||
+                       matchBox.querySelector('.player-row .p-name:empty')?.closest(".player-row");
+
+        if (!byeRow) {
+          showToast("⚠️ No empty slot found", "error");
+          return;
+        }
+
+        const srcName = selectedPlayerData.name;
+        const srcTeam = selectedPlayerData.team;
+        const srcCategory = selectedPlayerData.category;
+        const srcType = selectedPlayerData.type;
+        const srcEl = selectedPlayerData.rowEl;
+
+        await takeSnapshot(`Move "${srcName}" to new position`);
+
+        // Update DOM
+        const srcNameEl = srcEl.querySelector(".p-name");
+        const srcTeamEl = srcEl.querySelector(".p-team");
+        const byeNameEl = byeRow.querySelector(".p-name");
+        const byeTeamEl = byeRow.querySelector(".p-team");
+
+        // Set the BYE slot to the player's data
+        byeNameEl.innerText = srcName;
+        byeTeamEl.innerText = srcTeam || "N/A";
+        byeRow.dataset.playerName = srcName;
+        byeRow.dataset.playerTeam = srcTeam || "";
+
+        // Set the source slot to BYE
+        srcNameEl.innerText = "BYE";
+        srcTeamEl.innerText = "N/A";
+        srcEl.dataset.playerName = "BYE";
+        srcEl.dataset.playerTeam = "";
+
+        // Update match-box classes
+        const srcMatchBox = srcEl.closest(".match-box");
+        if (srcMatchBox) {
+          srcMatchBox.classList.add("bye");
+          srcMatchBox.classList.remove("empty");
+          srcMatchBox.setAttribute("ondragover", "handleByeSlotDragOver(event)");
+          srcMatchBox.setAttribute("ondragleave", "handleByeSlotDragLeave(event)");
+          srcMatchBox.setAttribute("ondrop", "handleByeSlotDrop(event)");
+        }
+        matchBox.classList.remove("bye", "empty", "bye-selected");
+        matchBox.removeAttribute("ondragover");
+        matchBox.removeAttribute("ondragleave");
+        matchBox.removeAttribute("ondrop");
+
+        // Flash effect
+        byeRow.style.background = "#c8e6c9";
+        srcEl.style.background = "#c8e6c9";
+        setTimeout(() => { byeRow.style.background = ""; srcEl.style.background = ""; }, 400);
+
+        clearSelection();
+
+        // Save order
+        await saveCategoryOrder(srcCategory, srcType, true);
+        if (srcCategory !== targetCategory) {
+          await saveCategoryOrder(targetCategory, targetType, true);
+        }
+
+        showToast(`✅ "${srcName}" moved`, "success");
+      }
+
+      async function performSwap(row1, row2, category, type) {
         const name1 = row1.querySelector(".p-name").innerText;
         const team1 = row1.querySelector(".p-team").innerText;
         const name2 = row2.querySelector(".p-name").innerText;
         const team2 = row2.querySelector(".p-team").innerText;
-        if ((!name1 || name1 === "BYE") && (!name2 || name2 === "BYE")) return;
 
-        const category = row1.dataset.category;
-        const bracketType = row1.dataset.bracketType;
-        if (category && bracketType) {
-          await takeSnapshot(`Swap "${name1 || 'empty'}" ↔ "${name2 || 'empty'}"`);
-        }
+        await takeSnapshot(`Swap "${name1}" ↔ "${name2}"`);
 
+        // Swap data attributes
+        row1.dataset.playerName = name2;
+        row1.dataset.playerTeam = team2;
+        row2.dataset.playerName = name1;
+        row2.dataset.playerTeam = team1;
+
+        // Swap displayed text
         row1.querySelector(".p-name").innerText = name2;
         row2.querySelector(".p-name").innerText = name1;
         row1.querySelector(".p-team").innerText = team2;
         row2.querySelector(".p-team").innerText = team1;
+
+        // Flash effect
         row1.style.background = "#c8e6c9";
         row2.style.background = "#c8e6c9";
-        setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 300);
+        setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 400);
 
-        if (category && bracketType) {
-          await saveCategoryOrder(category, bracketType, true);
-          await saveBracketStructure(category, bracketType);
-        }
+        clearSelection();
+
+        // Auto-save order
+        await saveCategoryOrder(category, type, true);
       }
 
       /* ============================================================
@@ -935,6 +1060,7 @@
         currentBracketType = type;
         undoStack = [];
         updateUndoButton();
+        clearSelection();
 
         let html = `
           <div class="bracket-controls-bar">
@@ -975,7 +1101,6 @@
 <div style="text-align:right;margin-top:5px">
 <button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory('${safeKey}', '${type}')"><i class="fas fa-random"></i> Shuffle</button>
 <button class="btn btn-success btn-sm" onclick="saveCategoryOrder('${safeKey}', '${type}')"><i class="fas fa-list-ol"></i> Save Order</button>
-<button class="btn btn-primary btn-sm" onclick="saveBracketStructure('${safeKey}', '${type}')"><i class="fas fa-sitemap"></i> Save Bracket</button>
 </div>
 <div class="bracket-header-actions">
   <button class="btn btn-remove btn-sm" onclick="decreaseBracketSize('${safeKey}', '${type}')"><i class="fas fa-minus"></i> Smaller</button>
@@ -1002,12 +1127,29 @@
                 const p2Id = `p2-${categoryIndex}-${r}-${matchIndex}-1`;
                 const dropAttrs = (isBye || isEmpty) ? `ondragover="handleByeSlotDragOver(event)" ondragleave="handleByeSlotDragLeave(event)" ondrop="handleByeSlotDrop(event)"` : "";
                 html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}" ${dropAttrs}>`;
-                html += `<div class="player-row" data-draggable="true" data-player-id="${p1Id}" data-category="${key}" data-bracket-type="${type}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
-                if (p1.name && p1.name !== "BYE" && p1.name !== "________________") html += `<button class="delete-btn" onclick="deletePlayerFromBracket('${p1.name.replace(/'/g, "\\'")}', '${(p1.team || "").replace(/'/g, "\\'")}', '${key.replace(/'/g, "\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
-                html += `</div><div class="vs-divider">VS</div>`;
-                html += `<div class="player-row" data-draggable="true" data-player-id="${p2Id}" data-category="${key}" data-bracket-type="${type}" draggable="true"><div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || "N/A"}</span></div>`;
-                if (p2.name && p2.name !== "BYE" && p2.name !== "________________") html += `<button class="delete-btn" onclick="deletePlayerFromBracket('${p2.name.replace(/'/g, "\\'")}', '${(p2.team || "").replace(/'/g, "\\'")}', '${key.replace(/'/g, "\\'")}', '${type}')"><i class="fas fa-times"></i></button>`;
+
+                // Player 1
+                const p1IsBye = p1.name === "BYE" || !p1.name;
+                const p1SafeName = (p1.name || "").replace(/"/g, '&quot;');
+                const p1SafeTeam = (p1.team || "").replace(/"/g, '&quot;');
+                html += `<div class="player-row" data-player-id="${p1Id}" data-player-name="${p1SafeName}" data-player-team="${p1SafeTeam}" data-category="${key}" data-bracket-type="${type}">`;
+                html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
+                html += `<div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
+                if (!p1IsBye && p1.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
+                html += `</div>`;
+
+                html += `<div class="vs-divider">VS</div>`;
+
+                // Player 2
+                const p2IsBye = p2.name === "BYE" || !p2.name;
+                const p2SafeName = (p2.name || "").replace(/"/g, '&quot;');
+                const p2SafeTeam = (p2.team || "").replace(/"/g, '&quot;');
+                html += `<div class="player-row" data-player-id="${p2Id}" data-player-name="${p2SafeName}" data-player-team="${p2SafeTeam}" data-category="${key}" data-bracket-type="${type}">`;
+                html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
+                html += `<div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || "N/A"}</span></div>`;
+                if (!p2IsBye && p2.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
                 html += `</div></div>`;
+
                 if (isLastRound) {
                   html += `<div style="margin-top:8px;text-align:center;width:100%"><div style="font-size:10px;color:var(--secondary);font-weight:bold;margin-bottom:4px">WINNER</div><div contenteditable="true" style="border-bottom:1px solid #000;min-height:18px;margin-bottom:8px"></div><div style="font-size:10px;font-weight:bold;margin-bottom:4px">PLACEMENTS</div><div style="display:flex;flex-direction:column;gap:4px;font-size:11px"><div style="display:flex;align-items:center"><span style="width:20px">1.</span><div contenteditable="true" style="flex:1;border-bottom:1px solid #000;min-height:16px"></div></div><div style="display:flex;align-items:center"><span style="width:20px">2.</span><div contenteditable="true" style="flex:1;border-bottom:1px solid #000;min-height:16px"></div></div><div style="display:flex;align-items:center"><span style="width:20px">3.</span><div contenteditable="true" style="flex:1;border-bottom:1px solid #000;min-height:16px"></div></div><div style="display:flex;align-items:center"><span style="width:20px">3.</span><div contenteditable="true" style="flex:1;border-bottom:1px solid #000;min-height:16px"></div></div></div></div>`;
                 }
@@ -1020,7 +1162,131 @@
           categoryIndex++;
         }
         document.getElementById("content").innerHTML = html;
-        setTimeout(() => { initDragAndDrop(); initContentEditableTracking(); }, 100);
+        setTimeout(() => {
+          initInteractionHandlers();
+          initContentEditableTracking();
+          initDragHandleDrag();
+        }, 100);
+      }
+
+      /* ============================================================
+         DRAG HANDLE - drag a player to another slot
+         ============================================================ */
+      let dragHandleState = null;
+
+      function initDragHandleDrag() {
+        document.querySelectorAll(".drag-handle").forEach(handle => {
+          handle.addEventListener("mousedown", startDragHandle);
+        });
+      }
+
+      function startDragHandle(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const row = e.target.closest(".player-row");
+        if (!row) return;
+        const name = row.dataset.playerName;
+        if (!name || name === "BYE" || name === "________________") return;
+
+        clearSelection();
+
+        // Create floating ghost
+        const ghost = row.cloneNode(true);
+        ghost.style.position = "fixed";
+        ghost.style.pointerEvents = "none";
+        ghost.style.zIndex = "10000";
+        ghost.style.width = row.offsetWidth + "px";
+        ghost.style.opacity = "0.85";
+        ghost.style.background = "#fff3cd";
+        ghost.style.border = "2px solid var(--warning)";
+        ghost.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+        ghost.style.transform = "rotate(2deg)";
+        document.body.appendChild(ghost);
+
+        dragHandleState = {
+          sourceRow: row,
+          ghost: ghost,
+          offsetX: e.clientX - row.getBoundingClientRect().left,
+          offsetY: e.clientY - row.getBoundingClientRect().top,
+          name: row.dataset.playerName,
+          team: row.dataset.playerTeam,
+          category: row.dataset.category,
+          type: row.dataset.bracketType
+        };
+
+        document.addEventListener("mousemove", onDragHandleMove);
+        document.addEventListener("mouseup", onDragHandleEnd);
+      }
+
+      function onDragHandleMove(e) {
+        if (!dragHandleState) return;
+        dragHandleState.ghost.style.left = (e.clientX - dragHandleState.offsetX) + "px";
+        dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
+
+        // Highlight potential targets
+        document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
+        document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
+
+        const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
+        if (!elemBelow) return;
+
+        const targetRow = elemBelow.closest(".player-row");
+        if (targetRow && targetRow !== dragHandleState.sourceRow) {
+          const tName = targetRow.dataset.playerName;
+          if (tName && tName !== "BYE" && tName !== "________________") {
+            targetRow.classList.add("swap-target");
+          }
+        }
+
+        const matchBox = elemBelow.closest(".match-box");
+        if (matchBox && (matchBox.classList.contains("bye") || matchBox.classList.contains("empty"))) {
+          matchBox.classList.add("bye-selected");
+        }
+      }
+
+      async function onDragHandleEnd(e) {
+        document.removeEventListener("mousemove", onDragHandleMove);
+        document.removeEventListener("mouseup", onDragHandleEnd);
+
+        if (!dragHandleState) return;
+
+        dragHandleState.ghost.remove();
+        document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
+        document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
+
+        const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
+        const state = dragHandleState;
+        dragHandleState = null;
+
+        if (!elemBelow) return;
+
+        // Try swap with another player
+        const targetRow = elemBelow.closest(".player-row");
+        if (targetRow && targetRow !== state.sourceRow) {
+          const tName = targetRow.dataset.playerName;
+          if (tName && tName !== "BYE" && tName !== "________________") {
+            // Same category = swap
+            if (targetRow.dataset.category === state.category && targetRow.dataset.bracketType === state.type) {
+              await performSwap(state.sourceRow, targetRow, state.category, state.type);
+              return;
+            }
+          }
+        }
+
+        // Try move to BYE slot
+        const matchBox = elemBelow.closest(".match-box");
+        if (matchBox && (matchBox.classList.contains("bye") || matchBox.classList.contains("empty"))) {
+          selectedPlayerEl = state.sourceRow;
+          selectedPlayerData = {
+            name: state.name,
+            team: state.team,
+            category: state.category,
+            type: state.type,
+            rowEl: state.sourceRow
+          };
+          await moveSelectedPlayerToBye(matchBox);
+          return;
+        }
       }
 
       function performInlineSearch(term) {
@@ -1065,10 +1331,11 @@
               const row = this.closest(".player-row");
               const category = row ? row.dataset.category : "";
               const bracketType = row ? row.dataset.bracketType : "";
+              // Update data attribute
+              if (row) row.dataset.playerName = newVal;
               if (category && bracketType) {
                 await takeSnapshot(`Edit name "${oldVal}" → "${newVal}"`);
                 await saveCategoryOrder(category, bracketType, true);
-                await saveBracketStructure(category, bracketType);
               }
             }
           });
@@ -1080,7 +1347,7 @@
         await takeSnapshot(`Shuffle ${categoryKey}`);
         const newGroups = { ...currentGroups };
         newGroups[categoryKey] = shuffle([...newGroups[categoryKey]]);
-        await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
+        clearSelection();
         await renderBracketView(newGroups, type);
       }
 
