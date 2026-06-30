@@ -85,7 +85,6 @@
       .player-row.selected .drag-handle { opacity: 1; color: var(--warning); }
       .player-row.swap-target { background: #c8e6c9 !important; border: 2px dashed var(--success) !important; }
       .match-box.bye-selected { background: #fff3cd !important; border: 2px solid var(--warning) !important; box-shadow: 0 0 8px rgba(255, 193, 7, 0.5); }
-      .match-box.drop-hover { background: #c8e6c9 !important; border: 2px dashed var(--success) !important; box-shadow: 0 0 10px rgba(40, 167, 69, 0.4); }
       .vs-divider { display: flex; align-items: center; text-align: center; margin: 4px 0; font-size: 10px; color: #999; font-weight: 700; }
       .vs-divider::before, .vs-divider::after { content: ""; flex: 1; border-bottom: 1px solid #ccc; }
       .vs-divider:not(:empty)::before { margin-right: 6px; }
@@ -335,10 +334,13 @@
       async function loadBracketSizeOverrides() {
         try {
           const { data, error } = await sb.from("bracket_overrides").select("*");
-          if (error) return;
+          if (error) { bracketSizeOverrides = {}; return; }
           bracketSizeOverrides = {};
           (data || []).forEach(row => { bracketSizeOverrides[row.category] = row.forced_size; });
-        } catch (err) { console.warn("Could not load bracket overrides:", err); }
+        } catch (err) { 
+          console.warn("Could not load bracket overrides (table may not exist):", err); 
+          bracketSizeOverrides = {};
+        }
       }
 
       async function takeSnapshot(description) {
@@ -460,6 +462,7 @@
         }
       });
 
+      /* 🔑 FIXED: handleByeSlotDrop now passes the SPECIFIC player row clicked */
       function handleByeSlotDrop(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -467,7 +470,9 @@
         matchBox.classList.remove("drop-hover");
 
         if (selectedPlayerData) {
-          moveSelectedPlayerToBye(matchBox);
+          // Find which specific slot was clicked (p1 or p2)
+          const clickedRow = e.target.closest(".player-row");
+          moveSelectedPlayerToBye(matchBox, clickedRow);
           return;
         }
 
@@ -612,6 +617,7 @@
         return "€" + Number(amount).toFixed(2);
       }
 
+      /* 🔑 FIXED: getSavedOrder returns ALL entries including round 2+ */
       async function getSavedOrder(categoryKey, type) {
         const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         const { data, error } = await sb.from(table).select("*").eq("category", categoryKey).order("position_number", { ascending: true });
@@ -619,17 +625,32 @@
         return data && data.length ? data : null;
       }
 
+      /* 🔑 FIXED: generateBracketData now restores Round 2+ players from saved positions */
       async function generateBracketData(list, categoryKey, type) {
         let orderedList = [...list];
-
         const savedOrder = await getSavedOrder(categoryKey, type);
+        
+        // Separate round 1 entries (position < 10000) from later rounds
+        const round1Entries = [];
+        const laterRoundEntries = [];
+        
         if (savedOrder && savedOrder.length > 0) {
-          const currentNames = new Set(list.map(p => (p.name || "").trim().toLowerCase()));
-          const validOrder = savedOrder.filter(item => {
+          savedOrder.forEach(item => {
             const pos = item.position_number || 0;
-            if (pos >= 10000) return false;
-            return currentNames.has((item.name || "").trim().toLowerCase());
+            if (pos >= 10000) {
+              laterRoundEntries.push(item);
+            } else {
+              round1Entries.push(item);
+            }
           });
+        }
+
+        // Apply round 1 saved order
+        if (round1Entries.length > 0) {
+          const currentNames = new Set(list.map(p => (p.name || "").trim().toLowerCase()));
+          const validOrder = round1Entries.filter(item => 
+            currentNames.has((item.name || "").trim().toLowerCase())
+          );
 
           const orderedNames = new Set(validOrder.map(item => (item.name || "").trim().toLowerCase()));
           const orderedPlayers = validOrder.map(item => {
@@ -645,7 +666,8 @@
         if (size === 1) {
           return {
             rounds: [[{ p1: orderedList[0] || { name: "", team: "" }, p2: { name: "", team: "" } }]],
-            totalRounds: 1
+            totalRounds: 1,
+            laterRoundEntries: []
           };
         }
         if (size === 2) {
@@ -654,7 +676,8 @@
               p1: orderedList[0] || { name: "", team: "" },
               p2: orderedList[1] || { name: "", team: "" }
             }]],
-            totalRounds: 1
+            totalRounds: 1,
+            laterRoundEntries: []
           };
         }
 
@@ -664,7 +687,7 @@
         let slots = orderedList.map(p => ({ name: p.name, team: p.team }));
         while (slots.length < size) slots.push({ name: "BYE", team: "" });
 
-        if (!savedOrder || savedOrder.length === 0) {
+        if (!savedOrder || round1Entries.length === 0) {
           const shuffled = shuffle(orderedList);
           slots = spreadTeams(shuffled, size);
           slots = slots.map(p => !p || !p.name ? { name: "BYE", team: "" } : p);
@@ -676,6 +699,7 @@
         }
         rounds.push(r1Matches);
 
+        // Build empty later rounds, then populate from saved data
         let matchCount = size / 2;
         for (let r = 1; r < totalRounds; r++) {
           matchCount = matchCount / 2;
@@ -686,10 +710,27 @@
           rounds.push(currentMatches);
         }
 
-        return { rounds, totalRounds };
+        // 🔑 Populate later rounds from saved entries
+        laterRoundEntries.forEach(entry => {
+          const pos = entry.position_number;
+          const round = Math.floor(pos / 10000) - 1; // position 20000 = round 1 (0-indexed round 2)
+          const matchAndSlot = pos % 10000;
+          const match = Math.floor(matchAndSlot / 100) - 1;
+          const slot = matchAndSlot % 100; // 0 = p1, 1 = p2
+          
+          if (round >= 1 && round < totalRounds && match >= 0 && match < rounds[round].length) {
+            if (slot === 0) {
+              rounds[round][match].p1 = { name: entry.name, team: entry.team || "" };
+            } else if (slot === 1) {
+              rounds[round][match].p2 = { name: entry.name, team: entry.team || "" };
+            }
+          }
+        });
+
+        return { rounds, totalRounds, laterRoundEntries };
       }
 
-      /* 🔑 FIXED: Save ALL rounds, not just round 1 */
+      /* 🔑 FIXED: saveCategoryOrder saves ALL rounds with encoded positions */
       async function saveCategoryOrder(categoryKey, type, silent = false) {
         const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
@@ -722,14 +763,13 @@
             
             if (!name || name === "BYE" || name === "________________" || name === "") return;
             
-            // Encode position: round * 10000 + match * 100 + slot
-            // Round 1 uses positions 1-9999 for backward compatibility
+            // Position encoding:
+            // Round 1 (round=0): sequential 1, 2, 3...
+            // Round 2+ (round>=1): (round+1)*10000 + (match+1)*100 + slotIndex
             let position;
             if (round === 0) {
-              // Round 1: use simple sequential numbering
               position = dataToSave.filter(d => d.position_number < 10000).length + 1;
             } else {
-              // Round 2+: use encoded position
               position = (round + 1) * 10000 + (match + 1) * 100 + slotIndex;
             }
             
@@ -759,7 +799,6 @@
         }
       }
 
-      /* 🔑 NEW: Save ALL categories at once */
       async function saveAllCategories(type) {
         const pages = document.querySelectorAll(`.a4-page[data-type="${type}"]`);
         if (pages.length === 0) {
@@ -934,26 +973,39 @@
         document.getElementById("selectionBanner").classList.add("visible");
       }
 
+      /* 🔑 FIXED: handleByeClick passes the specific clicked row */
       function handleByeClick(e) {
         if (!selectedPlayerData) return;
         const matchBox = e.target.closest(".match-box");
         if (!matchBox) return;
         if (!matchBox.classList.contains("bye") && !matchBox.classList.contains("empty")) return;
-        if (e.target.closest(".player-row")) return;
+        
+        const clickedRow = e.target.closest(".player-row");
+        if (!clickedRow) return; // must click on a specific player-row slot
+        
+        // Don't trigger if clicking on the selected player itself
+        if (clickedRow === selectedPlayerEl) return;
+        
+        // Only allow clicking on BYE/empty slots
+        const clickedName = clickedRow.dataset.playerName;
+        if (clickedName && clickedName !== "BYE" && clickedName !== "________________" && clickedName !== "") return;
 
         e.preventDefault();
         e.stopPropagation();
-        moveSelectedPlayerToBye(matchBox);
+        moveSelectedPlayerToBye(matchBox, clickedRow);
       }
 
-      async function moveSelectedPlayerToBye(matchBox) {
+      /* 🔑 FIXED: moveSelectedPlayerToBye now uses the SPECIFIC target row (p1 or p2) */
+      async function moveSelectedPlayerToBye(matchBox, targetRow) {
         if (!selectedPlayerData) return;
         const page = matchBox.closest(".a4-page");
         if (!page) return;
         const targetCategory = page.dataset.category;
         const targetType = page.dataset.type;
 
-        const byeRow = matchBox.querySelector('.player-row[data-player-name="BYE"]') ||
+        // Use the specific row that was clicked, or find first BYE as fallback
+        const byeRow = targetRow || 
+                       matchBox.querySelector('.player-row[data-player-name="BYE"]') ||
                        matchBox.querySelector('.player-row .p-name:empty')?.closest(".player-row");
 
         if (!byeRow) {
@@ -988,14 +1040,18 @@
         if (srcMatchBox) {
           srcMatchBox.classList.add("bye");
           srcMatchBox.classList.remove("empty");
-          srcMatchBox.setAttribute("ondragover", "handleByeSlotDragOver(event)");
-          srcMatchBox.setAttribute("ondragleave", "handleByeSlotDragLeave(event)");
-          srcMatchBox.setAttribute("ondrop", "handleByeSlotDrop(event)");
         }
-        matchBox.classList.remove("bye", "empty", "bye-selected");
-        matchBox.removeAttribute("ondragover");
-        matchBox.removeAttribute("ondragleave");
-        matchBox.removeAttribute("ondrop");
+        // Target match-box: only remove bye/empty if BOTH slots are now filled
+        const targetP1 = matchBox.querySelector('.player-row:nth-child(1)');
+        const targetP2 = matchBox.querySelector('.player-row:nth-child(3)') || 
+                         Array.from(matchBox.querySelectorAll('.player-row'))[1];
+        const allFilled = Array.from(matchBox.querySelectorAll('.player-row')).every(r => {
+          const n = r.dataset.playerName;
+          return n && n !== "BYE" && n !== "________________" && n !== "";
+        });
+        if (allFilled) {
+          matchBox.classList.remove("bye", "empty", "bye-selected");
+        }
 
         byeRow.style.background = "#c8e6c9";
         srcEl.style.background = "#c8e6c9";
@@ -1110,14 +1166,17 @@
                 const isEmpty = !p1.name && !p2.name;
                 const p1Id = `p1-${categoryIndex}-${r}-${matchIndex}-0`;
                 const p2Id = `p2-${categoryIndex}-${r}-${matchIndex}-1`;
-                const dropAttrs = (isBye || isEmpty) ? `ondragover="handleByeSlotDragOver(event)" ondragleave="handleByeSlotDragLeave(event)" ondrop="handleByeSlotDrop(event)"` : "";
+                // 🔑 Allow drop on ANY slot that is BYE/empty (not just the whole match-box)
+                const p1IsBye = p1.name === "BYE" || !p1.name;
+                const p2IsBye = p2.name === "BYE" || !p2.name;
+                const matchIsDroppable = isBye || isEmpty;
+                const dropAttrs = matchIsDroppable ? `ondragover="handleByeSlotDragOver(event)" ondragleave="handleByeSlotDragLeave(event)" ondrop="handleByeSlotDrop(event)"` : "";
                 
                 html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}" data-round="${r}" data-match="${matchIndex}" ${dropAttrs}>`;
 
-                const p1IsBye = p1.name === "BYE" || !p1.name;
                 const p1SafeName = (p1.name || "").replace(/"/g, '&quot;');
                 const p1SafeTeam = (p1.team || "").replace(/"/g, '&quot;');
-                html += `<div class="player-row" data-player-id="${p1Id}" data-player-name="${p1SafeName}" data-player-team="${p1SafeTeam}" data-category="${key}" data-bracket-type="${type}">`;
+                html += `<div class="player-row" data-player-id="${p1Id}" data-player-name="${p1SafeName}" data-player-team="${p1SafeTeam}" data-category="${key}" data-bracket-type="${type}" data-slot="p1">`;
                 html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
                 html += `<div class="player-info"><span class="p-name" contenteditable="true">${p1.name}</span><span class="p-team">${p1.team || "N/A"}</span></div>`;
                 if (!p1IsBye && p1.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
@@ -1125,10 +1184,9 @@
 
                 html += `<div class="vs-divider">VS</div>`;
 
-                const p2IsBye = p2.name === "BYE" || !p2.name;
                 const p2SafeName = (p2.name || "").replace(/"/g, '&quot;');
                 const p2SafeTeam = (p2.team || "").replace(/"/g, '&quot;');
-                html += `<div class="player-row" data-player-id="${p2Id}" data-player-name="${p2SafeName}" data-player-team="${p2SafeTeam}" data-category="${key}" data-bracket-type="${type}">`;
+                html += `<div class="player-row" data-player-id="${p2Id}" data-player-name="${p2SafeName}" data-player-team="${p2SafeTeam}" data-category="${key}" data-bracket-type="${type}" data-slot="p2">`;
                 html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
                 html += `<div class="player-info"><span class="p-name" contenteditable="true">${p2.name}</span><span class="p-team">${p2.team || "N/A"}</span></div>`;
                 if (!p2IsBye && p2.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
@@ -1260,7 +1318,8 @@
             type: state.type,
             rowEl: state.sourceRow
           };
-          await moveSelectedPlayerToBye(matchBox);
+          // 🔑 Pass the specific row being hovered
+          await moveSelectedPlayerToBye(matchBox, targetRow);
           return;
         }
       }
