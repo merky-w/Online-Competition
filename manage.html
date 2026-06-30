@@ -1,13 +1,3 @@
-Looking at your errors, I can see the main issues:
-
-1. **Syntax error**: There's a stray `<script>` block at the bottom with example code `[...].catch()` that's invalid JavaScript
-2. **Missing tables**: `bracket_overrides` and `undo_history` don't exist in Supabase (but errors are handled gracefully)
-3. **Save bug**: The `saveBracketStructure` function treats the single table as multiple rounds, causing all matches to save as round 1
-4. **Random people in bracket**: The stale bracket validation is already in place but the save/load cycle was corrupting data
-
-Here's the complete fixed code:
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -535,13 +525,14 @@ Here's the complete fixed code:
       async function decreaseBracketSize(categoryKey, type) {
         const list = currentGroups[categoryKey] || [];
         const currentSize = getEffectiveBracketSize(categoryKey, list.length);
+        const minNeeded = getBracketSize(list.length);
         const newSize = Math.max(2, Math.floor(currentSize / 2));
-        if (newSize < list.length) { 
-          showToast(`⚠️ Cannot shrink below player count (${list.length} players need at least ${getBracketSize(list.length)} slots)`, "error"); 
-          return; 
+        if (newSize < minNeeded) {
+          showToast(`⚠️ Cannot shrink below ${minNeeded} slots (you have ${list.length} players)`, "error");
+          return;
         }
         await takeSnapshot(`Shrink ${categoryKey} to ${newSize} slots`);
-        if (newSize === getBracketSize(list.length)) {
+        if (newSize === minNeeded) {
           delete bracketSizeOverrides[categoryKey];
           await saveBracketSizeOverride(categoryKey, type, null);
         } else {
@@ -642,47 +633,46 @@ Here's the complete fixed code:
       }
 
       /* ============================================================
-         FIXED: saveBracketStructure - correctly saves by column/round
+         FIXED: saveBracketStructure - correctly tracks rowspans
+         so rounds don't get duplicated/shifted when saving
          ============================================================ */
       async function saveBracketStructure(categoryKey, type) {
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
         if (!page) return false;
         const table = page.querySelector(".bracket-table");
         if (!table) return false;
-        
-        const matchesToSave = [];
+
         const thead = table.querySelector("thead tr");
         const totalRounds = thead ? thead.querySelectorAll("th").length : 1;
         const rows = table.querySelectorAll("tbody tr");
-        
-        // Track which columns are occupied by rowspans from previous rows
+
+        const matchesToSave = [];
+        // Track remaining rowspan occupancy for each column
         const colOccupied = new Array(totalRounds).fill(0);
-        
+
         rows.forEach((row) => {
           const cells = row.querySelectorAll("td");
           let colIndex = 0;
-          
+
           cells.forEach((cell) => {
-            // Skip columns that are occupied by rowspans from previous rows
+            // Skip columns still occupied by a rowspan from a previous row
             while (colIndex < totalRounds && colOccupied[colIndex] > 0) {
               colOccupied[colIndex]--;
               colIndex++;
             }
-            
             if (colIndex >= totalRounds) return;
-            
-            const rowspan = parseInt(cell.getAttribute("rowspan") || "1");
-            
-            // This is a match cell - extract player data
+
+            const rowspan = parseInt(cell.getAttribute("rowspan") || "1", 10);
+
             const playerRows = cell.querySelectorAll(".player-row");
             if (playerRows.length >= 2) {
               const p1Name = playerRows[0].querySelector(".p-name")?.innerText.trim() || "";
               const p1Team = playerRows[0].querySelector(".p-team")?.innerText.trim() || "";
               const p2Name = playerRows[1].querySelector(".p-name")?.innerText.trim() || "";
               const p2Team = playerRows[1].querySelector(".p-team")?.innerText.trim() || "";
-              
+
               const matchNum = matchesToSave.filter(m => m.round_number === colIndex + 1).length + 1;
-              
+
               matchesToSave.push({
                 category: categoryKey,
                 bracket_type: type,
@@ -694,21 +684,16 @@ Here's the complete fixed code:
                 player2_team: p2Team,
               });
             }
-            
+
             // Mark this column as occupied for the next (rowspan - 1) rows
             if (rowspan > 1) {
               colOccupied[colIndex] = rowspan - 1;
             }
-            
+
             colIndex++;
           });
-          
-          // Decrement all occupied columns at end of row
-          for (let i = 0; i < totalRounds; i++) {
-            if (colOccupied[i] > 0) colOccupied[i]--;
-          }
         });
-        
+
         await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
         if (matchesToSave.length > 0) {
           const { error } = await sb.from("saved_brackets").insert(matchesToSave);
@@ -719,17 +704,17 @@ Here's the complete fixed code:
 
       /* ============================================================
          VALIDATE SAVED BRACKET AGAINST CURRENT PLAYERS
+         If saved bracket contains players not in the current category,
+         invalidate it and regenerate fresh.
          ============================================================ */
       async function generateBracketData(list, categoryKey, type) {
         const savedBracket = await loadSavedBracket(categoryKey, type);
 
         if (savedBracket) {
-          // Build set of current player names (lowercase for case-insensitive match)
           const currentPlayerNames = new Set(
             list.map(p => (p.name || "").trim().toLowerCase())
           );
 
-          // Check every player in the saved bracket
           let hasStalePlayer = false;
           let staleNames = [];
           savedBracket.rounds.forEach(round => {
@@ -752,7 +737,15 @@ Here's the complete fixed code:
             await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
             // Fall through to regenerate
           } else {
-            return savedBracket;
+            // Validate saved bracket structure matches expected round counts
+            const expectedSize = getEffectiveBracketSize(categoryKey, list.length);
+            const expectedRounds = Math.log2(expectedSize);
+            if (savedBracket.totalRounds !== expectedRounds || savedBracket.rounds[0].length !== expectedSize / 2) {
+              console.log(`⚠️ Saved bracket for "${categoryKey}" has wrong structure. Regenerating.`);
+              await safeDelete("saved_brackets", { category: categoryKey, bracket_type: type });
+            } else {
+              return savedBracket;
+            }
           }
         }
 
@@ -928,7 +921,6 @@ Here's the complete fixed code:
         row2.style.background = "#c8e6c9";
         setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 300);
 
-        // AUTO-SAVE
         if (category && bracketType) {
           await saveCategoryOrder(category, bracketType, true);
           await saveBracketStructure(category, bracketType);
@@ -1177,4 +1169,358 @@ Here's the complete fixed code:
                 let fullCat = entry.full_cat || entry.category || entry.fullCat || "";
                 let discipline = (entry.discipline || entry.type || "").toString().toLowerCase();
                 let label = entry.label || entry.name || "";
-                let parts = fullCat.split
+                let parts = fullCat.split(" - ");
+                if (parts.length < 2) parts = fullCat.split("-");
+                if (parts.length < 2) parts = fullCat.split("/");
+                const ageGroup = (parts[0] || "").trim() || "OTHER";
+                const subCat = (parts[1] || "").trim() || "";
+                competitors.push({ ...person, _reg_id: reg.id, _discipline: discipline, _label: label, _full_cat: fullCat, _actual_age_group: ageGroup, _actual_sub_cat: subCat });
+              });
+            });
+          });
+          judgeDetails.forEach((person) => {
+            const personRegs = judgeRegs.filter((r) => String(r.entry_id) === String(person.id));
+            if (personRegs.length === 0) judges.push({ ...person });
+            else personRegs.forEach((reg) => judges.push({ ...person, _reg_id: reg.id }));
+          });
+          coachDetails.forEach((person) => {
+            const personRegs = coachRegs.filter((r) => String(r.entry_id) === String(person.id));
+            if (personRegs.length === 0) coaches.push({ ...person });
+            else personRegs.forEach((reg) => coaches.push({ ...person, _reg_id: reg.id }));
+          });
+        } catch (error) {
+          console.error("fetchData error:", error);
+          document.getElementById("content").innerHTML = `<div class="empty-state" style="padding:30px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;"><h3 style="color:#856404;">⚠️ Error loading data</h3><p style="margin:10px 0;">${error.message || error}</p><button class="btn btn-primary" onclick="showDebugInfo()"><i class="fas fa-bug"></i> View Debug Info</button></div>`;
+        }
+      }
+
+      function showDebugInfo() {
+        setActiveBtn("btnDebug");
+        let html = `<div class="controls"><button class="btn btn-secondary" onclick="showPatterns()"><i class="fas fa-arrow-left"></i> Back</button><button class="btn btn-warning" onclick="runFullDebug()"><i class="fas fa-sync"></i> Refresh</button></div>`;
+        html += `<div class="category-card"><div class="category-header">📊 Data Summary</div><div style="padding:20px;">
+            <p><strong>Registrations:</strong> ${lastDebugInfo.registrations.length}</p>
+            <p><strong>Competitor Details:</strong> ${lastDebugInfo.competitors.length}</p>
+            <p><strong>Final Entries:</strong> ${competitors.length}</p>
+            <p><strong>Judges:</strong> ${judges.length}</p>
+            <p><strong>Coaches:</strong> ${coaches.length}</p>
+          </div></div>`;
+        if (lastDebugInfo.errors.length > 0) {
+          html += `<div class="category-card"><div class="category-header" style="background:var(--danger);">❌ Errors</div><div style="padding:20px;">${lastDebugInfo.errors.map(e => `<div style="color:var(--danger);margin:5px 0;">• ${e}</div>`).join("")}</div></div>`;
+        }
+        if (lastDebugInfo.registrations.length > 0) {
+          html += `<div class="category-card"><div class="category-header">📋 Sample Registration</div><div class="debug-box">${JSON.stringify(lastDebugInfo.registrations[0], null, 2)}</div></div>`;
+        }
+        document.getElementById("content").innerHTML = html;
+      }
+      async function runFullDebug() { await fetchData(); showDebugInfo(); }
+
+      function updateAgeForFilters() {
+        tournamentDate = document.getElementById("tournamentDate").value;
+        const activeBtn = document.querySelector(".nav .btn.btn-active");
+        if (activeBtn && activeBtn.id === "btnPatterns") runPatternFilter();
+        if (activeBtn && activeBtn.id === "btnSparring") runSparringFilter();
+      }
+
+      async function showPatterns() {
+        setActiveBtn("btnPatterns");
+        await fetchData();
+        document.getElementById("content").innerHTML = `<div class="filters-card"><div class="filters">
+<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages</option><option value="KIDS">Kids (6-9)</option><option value="YOUTH">Youth (10-11)</option><option value="OLDER_YOUTH">Older Youth (12-13)</option><option value="JUNIORS">Juniors (14-16)</option><option value="OTHER">Other</option></select></div>
+<div class="filter-group"><label>Gender</label><select id="pGen" onchange="runPatternFilter()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>
+<div class="filter-group"><label>Belt Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Belts</option><option value="10-9 Kup">10-9 Kup</option><option value="8-7 Kup">8-7 Kup</option><option value="6-5 Kup">6-5 Kup</option><option value="4-3 Kup">4-3 Kup</option><option value="2-1 Kup">2-1 Kup</option><option value="Dan Grades">Dan Grades</option></select></div>
+<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generatePatternBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>
+</div></div><div id="listTarget"></div><div id="teamSummary"></div>`;
+        runPatternFilter();
+      }
+
+      function runPatternFilter() {
+        const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "patterns") return false;
+          const dbGender = (c.gender || "").trim().toUpperCase();
+          const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+          if (!mGen) return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          if (belt !== "ALL" && c._actual_sub_cat !== belt) return false;
+          return true;
+        });
+        const groups = {};
+        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        const t = document.getElementById("listTarget");
+        t.innerHTML = "";
+        if (Object.keys(groups).length === 0) t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>`;
+        else for (const k in groups) t.innerHTML += createParallelCard(`Pattern: ${k}`, groups[k]);
+        renderTeamSummary(filtered, "Patterns");
+      }
+
+      async function generatePatternBrackets() {
+        await loadBracketSizeOverrides();
+        const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "patterns") return false;
+          const dbGender = (c.gender || "").trim().toUpperCase();
+          const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+          if (!mGen) return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          if (belt !== "ALL" && c._actual_sub_cat !== belt) return false;
+          return true;
+        });
+        const groups = {};
+        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        await renderBracketView(groups, "Patterns");
+      }
+
+      const RULES = { SPARRING: { KIDS: { time: "2 x 1 min" }, YOUTH: { time: "2 x 1.30 min" }, OLDER_YOUTH: { time: "2 x 1.30 min" }, JUNIORS: { time: "2 x 2 min" } } };
+
+      async function showSparring() {
+        setActiveBtn("btnSparring");
+        await fetchData();
+        document.getElementById("content").innerHTML = `<div class="filters-card"><div class="filters">
+<div class="filter-group"><label>Age Category</label><select id="sAge" onchange="updateWeightDropdown()"><option value="ALL">All Ages</option><option value="KIDS">Kids (6-9)</option><option value="YOUTH">Youth (10-11)</option><option value="OLDER_YOUTH">Older Youth (12-13)</option><option value="JUNIORS">Juniors (14-16)</option><option value="OTHER">Other</option></select></div>
+<div class="filter-group"><label>Gender</label><select id="sGen" onchange="updateWeightDropdown()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>
+<div class="filter-group"><label>Weight Class</label><select id="sWeight" onchange="runSparringFilter()"><option value="ALL">All</option></select></div>
+<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generateSparringBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>
+</div><div id="sparringInfo" class="info-banner"><i class="fas fa-info-circle"></i> Select Age and Gender to see round times.</div></div><div id="listTarget"></div><div id="teamSummary"></div>`;
+        updateWeightDropdown();
+      }
+
+      function updateWeightDropdown() {
+        const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, wDrop = document.getElementById("sWeight"), info = document.getElementById("sparringInfo");
+        wDrop.innerHTML = '<option value="ALL">All</option>';
+        const relevantComps = competitors.filter((c) => {
+          if (c._discipline !== "sparring") return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          const dbGender = (c.gender || "").trim().toUpperCase();
+          return gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+        });
+        const weights = new Set();
+        relevantComps.forEach((c) => { const w = c._actual_sub_cat.replace("kg", ""); if (w && w !== "N/A") weights.add(w); });
+        Array.from(weights).sort((a, b) => {
+          const numA = parseFloat(a.replace(/[^0-9.-]/g, ""));
+          const numB = parseFloat(b.replace(/[^0-9.-]/g, ""));
+          if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+          return a.localeCompare(b);
+        }).forEach((w) => { wDrop.innerHTML += `<option value="${w}">${w}kg</option>`; });
+        if (age !== "ALL" && gen !== "ALL" && age !== "OTHER" && RULES.SPARRING[age]) info.innerHTML = `<i class="far fa-clock"></i> Match Time: ${RULES.SPARRING[age].time}`;
+        else info.innerHTML = `<i class="fas fa-info-circle"></i> Select Age and Gender to see round times.`;
+        runSparringFilter();
+      }
+
+      function runSparringFilter() {
+        const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "sparring") return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          const dbGender = (c.gender || "").trim().toUpperCase();
+          const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+          if (!mGen) return false;
+          const cWeight = c._actual_sub_cat.replace("kg", "");
+          if (weightReq !== "ALL" && cWeight !== weightReq) return false;
+          return true;
+        });
+        const groups = {};
+        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        const t = document.getElementById("listTarget");
+        t.innerHTML = "";
+        if (Object.keys(groups).length === 0) t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>`;
+        else for (const k in groups) t.innerHTML += createParallelCard(`Sparring: ${k}`, groups[k]);
+        renderTeamSummary(filtered, "Sparring");
+      }
+
+      async function generateSparringBrackets() {
+        await loadBracketSizeOverrides();
+        const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
+        const filtered = competitors.filter((c) => {
+          if (c._discipline !== "sparring") return false;
+          if (age !== "ALL" && c._actual_age_group !== age) return false;
+          const dbGender = (c.gender || "").trim().toUpperCase();
+          const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+          if (!mGen) return false;
+          const cWeight = c._actual_sub_cat.replace("kg", "");
+          if (weightReq !== "ALL" && cWeight !== weightReq) return false;
+          return true;
+        });
+        const groups = {};
+        filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+        await renderBracketView(groups, "Sparring");
+      }
+
+      async function showTeamOverview() {
+        setActiveBtn("btnTeamOverview");
+        await fetchData();
+        await fetchTournamentPrices();
+        if (competitors.length === 0) {
+          document.getElementById("content").innerHTML = `<div class="empty-state" style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);"><h3 style="color:var(--primary);margin-bottom:10px;">No Competitors Loaded</h3></div>`;
+          return;
+        }
+        const teamsMap = {};
+        competitors.forEach((c) => {
+          const teamName = c.team || "Unassigned";
+          if (!teamsMap[teamName]) teamsMap[teamName] = { name: teamName, competitorNames: new Set(), patternsCategories: new Set(), sparringCategories: new Set(), patternsEntries: [], sparringEntries: [] };
+          teamsMap[teamName].competitorNames.add(c.name);
+          if (c._discipline === "patterns") { teamsMap[teamName].patternsCategories.add(c._full_cat); teamsMap[teamName].patternsEntries.push(c); }
+          else if (c._discipline === "sparring") { teamsMap[teamName].sparringCategories.add(c._full_cat); teamsMap[teamName].sparringEntries.push(c); }
+        });
+        const teamNames = Object.keys(teamsMap).sort();
+        let html = `<div class="controls"><h2 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-users-cog"></i> Team Overview</h2></div>`;
+        const totalPatternsCats = new Set(), totalSparringCats = new Set(), totalUniqueCompetitors = new Set();
+        teamNames.forEach((tn) => {
+          teamsMap[tn].patternsCategories.forEach((c) => totalPatternsCats.add(c));
+          teamsMap[tn].sparringCategories.forEach((c) => totalSparringCats.add(c));
+          teamsMap[tn].competitorNames.forEach((n) => totalUniqueCompetitors.add(n));
+        });
+        html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;">
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--primary);"><div style="font-size:2rem;font-weight:700;color:var(--primary);">${teamNames.length}</div><div style="color:var(--gray);font-size:0.9rem;">Teams</div></div>
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);"><div style="font-size:2rem;font-weight:700;color:var(--secondary);">${totalUniqueCompetitors.size}</div><div style="color:var(--gray);font-size:0.9rem;">Unique Competitors</div></div>
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #1565c0;"><div style="font-size:2rem;font-weight:700;color:#1565c0;">${totalPatternsCats.size}</div><div style="color:var(--gray);font-size:0.9rem;">Pattern Categories</div></div>
+          <div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #c2185b;"><div style="font-size:2rem;font-weight:700;color:#c2185b;">${totalSparringCats.size}</div><div style="color:var(--gray);font-size:0.9rem;">Sparring Categories</div></div>
+        </div>`;
+        teamNames.forEach((teamName) => {
+          const t = teamsMap[teamName];
+          const initial = teamName.charAt(0).toUpperCase();
+          const safeTeam = teamName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const patternsCount = t.patternsCategories.size;
+          const sparringCount = t.sparringCategories.size;
+          const totalCats = patternsCount + sparringCount;
+          const totalEntries = t.patternsEntries.length + t.sparringEntries.length;
+          const patternsPrice = tournamentPrices.patterns;
+          const sparringPrice = tournamentPrices.sparring;
+          const patternsTotal = (patternsPrice !== null && !isNaN(patternsPrice)) ? patternsPrice * t.patternsEntries.length : null;
+          const sparringTotal = (sparringPrice !== null && !isNaN(sparringPrice)) ? sparringPrice * t.sparringEntries.length : null;
+          const hasAnyPrice = patternsTotal !== null || sparringTotal !== null;
+          const grandTotal = (patternsTotal || 0) + (sparringTotal || 0);
+          let priceSummaryHtml = "";
+          if (!hasAnyPrice) priceSummaryHtml = `<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>`;
+          else {
+            const segments = [];
+            if (patternsTotal !== null) segments.push(`<span class="price-segment patterns-price"><i class="fas fa-chess-board"></i> ${formatEuro(patternsPrice)} × ${t.patternsEntries.length} = <strong>${formatEuro(patternsTotal)}</strong></span>`);
+            if (sparringTotal !== null) segments.push(`<span class="price-segment sparring-price"><i class="fas fa-fist-raised"></i> ${formatEuro(sparringPrice)} × ${t.sparringEntries.length} = <strong>${formatEuro(sparringTotal)}</strong></span>`);
+            priceSummaryHtml = `<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ${segments.join('<span class="price-operator">+</span>')} <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ${formatEuro(grandTotal)}</span></div>`;
+          }
+          html += `<div class="team-overview-card">
+            <div class="team-overview-header">
+              <div class="team-name-block"><div class="team-icon">${initial}</div><div><div class="team-name">${teamName}</div><div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitors • ${totalEntries} entries</div></div></div>
+              <div class="team-stats">
+                <span class="stat-pill total"><i class="fas fa-layer-group"></i> Categories: <span class="stat-num">${totalCats}</span></span>
+                <span class="stat-pill entries"><i class="fas fa-list"></i> Entries: <span class="stat-num">${totalEntries}</span></span>
+                <span class="stat-pill patterns"><i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">${patternsCount}</span></span>
+                <span class="stat-pill sparring"><i class="fas fa-fist-raised"></i> Sparring: <span class="stat-num">${sparringCount}</span></span>
+              </div>
+            </div>
+            ${priceSummaryHtml}
+            <div class="team-actions">
+              <button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'patterns')" ${patternsCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fas fa-chess-board"></i> View Patterns (${patternsCount})</button>
+              <button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'sparring')" ${sparringCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fas fa-fist-raised"></i> View Sparring (${sparringCount})</button>
+            </div>
+          </div>`;
+        });
+        document.getElementById("content").innerHTML = html;
+      }
+
+      function showTeamDetail(teamName, discipline) {
+        const disciplineLabel = discipline === "patterns" ? "Patterns" : "Sparring";
+        const headerClass = discipline === "patterns" ? "patterns-header" : "sparring-header";
+        const iconClass = discipline === "patterns" ? "fa-chess-board" : "fa-fist-raised";
+        const tagClass = discipline === "patterns" ? "patterns-tag" : "sparring-tag";
+        const teamEntries = competitors.filter((c) => { const t = c.team || "Unassigned"; return t === teamName && c._discipline === discipline; });
+        const byName = {};
+        teamEntries.forEach((c) => { if (!byName[c.name]) byName[c.name] = { entries: [], gender: c.gender || "" }; byName[c.name].entries.push(c); });
+        const competitorNames = Object.keys(byName).sort();
+        let html = `<div class="controls"><button class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-arrow-left"></i> Back</button></div>
+          <div class="team-detail-modal"><div class="team-detail-header ${headerClass}"><h3><i class="fas ${iconClass}"></i> ${teamName} — ${disciplineLabel}</h3></div><div style="padding:15px 0;">`;
+        if (competitorNames.length === 0) html += `<div class="empty-team-detail">No registrations.</div>`;
+        else {
+          competitorNames.forEach((name) => {
+            const data = byName[name];
+            const uniqueCats = new Set(data.entries.map((e) => e._full_cat));
+            html += `<div class="competitor-detail-card"><div class="competitor-detail-header"><div class="competitor-detail-name"><i class="fas fa-user-circle" style="color:var(--primary);"></i> ${name}</div><span class="category-count-badge">${uniqueCats.size} categor${uniqueCats.size !== 1 ? 'ies' : 'y'}</span></div><div class="category-list">`;
+            data.entries.forEach((e) => { html += `<span class="category-tag ${tagClass}">${e._full_cat}</span>`; });
+            html += `</div></div>`;
+          });
+        }
+        html += `</div></div>`;
+        document.getElementById("content").innerHTML = html;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function createParallelCard(title, list) {
+        if (list.length === 0) return `<div class="empty-state">No competitors found.</div>`;
+        let n = "", t = "";
+        list.forEach((c) => { n += `<div class="row-item">${c.name}</div>`; t += `<div class="row-item">${c.team || "N/A"}</div>`; });
+        return `<div class="category-card"><div class="category-header">${title} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
+      }
+
+      function renderTeamSummary(list, type) {
+        const uniqueByTeam = {};
+        const entriesByTeam = {};
+        list.forEach((c) => {
+          const teamName = c.team || "Unassigned";
+          if (!uniqueByTeam[teamName]) { uniqueByTeam[teamName] = new Set(); entriesByTeam[teamName] = 0; }
+          uniqueByTeam[teamName].add(c.name);
+          entriesByTeam[teamName]++;
+        });
+        const teamKeys = Object.keys(uniqueByTeam).sort();
+        let totalUnique = 0, totalEntries = 0;
+        teamKeys.forEach((t) => { totalUnique += uniqueByTeam[t].size; totalEntries += entriesByTeam[t]; });
+        let h = `<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (${type})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">`;
+        if (teamKeys.length === 0) h += `<span style="color:var(--gray);grid-column:1/-1">No data.</span>`;
+        else {
+          teamKeys.forEach((t) => {
+            const uniqueCount = uniqueByTeam[t].size;
+            const entryCount = entriesByTeam[t];
+            const diffNote = entryCount > uniqueCount ? ` <span style="font-size:0.7rem;color:#e65100;">(${entryCount} entries)</span>` : '';
+            h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">${t}</strong><span style="font-size:0.85rem;color:var(--gray)">${uniqueCount} competitor${uniqueCount !== 1 ? 's' : ''}${diffNote}</span></div>`;
+          });
+        }
+        h += `</div><div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:150px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-user-check"></i> Unique: ${totalUnique}</div>
+          <div style="flex:1;min-width:150px;padding:10px;background:var(--secondary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-list"></i> Total Entries: ${totalEntries}</div>
+        </div>`;
+        document.getElementById("teamSummary").innerHTML = h;
+      }
+
+      async function showJudges() {
+        setActiveBtn("btnJudges");
+        await fetchData();
+        let h = `<div class="category-card"><div class="category-header">Judges List (${judges.length})</div>`;
+        if (judges.length === 0) h += `<div style="padding:30px;text-align:center;color:var(--gray);">No judges.</div>`;
+        else {
+          h += `<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
+          judges.forEach((j) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${j.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.team || "N/A"}</td></tr>`));
+          h += `</table>`;
+        }
+        document.getElementById("content").innerHTML = h + `</div>`;
+      }
+
+      async function showCoaches() {
+        setActiveBtn("btnCoaches");
+        await fetchData();
+        let h = `<div class="category-card"><div class="category-header">Coaches List (${coaches.length})</div>`;
+        if (coaches.length === 0) h += `<div style="padding:30px;text-align:center;color:var(--gray);">No coaches.</div>`;
+        else {
+          h += `<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
+          coaches.forEach((c) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${c.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.belt}</td><td style="padding:8px;border-bottom:1px solid #eee">${c.team || "N/A"}</td></tr>`));
+          h += `</table>`;
+        }
+        document.getElementById("content").innerHTML = h + `</div>`;
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+          const active = document.activeElement;
+          const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+          if (isTyping) return;
+          if (active && active.isContentEditable && active.classList.contains("p-name")) return;
+          e.preventDefault();
+          performUndo();
+        }
+      });
+
+      const today = new Date();
+      document.getElementById("tournamentDate").valueAsDate = today;
+      tournamentDate = today.toISOString().split("T")[0];
+      showPatterns();
+    </script>
+</body>
+</html>
+
