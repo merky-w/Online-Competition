@@ -1,4 +1,19 @@
-<!DOCTYPE html>
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                
+              </style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -85,6 +100,7 @@
       .player-row.selected .drag-handle { opacity: 1; color: var(--warning); }
       .player-row.swap-target { background: #c8e6c9 !important; border: 2px dashed var(--success) !important; }
       .match-box.bye-selected { background: #fff3cd !important; border: 2px solid var(--warning) !important; box-shadow: 0 0 8px rgba(255, 193, 7, 0.5); }
+      .player-row.drop-hover-slot { background: #c8e6c9 !important; border: 2px dashed var(--success) !important; }
       .vs-divider { display: flex; align-items: center; text-align: center; margin: 4px 0; font-size: 10px; color: #999; font-weight: 700; }
       .vs-divider::before, .vs-divider::after { content: ""; flex: 1; border-bottom: 1px solid #ccc; }
       .vs-divider:not(:empty)::before { margin-right: 6px; }
@@ -292,6 +308,7 @@
         selectedPlayerData = null;
         document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
         document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
+        document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
         document.getElementById("selectionBanner").classList.remove("visible");
       }
 
@@ -338,7 +355,7 @@
           bracketSizeOverrides = {};
           (data || []).forEach(row => { bracketSizeOverrides[row.category] = row.forced_size; });
         } catch (err) { 
-          console.warn("Could not load bracket overrides (table may not exist):", err); 
+          console.warn("Could not load bracket overrides:", err); 
           bracketSizeOverrides = {};
         }
       }
@@ -462,17 +479,29 @@
         }
       });
 
-      /* 🔑 FIXED: handleByeSlotDrop now passes the SPECIFIC player row clicked */
+      /* 🔑 FIXED: Detect which slot (p1/p2) was dropped on using mouse Y position */
+      function detectDroppedSlot(matchBox, clientY) {
+        const rect = matchBox.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        return clientY < midY ? "p1" : "p2";
+      }
+
+      /* 🔑 FIXED: Drop handler detects specific slot (p1 or p2) */
       function handleByeSlotDrop(e) {
         e.preventDefault();
         e.stopPropagation();
         const matchBox = e.currentTarget;
         matchBox.classList.remove("drop-hover");
+        
+        // Clear any slot-level hover highlights
+        matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
+
+        // Detect which slot (p1 or p2) was dropped on
+        const slot = detectDroppedSlot(matchBox, e.clientY);
+        const targetRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
 
         if (selectedPlayerData) {
-          // Find which specific slot was clicked (p1 or p2)
-          const clickedRow = e.target.closest(".player-row");
-          moveSelectedPlayerToBye(matchBox, clickedRow);
+          moveSelectedPlayerToBye(matchBox, targetRow);
           return;
         }
 
@@ -484,20 +513,38 @@
         if (!page) return;
         const categoryKey = page.dataset.category;
         const type = page.dataset.type;
-        addPlayerToCategoryFromDrag(player.name, player.team, categoryKey, type);
+        const round = parseInt(matchBox.dataset.round || "0");
+        const match = parseInt(matchBox.dataset.match || "0");
+        
+        // 🔑 FIXED: Pass the specific slot to add player to
+        addPlayerToSpecificSlot(player.name, player.team, categoryKey, type, round, match, slot);
       }
 
       function handleByeSlotDragOver(e) {
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
-        e.currentTarget.classList.add("drop-hover");
+        const matchBox = e.currentTarget;
+        matchBox.classList.add("drop-hover");
+        
+        // Highlight the specific slot being hovered
+        const slot = detectDroppedSlot(matchBox, e.clientY);
+        matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
+        const targetRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+        if (targetRow) targetRow.classList.add("drop-hover-slot");
       }
 
       function handleByeSlotDragLeave(e) {
-        e.currentTarget.classList.remove("drop-hover");
+        const matchBox = e.currentTarget;
+        // Only remove if actually leaving the match-box
+        const rect = matchBox.getBoundingClientRect();
+        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+          matchBox.classList.remove("drop-hover");
+          matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
+        }
       }
 
-      async function addPlayerToCategoryFromDrag(name, team, categoryKey, type) {
+      /* 🔑 FIXED: Add player to a SPECIFIC slot (round/match/slot) */
+      async function addPlayerToSpecificSlot(name, team, categoryKey, type, round, match, slot) {
         const existsInRegistrations = competitors.some(c =>
           (c.name || "").toLowerCase() === (name || "").toLowerCase() &&
           c._discipline === (type === "Patterns" ? "patterns" : "sparring")
@@ -508,21 +555,55 @@
         }
 
         const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
-        const { data: existing } = await sb.from(table).select("name").eq("category", categoryKey).eq("name", name);
-        if (existing && existing.length > 0) {
-          showToast(`⚠️ "${name}" is already in ${categoryKey}`, "error");
-          return;
-        }
+        
+        // Check if player already exists in this category (any slot)
+        const { data: existing } = await sb.from(table).select("*").eq("category", categoryKey);
+        const alreadyExists = (existing || []).some(e => (e.name || "").toLowerCase() === (name || "").toLowerCase());
+        
         await takeSnapshot(`Add "${name}" to ${categoryKey}`);
-        const { data: posData } = await sb.from(table).select("position_number").eq("category", categoryKey).order("position_number", { ascending: false }).limit(1);
-        const nextPos = posData && posData[0] ? posData[0].position_number + 1 : 1;
-        const { error } = await sb.from(table).insert([{ name, team, category: categoryKey, position_number: nextPos }]);
-        if (error) { showToast("❌ Failed to add: " + error.message, "error"); return; }
-        if (currentGroups && currentGroups[categoryKey]) currentGroups[categoryKey].push({ name, team });
+        
+        if (alreadyExists) {
+          // Player exists - update their position to the new slot
+          await sb.from(table).delete().eq("category", categoryKey).eq("name", name);
+        }
+        
+        // Calculate position based on round/match/slot
+        let position;
+        if (round === 0) {
+          // Round 1: use sequential numbering (will be recalculated on save)
+          const maxR1 = (existing || []).filter(e => (e.position_number || 0) < 10000)
+            .reduce((max, e) => Math.max(max, e.position_number || 0), 0);
+          position = maxR1 + 1;
+        } else {
+          position = (round + 1) * 10000 + (match + 1) * 100 + (slot === "p1" ? 0 : 1);
+        }
+        
+        const { error } = await sb.from(table).insert([{ 
+          name, 
+          team, 
+          category: categoryKey, 
+          position_number: position 
+        }]);
+        
+        if (error) { 
+          showToast("❌ Failed to add: " + error.message, "error"); 
+          return; 
+        }
+        
+        // Add to currentGroups if not already there
+        if (currentGroups && currentGroups[categoryKey]) {
+          const alreadyInGroup = currentGroups[categoryKey].some(c => 
+            (c.name || "").toLowerCase() === (name || "").toLowerCase()
+          );
+          if (!alreadyInGroup) {
+            currentGroups[categoryKey].push({ name, team });
+          }
+        }
+        
         clearAutocomplete();
         clearSelection();
         await renderBracketView(currentGroups, type);
-        showToast(`✅ "${name}" added to ${categoryKey}`, "success");
+        showToast(`✅ "${name}" added to Round ${round + 1}, Match ${match + 1}, ${slot === "p1" ? "top" : "bottom"} slot`, "success");
       }
 
       async function increaseBracketSize(categoryKey, type) {
@@ -617,7 +698,6 @@
         return "€" + Number(amount).toFixed(2);
       }
 
-      /* 🔑 FIXED: getSavedOrder returns ALL entries including round 2+ */
       async function getSavedOrder(categoryKey, type) {
         const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         const { data, error } = await sb.from(table).select("*").eq("category", categoryKey).order("position_number", { ascending: true });
@@ -625,12 +705,10 @@
         return data && data.length ? data : null;
       }
 
-      /* 🔑 FIXED: generateBracketData now restores Round 2+ players from saved positions */
+      /* 🔑 CRITICAL FIX: Prevent duplicates by excluding players placed in later rounds from round 1 */
       async function generateBracketData(list, categoryKey, type) {
-        let orderedList = [...list];
         const savedOrder = await getSavedOrder(categoryKey, type);
         
-        // Separate round 1 entries (position < 10000) from later rounds
         const round1Entries = [];
         const laterRoundEntries = [];
         
@@ -645,19 +723,31 @@
           });
         }
 
-        // Apply round 1 saved order
+        // 🔑 KEY FIX: Build set of players placed in later rounds
+        const laterRoundNames = new Set(
+          laterRoundEntries.map(e => (e.name || "").trim().toLowerCase())
+        );
+
+        // 🔑 KEY FIX: Filter main list to EXCLUDE players already placed in later rounds
+        // This prevents the duplicate issue
+        const availableForRound1 = list.filter(p => 
+          !laterRoundNames.has((p.name || "").trim().toLowerCase())
+        );
+
+        // Apply round 1 saved order to the available players
+        let orderedList = [...availableForRound1];
         if (round1Entries.length > 0) {
-          const currentNames = new Set(list.map(p => (p.name || "").trim().toLowerCase()));
+          const currentNames = new Set(availableForRound1.map(p => (p.name || "").trim().toLowerCase()));
           const validOrder = round1Entries.filter(item => 
             currentNames.has((item.name || "").trim().toLowerCase())
           );
 
           const orderedNames = new Set(validOrder.map(item => (item.name || "").trim().toLowerCase()));
           const orderedPlayers = validOrder.map(item => {
-            const found = list.find(p => (p.name || "").trim().toLowerCase() === (item.name || "").trim().toLowerCase());
+            const found = availableForRound1.find(p => (p.name || "").trim().toLowerCase() === (item.name || "").trim().toLowerCase());
             return found || { name: item.name, team: item.team };
           });
-          const newPlayers = list.filter(p => !orderedNames.has((p.name || "").trim().toLowerCase()));
+          const newPlayers = availableForRound1.filter(p => !orderedNames.has((p.name || "").trim().toLowerCase()));
           orderedList = [...orderedPlayers, ...newPlayers];
         }
 
@@ -699,7 +789,6 @@
         }
         rounds.push(r1Matches);
 
-        // Build empty later rounds, then populate from saved data
         let matchCount = size / 2;
         for (let r = 1; r < totalRounds; r++) {
           matchCount = matchCount / 2;
@@ -710,13 +799,13 @@
           rounds.push(currentMatches);
         }
 
-        // 🔑 Populate later rounds from saved entries
+        // Populate later rounds from saved entries
         laterRoundEntries.forEach(entry => {
           const pos = entry.position_number;
-          const round = Math.floor(pos / 10000) - 1; // position 20000 = round 1 (0-indexed round 2)
+          const round = Math.floor(pos / 10000) - 1;
           const matchAndSlot = pos % 10000;
           const match = Math.floor(matchAndSlot / 100) - 1;
-          const slot = matchAndSlot % 100; // 0 = p1, 1 = p2
+          const slot = matchAndSlot % 100;
           
           if (round >= 1 && round < totalRounds && match >= 0 && match < rounds[round].length) {
             if (slot === 0) {
@@ -730,7 +819,6 @@
         return { rounds, totalRounds, laterRoundEntries };
       }
 
-      /* 🔑 FIXED: saveCategoryOrder saves ALL rounds with encoded positions */
       async function saveCategoryOrder(categoryKey, type, silent = false) {
         const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
         const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
@@ -748,30 +836,48 @@
         const dataToSave = [];
         const matchBoxes = bracketTable.querySelectorAll(".match-box");
         
+        // First pass: collect round 1 players in order
+        const round1Players = [];
+        matchBoxes.forEach((matchBox) => {
+          const round = parseInt(matchBox.dataset.round || "0");
+          if (round !== 0) return;
+          const playerRows = matchBox.querySelectorAll(".player-row");
+          playerRows.forEach((row) => {
+            const nameEl = row.querySelector(".p-name");
+            if (!nameEl) return;
+            const name = nameEl.innerText.trim();
+            const team = row.querySelector(".p-team") ? row.querySelector(".p-team").innerText.trim() : "";
+            if (!name || name === "BYE" || name === "________________" || name === "") return;
+            round1Players.push({ name, team });
+          });
+        });
+        
+        // Assign sequential positions to round 1
+        round1Players.forEach((p, idx) => {
+          dataToSave.push({
+            name: p.name,
+            team: p.team,
+            category: categoryKey,
+            position_number: idx + 1
+          });
+        });
+
+        // Second pass: collect later round players with encoded positions
         matchBoxes.forEach((matchBox) => {
           const round = parseInt(matchBox.dataset.round || "0");
           const match = parseInt(matchBox.dataset.match || "0");
-          const playerRows = matchBox.querySelectorAll(".player-row");
+          if (round === 0) return;
           
-          playerRows.forEach((row, slotIndex) => {
+          const playerRows = matchBox.querySelectorAll(".player-row");
+          playerRows.forEach((row) => {
             const nameEl = row.querySelector(".p-name");
-            const teamEl = row.querySelector(".p-team");
             if (!nameEl) return;
-            
             const name = nameEl.innerText.trim();
-            const team = teamEl ? teamEl.innerText.trim() : "";
-            
+            const team = row.querySelector(".p-team") ? row.querySelector(".p-team").innerText.trim() : "";
             if (!name || name === "BYE" || name === "________________" || name === "") return;
             
-            // Position encoding:
-            // Round 1 (round=0): sequential 1, 2, 3...
-            // Round 2+ (round>=1): (round+1)*10000 + (match+1)*100 + slotIndex
-            let position;
-            if (round === 0) {
-              position = dataToSave.filter(d => d.position_number < 10000).length + 1;
-            } else {
-              position = (round + 1) * 10000 + (match + 1) * 100 + slotIndex;
-            }
+            const slot = row.dataset.slot === "p2" ? 1 : 0;
+            const position = (round + 1) * 10000 + (match + 1) * 100 + slot;
             
             dataToSave.push({ 
               name, 
@@ -973,29 +1079,31 @@
         document.getElementById("selectionBanner").classList.add("visible");
       }
 
-      /* 🔑 FIXED: handleByeClick passes the specific clicked row */
+      /* 🔑 FIXED: handleByeClick detects specific slot (p1 or p2) */
       function handleByeClick(e) {
         if (!selectedPlayerData) return;
         const matchBox = e.target.closest(".match-box");
         if (!matchBox) return;
         if (!matchBox.classList.contains("bye") && !matchBox.classList.contains("empty")) return;
         
+        // Don't trigger if clicking on a non-BYE player
         const clickedRow = e.target.closest(".player-row");
-        if (!clickedRow) return; // must click on a specific player-row slot
-        
-        // Don't trigger if clicking on the selected player itself
         if (clickedRow === selectedPlayerEl) return;
         
-        // Only allow clicking on BYE/empty slots
-        const clickedName = clickedRow.dataset.playerName;
-        if (clickedName && clickedName !== "BYE" && clickedName !== "________________" && clickedName !== "") return;
+        if (clickedRow) {
+          const clickedName = clickedRow.dataset.playerName;
+          if (clickedName && clickedName !== "BYE" && clickedName !== "________________" && clickedName !== "") return;
+        }
+
+        // 🔑 Detect which slot was clicked based on Y position
+        const slot = detectDroppedSlot(matchBox, e.clientY);
+        const targetRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
 
         e.preventDefault();
         e.stopPropagation();
-        moveSelectedPlayerToBye(matchBox, clickedRow);
+        moveSelectedPlayerToBye(matchBox, targetRow);
       }
 
-      /* 🔑 FIXED: moveSelectedPlayerToBye now uses the SPECIFIC target row (p1 or p2) */
       async function moveSelectedPlayerToBye(matchBox, targetRow) {
         if (!selectedPlayerData) return;
         const page = matchBox.closest(".a4-page");
@@ -1003,7 +1111,7 @@
         const targetCategory = page.dataset.category;
         const targetType = page.dataset.type;
 
-        // Use the specific row that was clicked, or find first BYE as fallback
+        // Use the specific target row, or find first BYE as fallback
         const byeRow = targetRow || 
                        matchBox.querySelector('.player-row[data-player-name="BYE"]') ||
                        matchBox.querySelector('.player-row .p-name:empty')?.closest(".player-row");
@@ -1041,10 +1149,7 @@
           srcMatchBox.classList.add("bye");
           srcMatchBox.classList.remove("empty");
         }
-        // Target match-box: only remove bye/empty if BOTH slots are now filled
-        const targetP1 = matchBox.querySelector('.player-row:nth-child(1)');
-        const targetP2 = matchBox.querySelector('.player-row:nth-child(3)') || 
-                         Array.from(matchBox.querySelectorAll('.player-row'))[1];
+        
         const allFilled = Array.from(matchBox.querySelectorAll('.player-row')).every(r => {
           const n = r.dataset.playerName;
           return n && n !== "BYE" && n !== "________________" && n !== "";
@@ -1166,7 +1271,6 @@
                 const isEmpty = !p1.name && !p2.name;
                 const p1Id = `p1-${categoryIndex}-${r}-${matchIndex}-0`;
                 const p2Id = `p2-${categoryIndex}-${r}-${matchIndex}-1`;
-                // 🔑 Allow drop on ANY slot that is BYE/empty (not just the whole match-box)
                 const p1IsBye = p1.name === "BYE" || !p1.name;
                 const p2IsBye = p2.name === "BYE" || !p2.name;
                 const matchIsDroppable = isBye || isEmpty;
@@ -1263,6 +1367,7 @@
 
         document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
         document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
+        document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
 
         const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
         if (!elemBelow) return;
@@ -1278,6 +1383,10 @@
         const matchBox = elemBelow.closest(".match-box");
         if (matchBox && (matchBox.classList.contains("bye") || matchBox.classList.contains("empty"))) {
           matchBox.classList.add("bye-selected");
+          // Highlight specific slot
+          const slot = detectDroppedSlot(matchBox, e.clientY);
+          const slotRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+          if (slotRow) slotRow.classList.add("drop-hover-slot");
         }
       }
 
@@ -1290,6 +1399,7 @@
         dragHandleState.ghost.remove();
         document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
         document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
+        document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
 
         const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
         const state = dragHandleState;
@@ -1318,8 +1428,10 @@
             type: state.type,
             rowEl: state.sourceRow
           };
-          // 🔑 Pass the specific row being hovered
-          await moveSelectedPlayerToBye(matchBox, targetRow);
+          // 🔑 Detect specific slot based on drop Y position
+          const slot = detectDroppedSlot(matchBox, e.clientY);
+          const targetSlotRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+          await moveSelectedPlayerToBye(matchBox, targetSlotRow);
           return;
         }
       }
@@ -1825,3 +1937,21 @@
 </body>
 </html>
 
+
+
+              <script>
+                              const availableForRound1 = list.filter(p => 
+  !laterRoundNames.has((p.name || "").trim().toLowerCase())
+);
+
+function detectDroppedSlot(matchBox, clientY) {
+  const rect = matchBox.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  return clientY < midY ? "p1" : "p2";
+}
+
+
+              </script>
+                        </body>
+                        </html>
+                    
