@@ -1,4 +1,19 @@
-<!DOCTYPE html>
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                
+              </style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -114,8 +129,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .bracket-header-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; flex-wrap: wrap; }
 .bracket-header-actions .btn { font-size: 0.8rem; padding: 4px 10px; }
 .bracket-size-indicator { display: inline-block; padding: 2px 10px; border-radius: 12px; background: var(--light-gray); color: var(--primary); font-size: 0.75rem; font-weight: 700; margin-left: 8px; }
-
-/* Winner / Placement drop zones */
 .winner-section { margin-top: 8px; text-align: center; width: 100%; }
 .winner-label { font-size: 10px; color: var(--secondary); font-weight: bold; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 4px; }
 .winner-drop-zone { border: 1.5px dashed #bbb; border-radius: 6px; padding: 6px 10px; min-height: 22px; margin-bottom: 6px; background: #fffde7; transition: all 0.2s; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--primary); position: relative; }
@@ -136,8 +149,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .placement-drop-zone.has-value { background: #f3e5f5; border: 1px solid #ce93d8; color: var(--primary); font-weight: 600; }
 .placement-drop-zone .clear-placement { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; }
 .placement-drop-zone.has-value:hover .clear-placement { display: flex; }
-
-/* Price Overview Styles */
 .price-overview-container { padding: 10px 0; }
 .price-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
 .price-summary-card { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow); text-align: center; position: relative; overflow: hidden; transition: var(--transition); }
@@ -159,7 +170,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .price-summary-card.count { border-top: 5px solid var(--primary); }
 .price-summary-card.count .card-icon-big { color: var(--primary); }
 .price-summary-card.count .card-value { color: var(--primary); font-size: 1.6rem; }
-
 .price-breakdown-section { background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; border-left: 5px solid var(--primary); }
 .price-breakdown-header { padding: 16px 22px; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; cursor: pointer; transition: var(--transition); }
 .price-breakdown-header:hover { background: linear-gradient(135deg, #f8f9fa 0%, #eeeeee 100%); }
@@ -175,7 +185,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .price-breakdown-body.expanded { max-height: 5000px; padding: 15px 22px; }
 .price-breakdown-toggle { font-size: 0.85rem; color: var(--gray); transition: transform 0.3s; }
 .price-breakdown-header.expanded .price-breakdown-toggle { transform: rotate(180deg); }
-
 .price-line-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 8px; margin-bottom: 6px; transition: var(--transition); cursor: pointer; border: 1px solid transparent; }
 .price-line-item:hover { background: #f5f7fa; border-color: var(--border); }
 .price-line-item.expanded { background: #fafafa; border-color: var(--border); }
@@ -205,7 +214,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .price-detail-amount.income-amount { color: var(--price-income); }
 .price-detail-amount.expense-amount { color: var(--price-expense); }
 .price-empty-msg { padding: 20px; text-align: center; color: var(--gray); font-style: italic; font-size: 0.9rem; }
-
 .price-formula-bar { background: linear-gradient(90deg, #e8f5e9 0%, #fff8e1 50%, #ffebee 100%); border: 2px dashed var(--secondary); border-radius: 12px; padding: 16px 22px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; font-weight: 700; }
 .formula-segment { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 20px; font-size: 0.95rem; }
 .formula-segment.income-seg { background: white; color: var(--price-income); border: 1px solid #a5d6a7; }
@@ -213,7 +221,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .formula-segment.profit-seg { background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%); color: white; font-size: 1.1rem; padding: 8px 20px; box-shadow: 0 2px 8px rgba(106, 27, 154, 0.3); }
 .formula-segment.profit-seg.negative { background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%); box-shadow: 0 2px 8px rgba(198, 40, 40, 0.3); }
 .formula-operator { font-size: 1.5rem; font-weight: 800; color: var(--gray); }
-
 .floating-undo-btn { position: fixed; bottom: 30px; right: 30px; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%); color: white; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(111, 66, 193, 0.5); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; z-index: 999; transition: all 0.3s ease; }
 .floating-undo-btn:hover:not(:disabled) { transform: scale(1.1) rotate(-15deg); box-shadow: 0 8px 25px rgba(111, 66, 193, 0.7); }
 .floating-undo-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: 0 3px 10px rgba(0,0,0,0.2); opacity: 0.7; }
@@ -287,8 +294,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .selection-banner { position: fixed; top: 0; left: 0; right: 0; background: var(--warning); color: #212529; padding: 8px 20px; text-align: center; font-weight: 600; font-size: 0.9rem; z-index: 997; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: none; }
 .selection-banner.visible { display: block; }
 .selection-banner button { background: var(--dark); color: white; border: none; padding: 4px 12px; border-radius: 4px; margin-left: 10px; cursor: pointer; font-size: 0.8rem; }
-
-/* ============ JUDGES RANK ASSIGNMENT UI ============ */
 .judges-toolbar { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 18px 22px; margin-bottom: 20px; border-left: 5px solid var(--secondary); }
 .judges-toolbar-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
 .judges-toolbar-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; }
@@ -319,7 +324,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .judges-table tbody td { padding: 12px 15px; font-size: 0.95rem; }
 .judges-table tbody tr.assignable { cursor: pointer; }
 .judges-table tbody tr.assignable:hover { background: #fff9c4; box-shadow: inset 0 0 0 2px var(--warning); }
-.judges-table tbody tr.assignable:hover td:first-child::before { content: "→ "; color: var(--warning); font-weight: 700; }
 .judges-table tbody tr.just-assigned { animation: flashAssign 1s ease; }
 @keyframes flashAssign { 0% { background: #c8e6c9; } 100% { background: transparent; } }
 .rank-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -330,7 +334,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .rank-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding: 10px 14px; background: #f8f9fa; border-radius: 8px; }
 .rank-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--gray); }
 .rank-legend-count { background: white; padding: 2px 8px; border-radius: 10px; font-weight: 700; color: var(--dark); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-
 @media print {
 @page { size: A4; margin: 10mm; }
 body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
@@ -414,7 +417,26 @@ body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exa
 <div id="content"></div>
 </div>
 <script>
-/* ---------------- CONFIG ---------------- */
+/* ============================================================
+🔑 SAFE STRING HELPERS - FIXES THE .replace() ERROR
+============================================================ */
+function safeStr(val) {
+if (val === null || val === undefined) return "";
+if (typeof val !== "string") {
+try { return String(val); } catch (e) { return ""; }
+}
+return val;
+}
+function escapeAttr(str) {
+return safeStr(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+function escapeHtml(str) {
+return safeStr(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+/* ============================================================
+CONFIG & STATE
+============================================================ */
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -432,10 +454,8 @@ let undoStack = [];
 let selectedPlayerEl = null;
 let selectedPlayerData = null;
 let bracketWinnersCache = {};
-
-/* ============ JUDGE RANKS STATE ============ */
-let judgeRanksMap = {}; // { judge_id: 'head_referee' | 'referee' | 'computer_referee' }
-let rankSelectionMode = null; // null | 'head_referee' | 'referee' | 'computer_referee' | 'unassign'
+let judgeRanksMap = {};
+let rankSelectionMode = null;
 
 function clearSelection() {
 if (selectedPlayerEl) selectedPlayerEl.classList.remove("selected");
@@ -489,8 +509,6 @@ console.warn("Could not load bracket overrides:", err);
 bracketSizeOverrides = {};
 }
 }
-
-/* ---------------- BRACKET WINNERS / PLACEMENTS ---------------- */
 async function loadBracketWinners() {
 try {
 const { data, error } = await sb.from("bracket_winners").select("*");
@@ -505,17 +523,14 @@ console.warn("Could not load bracket winners:", err);
 bracketWinnersCache = {};
 }
 }
-function getWinnerKey(category, type) {
-return `${category}|||${type}`;
-}
+function getWinnerKey(category, type) { return `${category}|||${type}`; }
 async function saveWinnerToDb(category, type, winnerName, placements) {
 const key = getWinnerKey(category, type);
 await safeDelete("bracket_winners", { category: category, bracket_type: type });
 const hasData = winnerName || (placements && placements.some(p => p));
 if (hasData) {
 await safeInsert("bracket_winners", [{
-category: category,
-bracket_type: type,
+category: category, bracket_type: type,
 winner_name: winnerName || null,
 placement_1: (placements && placements[0]) || null,
 placement_2: (placements && placements[1]) || null,
@@ -550,17 +565,6 @@ const page = document.querySelector(`.a4-page[data-category="${CSS.escape(catego
 if (!page) return;
 const { winner, placements } = readWinnerFromDom(page);
 await saveWinnerToDb(category, type, winner, placements);
-}
-async function saveAllWinners(type) {
-const pages = document.querySelectorAll(`.a4-page[data-type="${type}"]`);
-let count = 0;
-for (const page of pages) {
-const category = page.dataset.category;
-const { winner, placements } = readWinnerFromDom(page);
-await saveWinnerToDb(category, type, winner, placements);
-count++;
-}
-showToast(`✅ Saved winners/placements for ${count} categories`, "success");
 }
 function setWinnerZoneValue(zone, value) {
 if (!zone) return;
@@ -598,9 +602,7 @@ e.stopPropagation();
 e.dataTransfer.dropEffect = "copy";
 zone.classList.add("drop-hover");
 });
-zone.addEventListener("dragleave", (e) => {
-zone.classList.remove("drop-hover");
-});
+zone.addEventListener("dragleave", (e) => { zone.classList.remove("drop-hover"); });
 zone.addEventListener("drop", handleWinnerDrop);
 zone.addEventListener("click", handleWinnerZoneClick);
 });
@@ -613,14 +615,9 @@ const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
-if (zone.classList.contains("winner-drop-zone")) {
-setWinnerZoneValue(zone, "");
-} else {
-setPlacementZoneValue(zone, "");
-}
-const category = page.dataset.category;
-const type = page.dataset.type;
-saveWinnersForCategory(category, type);
+if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, "");
+else setPlacementZoneValue(zone, "");
+saveWinnersForCategory(page.dataset.category, page.dataset.type);
 showToast("🗑️ Cleared", "success");
 return;
 }
@@ -628,11 +625,8 @@ if (selectedPlayerData) {
 const zone = e.currentTarget;
 const page = zone.closest(".a4-page");
 if (!page) return;
-if (zone.classList.contains("winner-drop-zone")) {
-setWinnerZoneValue(zone, selectedPlayerData.name);
-} else {
-setPlacementZoneValue(zone, selectedPlayerData.name);
-}
+if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, selectedPlayerData.name);
+else setPlacementZoneValue(zone, selectedPlayerData.name);
 clearSelection();
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
 showToast(`✅ "${selectedPlayerData.name}" placed`, "success");
@@ -646,11 +640,8 @@ zone.classList.remove("drop-hover");
 const page = zone.closest(".a4-page");
 if (!page) return;
 if (selectedPlayerData) {
-if (zone.classList.contains("winner-drop-zone")) {
-setWinnerZoneValue(zone, selectedPlayerData.name);
-} else {
-setPlacementZoneValue(zone, selectedPlayerData.name);
-}
+if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, selectedPlayerData.name);
+else setPlacementZoneValue(zone, selectedPlayerData.name);
 clearSelection();
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
 showToast(`✅ "${selectedPlayerData.name}" placed`, "success");
@@ -660,15 +651,11 @@ const data = e.dataTransfer.getData("application/player");
 if (!data) return;
 let player;
 try { player = JSON.parse(data); } catch { return; }
-if (zone.classList.contains("winner-drop-zone")) {
-setWinnerZoneValue(zone, player.name);
-} else {
-setPlacementZoneValue(zone, player.name);
-}
+if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, player.name);
+else setPlacementZoneValue(zone, player.name);
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
 showToast(`✅ "${player.name}" placed`, "success");
 }
-
 async function takeSnapshot(description) {
 if (!currentBracketType) return;
 const snapshots = {};
@@ -679,17 +666,12 @@ const { data: orderData } = await sb.from(table).select("*").eq("category", cate
 snapshots[categoryKey] = { categoryOrder: orderData || [] };
 }
 const winnersSnapshot = {};
-for (const key in bracketWinnersCache) {
-winnersSnapshot[key] = { ...bracketWinnersCache[key] };
-}
+for (const key in bracketWinnersCache) winnersSnapshot[key] = { ...bracketWinnersCache[key] };
 undoStack.push({
-description,
-bracketType: currentBracketType,
-snapshots,
+description, bracketType: currentBracketType, snapshots,
 groupsSnapshot: JSON.parse(JSON.stringify(currentGroups)),
 overridesSnapshot: { ...bracketSizeOverrides },
-winnersSnapshot,
-timestamp: new Date().toISOString()
+winnersSnapshot, timestamp: new Date().toISOString()
 });
 updateUndoButton();
 }
@@ -701,11 +683,8 @@ if (!btn) return;
 const count = undoStack.length;
 btn.disabled = count === 0;
 badge.textContent = count;
-if (count > 0) {
-tooltip.textContent = `Undo: ${undoStack[undoStack.length - 1].description}`;
-} else {
-tooltip.textContent = "Nothing to undo";
-}
+if (count > 0) tooltip.textContent = `Undo: ${undoStack[undoStack.length - 1].description}`;
+else tooltip.textContent = "Nothing to undo";
 }
 async function performUndo() {
 if (undoStack.length === 0) { showToast("Nothing to undo", "error"); return; }
@@ -720,9 +699,7 @@ if (catSnap.categoryOrder.length > 0) await safeInsert(table, catSnap.categoryOr
 }
 currentGroups = snapshot.groupsSnapshot;
 bracketSizeOverrides = snapshot.overridesSnapshot;
-if (snapshot.winnersSnapshot) {
-bracketWinnersCache = snapshot.winnersSnapshot;
-}
+if (snapshot.winnersSnapshot) bracketWinnersCache = snapshot.winnersSnapshot;
 clearSelection();
 await renderBracketView(currentGroups, snapshot.bracketType);
 updateUndoButton();
@@ -753,16 +730,16 @@ if (matches.length === 0) {
 dropdown.innerHTML = `<div class="autocomplete-empty"><i class="fas fa-search"></i> No matches for "${term}"</div>`;
 } else {
 dropdown.innerHTML = matches.map(c => {
-const safeName = (c.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '&quot;');
-const safeTeam = (c.team || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '&quot;');
+const safeName = escapeAttr(c.name);
+const safeTeam = escapeAttr(c.team);
 const discClass = c._discipline === "patterns" ? "patterns" : "sparring";
 const discLabel = c._discipline === "patterns" ? "Patterns" : "Sparring";
 return `<div class="autocomplete-item" draggable="true" ondragstart="dragAutocompleteItem(event, '${safeName}', '${safeTeam}')" ondragend="this.classList.remove('dragging-item')">
-<span class="autocomplete-item-name">${c.name}</span>
+<span class="autocomplete-item-name">${escapeHtml(c.name)}</span>
 <span class="autocomplete-item-meta">
-<span>${c.team || "N/A"}</span>
+<span>${escapeHtml(c.team) || "N/A"}</span>
 <span class="disc-tag ${discClass}">${discLabel}</span>
-<span>${c._full_cat || ""}</span>
+<span>${escapeHtml(c._full_cat)}</span>
 </span>
 </div>`;
 }).join("");
@@ -799,21 +776,14 @@ matchBox.classList.remove("drop-hover");
 matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
 const slot = detectDroppedSlot(matchBox, e.clientY);
 const targetRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
-if (selectedPlayerData) {
-moveSelectedPlayerToBye(matchBox, targetRow);
-return;
-}
+if (selectedPlayerData) { moveSelectedPlayerToBye(matchBox, targetRow); return; }
 const data = e.dataTransfer.getData("application/player");
 if (!data) return;
 let player;
 try { player = JSON.parse(data); } catch { return; }
 const page = matchBox.closest(".a4-page");
 if (!page) return;
-const categoryKey = page.dataset.category;
-const type = page.dataset.type;
-const round = parseInt(matchBox.dataset.round || "0");
-const match = parseInt(matchBox.dataset.match || "0");
-addPlayerToSpecificSlot(player.name, player.team, categoryKey, type, round, match, slot);
+addPlayerToSpecificSlot(player.name, player.team, page.dataset.category, page.dataset.type, parseInt(matchBox.dataset.round || "0"), parseInt(matchBox.dataset.match || "0"), slot);
 }
 function handleByeSlotDragOver(e) {
 e.preventDefault();
@@ -846,9 +816,7 @@ const table = type === "Patterns" ? "patterns_categories" : "sparring_categories
 const { data: existing } = await sb.from(table).select("*").eq("category", categoryKey);
 const alreadyExists = (existing || []).some(e => (e.name || "").toLowerCase() === (name || "").toLowerCase());
 await takeSnapshot(`Add "${name}" to ${categoryKey}`);
-if (alreadyExists) {
-await sb.from(table).delete().eq("category", categoryKey).eq("name", name);
-}
+if (alreadyExists) await sb.from(table).delete().eq("category", categoryKey).eq("name", name);
 let position;
 if (round === 0) {
 const maxR1 = (existing || []).filter(e => (e.position_number || 0) < 10000)
@@ -857,23 +825,13 @@ position = maxR1 + 1;
 } else {
 position = (round + 1) * 10000 + (match + 1) * 100 + (slot === "p1" ? 0 : 1);
 }
-const { error } = await sb.from(table).insert([{
-name,
-team,
-category: categoryKey,
-position_number: position
-}]);
-if (error) {
-showToast("❌ Failed to add: " + error.message, "error");
-return;
-}
+const { error } = await sb.from(table).insert([{ name, team, category: categoryKey, position_number: position }]);
+if (error) { showToast("❌ Failed to add: " + error.message, "error"); return; }
 if (currentGroups && currentGroups[categoryKey]) {
 const alreadyInGroup = currentGroups[categoryKey].some(c =>
 (c.name || "").toLowerCase() === (name || "").toLowerCase()
 );
-if (!alreadyInGroup) {
-currentGroups[categoryKey].push({ name, team });
-}
+if (!alreadyInGroup) currentGroups[categoryKey].push({ name, team });
 }
 clearAutocomplete();
 clearSelection();
@@ -1003,21 +961,10 @@ orderedList = [...orderedPlayers, ...newPlayers];
 }
 const size = getEffectiveBracketSize(categoryKey, orderedList.length);
 if (size === 1) {
-return {
-rounds: [[{ p1: orderedList[0] || { name: "", team: "" }, p2: { name: "", team: "" } }]],
-totalRounds: 1,
-laterRoundEntries: []
-};
+return { rounds: [[{ p1: orderedList[0] || { name: "", team: "" }, p2: { name: "", team: "" } }]], totalRounds: 1, laterRoundEntries: [] };
 }
 if (size === 2) {
-return {
-rounds: [[{
-p1: orderedList[0] || { name: "", team: "" },
-p2: orderedList[1] || { name: "", team: "" }
-}]],
-totalRounds: 1,
-laterRoundEntries: []
-};
+return { rounds: [[{ p1: orderedList[0] || { name: "", team: "" }, p2: orderedList[1] || { name: "", team: "" } }]], totalRounds: 1, laterRoundEntries: [] };
 }
 const totalRounds = Math.log2(size);
 const rounds = [];
@@ -1029,17 +976,13 @@ slots = spreadTeams(shuffled, size);
 slots = slots.map(p => !p || !p.name ? { name: "BYE", team: "" } : p);
 }
 const r1Matches = [];
-for (let i = 0; i < size; i += 2) {
-r1Matches.push({ p1: slots[i], p2: slots[i + 1] });
-}
+for (let i = 0; i < size; i += 2) r1Matches.push({ p1: slots[i], p2: slots[i + 1] });
 rounds.push(r1Matches);
 let matchCount = size / 2;
 for (let r = 1; r < totalRounds; r++) {
 matchCount = matchCount / 2;
 const currentMatches = [];
-for (let m = 0; m < matchCount; m++) {
-currentMatches.push({ p1: { name: "", team: "" }, p2: { name: "", team: "" } });
-}
+for (let m = 0; m < matchCount; m++) currentMatches.push({ p1: { name: "", team: "" }, p2: { name: "", team: "" } });
 rounds.push(currentMatches);
 }
 laterRoundEntries.forEach(entry => {
@@ -1058,23 +1001,16 @@ return { rounds, totalRounds, laterRoundEntries };
 async function saveCategoryOrder(categoryKey, type, silent = false) {
 const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
 const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
-if (!page) {
-if (!silent) alert("❌ Page not found for " + categoryKey);
-return { success: false, count: 0 };
-}
+if (!page) { if (!silent) alert("❌ Page not found for " + categoryKey); return { success: false, count: 0 }; }
 const bracketTable = page.querySelector(".bracket-table");
-if (!bracketTable) {
-if (!silent) showToast("❌ Bracket table not found", "error");
-return { success: false, count: 0 };
-}
+if (!bracketTable) { if (!silent) showToast("❌ Bracket table not found", "error"); return { success: false, count: 0 }; }
 const dataToSave = [];
 const matchBoxes = bracketTable.querySelectorAll(".match-box");
 const round1Players = [];
 matchBoxes.forEach((matchBox) => {
 const round = parseInt(matchBox.dataset.round || "0");
 if (round !== 0) return;
-const playerRows = matchBox.querySelectorAll(".player-row");
-playerRows.forEach((row) => {
+matchBox.querySelectorAll(".player-row").forEach((row) => {
 const nameEl = row.querySelector(".p-name");
 if (!nameEl) return;
 const name = nameEl.innerText.trim();
@@ -1090,8 +1026,7 @@ matchBoxes.forEach((matchBox) => {
 const round = parseInt(matchBox.dataset.round || "0");
 const match = parseInt(matchBox.dataset.match || "0");
 if (round === 0) return;
-const playerRows = matchBox.querySelectorAll(".player-row");
-playerRows.forEach((row) => {
+matchBox.querySelectorAll(".player-row").forEach((row) => {
 const nameEl = row.querySelector(".p-name");
 if (!nameEl) return;
 const name = nameEl.innerText.trim();
@@ -1103,9 +1038,8 @@ dataToSave.push({ name, team, category: categoryKey, position_number: position }
 });
 });
 if (dataToSave.length === 0) {
-if (!silent) showToast("⚠️ No players to save", "error");
-// 🔑 FIX: Even if no players, still save winners for this category
 await saveWinnersForCategory(categoryKey, type);
+if (!silent) showToast("⚠️ No players to save", "error");
 return { success: true, count: 0 };
 }
 await safeDelete(table, { category: categoryKey });
@@ -1114,9 +1048,8 @@ if (error) {
 if (!silent) showToast("❌ Save error: " + error.message, "error");
 return { success: false, count: 0, error };
 } else {
-// 🔑 FIX: Also save winners when saving a single category
 await saveWinnersForCategory(categoryKey, type);
-if (!silent) showToast(`✅ Saved ${dataToSave.length} players + winners from ${categoryKey}`, "success");
+if (!silent) showToast(`✅ Saved ${dataToSave.length} players + winners`, "success");
 return { success: true, count: dataToSave.length };
 }
 }
@@ -1175,19 +1108,13 @@ html += `<div class="empty-state" style="text-align:center;padding:40px;color:va
 if (delPatterns.length > 0) {
 html += `<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">🎭 Deleted from Patterns</h3>`;
 delPatterns.forEach((p) => {
-const safeName = (p.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-const safeTeam = (p.team || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-const safeCat = (p.category || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-html += `<div class="deleted-card"><div class="deleted-info"><strong>${p.name || "Unknown"}</strong><small>${p.team || "N/A"} • ${p.category || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${safeName}', '${safeTeam}', '${safeCat}', 'Patterns')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
+html += `<div class="deleted-card"><div class="deleted-info"><strong>${escapeHtml(p.name) || "Unknown"}</strong><small>${escapeHtml(p.team) || "N/A"} • ${escapeHtml(p.category) || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${escapeAttr(p.name)}', '${escapeAttr(p.team)}', '${escapeAttr(p.category)}', 'Patterns')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
 });
 }
 if (delSparring.length > 0) {
 html += `<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">🥋 Deleted from Sparring</h3>`;
 delSparring.forEach((p) => {
-const safeName = (p.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-const safeTeam = (p.team || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-const safeCat = (p.category || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-html += `<div class="deleted-card"><div class="deleted-info"><strong>${p.name || "Unknown"}</strong><small>${p.team || "N/A"} • ${p.category || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${safeName}', '${safeTeam}', '${safeCat}', 'Sparring')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
+html += `<div class="deleted-card"><div class="deleted-info"><strong>${escapeHtml(p.name) || "Unknown"}</strong><small>${escapeHtml(p.team) || "N/A"} • ${escapeHtml(p.category) || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${escapeAttr(p.name)}', '${escapeAttr(p.team)}', '${escapeAttr(p.category)}', 'Sparring')"><i class="fas fa-undo"></i> Restore</button></div></div>`;
 });
 }
 }
@@ -1198,9 +1125,6 @@ const content = document.getElementById("content");
 if (!content) return;
 content.addEventListener("click", handleContentClick);
 content.addEventListener("click", handleByeClick);
-document.addEventListener("keydown", (e) => {
-if (e.key === "Escape") clearSelection();
-});
 }
 function handleContentClick(e) {
 const deleteBtn = e.target.closest(".delete-btn");
@@ -1213,9 +1137,7 @@ const name = row.dataset.playerName;
 const team = row.dataset.playerTeam;
 const category = row.dataset.category;
 const type = row.dataset.bracketType;
-if (name && name !== "BYE" && name !== "________________") {
-deletePlayerFromBracket(name, team, category, type);
-}
+if (name && name !== "BYE" && name !== "________________") deletePlayerFromBracket(name, team, category, type);
 return;
 }
 if (e.target.closest(".drag-handle")) return;
@@ -1232,15 +1154,11 @@ if (!selectedPlayerEl) {
 selectedPlayerEl = playerRow;
 selectedPlayerData = { name, team, category, type, rowEl: playerRow };
 playerRow.classList.add("selected");
-document.getElementById("selectionBannerText").textContent =
-`Selected: "${name}" — click another player to swap, click BYE/Winner to move`;
+document.getElementById("selectionBannerText").textContent = `Selected: "${name}" — click another player to swap, click BYE/Winner to move`;
 document.getElementById("selectionBanner").classList.add("visible");
 return;
 }
-if (playerRow === selectedPlayerEl) {
-clearSelection();
-return;
-}
+if (playerRow === selectedPlayerEl) { clearSelection(); return; }
 if (category === selectedPlayerData.category && type === selectedPlayerData.type) {
 performSwap(selectedPlayerEl, playerRow, category, type);
 return;
@@ -1249,8 +1167,7 @@ clearSelection();
 selectedPlayerEl = playerRow;
 selectedPlayerData = { name, team, category, type, rowEl: playerRow };
 playerRow.classList.add("selected");
-document.getElementById("selectionBannerText").textContent =
-`Selected: "${name}" — click another player to swap`;
+document.getElementById("selectionBannerText").textContent = `Selected: "${name}" — click another player to swap`;
 document.getElementById("selectionBanner").classList.add("visible");
 }
 function handleByeClick(e) {
@@ -1279,10 +1196,7 @@ const targetType = page.dataset.type;
 const byeRow = targetRow ||
 matchBox.querySelector('.player-row[data-player-name="BYE"]') ||
 matchBox.querySelector('.player-row .p-name:empty')?.closest(".player-row");
-if (!byeRow) {
-showToast("⚠️ No empty slot found", "error");
-return;
-}
+if (!byeRow) { showToast("⚠️ No empty slot found", "error"); return; }
 const srcName = selectedPlayerData.name;
 const srcTeam = selectedPlayerData.team;
 const srcCategory = selectedPlayerData.category;
@@ -1302,25 +1216,18 @@ srcTeamEl.innerText = "N/A";
 srcEl.dataset.playerName = "BYE";
 srcEl.dataset.playerTeam = "";
 const srcMatchBox = srcEl.closest(".match-box");
-if (srcMatchBox) {
-srcMatchBox.classList.add("bye");
-srcMatchBox.classList.remove("empty");
-}
+if (srcMatchBox) { srcMatchBox.classList.add("bye"); srcMatchBox.classList.remove("empty"); }
 const allFilled = Array.from(matchBox.querySelectorAll('.player-row')).every(r => {
 const n = r.dataset.playerName;
 return n && n !== "BYE" && n !== "________________" && n !== "";
 });
-if (allFilled) {
-matchBox.classList.remove("bye", "empty", "bye-selected");
-}
+if (allFilled) matchBox.classList.remove("bye", "empty", "bye-selected");
 byeRow.style.background = "#c8e6c9";
 srcEl.style.background = "#c8e6c9";
 setTimeout(() => { byeRow.style.background = ""; srcEl.style.background = ""; }, 400);
 clearSelection();
 await saveCategoryOrder(srcCategory, srcType, true);
-if (srcCategory !== targetCategory) {
-await saveCategoryOrder(targetCategory, targetType, true);
-}
+if (srcCategory !== targetCategory) await saveCategoryOrder(targetCategory, targetType, true);
 showToast(`✅ "${srcName}" moved`, "success");
 }
 async function performSwap(row1, row2, category, type) {
@@ -1374,7 +1281,7 @@ const data = await generateBracketData(list, key, type);
 const existing = await getSavedOrder(key, type);
 if (!existing) await saveCategoryOrder(key, type, true);
 const rowsCount = data.rounds[0].length;
-const safeKey = key.replace(/'/g, "\\'");
+const safeKey = escapeAttr(key);
 const effectiveSize = getEffectiveBracketSize(key, list.length);
 const autoSize = getBracketSize(list.length);
 const isOverridden = bracketSizeOverrides[key] && bracketSizeOverrides[key] !== autoSize;
@@ -1388,7 +1295,7 @@ const p3b = winnerData.placement_3b || "";
 html += `<div class="a4-page" id="page-${categoryIndex}" data-category="${key}" data-type="${type}" style="--row-count:${rowsCount}">
 <div class="bracket-header">
 <span style="font-size:12px;text-transform:uppercase;color:#666">${type}</span>
-<h2>${key}</h2>
+<h2>${escapeHtml(key)}</h2>
 <span style="font-size:14px;color:var(--secondary);font-weight:bold">${list.length} Competitors
 <span class="bracket-size-indicator">${effectiveSize} slots${isOverridden ? ' ⚙️' : ''}</span>
 </span>
@@ -1424,19 +1331,19 @@ const p2IsBye = mp2.name === "BYE" || !mp2.name;
 const matchIsDroppable = isBye || isEmpty;
 const dropAttrs = matchIsDroppable ? `ondragover="handleByeSlotDragOver(event)" ondragleave="handleByeSlotDragLeave(event)" ondrop="handleByeSlotDrop(event)"` : "";
 html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}" data-round="${r}" data-match="${matchIndex}" ${dropAttrs}>`;
-const p1SafeName = (mp1.name || "").replace(/"/g, '&quot;');
-const p1SafeTeam = (mp1.team || "").replace(/"/g, '&quot;');
+const p1SafeName = escapeAttr(mp1.name);
+const p1SafeTeam = escapeAttr(mp1.team);
 html += `<div class="player-row" data-player-id="${p1Id}" data-player-name="${p1SafeName}" data-player-team="${p1SafeTeam}" data-category="${key}" data-bracket-type="${type}" data-slot="p1">`;
 html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
-html += `<div class="player-info"><span class="p-name" contenteditable="true">${mp1.name}</span><span class="p-team">${mp1.team || "N/A"}</span></div>`;
+html += `<div class="player-info"><span class="p-name" contenteditable="true">${escapeHtml(mp1.name)}</span><span class="p-team">${escapeHtml(mp1.team) || "N/A"}</span></div>`;
 if (!p1IsBye && mp1.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
 html += `</div>`;
 html += `<div class="vs-divider">VS</div>`;
-const p2SafeName = (mp2.name || "").replace(/"/g, '&quot;');
-const p2SafeTeam = (mp2.team || "").replace(/"/g, '&quot;');
+const p2SafeName = escapeAttr(mp2.name);
+const p2SafeTeam = escapeAttr(mp2.team);
 html += `<div class="player-row" data-player-id="${p2Id}" data-player-name="${p2SafeName}" data-player-team="${p2SafeTeam}" data-category="${key}" data-bracket-type="${type}" data-slot="p2">`;
 html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
-html += `<div class="player-info"><span class="p-name" contenteditable="true">${mp2.name}</span><span class="p-team">${mp2.team || "N/A"}</span></div>`;
+html += `<div class="player-info"><span class="p-name" contenteditable="true">${escapeHtml(mp2.name)}</span><span class="p-team">${escapeHtml(mp2.team) || "N/A"}</span></div>`;
 if (!p2IsBye && mp2.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
 html += `</div></div>`;
 if (isLastRound) {
@@ -1447,13 +1354,13 @@ const p3aClass = p3a ? "has-value" : "empty-zone";
 const p3bClass = p3b ? "has-value" : "empty-zone";
 html += `<div class="winner-section">
 <div class="winner-label"><i class="fas fa-trophy"></i> WINNER</div>
-<div class="winner-drop-zone ${winnerClass}" data-placeholder="Drop winner here" data-value="${winnerName.replace(/"/g, '&quot;')}">${winnerName || "Drop winner here"}<button class="clear-winner" title="Clear"><i class="fas fa-times"></i></button></div>
+<div class="winner-drop-zone ${winnerClass}" data-placeholder="Drop winner here" data-value="${escapeAttr(winnerName)}">${escapeHtml(winnerName) || "Drop winner here"}<button class="clear-winner" title="Clear"><i class="fas fa-times"></i></button></div>
 <div class="winner-label" style="margin-top:6px"><i class="fas fa-medal"></i> PLACEMENTS</div>
 <div class="placements-list">
-<div class="placement-row"><span class="placement-rank gold">🥇 1.</span><div class="placement-drop-zone ${p1Class}" data-placement="0" data-placeholder="—" data-value="${p1.replace(/"/g, '&quot;')}">${p1 || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
-<div class="placement-row"><span class="placement-rank silver">🥈 2.</span><div class="placement-drop-zone ${p2Class}" data-placement="1" data-placeholder="—" data-value="${p2.replace(/"/g, '&quot;')}">${p2 || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
-<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ${p3aClass}" data-placement="2" data-placeholder="—" data-value="${p3a.replace(/"/g, '&quot;')}">${p3a || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
-<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ${p3bClass}" data-placement="3" data-placeholder="—" data-value="${p3b.replace(/"/g, '&quot;')}">${p3b || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
+<div class="placement-row"><span class="placement-rank gold">🥇 1.</span><div class="placement-drop-zone ${p1Class}" data-placement="0" data-placeholder="—" data-value="${escapeAttr(p1)}">${escapeHtml(p1) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
+<div class="placement-row"><span class="placement-rank silver">🥈 2.</span><div class="placement-drop-zone ${p2Class}" data-placement="1" data-placeholder="—" data-value="${escapeAttr(p2)}">${escapeHtml(p2) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
+<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ${p3aClass}" data-placement="2" data-placeholder="—" data-value="${escapeAttr(p3a)}">${escapeHtml(p3a) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
+<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ${p3bClass}" data-placement="3" data-placeholder="—" data-value="${escapeAttr(p3b)}">${escapeHtml(p3b) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
 </div>
 </div>`;
 }
@@ -1499,14 +1406,11 @@ ghost.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
 ghost.style.transform = "rotate(2deg)";
 document.body.appendChild(ghost);
 dragHandleState = {
-sourceRow: row,
-ghost: ghost,
+sourceRow: row, ghost: ghost,
 offsetX: e.clientX - row.getBoundingClientRect().left,
 offsetY: e.clientY - row.getBoundingClientRect().top,
-name: row.dataset.playerName,
-team: row.dataset.playerTeam,
-category: row.dataset.category,
-type: row.dataset.bracketType
+name: row.dataset.playerName, team: row.dataset.playerTeam,
+category: row.dataset.category, type: row.dataset.bracketType
 };
 document.addEventListener("mousemove", onDragHandleMove);
 document.addEventListener("mouseup", onDragHandleEnd);
@@ -1524,9 +1428,7 @@ if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
 if (targetRow && targetRow !== dragHandleState.sourceRow) {
 const tName = targetRow.dataset.playerName;
-if (tName && tName !== "BYE" && tName !== "________________") {
-targetRow.classList.add("swap-target");
-}
+if (tName && tName !== "BYE" && tName !== "________________") targetRow.classList.add("swap-target");
 }
 const matchBox = elemBelow.closest(".match-box");
 if (matchBox && (matchBox.classList.contains("bye") || matchBox.classList.contains("empty"))) {
@@ -1555,11 +1457,8 @@ const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
 if (winnerZone) {
 const page = winnerZone.closest(".a4-page");
 if (page) {
-if (winnerZone.classList.contains("winner-drop-zone")) {
-setWinnerZoneValue(winnerZone, state.name);
-} else {
-setPlacementZoneValue(winnerZone, state.name);
-}
+if (winnerZone.classList.contains("winner-drop-zone")) setWinnerZoneValue(winnerZone, state.name);
+else setPlacementZoneValue(winnerZone, state.name);
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
 showToast(`✅ "${state.name}" placed`, "success");
 }
@@ -1578,13 +1477,7 @@ return;
 const matchBox = elemBelow.closest(".match-box");
 if (matchBox && (matchBox.classList.contains("bye") || matchBox.classList.contains("empty"))) {
 selectedPlayerEl = state.sourceRow;
-selectedPlayerData = {
-name: state.name,
-team: state.team,
-category: state.category,
-type: state.type,
-rowEl: state.sourceRow
-};
+selectedPlayerData = { name: state.name, team: state.team, category: state.category, type: state.type, rowEl: state.sourceRow };
 const slot = detectDroppedSlot(matchBox, e.clientY);
 const targetSlotRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
 await moveSelectedPlayerToBye(matchBox, targetSlotRow);
@@ -1621,8 +1514,7 @@ const input = document.getElementById("bracketSearch");
 if (input) { input.value = ""; performInlineSearch(""); input.focus(); }
 }
 function initContentEditableTracking() {
-const editableNames = document.querySelectorAll(".p-name[contenteditable='true']");
-editableNames.forEach(el => {
+document.querySelectorAll(".p-name[contenteditable='true']").forEach(el => {
 el.addEventListener("focus", function() { this.dataset.oldValue = this.innerText; });
 el.addEventListener("blur", async function() {
 const oldVal = this.dataset.oldValue || "";
@@ -1754,7 +1646,6 @@ const personRegs = coachRegs.filter((r) => String(r.entry_id) === String(person.
 if (personRegs.length === 0) coaches.push({ ...person });
 else personRegs.forEach((reg) => coaches.push({ ...person, _reg_id: reg.id }));
 });
-// 🔑 Load judge ranks from dedicated table
 await loadJudgeRanks();
 } catch (error) {
 console.error("fetchData error:", error);
@@ -1855,7 +1746,7 @@ const dbGender = (c.gender || "").trim().toUpperCase();
 return gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
 });
 const weights = new Set();
-relevantComps.forEach((c) => { const w = c._actual_sub_cat.replace("kg", ""); if (w && w !== "N/A") weights.add(w); });
+relevantComps.forEach((c) => { const w = (c._actual_sub_cat || "").replace("kg", ""); if (w && w !== "N/A") weights.add(w); });
 Array.from(weights).sort((a, b) => {
 const numA = parseFloat(a.replace(/[^0-9.-]/g, ""));
 const numB = parseFloat(b.replace(/[^0-9.-]/g, ""));
@@ -1874,7 +1765,7 @@ if (age !== "ALL" && c._actual_age_group !== age) return false;
 const dbGender = (c.gender || "").trim().toUpperCase();
 const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
 if (!mGen) return false;
-const cWeight = c._actual_sub_cat.replace("kg", "");
+const cWeight = (c._actual_sub_cat || "").replace("kg", "");
 if (weightReq !== "ALL" && cWeight !== weightReq) return false;
 return true;
 });
@@ -1895,7 +1786,7 @@ if (age !== "ALL" && c._actual_age_group !== age) return false;
 const dbGender = (c.gender || "").trim().toUpperCase();
 const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
 if (!mGen) return false;
-const cWeight = c._actual_sub_cat.replace("kg", "");
+const cWeight = (c._actual_sub_cat || "").replace("kg", "");
 if (weightReq !== "ALL" && cWeight !== weightReq) return false;
 return true;
 });
@@ -1936,7 +1827,7 @@ html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(2
 teamNames.forEach((teamName) => {
 const t = teamsMap[teamName];
 const initial = teamName.charAt(0).toUpperCase();
-const safeTeam = teamName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+const safeTeam = escapeAttr(teamName);
 const patternsCount = t.patternsCategories.size;
 const sparringCount = t.sparringCategories.size;
 const totalCats = patternsCount + sparringCount;
@@ -1957,7 +1848,7 @@ priceSummaryHtml = `<div class="team-price-summary"><i class="fas fa-calculator"
 }
 html += `<div class="team-overview-card">
 <div class="team-overview-header">
-<div class="team-name-block"><div class="team-icon">${initial}</div><div><div class="team-name">${teamName}</div><div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitors • ${totalEntries} entries</div></div></div>
+<div class="team-name-block"><div class="team-icon">${initial}</div><div><div class="team-name">${escapeHtml(teamName)}</div><div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitors • ${totalEntries} entries</div></div></div>
 <div class="team-stats">
 <span class="stat-pill total"><i class="fas fa-layer-group"></i> Categories: <span class="stat-num">${totalCats}</span></span>
 <span class="stat-pill entries"><i class="fas fa-list"></i> Entries: <span class="stat-num">${totalEntries}</span></span>
@@ -1984,14 +1875,14 @@ const byName = {};
 teamEntries.forEach((c) => { if (!byName[c.name]) byName[c.name] = { entries: [], gender: c.gender || "" }; byName[c.name].entries.push(c); });
 const competitorNames = Object.keys(byName).sort();
 let html = `<div class="controls"><button class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-arrow-left"></i> Back</button></div>
-<div class="team-detail-modal"><div class="team-detail-header ${headerClass}"><h3><i class="fas ${iconClass}"></i> ${teamName} — ${disciplineLabel}</h3></div><div style="padding:15px 0;">`;
+<div class="team-detail-modal"><div class="team-detail-header ${headerClass}"><h3><i class="fas ${iconClass}"></i> ${escapeHtml(teamName)} — ${disciplineLabel}</h3></div><div style="padding:15px 0;">`;
 if (competitorNames.length === 0) html += `<div class="empty-team-detail">No registrations.</div>`;
 else {
 competitorNames.forEach((name) => {
 const data = byName[name];
 const uniqueCats = new Set(data.entries.map((e) => e._full_cat));
-html += `<div class="competitor-detail-card"><div class="competitor-detail-header"><div class="competitor-detail-name"><i class="fas fa-user-circle" style="color:var(--primary);"></i> ${name}</div><span class="category-count-badge">${uniqueCats.size} categor${uniqueCats.size !== 1 ? 'ies' : 'y'}</span></div><div class="category-list">`;
-data.entries.forEach((e) => { html += `<span class="category-tag ${tagClass}">${e._full_cat}</span>`; });
+html += `<div class="competitor-detail-card"><div class="competitor-detail-header"><div class="competitor-detail-name"><i class="fas fa-user-circle" style="color:var(--primary);"></i> ${escapeHtml(name)}</div><span class="category-count-badge">${uniqueCats.size} categor${uniqueCats.size !== 1 ? 'ies' : 'y'}</span></div><div class="category-list">`;
+data.entries.forEach((e) => { html += `<span class="category-tag ${tagClass}">${escapeHtml(e._full_cat)}</span>`; });
 html += `</div></div>`;
 });
 }
@@ -2002,8 +1893,8 @@ window.scrollTo({ top: 0, behavior: "smooth" });
 function createParallelCard(title, list) {
 if (list.length === 0) return `<div class="empty-state">No competitors found.</div>`;
 let n = "", t = "";
-list.forEach((c) => { n += `<div class="row-item">${c.name}</div>`; t += `<div class="row-item">${c.team || "N/A"}</div>`; });
-return `<div class="category-card"><div class="category-header">${title} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
+list.forEach((c) => { n += `<div class="row-item">${escapeHtml(c.name)}</div>`; t += `<div class="row-item">${escapeHtml(c.team) || "N/A"}</div>`; });
+return `<div class="category-card"><div class="category-header">${escapeHtml(title)} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
 }
 function renderTeamSummary(list, type) {
 const uniqueByTeam = {};
@@ -2024,7 +1915,7 @@ teamKeys.forEach((t) => {
 const uniqueCount = uniqueByTeam[t].size;
 const entryCount = entriesByTeam[t];
 const diffNote = entryCount > uniqueCount ? ` <span style="font-size:0.7rem;color:#e65100;">(${entryCount} entries)</span>` : '';
-h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">${t}</strong><span style="font-size:0.85rem;color:var(--gray)">${uniqueCount} competitor${uniqueCount !== 1 ? 's' : ''}${diffNote}</span></div>`;
+h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">${escapeHtml(t)}</strong><span style="font-size:0.85rem;color:var(--gray)">${uniqueCount} competitor${uniqueCount !== 1 ? 's' : ''}${diffNote}</span></div>`;
 });
 }
 h += `</div><div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -2035,24 +1926,20 @@ document.getElementById("teamSummary").innerHTML = h;
 }
 
 /* ============================================================
-👨‍⚖️ JUDGES + RANKS ASSIGNMENT
+👨‍⚖️ JUDGES + RANKS
 ============================================================ */
 async function loadJudgeRanks() {
 try {
 const { data, error } = await sb.from("judge_ranks").select("judge_id, rank");
 if (error) { judgeRanksMap = {}; return; }
 judgeRanksMap = {};
-(data || []).forEach(row => {
-judgeRanksMap[row.judge_id] = row.rank;
-});
+(data || []).forEach(row => { judgeRanksMap[row.judge_id] = row.rank; });
 } catch (err) {
 console.warn("Could not load judge ranks:", err);
 judgeRanksMap = {};
 }
 }
-function getJudgeRank(judgeId) {
-return judgeRanksMap[judgeId] || null;
-}
+function getJudgeRank(judgeId) { return judgeRanksMap[judgeId] || null; }
 function getRankLabel(rank) {
 if (rank === "head_referee") return "Head Referee";
 if (rank === "referee") return "Referee";
@@ -2066,11 +1953,7 @@ if (rank === "computer_referee") return "fa-desktop";
 return "fa-question-circle";
 }
 function selectRank(rank) {
-if (rankSelectionMode === rank) {
-rankSelectionMode = null;
-} else {
-rankSelectionMode = rank;
-}
+rankSelectionMode = (rankSelectionMode === rank) ? null : rank;
 updateRangsUI();
 }
 function updateRangsUI() {
@@ -2093,49 +1976,41 @@ const info = labels[rankSelectionMode];
 hint.className = `rangs-hint active-rank-${info.color}`;
 hint.innerHTML = `<i class="fas ${getRankIcon(rankSelectionMode)}"></i> <strong>Mode: ${info.name}</strong> — now click on any judge row to ${rankSelectionMode === 'unassign' ? 'remove their rank' : `assign them as ${info.name.toLowerCase()}`}.`;
 }
-// Update judge rows to show they are clickable
 document.querySelectorAll(".judges-table tbody tr").forEach(tr => {
-if (rankSelectionMode) {
-tr.classList.add("assignable");
-} else {
-tr.classList.remove("assignable");
-}
+tr.classList.toggle("assignable", !!rankSelectionMode);
 });
 }
 async function assignJudgeRank(judgeId, judgeName) {
 if (!rankSelectionMode) {
-showToast("⚠️ Select a rank first", "error");
+showToast("⚠️ Select a rank first (click Rangs button)", "error");
 return;
 }
-const row = document.querySelector(`tr[data-judge-id="${judgeId}"]`);
+const row = document.querySelector(`tr[data-judge-id="${CSS.escape(String(judgeId))}"]`);
+const displayName = safeStr(judgeName) || "Unknown";
 try {
 if (rankSelectionMode === "unassign") {
 await safeDelete("judge_ranks", { judge_id: judgeId });
 delete judgeRanksMap[judgeId];
-showToast(`🗑️ Rank removed from "${judgeName}"`, "success");
+showToast(`🗑️ Rank removed from "${displayName}"`, "success");
 } else {
-// Upsert: delete existing then insert
 await safeDelete("judge_ranks", { judge_id: judgeId });
 await safeInsert("judge_ranks", [{ judge_id: judgeId, rank: rankSelectionMode }]);
 judgeRanksMap[judgeId] = rankSelectionMode;
-showToast(`✅ "${judgeName}" → ${getRankLabel(rankSelectionMode)}`, "success");
+showToast(`✅ "${displayName}" → ${getRankLabel(rankSelectionMode)}`, "success");
 }
-// Flash animation on row
 if (row) {
 row.classList.add("just-assigned");
 setTimeout(() => row.classList.remove("just-assigned"), 1000);
 }
-// Re-render judges table to update rank badges
 await refreshJudgesTable();
 } catch (err) {
 console.error("Assign rank error:", err);
-showToast("❌ Failed: " + err.message, "error");
+showToast("❌ Failed: " + (err.message || err), "error");
 }
 }
 async function refreshJudgesTable() {
 const tbody = document.querySelector(".judges-table tbody");
 if (!tbody) return;
-// Rebuild tbody rows with updated ranks
 const rows = Array.from(tbody.querySelectorAll("tr"));
 rows.forEach(row => {
 const judgeId = row.dataset.judgeId;
@@ -2146,7 +2021,6 @@ const rankClass = rank || "unassigned";
 rankCell.innerHTML = `<span class="rank-badge ${rankClass}"><i class="fas ${getRankIcon(rank)}"></i> ${getRankLabel(rank)}</span>`;
 }
 });
-// Update legend counts
 updateRankLegend();
 }
 function updateRankLegend() {
@@ -2179,7 +2053,7 @@ else counts.unassigned++;
 let html = `
 <div class="judges-toolbar">
 <div class="judges-toolbar-header">
-<div class="judges-toolbar-title"><i class="fas fa-gavel"></i> Judges (${judges.length})</div>
+<div class="judges-toolbar-title"><i class="fas fa-gavel"></i> Judges List (${judges.length})</div>
 <button class="btn btn-warning btn-sm" id="toggleRangsBtn" onclick="toggleRangsPanel()">
 <i class="fas fa-layer-group"></i> Rangs
 </button>
@@ -2224,13 +2098,17 @@ html += `<table class="judges-table"><thead><tr>
 judges.forEach((j, idx) => {
 const rank = getJudgeRank(j.id);
 const rankClass = rank || "unassigned";
-const safeId = (j.id || "").replace(/"/g, '&quot;');
-const safeName = (j.name || "").replace(/"/g, '&quot;');
-html += `<tr data-judge-id="${safeId}" onclick="assignJudgeRank('${safeId}', '${safeName.replace(/'/g, "\\'")}')">
+// 🔑 FIX: Use safeStr + escapeAttr for ALL values to prevent .replace error
+const safeId = escapeAttr(j.id);
+const safeName = escapeAttr(j.name);
+const displayName = escapeHtml(j.name) || "Unknown";
+const displayBelt = escapeHtml(j.belt) || "N/A";
+const displayTeam = escapeHtml(j.team) || "N/A";
+html += `<tr data-judge-id="${safeId}" onclick="assignJudgeRank('${safeId}', '${safeName}')">
 <td style="color:var(--gray);font-weight:700">${idx + 1}</td>
-<td style="font-weight:600">${j.name || "Unknown"}</td>
-<td>${j.belt || "N/A"}</td>
-<td>${j.team || "N/A"}</td>
+<td style="font-weight:600">${displayName}</td>
+<td>${displayBelt}</td>
+<td>${displayTeam}</td>
 <td class="rank-cell"><span class="rank-badge ${rankClass}"><i class="fas ${getRankIcon(rank)}"></i> ${getRankLabel(rank)}</span></td>
 </tr>`;
 });
@@ -2242,48 +2120,47 @@ function toggleRangsPanel() {
 const panel = document.getElementById("rangsPanel");
 if (panel) panel.classList.toggle("active");
 }
-
-/* ============================================================
-💰 PRICE / PROFIT OVERVIEW
-============================================================ */
+async function showCoaches() {
+setActiveBtn("btnCoaches");
+await fetchData();
+let h = `<div class="category-card"><div class="category-header">Coaches List (${coaches.length})</div>`;
+if (coaches.length === 0) h += `<div style="padding:30px;text-align:center;color:var(--gray);">No coaches.</div>`;
+else {
+h += `<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
+coaches.forEach((c) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(c.name) || "Unknown"}</td><td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(c.belt) || "N/A"}</td><td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(c.team) || "N/A"}</td></tr>`));
+h += `</table>`;
+}
+document.getElementById("content").innerHTML = h + `</div>`;
+}
 async function showPriceOverview() {
 setActiveBtn("btnPriceOverview");
 await fetchData();
 await fetchTournamentPrices();
-
 const patternsPrice = tournamentPrices.patterns;
 const sparringPrice = tournamentPrices.sparring;
 const headRefPrice = tournamentPrices.headReferee;
 const refPrice = tournamentPrices.referee;
 const compRefPrice = tournamentPrices.computerReferee;
-
 const patternsEntries = competitors.filter(c => c._discipline === "patterns");
 const sparringEntries = competitors.filter(c => c._discipline === "sparring");
-
-// 🔑 Count judges by rank from the dedicated judge_ranks table
 const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
 const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
 const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
 const unassignedJudges = judges.filter(j => !getJudgeRank(j.id));
-
 const patternsIncome = (patternsPrice !== null && !isNaN(patternsPrice)) ? patternsPrice * patternsEntries.length : 0;
 const sparringIncome = (sparringPrice !== null && !isNaN(sparringPrice)) ? sparringPrice * sparringEntries.length : 0;
 const totalIncome = patternsIncome + sparringIncome;
-
 const headRefExpense = (headRefPrice !== null && !isNaN(headRefPrice)) ? headRefPrice * headReferees.length : 0;
 const refExpense = (refPrice !== null && !isNaN(refPrice)) ? refPrice * regularReferees.length : 0;
 const compRefExpense = (compRefPrice !== null && !isNaN(compRefPrice)) ? compRefPrice * computerReferees.length : 0;
 const totalExpense = headRefExpense + refExpense + compRefExpense;
-
 const netProfit = totalIncome - totalExpense;
 const isNegative = netProfit < 0;
-
 let html = `<div class="price-overview-container">
 <div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
 <h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>
 <button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>
 </div>
-
 <div class="price-summary-grid">
 <div class="price-summary-card income">
 <div class="card-icon-big"><i class="fas fa-arrow-down"></i></div>
@@ -2306,7 +2183,6 @@ let html = `<div class="price-overview-container">
 <div class="card-value">${competitors.length + judges.length + coaches.length}</div>
 </div>
 </div>
-
 <div class="price-formula-bar">
 <span class="formula-segment income-seg"><i class="fas fa-arrow-down"></i> Income: <strong>${formatEuro(totalIncome)}</strong></span>
 <span class="formula-operator">−</span>
@@ -2314,14 +2190,12 @@ let html = `<div class="price-overview-container">
 <span class="formula-operator">=</span>
 <span class="formula-segment profit-seg ${isNegative ? 'negative' : ''}"><i class="fas fa-${isNegative ? 'minus' : 'equals'}"></i> ${isNegative ? 'Loss' : 'Profit'}: <strong>${formatEuro(Math.abs(netProfit))}</strong></span>
 </div>`;
-
 if (unassignedJudges.length > 0) {
 html += `<div style="background:#fff3cd;border:1px solid #ffc107;border-left:5px solid var(--warning);border-radius:8px;padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:0.9rem;color:#856404">
 <i class="fas fa-exclamation-triangle" style="font-size:1.3rem"></i>
 <div><strong>${unassignedJudges.length} judge${unassignedJudges.length !== 1 ? 's' : ''} unassigned</strong> — their fees are NOT being counted. Go to <strong>Judges → Rangs</strong> to assign ranks.</div>
 </div>`;
 }
-
 html += `
 <div class="price-breakdown-section">
 <div class="price-breakdown-header income-header expanded" onclick="toggleBreakdown(this)">
@@ -2330,33 +2204,9 @@ html += `
 <span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>
 </div>
 <div class="price-breakdown-body expanded">`;
-
-html += buildPriceLineItem(
-"Patterns (Tul) Entry Fees",
-"fa-chess-board",
-"patterns-icon",
-patternsEntries.length,
-patternsPrice,
-patternsIncome,
-"income",
-patternsEntries,
-`per entry @ ${patternsPrice !== null ? formatEuro(patternsPrice) : 'N/A'}`
-);
-
-html += buildPriceLineItem(
-"Sparring (Matsogi) Entry Fees",
-"fa-fist-raised",
-"sparring-icon",
-sparringEntries.length,
-sparringPrice,
-sparringIncome,
-"income",
-sparringEntries,
-`per entry @ ${sparringPrice !== null ? formatEuro(sparringPrice) : 'N/A'}`
-);
-
+html += buildPriceLineItem("Patterns (Tul) Entry Fees", "fa-chess-board", "patterns-icon", patternsEntries.length, patternsPrice, patternsIncome, "income", patternsEntries, `per entry @ ${patternsPrice !== null ? formatEuro(patternsPrice) : 'N/A'}`);
+html += buildPriceLineItem("Sparring (Matsogi) Entry Fees", "fa-fist-raised", "sparring-icon", sparringEntries.length, sparringPrice, sparringIncome, "income", sparringEntries, `per entry @ ${sparringPrice !== null ? formatEuro(sparringPrice) : 'N/A'}`);
 html += `</div></div>
-
 <div class="price-breakdown-section">
 <div class="price-breakdown-header expense-header expanded" onclick="toggleBreakdown(this)">
 <div class="price-breakdown-title expense-title"><i class="fas fa-arrow-up"></i> EXPENSES — Referee Fees (by Rank)</div>
@@ -2364,45 +2214,10 @@ html += `</div></div>
 <span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>
 </div>
 <div class="price-breakdown-body expanded">`;
-
-html += buildPriceLineItem(
-"Head Referees",
-"fa-crown",
-"headref-icon",
-headReferees.length,
-headRefPrice,
-headRefExpense,
-"expense",
-headReferees,
-`${headReferees.length} judge${headReferees.length !== 1 ? 's' : ''} @ ${headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'}`
-);
-
-html += buildPriceLineItem(
-"Referees",
-"fa-user-shield",
-"referee-icon",
-regularReferees.length,
-refPrice,
-refExpense,
-"expense",
-regularReferees,
-`${regularReferees.length} judge${regularReferees.length !== 1 ? 's' : ''} @ ${refPrice !== null ? formatEuro(refPrice) : 'N/A'}`
-);
-
-html += buildPriceLineItem(
-"Computer Referees",
-"fa-desktop",
-"computer-icon",
-computerReferees.length,
-compRefPrice,
-compRefExpense,
-"expense",
-computerReferees,
-`${computerReferees.length} judge${computerReferees.length !== 1 ? 's' : ''} @ ${compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'}`
-);
-
+html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headReferees.length, headRefPrice, headRefExpense, "expense", headReferees, `${headReferees.length} judge${headReferees.length !== 1 ? 's' : ''} @ ${headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'}`);
+html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", regularReferees.length, refPrice, refExpense, "expense", regularReferees, `${regularReferees.length} judge${regularReferees.length !== 1 ? 's' : ''} @ ${refPrice !== null ? formatEuro(refPrice) : 'N/A'}`);
+html += buildPriceLineItem("Computer Referees", "fa-desktop", "computer-icon", computerReferees.length, compRefPrice, compRefExpense, "expense", computerReferees, `${computerReferees.length} judge${computerReferees.length !== 1 ? 's' : ''} @ ${compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'}`);
 html += `</div></div>
-
 <div class="price-breakdown-section">
 <div class="price-breakdown-header" onclick="toggleBreakdown(this)" style="border-left:6px solid var(--secondary)">
 <div class="price-breakdown-title" style="color:var(--secondary)"><i class="fas fa-cog"></i> Current Price Configuration</div>
@@ -2433,18 +2248,13 @@ html += `</div></div>
 </div>
 </div>
 </div>
-
 </div>`;
-
 document.getElementById("content").innerHTML = html;
 }
-
 function buildPriceLineItem(title, icon, iconClass, count, unitPrice, total, type, entries, subtitle) {
 const amountClass = type === "income" ? "income-amount" : "expense-amount";
 const sign = type === "income" ? "+" : "−";
 const hasPrice = unitPrice !== null && !isNaN(unitPrice);
-const safeId = "line-" + Math.random().toString(36).slice(2, 10);
-
 let detailsHtml = "";
 if (entries && entries.length > 0) {
 detailsHtml = `<div class="price-line-details">`;
@@ -2452,9 +2262,9 @@ if (!hasPrice) {
 detailsHtml += `<div class="price-empty-msg"><i class="fas fa-info-circle"></i> Unit price not configured — cannot calculate total</div>`;
 } else {
 entries.forEach((e, idx) => {
-const name = e.name || "Unknown";
-const team = e.team || "N/A";
-const cat = e._full_cat || "";
+const name = escapeHtml(e.name) || "Unknown";
+const team = escapeHtml(e.team) || "N/A";
+const cat = escapeHtml(e._full_cat) || "";
 detailsHtml += `<div class="price-detail-row">
 <div class="price-detail-name">
 <span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
@@ -2469,13 +2279,12 @@ detailsHtml += `</div>`;
 } else {
 detailsHtml = `<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>`;
 }
-
 return `<div class="price-line-item" onclick="togglePriceLine(this)">
 <div class="price-line-left">
 <div class="price-line-icon ${iconClass}"><i class="fas ${icon}"></i></div>
 <div class="price-line-info">
-<div class="price-line-title">${title} <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">${count}</span></div>
-<div class="price-line-subtitle">${subtitle}</div>
+<div class="price-line-title">${escapeHtml(title)} <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">${count}</span></div>
+<div class="price-line-subtitle">${escapeHtml(subtitle)}</div>
 </div>
 </div>
 <div class="price-line-right">
@@ -2485,53 +2294,29 @@ return `<div class="price-line-item" onclick="togglePriceLine(this)">
 ${detailsHtml}
 </div>`;
 }
-
 function toggleBreakdown(header) {
 header.classList.toggle("expanded");
 const body = header.nextElementSibling;
 if (body) body.classList.toggle("expanded");
 }
-
-function togglePriceLine(item) {
-item.classList.toggle("expanded");
-}
-
+function togglePriceLine(item) { item.classList.toggle("expanded"); }
 function exportFinancialReport() {
 const patternsPrice = tournamentPrices.patterns;
 const sparringPrice = tournamentPrices.sparring;
 const headRefPrice = tournamentPrices.headReferee;
 const refPrice = tournamentPrices.referee;
 const compRefPrice = tournamentPrices.computerReferee;
-
 const patternsEntries = competitors.filter(c => c._discipline === "patterns");
 const sparringEntries = competitors.filter(c => c._discipline === "sparring");
 const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
 const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
 const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
-
 let csv = "data:text/csv;charset=utf-8,Type,Category,Name,Team,Amount (EUR)\n";
-
-patternsEntries.forEach(e => {
-const amt = patternsPrice !== null ? patternsPrice.toFixed(2) : "0.00";
-csv += `INCOME,Patterns,"${e.name}","${e.team || "N/A"}",${amt}\n`;
-});
-sparringEntries.forEach(e => {
-const amt = sparringPrice !== null ? sparringPrice.toFixed(2) : "0.00";
-csv += `INCOME,Sparring,"${e.name}","${e.team || "N/A"}",${amt}\n`;
-});
-headReferees.forEach(e => {
-const amt = headRefPrice !== null ? (-headRefPrice).toFixed(2) : "0.00";
-csv += `EXPENSE,Head Referee,"${e.name}","${e.team || "N/A"}",${amt}\n`;
-});
-regularReferees.forEach(e => {
-const amt = refPrice !== null ? (-refPrice).toFixed(2) : "0.00";
-csv += `EXPENSE,Referee,"${e.name}","${e.team || "N/A"}",${amt}\n`;
-});
-computerReferees.forEach(e => {
-const amt = compRefPrice !== null ? (-compRefPrice).toFixed(2) : "0.00";
-csv += `EXPENSE,Computer Referee,"${e.name}","${e.team || "N/A"}",${amt}\n`;
-});
-
+patternsEntries.forEach(e => { csv += `INCOME,Patterns,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(patternsPrice !== null ? patternsPrice : 0).toFixed(2)}\n`; });
+sparringEntries.forEach(e => { csv += `INCOME,Sparring,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(sparringPrice !== null ? sparringPrice : 0).toFixed(2)}\n`; });
+headReferees.forEach(e => { csv += `EXPENSE,Head Referee,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(headRefPrice !== null ? -headRefPrice : 0).toFixed(2)}\n`; });
+regularReferees.forEach(e => { csv += `EXPENSE,Referee,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(refPrice !== null ? -refPrice : 0).toFixed(2)}\n`; });
+computerReferees.forEach(e => { csv += `EXPENSE,Computer Referee,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(compRefPrice !== null ? -compRefPrice : 0).toFixed(2)}\n`; });
 const encodedUri = encodeURI(csv);
 const link = document.createElement("a");
 link.setAttribute("href", encodedUri);
@@ -2541,8 +2326,8 @@ link.click();
 document.body.removeChild(link);
 showToast("✅ Financial report exported", "success");
 }
-
 document.addEventListener("keydown", (e) => {
+if (e.key === "Escape") clearSelection();
 if ((e.ctrlKey || e.metaKey) && e.key === "z") {
 const active = document.activeElement;
 const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
@@ -2560,3 +2345,27 @@ showPatterns();
 </body>
 </html>
 
+
+
+              <script>
+                              function safeStr(val) {
+  if (val === null || val === undefined) return "";
+  if (typeof val !== "string") {
+    try { return String(val); } catch (e) { return ""; }
+  }
+  return val;
+}
+
+function escapeAttr(str) {
+  return safeStr(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+
+function escapeHtml(str) {
+  return safeStr(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+
+              </script>
+                        </body>
+                        </html>
+                    
