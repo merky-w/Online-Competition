@@ -1,625 +1,904 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Taekwondo Scoring System</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  * { -webkit-tap-highlight-color: transparent; user-select: none; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overscroll-behavior: none; }
-  .btn-score { transition: all 0.08s ease; }
-  .btn-score:active { transform: scale(0.94); }
-  .pulse { animation: pulse 0.4s ease; }
-  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
-  .tv-score { font-variant-numeric: tabular-nums; text-shadow: 0 4px 24px rgba(0,0,0,0.25); }
-  .glow-blue { box-shadow: 0 0 40px rgba(37,99,235,0.35); }
-  .glow-red  { box-shadow: 0 0 40px rgba(220,38,38,0.35); }
-  .card-box { border: 3px solid; border-radius: 16px; display:flex; align-items:center; justify-content:center; flex-direction:column; }
-  .mode-plus  { background: #10b981; color: white; }
-  .mode-minus { background: #f59e0b; color: white; }
-  .hidden-view { display: none !important; }
-  input:focus { outline: none; }
-  .big-number { font-size: clamp(8rem, 22vw, 22rem); line-height: 1; font-weight: 900; }
-  .card-count { font-size: clamp(3rem, 8vw, 7rem); line-height: 1; font-weight: 800; }
-  .side-blue { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
-  .side-red  { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
-</style>
-</head>
-<body class="bg-slate-900 text-white min-h-screen">
-
-<!-- ========================================================= -->
-<!-- VIEW: LANDING (enter ring password)                        -->
-<!-- ========================================================= -->
-<div id="view-landing" class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-md bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700">
-    <div class="text-center mb-8">
-      <div class="text-5xl mb-3">🥋</div>
-      <h1 class="text-3xl font-black mb-2">TKD Scoring</h1>
-      <p class="text-slate-400 text-sm">Enter the ring password to continue</p>
-    </div>
-
-    <div class="mb-4">
-      <label class="block text-sm font-semibold text-slate-300 mb-2">Ring Password</label>
-      <input id="inp-password" type="password" inputmode="numeric" maxlength="10"
-        class="w-full bg-slate-900 border-2 border-slate-600 rounded-xl px-4 py-4 text-2xl text-center tracking-widest focus:border-blue-500"
-        placeholder="••••" />
-    </div>
-
-    <button id="btn-enter" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl py-4 font-bold text-lg transition">
-      Enter Ring
-    </button>
-
-    <div id="landing-error" class="mt-4 text-center text-red-400 text-sm hidden"></div>
-
-    <div class="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-500">
-      <p>Laptop password → Control panel</p>
-      <p>Phone password → Referee device</p>
-      <p class="mt-2">Append <code class="bg-slate-900 px-2 py-1 rounded">#tv</code> to the scoreboard URL for TV display</p>
-    </div>
-  </div>
-</div>
-
-<!-- ========================================================= -->
-<!-- VIEW: PHONE (referee device)                               -->
-<!-- ========================================================= -->
-<div id="view-phone" class="hidden-view min-h-screen flex flex-col bg-slate-900">
-  <div class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
-    <div class="flex items-center gap-2">
-      <span class="text-xl">🥋</span>
-      <span id="phone-ring-name" class="font-bold"></span>
-    </div>
-    <div class="text-xs text-slate-400">
-      <span id="phone-conn-status" class="inline-flex items-center gap-1">
-        <span class="w-2 h-2 rounded-full bg-green-500"></span>Live
-      </span>
-    </div>
-  </div>
-
-  <!-- Opponent selector -->
-  <div class="grid grid-cols-2 gap-2 p-3">
-    <button data-side="blue" class="phone-side-btn side-blue rounded-xl py-4 font-black text-xl border-4 border-transparent">
-      🔵 BLUE (CHUNG)
-    </button>
-    <button data-side="red" class="phone-side-btn side-red rounded-xl py-4 font-black text-xl border-4 border-transparent">
-      🔴 RED (HONG)
-    </button>
-  </div>
-
-  <!-- Mode toggle (+ / -) -->
-  <div class="px-3 pb-2">
-    <button id="btn-mode-toggle" class="w-full mode-plus rounded-xl py-3 font-black text-lg transition">
-      MODE: + ADD
-    </button>
-  </div>
-
-  <!-- Score buttons -->
-  <div class="grid grid-cols-2 gap-3 p-3 flex-1">
-    <button data-val="1" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">1</button>
-    <button data-val="2" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">2</button>
-    <button data-val="3" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">3</button>
-    <button data-val="4" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">4</button>
-  </div>
-
-  <div class="p-3 text-center text-xs text-slate-500">
-    Values = WT point system (punch 1 · body kick 2 · head kick 3 · spinning 4)
-  </div>
-</div>
-
-<!-- ========================================================= -->
-<!-- VIEW: LAPTOP (control panel)                               -->
-<!-- ========================================================= -->
-<div id="view-laptop" class="hidden-view min-h-screen bg-slate-900 p-4">
-  <div class="max-w-6xl mx-auto">
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h1 id="laptop-ring-name" class="text-2xl font-black"></h1>
-        <p class="text-slate-400 text-sm">Control panel · <span id="laptop-ring-id" class="font-mono"></span></p>
-      </div>
-      <div class="flex gap-2">
-        <button id="btn-open-tv" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold">📺 Open TV</button>
-        <button id="btn-reset-match" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold">⟲ Reset</button>
-        <button id="btn-logout" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold">Logout</button>
-      </div>
-    </div>
-
-    <!-- Scoreboard -->
-    <div class="grid grid-cols-2 gap-4 mb-4">
-      <!-- BLUE -->
-      <div class="side-blue rounded-2xl p-6 glow-blue">
-        <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
-        <div id="l-blue-score" class="text-center text-8xl font-black tv-score">0</div>
-        <div class="grid grid-cols-2 gap-3 mt-4">
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-            <div id="l-blue-gj" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="blue-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="blue-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-            </div>
-          </div>
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
-            <div id="l-blue-yc" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="blue-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="blue-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RED -->
-      <div class="side-red rounded-2xl p-6 glow-red">
-        <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">RED · HONG</div>
-        <div id="l-red-score" class="text-center text-8xl font-black tv-score">0</div>
-        <div class="grid grid-cols-2 gap-3 mt-4">
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-            <div id="l-red-gj" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="red-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="red-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-            </div>
-          </div>
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
-            <div id="l-red-yc" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="red-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="red-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Connected phones -->
-    <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold">Connected Referee Phones</h3>
-        <span id="laptop-phone-count" class="text-sm text-slate-400">0 / 4</span>
-      </div>
-      <div id="laptop-phones-list" class="grid grid-cols-4 gap-2">
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 1 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 2 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 3 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 4 — empty</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ========================================================= -->
-<!-- VIEW: TV DISPLAY                                           -->
-<!-- ========================================================= -->
-<div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
-  <div class="w-full h-full grid grid-cols-2">
-    <!-- BLUE SIDE -->
-    <div class="side-blue flex flex-col p-6 relative">
-      <div class="text-center text-xl font-black tracking-widest opacity-80 mb-2">BLUE · CHUNG</div>
-      <div class="flex-1 flex items-center justify-center">
-        <div id="tv-blue-score" class="tv-score big-number text-white">0</div>
-      </div>
-      <div class="grid grid-cols-2 gap-4 h-48">
-        <div class="card-box border-yellow-400 bg-black/40">
-          <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-          <div id="tv-blue-gj" class="card-count text-yellow-300">0</div>
-        </div>
-        <div class="card-box border-yellow-400 bg-black/40">
-          <div class="text-xs opacity-70 mb-1">YELLOW</div>
-          <div id="tv-blue-yc" class="card-count text-yellow-300">0</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RED SIDE -->
-    <div class="side-red flex flex-col p-6 relative">
-      <div class="text-center text-xl font-black tracking-widest opacity-80 mb-2">RED · HONG</div>
-      <div class="flex-1 flex items-center justify-center">
-        <div id="tv-red-score" class="tv-score big-number text-white">0</div>
-      </div>
-      <div class="grid grid-cols-2 gap-4 h-48">
-        <div class="card-box border-yellow-400 bg-black/40">
-          <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-          <div id="tv-red-gj" class="card-count text-yellow-300">0</div>
-        </div>
-        <div class="card-box border-yellow-400 bg-black/40">
-          <div class="text-xs opacity-70 mb-1">YELLOW</div>
-          <div id="tv-red-yc" class="card-count text-yellow-300">0</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Center divider -->
-  <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-yellow-400 -translate-x-1/2"></div>
-  <div id="tv-ring-name" class="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-black px-4 py-1 rounded-b-xl text-sm"></div>
-</div>
-
-<!-- ========================================================= -->
-<!-- SCRIPT                                                      -->
-<!-- ========================================================= -->
-<script>
-/* =========================================================
- * ⚙️  CONFIG — PUT YOUR SUPABASE CREDENTIALS HERE
- * ========================================================= */
-const SUPABASE_URL  = "https://YOUR-PROJECT.supabase.co";
-const SUPABASE_ANON = "YOUR-ANON-KEY";
-
-/* =========================================================
- * 🧱  SUPABASE CLIENT
- * ========================================================= */
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-
-/* =========================================================
- * 🧭  APP STATE
- * ========================================================= */
-const state = {
-  role: null,          // "laptop" | "phone" | "tv"
-  ring: null,          // row from rings table
-  match: null,         // row from matches table
-  phoneMode: "+",      // "+" or "-"
-  phoneSide: "blue",   // "blue" or "red"
-  phoneSessionId: null,
-  realtimeChannel: null,
-  heartbeatInterval: null,
-};
-
-/* =========================================================
- * 🚦  ROUTER
- * ========================================================= */
-function showView(name) {
-  ["landing","phone","laptop","tv"].forEach(v => {
-    document.getElementById("view-" + v).classList.toggle("hidden-view", v !== name);
-  });
-}
-
-async function route() {
-  const hash = location.hash.replace("#","").toLowerCase();
-
-  // If URL contains #tv, we need a ring first
-  if (hash === "tv") {
-    // Try to reuse last ring from sessionStorage
-    const cached = sessionStorage.getItem("tkd_ring");
-    if (cached) {
-      try {
-        state.ring = JSON.parse(cached);
-        await enterTV();
-        return;
-      } catch(e){}
-    }
-    // Otherwise go to landing; after login we'll redirect to TV
-    state.role = "tv-pending";
-    showView("landing");
-    return;
-  }
-
-  showView("landing");
-}
-
-/* =========================================================
- * 🔐  LOGIN
- * ========================================================= */
-document.getElementById("btn-enter").addEventListener("click", tryLogin);
-document.getElementById("inp-password").addEventListener("keydown", e => {
-  if (e.key === "Enter") tryLogin();
-});
-
-async function tryLogin() {
-  const pwd = document.getElementById("inp-password").value.trim();
-  const errEl = document.getElementById("landing-error");
-  errEl.classList.add("hidden");
-
-  if (!pwd) {
-    errEl.textContent = "Please enter a password.";
-    errEl.classList.remove("hidden");
-    return;
-  }
-
-  // Look up ring by laptop OR phone password
-  const { data, error } = await sb
-    .from("rings")
-    .select("*")
-    .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd}`)
-    .limit(1);
-
-  if (error || !data || data.length === 0) {
-    errEl.textContent = "No ring found for that password.";
-    errEl.classList.remove("hidden");
-    return;
-  }
-
-  const ring = data[0];
-  state.ring = ring;
-  sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
-
-  if (pwd === ring.laptop_password) {
-    state.role = "laptop";
-    await enterLaptop();
-  } else {
-    state.role = "phone";
-    await enterPhone();
-  }
-}
-
-/* =========================================================
- * 📱  PHONE VIEW
- * ========================================================= */
-async function enterPhone() {
-  // Check if ring already has 4 phones
-  const { data: phones } = await sb
-    .from("ring_phones")
-    .select("id")
-    .eq("ring_id", state.ring.id)
-    .gt("last_seen", new Date(Date.now() - 15000).toISOString());
-
-  if (phones && phones.length >= 4) {
-    alert("This ring already has 4 phones connected. Please try again later.");
-    location.hash = "";
-    showView("landing");
-    return;
-  }
-
-  // Register this phone session
-  const sessionId = crypto.randomUUID();
-  state.phoneSessionId = sessionId;
-
-  await sb.from("ring_phones").upsert({
-    id: sessionId,
-    ring_id: state.ring.id,
-    last_seen: new Date().toISOString()
-  });
-
-  document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
-
-  // Heartbeat every 5s
-  state.heartbeatInterval = setInterval(async () => {
-    await sb.from("ring_phones").update({
-      last_seen: new Date().toISOString()
-    }).eq("id", sessionId);
-  }, 5000);
-
-  // Cleanup on unload
-  window.addEventListener("beforeunload", () => {
-    sb.from("ring_phones").delete().eq("id", sessionId);
-  });
-
-  // Subscribe to match updates (for connection indicator)
-  subscribeMatch();
-
-  showView("phone");
-}
-
-// Phone UI handlers
-document.querySelectorAll(".phone-side-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    state.phoneSide = btn.dataset.side;
-    document.querySelectorAll(".phone-side-btn").forEach(b => {
-      b.classList.toggle("border-yellow-400", b === btn);
-      b.classList.toggle("border-transparent", b !== btn);
-    });
-  });
-});
-// Default selection
-document.querySelector('.phone-side-btn[data-side="blue"]').classList.add("border-yellow-400");
-
-document.getElementById("btn-mode-toggle").addEventListener("click", () => {
-  state.phoneMode = (state.phoneMode === "+") ? "-" : "+";
-  const btn = document.getElementById("btn-mode-toggle");
-  if (state.phoneMode === "+") {
-    btn.className = "w-full mode-plus rounded-xl py-3 font-black text-lg transition";
-    btn.textContent = "MODE: + ADD";
-  } else {
-    btn.className = "w-full mode-minus rounded-xl py-3 font-black text-lg transition";
-    btn.textContent = "MODE: − SUBTRACT";
-  }
-});
-
-document.querySelectorAll("#view-phone .btn-score").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const val = parseInt(btn.dataset.val, 10);
-    const delta = (state.phoneMode === "+") ? val : -val;
-    const side = state.phoneSide;
-
-    // Vibrate
-    if (navigator.vibrate) navigator.vibrate(30);
-
-    // Pulse animation
-    btn.classList.add("pulse");
-    setTimeout(() => btn.classList.remove("pulse"), 400);
-
-    // Update match via RPC (atomic)
-    const col = side === "blue" ? "blue_score" : "red_score";
-    const { error } = await sb.rpc("adjust_score", {
-      p_ring_id: state.ring.id,
-      p_side: side,
-      p_delta: delta
-    });
-
-    if (error) {
-      console.error(error);
-      alert("Error: " + error.message);
-    }
-  });
-});
-
-/* =========================================================
- * 💻  LAPTOP VIEW
- * ========================================================= */
-async function enterLaptop() {
-  document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
-  document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
-
-  // Ensure match row exists
-  const { data: existing } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).maybeSingle();
-  if (!existing) {
-    await sb.from("matches").insert({ ring_id: state.ring.id });
-  }
-
-  subscribeMatch();
-  startPhoneListPolling();
-
-  showView("laptop");
-}
-
-document.getElementById("btn-open-tv").addEventListener("click", () => {
-  // Open TV in new tab with same ring context
-  const tvUrl = location.origin + location.pathname + "#tv";
-  window.open(tvUrl, "_blank");
-});
-
-document.getElementById("btn-reset-match").addEventListener("click", async () => {
-  if (!confirm("Reset all scores and cards for this ring?")) return;
-  await sb.from("matches").update({
-    blue_score: 0, red_score: 0,
-    blue_gam_jeom: 0, red_gam_jeom: 0,
-    blue_yellow_cards: 0, red_yellow_cards: 0,
-    updated_at: new Date().toISOString()
-  }).eq("ring_id", state.ring.id);
-});
-
-document.getElementById("btn-logout").addEventListener("click", () => {
-  cleanup();
-  sessionStorage.removeItem("tkd_ring");
-  location.hash = "";
-  showView("landing");
-  document.getElementById("inp-password").value = "";
-});
-
-document.querySelectorAll(".laptop-card-btn").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const act = btn.dataset.act; // e.g. "blue-gj-plus"
-    const [side, type, op] = act.split("-");
-    const col = side + "_" + (type === "gj" ? "gam_jeom" : "yellow_cards");
-    const delta = (op === "plus") ? 1 : -1;
-
-    const { error } = await sb.rpc("adjust_card", {
-      p_ring_id: state.ring.id,
-      p_column: col,
-      p_delta: delta
-    });
-    if (error) alert("Error: " + error.message);
-  });
-});
-
-async function startPhoneListPolling() {
-  async function refresh() {
-    const { data } = await sb
-      .from("ring_phones")
-      .select("id, last_seen")
-      .eq("ring_id", state.ring.id)
-      .gt("last_seen", new Date(Date.now() - 15000).toISOString());
-
-    const list = document.getElementById("laptop-phones-list");
-    const count = document.getElementById("laptop-phone-count");
-    const slots = data || [];
-    count.textContent = slots.length + " / 4";
-
-    list.innerHTML = "";
-    for (let i = 0; i < 4; i++) {
-      const slot = slots[i];
-      const div = document.createElement("div");
-      if (slot) {
-        div.className = "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
-        div.innerHTML = `<div class="font-bold">📱 Phone ${i+1}</div><div class="text-xs text-green-300 mt-1">Connected</div>`;
-      } else {
-        div.className = "bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700";
-        div.textContent = `Slot ${i+1} — empty`;
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Taekwondo Scoring System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      * {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
       }
-      list.appendChild(div);
-    }
-  }
-  refresh();
-  setInterval(refresh, 3000);
-}
-
-/* =========================================================
- * 📺  TV VIEW
- * ========================================================= */
-async function enterTV() {
-  document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
-  subscribeMatch();
-  showView("tv");
-
-  // Hide cursor on TV
-  document.body.style.cursor = "none";
-}
-
-/* =========================================================
- * 🔔  REALTIME SUBSCRIPTION
- * ========================================================= */
-function subscribeMatch() {
-  if (state.realtimeChannel) {
-    sb.removeChannel(state.realtimeChannel);
-  }
-
-  state.realtimeChannel = sb
-    .channel("match-" + state.ring.id)
-    .on("postgres_changes",
-      { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` },
-      handleMatchUpdate
-    )
-    .subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        // Initial fetch
-        const { data } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).maybeSingle();
-        if (data) handleMatchUpdate({ new: data });
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        overscroll-behavior: none;
       }
-    });
-}
+      .btn-score {
+        transition: all 0.08s ease;
+      }
+      .btn-score:active {
+        transform: scale(0.94);
+      }
+      .pulse {
+        animation: pulse 0.4s ease;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.12);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      .tv-score {
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      }
+      .glow-blue {
+        box-shadow: 0 0 40px rgba(37, 99, 235, 0.35);
+      }
+      .glow-red {
+        box-shadow: 0 0 40px rgba(220, 38, 38, 0.35);
+      }
+      .card-box {
+        border: 3px solid;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .mode-plus {
+        background: #10b981;
+        color: white;
+      }
+      .mode-minus {
+        background: #f59e0b;
+        color: white;
+      }
+      .hidden-view {
+        display: none !important;
+      }
+      input:focus {
+        outline: none;
+      }
+      .big-number {
+        font-size: clamp(8rem, 22vw, 22rem);
+        line-height: 1;
+        font-weight: 900;
+      }
+      .card-count {
+        font-size: clamp(3rem, 8vw, 7rem);
+        line-height: 1;
+        font-weight: 800;
+      }
+      .side-blue {
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      }
+      .side-red {
+        background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+      }
+    </style>
+  </head>
+  <body class="bg-slate-900 text-white min-h-screen">
+    <!-- ========================================================= -->
+    <!-- VIEW: LANDING (enter ring password)                        -->
+    <!-- ========================================================= -->
+    <div
+      id="view-landing"
+      class="min-h-screen flex items-center justify-center p-4"
+    >
+      <div
+        class="w-full max-w-md bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700"
+      >
+        <div class="text-center mb-8">
+          <div class="text-5xl mb-3">🥋</div>
+          <h1 class="text-3xl font-black mb-2">TKD Scoring</h1>
+          <p class="text-slate-400 text-sm">
+            Enter the ring password to continue
+          </p>
+        </div>
 
-function handleMatchUpdate(payload) {
-  const m = payload.new;
-  state.match = m;
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-slate-300 mb-2"
+            >Ring Password</label
+          >
+          <input
+            id="inp-password"
+            type="password"
+            inputmode="numeric"
+            maxlength="10"
+            class="w-full bg-slate-900 border-2 border-slate-600 rounded-xl px-4 py-4 text-2xl text-center tracking-widest focus:border-blue-500"
+            placeholder="••••"
+          />
+        </div>
 
-  // Laptop
-  const lBS = document.getElementById("l-blue-score");
-  const lRS = document.getElementById("l-red-score");
-  if (lBS) {
-    lBS.textContent = m.blue_score;
-    document.getElementById("l-red-score").textContent = m.red_score;
-    document.getElementById("l-blue-gj").textContent = m.blue_gam_jeom;
-    document.getElementById("l-red-gj").textContent = m.red_gam_jeom;
-    document.getElementById("l-blue-yc").textContent = m.blue_yellow_cards;
-    document.getElementById("l-red-yc").textContent = m.red_yellow_cards;
-  }
+        <button
+          id="btn-enter"
+          class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl py-4 font-bold text-lg transition"
+        >
+          Enter Ring
+        </button>
 
-  // TV
-  const tvBS = document.getElementById("tv-blue-score");
-  if (tvBS) {
-    tvBS.textContent = m.blue_score;
-    document.getElementById("tv-red-score").textContent = m.red_score;
-    document.getElementById("tv-blue-gj").textContent = m.blue_gam_jeom;
-    document.getElementById("tv-red-gj").textContent = m.red_gam_jeom;
-    document.getElementById("tv-blue-yc").textContent = m.blue_yellow_cards;
-    document.getElementById("tv-red-yc").textContent = m.red_yellow_cards;
-  }
-}
+        <div
+          id="landing-error"
+          class="mt-4 text-center text-red-400 text-sm hidden"
+        ></div>
 
-/* =========================================================
- * 🧹  CLEANUP
- * ========================================================= */
-function cleanup() {
-  if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
-  if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-  if (state.phoneSessionId) {
-    sb.from("ring_phones").delete().eq("id", state.phoneSessionId);
-  }
-  state.realtimeChannel = null;
-  state.heartbeatInterval = null;
-  state.phoneSessionId = null;
-}
+        <div
+          class="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-500"
+        >
+          <p>Laptop password → Control panel</p>
+          <p>Phone password → Referee device</p>
+          <p class="mt-2">
+            Append <code class="bg-slate-900 px-2 py-1 rounded">#tv</code> to
+            the scoreboard URL for TV display
+          </p>
+        </div>
+      </div>
+    </div>
 
-window.addEventListener("beforeunload", cleanup);
+    <!-- ========================================================= -->
+    <!-- VIEW: PHONE (referee device)                               -->
+    <!-- ========================================================= -->
+    <div
+      id="view-phone"
+      class="hidden-view min-h-screen flex flex-col bg-slate-900"
+    >
+      <div
+        class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🥋</span>
+          <span id="phone-ring-name" class="font-bold"></span>
+        </div>
+        <div class="text-xs text-slate-400">
+          <span id="phone-conn-status" class="inline-flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>Live
+          </span>
+        </div>
+      </div>
 
-/* =========================================================
- * 🚀  INIT
- * ========================================================= */
-route();
-window.addEventListener("hashchange", route);
-</script>
-</body>
+      <!-- Opponent selector -->
+      <div class="grid grid-cols-2 gap-2 p-3">
+        <button
+          data-side="blue"
+          class="phone-side-btn side-blue rounded-xl py-4 font-black text-xl border-4 border-transparent"
+        >
+          🔵 BLUE (CHUNG)
+        </button>
+        <button
+          data-side="red"
+          class="phone-side-btn side-red rounded-xl py-4 font-black text-xl border-4 border-transparent"
+        >
+          🔴 RED (HONG)
+        </button>
+      </div>
+
+      <!-- Mode toggle (+ / -) -->
+      <div class="px-3 pb-2">
+        <button
+          id="btn-mode-toggle"
+          class="w-full mode-plus rounded-xl py-3 font-black text-lg transition"
+        >
+          MODE: + ADD
+        </button>
+      </div>
+
+      <!-- Score buttons -->
+      <div class="grid grid-cols-2 gap-3 p-3 flex-1">
+        <button
+          data-val="1"
+          class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8"
+        >
+          1
+        </button>
+        <button
+          data-val="2"
+          class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8"
+        >
+          2
+        </button>
+        <button
+          data-val="3"
+          class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8"
+        >
+          3
+        </button>
+        <button
+          data-val="4"
+          class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8"
+        >
+          4
+        </button>
+      </div>
+
+      <div class="p-3 text-center text-xs text-slate-500">
+        Values = WT point system (punch 1 · body kick 2 · head kick 3 · spinning
+        4)
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- VIEW: LAPTOP (control panel)                               -->
+    <!-- ========================================================= -->
+    <div id="view-laptop" class="hidden-view min-h-screen bg-slate-900 p-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h1 id="laptop-ring-name" class="text-2xl font-black"></h1>
+            <p class="text-slate-400 text-sm">
+              Control panel ·
+              <span id="laptop-ring-id" class="font-mono"></span>
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              id="btn-open-tv"
+              class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold"
+            >
+              📺 Open TV
+            </button>
+            <button
+              id="btn-reset-match"
+              class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold"
+            >
+              ⟲ Reset
+            </button>
+            <button
+              id="btn-logout"
+              class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <!-- Scoreboard -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <!-- BLUE -->
+          <div class="side-blue rounded-2xl p-6 glow-blue">
+            <div
+              class="text-center mb-2 text-sm font-bold tracking-widest opacity-80"
+            >
+              BLUE · CHUNG
+            </div>
+            <div
+              id="l-blue-score"
+              class="text-center text-8xl font-black tv-score"
+            >
+              0
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <div class="bg-black/30 rounded-xl p-3 text-center">
+                <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
+                <div id="l-blue-gj" class="text-4xl font-black">0</div>
+                <div class="flex gap-1 mt-2 justify-center">
+                  <button
+                    data-act="blue-gj-plus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    +
+                  </button>
+                  <button
+                    data-act="blue-gj-minus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+              <div class="bg-black/30 rounded-xl p-3 text-center">
+                <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
+                <div id="l-blue-yc" class="text-4xl font-black">0</div>
+                <div class="flex gap-1 mt-2 justify-center">
+                  <button
+                    data-act="blue-yc-plus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    +
+                  </button>
+                  <button
+                    data-act="blue-yc-minus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RED -->
+          <div class="side-red rounded-2xl p-6 glow-red">
+            <div
+              class="text-center mb-2 text-sm font-bold tracking-widest opacity-80"
+            >
+              RED · HONG
+            </div>
+            <div
+              id="l-red-score"
+              class="text-center text-8xl font-black tv-score"
+            >
+              0
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <div class="bg-black/30 rounded-xl p-3 text-center">
+                <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
+                <div id="l-red-gj" class="text-4xl font-black">0</div>
+                <div class="flex gap-1 mt-2 justify-center">
+                  <button
+                    data-act="red-gj-plus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    +
+                  </button>
+                  <button
+                    data-act="red-gj-minus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+              <div class="bg-black/30 rounded-xl p-3 text-center">
+                <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
+                <div id="l-red-yc" class="text-4xl font-black">0</div>
+                <div class="flex gap-1 mt-2 justify-center">
+                  <button
+                    data-act="red-yc-plus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    +
+                  </button>
+                  <button
+                    data-act="red-yc-minus"
+                    class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connected phones -->
+        <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold">Connected Referee Phones</h3>
+            <span id="laptop-phone-count" class="text-sm text-slate-400"
+              >0 / 4</span
+            >
+          </div>
+          <div id="laptop-phones-list" class="grid grid-cols-4 gap-2">
+            <div
+              class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700"
+            >
+              Slot 1 — empty
+            </div>
+            <div
+              class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700"
+            >
+              Slot 2 — empty
+            </div>
+            <div
+              class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700"
+            >
+              Slot 3 — empty
+            </div>
+            <div
+              class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700"
+            >
+              Slot 4 — empty
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- VIEW: TV DISPLAY                                           -->
+    <!-- ========================================================= -->
+    <div
+      id="view-tv"
+      class="hidden-view fixed inset-0 bg-black overflow-hidden"
+    >
+      <div class="w-full h-full grid grid-cols-2">
+        <!-- BLUE SIDE -->
+        <div class="side-blue flex flex-col p-6 relative">
+          <div
+            class="text-center text-xl font-black tracking-widest opacity-80 mb-2"
+          >
+            BLUE · CHUNG
+          </div>
+          <div class="flex-1 flex items-center justify-center">
+            <div id="tv-blue-score" class="tv-score big-number text-white">
+              0
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 h-48">
+            <div class="card-box border-yellow-400 bg-black/40">
+              <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
+              <div id="tv-blue-gj" class="card-count text-yellow-300">0</div>
+            </div>
+            <div class="card-box border-yellow-400 bg-black/40">
+              <div class="text-xs opacity-70 mb-1">YELLOW</div>
+              <div id="tv-blue-yc" class="card-count text-yellow-300">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RED SIDE -->
+        <div class="side-red flex flex-col p-6 relative">
+          <div
+            class="text-center text-xl font-black tracking-widest opacity-80 mb-2"
+          >
+            RED · HONG
+          </div>
+          <div class="flex-1 flex items-center justify-center">
+            <div id="tv-red-score" class="tv-score big-number text-white">
+              0
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 h-48">
+            <div class="card-box border-yellow-400 bg-black/40">
+              <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
+              <div id="tv-red-gj" class="card-count text-yellow-300">0</div>
+            </div>
+            <div class="card-box border-yellow-400 bg-black/40">
+              <div class="text-xs opacity-70 mb-1">YELLOW</div>
+              <div id="tv-red-yc" class="card-count text-yellow-300">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Center divider -->
+      <div
+        class="absolute left-1/2 top-0 bottom-0 w-1 bg-yellow-400 -translate-x-1/2"
+      ></div>
+      <div
+        id="tv-ring-name"
+        class="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-black px-4 py-1 rounded-b-xl text-sm"
+      ></div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- SCRIPT                                                      -->
+    <!-- ========================================================= -->
+    <script>
+      /* =========================================================
+       * ⚙️  CONFIG — PUT YOUR SUPABASE CREDENTIALS HERE
+       * ========================================================= */
+      const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+
+      /* =========================================================
+       * 🧱  SUPABASE CLIENT
+       * ========================================================= */
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+      /* =========================================================
+       * 🧭  APP STATE
+       * ========================================================= */
+      const state = {
+        role: null, // "laptop" | "phone" | "tv"
+        ring: null, // row from rings table
+        match: null, // row from matches table
+        phoneMode: "+", // "+" or "-"
+        phoneSide: "blue", // "blue" or "red"
+        phoneSessionId: null,
+        realtimeChannel: null,
+        heartbeatInterval: null,
+      };
+
+      /* =========================================================
+       * 🚦  ROUTER
+       * ========================================================= */
+      function showView(name) {
+        ["landing", "phone", "laptop", "tv"].forEach((v) => {
+          document
+            .getElementById("view-" + v)
+            .classList.toggle("hidden-view", v !== name);
+        });
+      }
+
+      async function route() {
+        const hash = location.hash.replace("#", "").toLowerCase();
+
+        // If URL contains #tv, we need a ring first
+        if (hash === "tv") {
+          // Try to reuse last ring from sessionStorage
+          const cached = sessionStorage.getItem("tkd_ring");
+          if (cached) {
+            try {
+              state.ring = JSON.parse(cached);
+              await enterTV();
+              return;
+            } catch (e) {}
+          }
+          // Otherwise go to landing; after login we'll redirect to TV
+          state.role = "tv-pending";
+          showView("landing");
+          return;
+        }
+
+        showView("landing");
+      }
+
+      /* =========================================================
+       * 🔐  LOGIN
+       * ========================================================= */
+      document.getElementById("btn-enter").addEventListener("click", tryLogin);
+      document
+        .getElementById("inp-password")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") tryLogin();
+        });
+
+      async function tryLogin() {
+        const pwd = document.getElementById("inp-password").value.trim();
+        const errEl = document.getElementById("landing-error");
+        errEl.classList.add("hidden");
+
+        if (!pwd) {
+          errEl.textContent = "Please enter a password.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        // Look up ring by laptop OR phone password
+        const { data, error } = await sb
+          .from("rings")
+          .select("*")
+          .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd}`)
+          .limit(1);
+
+        if (error || !data || data.length === 0) {
+          errEl.textContent = "No ring found for that password.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+
+        const ring = data[0];
+        state.ring = ring;
+        sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
+
+        if (pwd === ring.laptop_password) {
+          state.role = "laptop";
+          await enterLaptop();
+        } else {
+          state.role = "phone";
+          await enterPhone();
+        }
+      }
+
+      /* =========================================================
+       * 📱  PHONE VIEW
+       * ========================================================= */
+      async function enterPhone() {
+        // Check if ring already has 4 phones
+        const { data: phones } = await sb
+          .from("ring_phones")
+          .select("id")
+          .eq("ring_id", state.ring.id)
+          .gt("last_seen", new Date(Date.now() - 15000).toISOString());
+
+        if (phones && phones.length >= 4) {
+          alert(
+            "This ring already has 4 phones connected. Please try again later.",
+          );
+          location.hash = "";
+          showView("landing");
+          return;
+        }
+
+        // Register this phone session
+        const sessionId = crypto.randomUUID();
+        state.phoneSessionId = sessionId;
+
+        await sb.from("ring_phones").upsert({
+          id: sessionId,
+          ring_id: state.ring.id,
+          last_seen: new Date().toISOString(),
+        });
+
+        document.getElementById("phone-ring-name").textContent =
+          state.ring.ring_name;
+
+        // Heartbeat every 5s
+        state.heartbeatInterval = setInterval(async () => {
+          await sb
+            .from("ring_phones")
+            .update({
+              last_seen: new Date().toISOString(),
+            })
+            .eq("id", sessionId);
+        }, 5000);
+
+        // Cleanup on unload
+        window.addEventListener("beforeunload", () => {
+          sb.from("ring_phones").delete().eq("id", sessionId);
+        });
+
+        // Subscribe to match updates (for connection indicator)
+        subscribeMatch();
+
+        showView("phone");
+      }
+
+      // Phone UI handlers
+      document.querySelectorAll(".phone-side-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.phoneSide = btn.dataset.side;
+          document.querySelectorAll(".phone-side-btn").forEach((b) => {
+            b.classList.toggle("border-yellow-400", b === btn);
+            b.classList.toggle("border-transparent", b !== btn);
+          });
+        });
+      });
+      // Default selection
+      document
+        .querySelector('.phone-side-btn[data-side="blue"]')
+        .classList.add("border-yellow-400");
+
+      document
+        .getElementById("btn-mode-toggle")
+        .addEventListener("click", () => {
+          state.phoneMode = state.phoneMode === "+" ? "-" : "+";
+          const btn = document.getElementById("btn-mode-toggle");
+          if (state.phoneMode === "+") {
+            btn.className =
+              "w-full mode-plus rounded-xl py-3 font-black text-lg transition";
+            btn.textContent = "MODE: + ADD";
+          } else {
+            btn.className =
+              "w-full mode-minus rounded-xl py-3 font-black text-lg transition";
+            btn.textContent = "MODE: − SUBTRACT";
+          }
+        });
+
+      document.querySelectorAll("#view-phone .btn-score").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const val = parseInt(btn.dataset.val, 10);
+          const delta = state.phoneMode === "+" ? val : -val;
+          const side = state.phoneSide;
+
+          // Vibrate
+          if (navigator.vibrate) navigator.vibrate(30);
+
+          // Pulse animation
+          btn.classList.add("pulse");
+          setTimeout(() => btn.classList.remove("pulse"), 400);
+
+          // Update match via RPC (atomic)
+          const col = side === "blue" ? "blue_score" : "red_score";
+          const { error } = await sb.rpc("adjust_score", {
+            p_ring_id: state.ring.id,
+            p_side: side,
+            p_delta: delta,
+          });
+
+          if (error) {
+            console.error(error);
+            alert("Error: " + error.message);
+          }
+        });
+      });
+
+      /* =========================================================
+       * 💻  LAPTOP VIEW
+       * ========================================================= */
+      async function enterLaptop() {
+        document.getElementById("laptop-ring-name").textContent =
+          state.ring.ring_name;
+        document.getElementById("laptop-ring-id").textContent =
+          "Ring " + state.ring.ring_code;
+
+        // Ensure match row exists
+        const { data: existing } = await sb
+          .from("matches")
+          .select("*")
+          .eq("ring_id", state.ring.id)
+          .maybeSingle();
+        if (!existing) {
+          await sb.from("matches").insert({ ring_id: state.ring.id });
+        }
+
+        subscribeMatch();
+        startPhoneListPolling();
+
+        showView("laptop");
+      }
+
+      document.getElementById("btn-open-tv").addEventListener("click", () => {
+        // Open TV in new tab with same ring context
+        const tvUrl = location.origin + location.pathname + "#tv";
+        window.open(tvUrl, "_blank");
+      });
+
+      document
+        .getElementById("btn-reset-match")
+        .addEventListener("click", async () => {
+          if (!confirm("Reset all scores and cards for this ring?")) return;
+          await sb
+            .from("matches")
+            .update({
+              blue_score: 0,
+              red_score: 0,
+              blue_gam_jeom: 0,
+              red_gam_jeom: 0,
+              blue_yellow_cards: 0,
+              red_yellow_cards: 0,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("ring_id", state.ring.id);
+        });
+
+      document.getElementById("btn-logout").addEventListener("click", () => {
+        cleanup();
+        sessionStorage.removeItem("tkd_ring");
+        location.hash = "";
+        showView("landing");
+        document.getElementById("inp-password").value = "";
+      });
+
+      document.querySelectorAll(".laptop-card-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const act = btn.dataset.act; // e.g. "blue-gj-plus"
+          const [side, type, op] = act.split("-");
+          const col =
+            side + "_" + (type === "gj" ? "gam_jeom" : "yellow_cards");
+          const delta = op === "plus" ? 1 : -1;
+
+          const { error } = await sb.rpc("adjust_card", {
+            p_ring_id: state.ring.id,
+            p_column: col,
+            p_delta: delta,
+          });
+          if (error) alert("Error: " + error.message);
+        });
+      });
+
+      async function startPhoneListPolling() {
+        async function refresh() {
+          const { data } = await sb
+            .from("ring_phones")
+            .select("id, last_seen")
+            .eq("ring_id", state.ring.id)
+            .gt("last_seen", new Date(Date.now() - 15000).toISOString());
+
+          const list = document.getElementById("laptop-phones-list");
+          const count = document.getElementById("laptop-phone-count");
+          const slots = data || [];
+          count.textContent = slots.length + " / 4";
+
+          list.innerHTML = "";
+          for (let i = 0; i < 4; i++) {
+            const slot = slots[i];
+            const div = document.createElement("div");
+            if (slot) {
+              div.className =
+                "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
+              div.innerHTML = `<div class="font-bold">📱 Phone ${i + 1}</div><div class="text-xs text-green-300 mt-1">Connected</div>`;
+            } else {
+              div.className =
+                "bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700";
+              div.textContent = `Slot ${i + 1} — empty`;
+            }
+            list.appendChild(div);
+          }
+        }
+        refresh();
+        setInterval(refresh, 3000);
+      }
+
+      /* =========================================================
+       * 📺  TV VIEW
+       * ========================================================= */
+      async function enterTV() {
+        document.getElementById("tv-ring-name").textContent =
+          state.ring.ring_name;
+        subscribeMatch();
+        showView("tv");
+
+        // Hide cursor on TV
+        document.body.style.cursor = "none";
+      }
+
+      /* =========================================================
+       * 🔔  REALTIME SUBSCRIPTION
+       * ========================================================= */
+      function subscribeMatch() {
+        if (state.realtimeChannel) {
+          sb.removeChannel(state.realtimeChannel);
+        }
+
+        state.realtimeChannel = sb
+          .channel("match-" + state.ring.id)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "matches",
+              filter: `ring_id=eq.${state.ring.id}`,
+            },
+            handleMatchUpdate,
+          )
+          .subscribe(async (status) => {
+            if (status === "SUBSCRIBED") {
+              // Initial fetch
+              const { data } = await sb
+                .from("matches")
+                .select("*")
+                .eq("ring_id", state.ring.id)
+                .maybeSingle();
+              if (data) handleMatchUpdate({ new: data });
+            }
+          });
+      }
+
+      function handleMatchUpdate(payload) {
+        const m = payload.new;
+        state.match = m;
+
+        // Laptop
+        const lBS = document.getElementById("l-blue-score");
+        const lRS = document.getElementById("l-red-score");
+        if (lBS) {
+          lBS.textContent = m.blue_score;
+          document.getElementById("l-red-score").textContent = m.red_score;
+          document.getElementById("l-blue-gj").textContent = m.blue_gam_jeom;
+          document.getElementById("l-red-gj").textContent = m.red_gam_jeom;
+          document.getElementById("l-blue-yc").textContent =
+            m.blue_yellow_cards;
+          document.getElementById("l-red-yc").textContent = m.red_yellow_cards;
+        }
+
+        // TV
+        const tvBS = document.getElementById("tv-blue-score");
+        if (tvBS) {
+          tvBS.textContent = m.blue_score;
+          document.getElementById("tv-red-score").textContent = m.red_score;
+          document.getElementById("tv-blue-gj").textContent = m.blue_gam_jeom;
+          document.getElementById("tv-red-gj").textContent = m.red_gam_jeom;
+          document.getElementById("tv-blue-yc").textContent =
+            m.blue_yellow_cards;
+          document.getElementById("tv-red-yc").textContent = m.red_yellow_cards;
+        }
+      }
+
+      /* =========================================================
+       * 🧹  CLEANUP
+       * ========================================================= */
+      function cleanup() {
+        if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+        if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+        if (state.phoneSessionId) {
+          sb.from("ring_phones").delete().eq("id", state.phoneSessionId);
+        }
+        state.realtimeChannel = null;
+        state.heartbeatInterval = null;
+        state.phoneSessionId = null;
+      }
+
+      window.addEventListener("beforeunload", cleanup);
+
+      /* =========================================================
+       * 🚀  INIT
+       * ========================================================= */
+      route();
+      window.addEventListener("hashchange", route);
+    </script>
+  </body>
 </html>
-
-
