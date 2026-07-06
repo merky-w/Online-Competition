@@ -387,11 +387,17 @@ input:checked + .slider-toggle:before { transform: translateX(18px); }
 .inline-input { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; width: 70px; font-family: inherit; }
 .inline-input:focus { border-color: var(--primary); outline: none; }
 .inline-input-wide { width: 140px; }
+/* AUTOSAVE INDICATOR */
+.autosave-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 14px; font-size: 0.78rem; font-weight: 600; transition: all 0.3s; }
+.autosave-indicator.saving { background: #fff3cd; color: #856404; }
+.autosave-indicator.saved { background: #d4edda; color: #155724; }
+.autosave-indicator.error { background: #f8d7da; color: #721c24; }
+.autosave-indicator.idle { background: #e9ecef; color: #6c757d; }
 @media print {
 @page { size: A4; margin: 10mm; }
 body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
 * { box-sizing: border-box; }
-.nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn, .clear-winner, .clear-placement, .judges-toolbar { display: none !important; }
+.nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn, .clear-winner, .clear-placement, .judges-toolbar, .autosave-indicator { display: none !important; }
 .container { max-width: none; width: 100%; margin: 0; padding: 0; }
 .a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
 .p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
@@ -514,23 +520,20 @@ let rankSelectionMode = null;
 
 /* ============================================================
 🎯 DYNAMIC CATEGORY CONFIG — loaded from Supabase
-Structure:
-  categoryConfig = {
-    patterns: {
-      ageGroups: [ {id, display_name, min_age, max_age, is_active, order_priority}, ... ],
-      weightBoundaries: { [ageGroupId]: [30, 35, 40, 45, ...] }   // vector of kg limits
-    },
-    sparring: {
-      ageGroups: [ ... ],
-      weightBoundaries: { [ageGroupId]: [30, 35, 40, 45, ...] }   // vector of kg limits
-    }
-  }
 ============================================================ */
 let categoryConfig = {
   patterns: { ageGroups: [], weightBoundaries: {} },
   sparring: { ageGroups: [], weightBoundaries: {} }
 };
 let currentCatDiscipline = "patterns";
+
+/* ============================================================
+🔄 AUTOSAVE STATE — debounced save after any editor change
+============================================================ */
+let autoSaveTimer = null;
+let autoSaveStatus = "idle"; // "idle" | "saving" | "saved" | "error"
+let hasUnsavedChanges = false;
+const AUTOSAVE_DELAY_MS = 1000; // 1 second after last change
 
 const DEFAULT_AGE_GROUPS = [
   { id: "default_kids", display_name: "Kids", min_age: 6, max_age: 9, is_active: true, order_priority: 1 },
@@ -578,7 +581,6 @@ async function loadCategoryConfig() {
     categoryConfig.patterns.ageGroups = patternsGroups;
     categoryConfig.sparring.ageGroups = sparringGroups;
 
-    // Reset weight boundaries
     categoryConfig.patterns.weightBoundaries = {};
     categoryConfig.sparring.weightBoundaries = {};
 
@@ -592,7 +594,6 @@ async function loadCategoryConfig() {
         .order("boundary_kg", { ascending: true });
 
       if (!bErr && boundaries) {
-        // Build a clean vector<number> per age group
         boundaries.forEach(b => {
           const parentGroup = [...patternsGroups, ...sparringGroups].find(g => g.id === b.age_group_id);
           if (!parentGroup) return;
@@ -602,13 +603,11 @@ async function loadCategoryConfig() {
           if (!categoryConfig[disc].weightBoundaries[b.age_group_id]) {
             categoryConfig[disc].weightBoundaries[b.age_group_id] = [];
           }
-          // Avoid duplicates
           if (!categoryConfig[disc].weightBoundaries[b.age_group_id].includes(kgValue)) {
             categoryConfig[disc].weightBoundaries[b.age_group_id].push(kgValue);
           }
         });
 
-        // Sort each vector ascending
         for (const disc of ["patterns", "sparring"]) {
           for (const gid in categoryConfig[disc].weightBoundaries) {
             categoryConfig[disc].weightBoundaries[gid].sort((a, b) => a - b);
@@ -619,12 +618,7 @@ async function loadCategoryConfig() {
       }
     }
 
-    // Debug log
-    console.log("✅ categoryConfig loaded:");
-    console.log("  patterns ageGroups:", categoryConfig.patterns.ageGroups.map(g => g.display_name));
-    console.log("  patterns weightBoundaries:", categoryConfig.patterns.weightBoundaries);
-    console.log("  sparring ageGroups:", categoryConfig.sparring.ageGroups.map(g => g.display_name));
-    console.log("  sparring weightBoundaries:", categoryConfig.sparring.weightBoundaries);
+    console.log("✅ categoryConfig loaded");
 
   } catch (err) {
     console.error("loadCategoryConfig error:", err);
@@ -661,11 +655,7 @@ async function seedDefaultCategories() {
 
 /* ============================================================
 🎯 AGE / WEIGHT CATEGORY COMPUTATION
-These are the KEY functions — they use ONLY the vectors from
-the weight_boundaries table (via categoryConfig).
 ============================================================ */
-
-// Find which age group a competitor belongs to
 function getAgeGroupForAge(age, discipline) {
   const groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active);
   for (const g of groups) {
@@ -676,24 +666,10 @@ function getAgeGroupForAge(age, discipline) {
   return null;
 }
 
-/**
- * Compute the weight category label for a given weight (kg) and age group,
- * using ONLY the boundaries vector from the weight_boundaries table.
- *
- * Example with boundaries = [30, 35, 40, 45, 50, 55, 60]:
- *   weight=28  → "-30kg"
- *   weight=30  → "-30kg"
- *   weight=32  → "30-35kg"
- *   weight=55  → "50-55kg"
- *   weight=56  → "55-60kg"
- *   weight=70  → "+60kg"
- */
 function getWeightCategoryLabel(weightKg, ageGroupId, discipline) {
   const boundaries = (categoryConfig[discipline]?.weightBoundaries?.[ageGroupId] || []).slice();
-  // boundaries is already sorted ascending from loadCategoryConfig
 
   if (boundaries.length === 0) {
-    console.warn(`⚠️ No weight boundaries configured for age group ${ageGroupId} (${discipline}) — returning "Open"`);
     return "Open";
   }
 
@@ -711,7 +687,6 @@ function getWeightCategoryLabel(weightKg, ageGroupId, discipline) {
   return `+${boundaries[boundaries.length - 1]}kg`;
 }
 
-// Compute age from DOB and tournament date
 function computeAge(dob) {
   if (!dob || !tournamentDate) return null;
   try {
@@ -724,15 +699,7 @@ function computeAge(dob) {
   } catch { return null; }
 }
 
-/**
- * Recompute every competitor's _actual_age_group, _actual_sub_cat, _full_cat
- * using the dynamic categoryConfig (loaded from weight_boundaries table).
- * This is the function that MUST be called after loading config.
- */
 function recomputeCompetitorCategories() {
-  console.log("🔄 recomputeCompetitorCategories() — recomputing", competitors.length, "competitors");
-  console.log("   sparring weightBoundaries vectors:", categoryConfig.sparring.weightBoundaries);
-
   competitors.forEach(c => {
     const age = computeAge(c.dob || c.date_of_birth);
     const discipline = c._discipline;
@@ -761,19 +728,16 @@ function recomputeCompetitorCategories() {
     c._computed_age = age;
 
     if (discipline === "sparring") {
-      // ALWAYS compute weight category from the boundaries vector in DB
       const weightKg = parseFloat(c.weight_kg);
       if (!isNaN(weightKg) && weightKg > 0) {
         const wCat = getWeightCategoryLabel(weightKg, ageGroup.id, discipline);
         c._actual_sub_cat = wCat;
         c._full_cat = `${ageGroup.display_name} - ${wCat}`;
       } else {
-        // No weight available — use Open
         c._actual_sub_cat = "Open";
         c._full_cat = `${ageGroup.display_name} - Open`;
       }
     } else if (discipline === "patterns") {
-      // For patterns, use belt rank as sub_cat
       const origSubCat = c._original_sub_cat || "";
       c._actual_sub_cat = origSubCat;
       c._full_cat = `${ageGroup.display_name}${origSubCat ? " - " + origSubCat : ""}`;
@@ -782,22 +746,53 @@ function recomputeCompetitorCategories() {
 }
 
 /* ============================================================
+💾 AUTOSAVE — called after every editor change
+============================================================ */
+function updateAutosaveIndicator(status, message) {
+  autoSaveStatus = status;
+  const indicator = document.getElementById("autosaveIndicator");
+  if (!indicator) return;
+  indicator.className = "autosave-indicator " + status;
+  let icon = "fa-check-circle";
+  if (status === "saving") icon = "fa-spinner fa-spin";
+  else if (status === "error") icon = "fa-exclamation-circle";
+  else if (status === "idle") icon = "fa-cloud";
+  indicator.innerHTML = `<i class="fas ${icon}"></i> ${message || ""}`;
+}
+
+/**
+ * Schedule a debounced auto-save. Called after every editor change.
+ * Waits 1 second after the last change, then saves.
+ */
+function scheduleAutoSave() {
+  hasUnsavedChanges = true;
+  updateAutosaveIndicator("idle", "Unsaved changes...");
+
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(async () => {
+    await saveAllCategoryConfig(true); // silent=true for autosave
+  }, AUTOSAVE_DELAY_MS);
+}
+
+/* ============================================================
 🎛️ CATEGORIES EDITOR UI
 ============================================================ */
 async function showCategories() {
-setActiveBtn("btnCategories");
-await loadCategoryConfig();
-const content = document.getElementById("content");
-content.innerHTML = `
+  setActiveBtn("btnCategories");
+  await loadCategoryConfig();
+  hasUnsavedChanges = false;
+  const content = document.getElementById("content");
+  content.innerHTML = `
 <div class="cat-editor-wrap">
 <div class="cat-editor-header">
 <div>
 <div class="cat-editor-title"><i class="fas fa-sliders-h"></i> Category Configuration</div>
-<div class="cat-editor-subtitle">Configure age groups and weight divisions. Changes are saved to the database and used across the tournament.</div>
+<div class="cat-editor-subtitle">All changes are automatically saved. You can also force-save or reset to defaults.</div>
 </div>
-<div style="display:flex; gap:8px; flex-wrap:wrap;">
-<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig()"><i class="fas fa-save"></i> Save All</button>
-<button class="btn btn-warning btn-sm" onclick="resetToDefaults()"><i class="fas fa-undo"></i> Reset to Defaults</button>
+<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+<span class="autosave-indicator idle" id="autosaveIndicator"><i class="fas fa-cloud"></i> Ready</span>
+<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig(false)"><i class="fas fa-save"></i> Save Now</button>
+<button class="btn btn-warning btn-sm" onclick="resetToDefaults()"><i class="fas fa-undo"></i> Reset</button>
 </div>
 </div>
 <div class="cat-discipline-tabs">
@@ -811,22 +806,24 @@ content.innerHTML = `
 <div id="catEditorBody"></div>
 </div>
 `;
-renderCatEditorBody();
+  renderCatEditorBody();
 }
+
 function switchCatDiscipline(disc) {
-currentCatDiscipline = disc;
-document.querySelectorAll(".cat-disc-tab").forEach(t => t.classList.remove("active-patterns", "active-sparring"));
-const tabs = document.querySelectorAll(".cat-disc-tab");
-if (disc === "patterns") tabs[0].classList.add("active-patterns");
-else tabs[1].classList.add("active-sparring");
-renderCatEditorBody();
+  currentCatDiscipline = disc;
+  document.querySelectorAll(".cat-disc-tab").forEach(t => t.classList.remove("active-patterns", "active-sparring"));
+  const tabs = document.querySelectorAll(".cat-disc-tab");
+  if (disc === "patterns") tabs[0].classList.add("active-patterns");
+  else tabs[1].classList.add("active-sparring");
+  renderCatEditorBody();
 }
+
 function renderCatEditorBody() {
-const body = document.getElementById("catEditorBody");
-if (!body) return;
-const disc = currentCatDiscipline;
-const groups = categoryConfig[disc].ageGroups || [];
-body.innerHTML = `
+  const body = document.getElementById("catEditorBody");
+  if (!body) return;
+  const disc = currentCatDiscipline;
+  const groups = categoryConfig[disc].ageGroups || [];
+  body.innerHTML = `
 <div class="cat-section">
 <div class="cat-section-title"><i class="fas fa-calendar-alt" style="color:var(--cat-age)"></i> Age Groups Timeline</div>
 <div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off.</div>
@@ -848,152 +845,152 @@ body.innerHTML = `
 <div id="weightSliders_${disc}"></div>
 </div>
 `;
-renderAgeTimeline(disc);
-renderAgeGroupList(disc);
-renderWeightSliders(disc);
+  renderAgeTimeline(disc);
+  renderAgeGroupList(disc);
+  renderWeightSliders(disc);
 }
+
 /* ----- AGE TIMELINE RENDERING ----- */
 function renderAgeTimeline(disc) {
-const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-const track = document.getElementById(`ageTrack_${disc}`);
-const segments = document.getElementById(`ageSegments_${disc}`);
-const scale = document.getElementById(`ageScale_${disc}`);
-const timeline = document.getElementById(`ageTimeline_${disc}`);
-if (!track || !segments || !scale || !timeline) return;
-// Remove existing markers
-timeline.querySelectorAll(".age-marker").forEach(m => m.remove());
-const maxAge = 70;
-const trackWidth = track.offsetWidth;
-// Render colored segments
-segments.innerHTML = "";
-groups.forEach((g, idx) => {
-const startPct = (g.min_age / maxAge) * 100;
-const endAge = g.max_age === null ? maxAge : g.max_age;
-const endPct = (endAge / maxAge) * 100;
-const widthPct = endPct - startPct;
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const seg = document.createElement("div");
-seg.className = "age-segment" + (g.is_active ? "" : " inactive");
-seg.style.position = "absolute";
-seg.style.left = startPct + "%";
-seg.style.width = widthPct + "%";
-seg.style.background = color;
-seg.innerHTML = `<span class="age-segment-label">${escapeHtml(g.display_name)}</span>`;
-segments.appendChild(seg);
-});
-// Render markers at boundaries
-const boundaries = new Set();
-groups.forEach(g => {
-boundaries.add(g.min_age);
-if (g.max_age !== null) boundaries.add(g.max_age);
-});
-boundaries.forEach(age => {
-const pct = (age / maxAge) * 100;
-const marker = document.createElement("div");
-marker.className = "age-marker";
-marker.style.left = `calc(30px + ${pct}% * (100% - 60px) / 100%)`;
-marker.style.left = `calc(30px + (100% - 60px) * ${pct / 100})`;
-marker.innerHTML = `<div class="age-marker-label">${age}</div>`;
-marker.dataset.age = age;
-marker.addEventListener("mousedown", (e) => startAgeMarkerDrag(e, age, disc));
-marker.addEventListener("touchstart", (e) => startAgeMarkerDrag(e, age, disc), {passive: false});
-timeline.appendChild(marker);
-});
-// Scale
-scale.innerHTML = "";
-for (let a = 0; a <= maxAge; a += 10) {
-const span = document.createElement("span");
-span.textContent = a;
-scale.appendChild(span);
+  const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
+  const track = document.getElementById(`ageTrack_${disc}`);
+  const segments = document.getElementById(`ageSegments_${disc}`);
+  const scale = document.getElementById(`ageScale_${disc}`);
+  const timeline = document.getElementById(`ageTimeline_${disc}`);
+  if (!track || !segments || !scale || !timeline) return;
+  timeline.querySelectorAll(".age-marker").forEach(m => m.remove());
+  const maxAge = 70;
+  segments.innerHTML = "";
+  groups.forEach((g, idx) => {
+    const startPct = (g.min_age / maxAge) * 100;
+    const endAge = g.max_age === null ? maxAge : g.max_age;
+    const endPct = (endAge / maxAge) * 100;
+    const widthPct = endPct - startPct;
+    const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
+    const seg = document.createElement("div");
+    seg.className = "age-segment" + (g.is_active ? "" : " inactive");
+    seg.style.position = "absolute";
+    seg.style.left = startPct + "%";
+    seg.style.width = widthPct + "%";
+    seg.style.background = color;
+    seg.innerHTML = `<span class="age-segment-label">${escapeHtml(g.display_name)}</span>`;
+    segments.appendChild(seg);
+  });
+  const boundaries = new Set();
+  groups.forEach(g => {
+    boundaries.add(g.min_age);
+    if (g.max_age !== null) boundaries.add(g.max_age);
+  });
+  boundaries.forEach(age => {
+    const pct = (age / maxAge) * 100;
+    const marker = document.createElement("div");
+    marker.className = "age-marker";
+    marker.style.left = `calc(30px + (100% - 60px) * ${pct / 100})`;
+    marker.innerHTML = `<div class="age-marker-label">${age}</div>`;
+    marker.dataset.age = age;
+    marker.addEventListener("mousedown", (e) => startAgeMarkerDrag(e, age, disc));
+    marker.addEventListener("touchstart", (e) => startAgeMarkerDrag(e, age, disc), {passive: false});
+    timeline.appendChild(marker);
+  });
+  scale.innerHTML = "";
+  for (let a = 0; a <= maxAge; a += 10) {
+    const span = document.createElement("span");
+    span.textContent = a;
+    scale.appendChild(span);
+  }
 }
-}
+
 function handleAgeTrackClick(e, disc) {
-if (e.target.classList.contains("age-marker")) return;
-const track = e.currentTarget;
-const rect = track.getBoundingClientRect();
-const pct = (e.clientX - rect.left) / rect.width;
-const age = Math.max(1, Math.min(70, Math.round(pct * 70)));
-// Find the group that contains this age and split it
-const groups = categoryConfig[disc].ageGroups;
-const targetGroup = groups.find(g => g.is_active !== false && age > g.min_age && (g.max_age === null || age < g.max_age));
-if (!targetGroup) {
-showToast("⚠️ Cannot add boundary here (no active group contains this age)", "error");
-return;
+  if (e.target.classList.contains("age-marker")) return;
+  const track = e.currentTarget;
+  const rect = track.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const age = Math.max(1, Math.min(70, Math.round(pct * 70)));
+  const groups = categoryConfig[disc].ageGroups;
+  const targetGroup = groups.find(g => g.is_active !== false && age > g.min_age && (g.max_age === null || age < g.max_age));
+  if (!targetGroup) {
+    showToast("⚠️ Cannot add boundary here (no active group contains this age)", "error");
+    return;
+  }
+  const existing = groups.find(g => g.min_age === age || g.max_age === age);
+  if (existing) {
+    showToast("⚠️ Boundary already exists at age " + age, "error");
+    return;
+  }
+  const oldMax = targetGroup.max_age;
+  const newGroup = {
+    id: "tmp_" + Date.now(),
+    display_name: targetGroup.display_name + " (split)",
+    min_age: age,
+    max_age: oldMax,
+    is_active: true,
+    order_priority: targetGroup.order_priority + 0.5,
+    discipline: disc
+  };
+  targetGroup.max_age = age;
+  categoryConfig[disc].ageGroups.push(newGroup);
+  reorderAndRenumber(disc);
+  renderCatEditorBody();
+  showToast(`✅ Added age boundary at ${age}`, "success");
+  // 🔥 KEY: recompute + autosave
+  recomputeCompetitorCategories();
+  scheduleAutoSave();
 }
-// Check if boundary already exists
-const existing = groups.find(g => g.min_age === age || g.max_age === age);
-if (existing) {
-showToast("⚠️ Boundary already exists at age " + age, "error");
-return;
-}
-// Split the group
-const oldMax = targetGroup.max_age;
-const newGroup = {
-id: "tmp_" + Date.now(),
-display_name: targetGroup.display_name + " (split)",
-min_age: age,
-max_age: oldMax,
-is_active: true,
-order_priority: targetGroup.order_priority + 0.5,
-discipline: disc
-};
-targetGroup.max_age = age;
-categoryConfig[disc].ageGroups.push(newGroup);
-reorderAndRenumber(disc);
-renderCatEditorBody();
-showToast(`✅ Added age boundary at ${age}`, "success");
-}
+
 async function startAgeMarkerDrag(e, age, disc) {
-e.preventDefault();
-e.stopPropagation();
-const timeline = document.getElementById(`ageTimeline_${disc}`);
-const track = document.getElementById(`ageTrack_${disc}`);
-if (!track) return;
-const trackRect = track.getBoundingClientRect();
-const marker = e.currentTarget;
-marker.classList.add("dragging");
-const maxAge = 70;
-let currentAge = age;
-const onMove = (ev) => {
-const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
-currentAge = Math.max(1, Math.min(70, Math.round(pct * maxAge)));
-marker.style.left = `calc(30px + (100% - 60px) * ${currentAge / maxAge})`;
-marker.querySelector(".age-marker-label").textContent = currentAge;
-};
-const onEnd = async () => {
-document.removeEventListener("mousemove", onMove);
-document.removeEventListener("mouseup", onEnd);
-document.removeEventListener("touchmove", onMove);
-document.removeEventListener("touchend", onEnd);
-marker.classList.remove("dragging");
-if (currentAge !== age) {
-// Update the age in all groups that have this as min_age or max_age
-const groups = categoryConfig[disc].ageGroups;
-let updated = false;
-groups.forEach(g => {
-if (g.min_age === age) { g.min_age = currentAge; updated = true; }
-if (g.max_age === age) { g.max_age = currentAge; updated = true; }
-});
-if (updated) {
-renderCatEditorBody();
-showToast(`✅ Age boundary moved: ${age} → ${currentAge}`, "success");
+  e.preventDefault();
+  e.stopPropagation();
+  const timeline = document.getElementById(`ageTimeline_${disc}`);
+  const track = document.getElementById(`ageTrack_${disc}`);
+  if (!track) return;
+  const trackRect = track.getBoundingClientRect();
+  const marker = e.currentTarget;
+  marker.classList.add("dragging");
+  const maxAge = 70;
+  let currentAge = age;
+  const onMove = (ev) => {
+    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
+    currentAge = Math.max(1, Math.min(70, Math.round(pct * maxAge)));
+    marker.style.left = `calc(30px + (100% - 60px) * ${currentAge / maxAge})`;
+    marker.querySelector(".age-marker-label").textContent = currentAge;
+  };
+  const onEnd = async () => {
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onEnd);
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("touchend", onEnd);
+    marker.classList.remove("dragging");
+    if (currentAge !== age) {
+      const groups = categoryConfig[disc].ageGroups;
+      let updated = false;
+      groups.forEach(g => {
+        if (g.min_age === age) { g.min_age = currentAge; updated = true; }
+        if (g.max_age === age) { g.max_age = currentAge; updated = true; }
+      });
+      if (updated) {
+        renderCatEditorBody();
+        showToast(`✅ Age boundary moved: ${age} → ${currentAge}`, "success");
+        // 🔥 KEY: recompute + autosave
+        recomputeCompetitorCategories();
+        scheduleAutoSave();
+      }
+    }
+  };
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onEnd);
+  document.addEventListener("touchmove", onMove, {passive: false});
+  document.addEventListener("touchend", onEnd);
 }
-}
-};
-document.addEventListener("mousemove", onMove);
-document.addEventListener("mouseup", onEnd);
-document.addEventListener("touchmove", onMove, {passive: false});
-document.addEventListener("touchend", onEnd);
-}
+
 function renderAgeGroupList(disc) {
-const list = document.getElementById(`ageGroupList_${disc}`);
-if (!list) return;
-const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-list.innerHTML = groups.map((g, idx) => {
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const rangeText = g.max_age === null ? `${g.min_age}+` : `${g.min_age} - ${g.max_age}`;
-return `
+  const list = document.getElementById(`ageGroupList_${disc}`);
+  if (!list) return;
+  const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
+  list.innerHTML = groups.map((g, idx) => {
+    const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
+    const rangeText = g.max_age === null ? `${g.min_age}+` : `${g.min_age} - ${g.max_age}`;
+    return `
 <div class="age-group-item ${g.is_active ? 'active' : 'inactive'}">
 <div class="age-group-color" style="background:${color}"></div>
 <div class="age-group-info">
@@ -1009,75 +1006,92 @@ return `
 </div>
 </div>
 `;
-}).join("");
+  }).join("");
 }
+
 function updateAgeGroupName(disc, groupId, newName) {
-const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) {
-g.display_name = newName.trim() || g.display_name;
-showToast(`✅ Renamed to "${g.display_name}"`, "success");
+  const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
+  if (g) {
+    g.display_name = newName.trim() || g.display_name;
+    showToast(`✅ Renamed to "${g.display_name}"`, "success");
+    // 🔥 KEY: recompute + autosave
+    recomputeCompetitorCategories();
+    scheduleAutoSave();
+  }
 }
-}
+
 function toggleAgeGroupActive(disc, groupId, isActive) {
-const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) {
-g.is_active = isActive;
-renderCatEditorBody();
-showToast(isActive ? `✅ "${g.display_name}" enabled` : `⚠️ "${g.display_name}" disabled`, "success");
+  const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
+  if (g) {
+    g.is_active = isActive;
+    renderCatEditorBody();
+    showToast(isActive ? `✅ "${g.display_name}" enabled` : `⚠️ "${g.display_name}" disabled`, "success");
+    // 🔥 KEY: recompute + autosave
+    recomputeCompetitorCategories();
+    scheduleAutoSave();
+  }
 }
-}
+
 async function deleteAgeGroup(disc, groupId) {
-const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (!g) return;
-if (!confirm(`Delete age group "${g.display_name}"? This will also delete its weight boundaries.`)) return;
-if (!g.id.startsWith("tmp_")) {
-await sb.from("age_groups").delete().eq("id", g.id);
+  const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
+  if (!g) return;
+  if (!confirm(`Delete age group "${g.display_name}"? This will also delete its weight boundaries.`)) return;
+  if (!g.id.startsWith("tmp_")) {
+    await sb.from("age_groups").delete().eq("id", g.id);
+  }
+  categoryConfig[disc].ageGroups = categoryConfig[disc].ageGroups.filter(x => x.id !== groupId);
+  delete categoryConfig[disc].weightBoundaries[groupId];
+  reorderAndRenumber(disc);
+  renderCatEditorBody();
+  showToast(`🗑️ Deleted "${g.display_name}"`, "success");
+  // 🔥 KEY: recompute + autosave
+  recomputeCompetitorCategories();
+  scheduleAutoSave();
 }
-categoryConfig[disc].ageGroups = categoryConfig[disc].ageGroups.filter(x => x.id !== groupId);
-delete categoryConfig[disc].weightBoundaries[groupId];
-reorderAndRenumber(disc);
-renderCatEditorBody();
-showToast(`🗑️ Deleted "${g.display_name}"`, "success");
-}
+
 async function addNewAgeGroup(disc) {
-const groups = categoryConfig[disc].ageGroups;
-const maxPriority = groups.reduce((m, g) => Math.max(m, g.order_priority || 0), 0);
-const lastGroup = groups.sort((a,b) => b.order_priority - a.order_priority)[0];
-const defaultMin = lastGroup ? (lastGroup.max_age !== null ? lastGroup.max_age : 36) : 0;
-const newGroup = {
-id: "tmp_" + Date.now(),
-display_name: "New Group",
-min_age: defaultMin,
-max_age: defaultMin + 5,
-is_active: true,
-order_priority: maxPriority + 1,
-discipline: disc
-};
-categoryConfig[disc].ageGroups.push(newGroup);
-reorderAndRenumber(disc);
-renderCatEditorBody();
-showToast(`✅ Added new age group. Drag markers to adjust.`, "success");
+  const groups = categoryConfig[disc].ageGroups;
+  const maxPriority = groups.reduce((m, g) => Math.max(m, g.order_priority || 0), 0);
+  const lastGroup = groups.sort((a,b) => b.order_priority - a.order_priority)[0];
+  const defaultMin = lastGroup ? (lastGroup.max_age !== null ? lastGroup.max_age : 36) : 0;
+  const newGroup = {
+    id: "tmp_" + Date.now(),
+    display_name: "New Group",
+    min_age: defaultMin,
+    max_age: defaultMin + 5,
+    is_active: true,
+    order_priority: maxPriority + 1,
+    discipline: disc
+  };
+  categoryConfig[disc].ageGroups.push(newGroup);
+  reorderAndRenumber(disc);
+  renderCatEditorBody();
+  showToast(`✅ Added new age group. Drag markers to adjust.`, "success");
+  // 🔥 KEY: recompute + autosave
+  recomputeCompetitorCategories();
+  scheduleAutoSave();
 }
+
 function reorderAndRenumber(disc) {
-categoryConfig[disc].ageGroups.sort((a,b) => a.min_age - b.min_age);
-categoryConfig[disc].ageGroups.forEach((g, i) => g.order_priority = i + 1);
+  categoryConfig[disc].ageGroups.sort((a,b) => a.min_age - b.min_age);
+  categoryConfig[disc].ageGroups.forEach((g, i) => g.order_priority = i + 1);
 }
+
 /* ----- WEIGHT SLIDERS ----- */
 function renderWeightSliders(disc) {
-const container = document.getElementById(`weightSliders_${disc}`);
-if (!container) return;
-const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-if (groups.length === 0) {
-container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined. Add age groups above first.</div>`;
-return;
-}
-container.innerHTML = groups.map((g, idx) => {
-const boundaries = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
-const rangeText = g.max_age === null ? `${g.min_age}+` : `${g.min_age} - ${g.max_age}`;
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-// Build category chips
-const chips = buildWeightCategoryChips(boundaries);
-return `
+  const container = document.getElementById(`weightSliders_${disc}`);
+  if (!container) return;
+  const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
+  if (groups.length === 0) {
+    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined. Add age groups above first.</div>`;
+    return;
+  }
+  container.innerHTML = groups.map((g, idx) => {
+    const boundaries = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
+    const rangeText = g.max_age === null ? `${g.min_age}+` : `${g.min_age} - ${g.max_age}`;
+    const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
+    const chips = buildWeightCategoryChips(boundaries);
+    return `
 <div class="weight-slider-card ${g.is_active ? 'active' : 'inactive'}">
 <div class="weight-slider-header">
 <div class="weight-slider-title">
@@ -1093,197 +1107,235 @@ ${g.is_active ? '' : '<span style="color:var(--cat-inactive);font-size:0.8rem;fo
 <div class="weight-categories-display">${chips}</div>
 </div>
 `;
-}).join("");
-// Render markers and scales
-groups.forEach(g => {
-renderWeightMarkers(disc, g);
-});
+  }).join("");
+  groups.forEach(g => {
+    renderWeightMarkers(disc, g);
+  });
 }
+
 function buildWeightCategoryChips(boundaries) {
-if (boundaries.length === 0) return `<span class="weight-cat-chip">Open (no divisions)</span>`;
-const chips = [];
-chips.push(`<span class="weight-cat-chip first">-${boundaries[0]}kg</span>`);
-for (let i = 0; i < boundaries.length - 1; i++) {
-chips.push(`<span class="weight-cat-chip">${Math.ceil(boundaries[i])}-${boundaries[i+1]}kg</span>`);
+  if (boundaries.length === 0) return `<span class="weight-cat-chip">Open (no divisions)</span>`;
+  const chips = [];
+  chips.push(`<span class="weight-cat-chip first">-${boundaries[0]}kg</span>`);
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    chips.push(`<span class="weight-cat-chip">${Math.ceil(boundaries[i])}-${boundaries[i+1]}kg</span>`);
+  }
+  chips.push(`<span class="weight-cat-chip last">+${boundaries[boundaries.length-1]}kg</span>`);
+  return chips.join("");
 }
-chips.push(`<span class="weight-cat-chip last">+${boundaries[boundaries.length-1]}kg</span>`);
-return chips.join("");
-}
+
 function renderWeightMarkers(disc, group) {
-const wrap = document.getElementById(`weightTrackWrap_${group.id}`);
-const track = document.getElementById(`weightTrack_${group.id}`);
-const scale = document.getElementById(`weightScale_${group.id}`);
-if (!wrap || !track || !scale) return;
-wrap.querySelectorAll(".weight-marker").forEach(m => m.remove());
-const maxKg = 120;
-const boundaries = (categoryConfig[disc].weightBoundaries[group.id] || []).slice().sort((a,b) => a-b);
-boundaries.forEach(kg => {
-const pct = (kg / maxKg) * 100;
-const marker = document.createElement("div");
-marker.className = "weight-marker";
-marker.style.left = `calc(20px + (100% - 40px) * ${pct / 100})`;
-marker.innerHTML = `
+  const wrap = document.getElementById(`weightTrackWrap_${group.id}`);
+  const track = document.getElementById(`weightTrack_${group.id}`);
+  const scale = document.getElementById(`weightScale_${group.id}`);
+  if (!wrap || !track || !scale) return;
+  wrap.querySelectorAll(".weight-marker").forEach(m => m.remove());
+  const maxKg = 120;
+  const boundaries = (categoryConfig[disc].weightBoundaries[group.id] || []).slice().sort((a,b) => a-b);
+  boundaries.forEach(kg => {
+    const pct = (kg / maxKg) * 100;
+    const marker = document.createElement("div");
+    marker.className = "weight-marker";
+    marker.style.left = `calc(20px + (100% - 40px) * ${pct / 100})`;
+    marker.innerHTML = `
 <div class="weight-marker-label">${kg}kg</div>
 <button class="weight-marker-delete" onclick="deleteWeightMarker(event, '${disc}', '${group.id}', ${kg})" title="Delete"><i class="fas fa-times"></i></button>
 `;
-marker.addEventListener("mousedown", (e) => {
-if (e.target.closest(".weight-marker-delete")) return;
-startWeightMarkerDrag(e, kg, disc, group.id);
-});
-marker.addEventListener("touchstart", (e) => {
-if (e.target.closest(".weight-marker-delete")) return;
-startWeightMarkerDrag(e, kg, disc, group.id);
-}, {passive: false});
-wrap.appendChild(marker);
-});
-// Scale
-scale.innerHTML = "";
-for (let k = 0; k <= maxKg; k += 20) {
-const span = document.createElement("span");
-span.textContent = k + "kg";
-scale.appendChild(span);
+    marker.addEventListener("mousedown", (e) => {
+      if (e.target.closest(".weight-marker-delete")) return;
+      startWeightMarkerDrag(e, kg, disc, group.id);
+    });
+    marker.addEventListener("touchstart", (e) => {
+      if (e.target.closest(".weight-marker-delete")) return;
+      startWeightMarkerDrag(e, kg, disc, group.id);
+    }, {passive: false});
+    wrap.appendChild(marker);
+  });
+  scale.innerHTML = "";
+  for (let k = 0; k <= maxKg; k += 20) {
+    const span = document.createElement("span");
+    span.textContent = k + "kg";
+    scale.appendChild(span);
+  }
 }
-}
+
 function handleWeightTrackClick(e, disc, groupId) {
-if (e.target.classList.contains("weight-marker") || e.target.closest(".weight-marker")) return;
-const track = e.currentTarget;
-const rect = track.getBoundingClientRect();
-const pct = (e.clientX - rect.left) / rect.width;
-const maxKg = 120;
-let kg = Math.max(1, Math.min(maxKg, Math.round(pct * maxKg * 2) / 2)); // round to 0.5
-const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
-if (boundaries.includes(kg)) {
-showToast("⚠️ Boundary already exists at " + kg + "kg", "error");
-return;
+  if (e.target.classList.contains("weight-marker") || e.target.closest(".weight-marker")) return;
+  const track = e.currentTarget;
+  const rect = track.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const maxKg = 120;
+  let kg = Math.max(1, Math.min(maxKg, Math.round(pct * maxKg * 2) / 2));
+  const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
+  if (boundaries.includes(kg)) {
+    showToast("⚠️ Boundary already exists at " + kg + "kg", "error");
+    return;
+  }
+  boundaries.push(kg);
+  categoryConfig[disc].weightBoundaries[groupId] = boundaries;
+  renderCatEditorBody();
+  showToast(`✅ Added weight boundary at ${kg}kg`, "success");
+  // 🔥 KEY: recompute + autosave
+  recomputeCompetitorCategories();
+  scheduleAutoSave();
 }
-boundaries.push(kg);
-categoryConfig[disc].weightBoundaries[groupId] = boundaries;
-renderCatEditorBody();
-showToast(`✅ Added weight boundary at ${kg}kg`, "success");
-}
+
 async function deleteWeightMarker(e, disc, groupId, kg) {
-e.preventDefault();
-e.stopPropagation();
-if (!confirm(`Remove weight boundary at ${kg}kg?`)) return;
-const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
-categoryConfig[disc].weightBoundaries[groupId] = boundaries.filter(b => b !== kg);
-renderCatEditorBody();
-showToast(`🗑️ Removed ${kg}kg boundary`, "success");
+  e.preventDefault();
+  e.stopPropagation();
+  if (!confirm(`Remove weight boundary at ${kg}kg?`)) return;
+  const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
+  categoryConfig[disc].weightBoundaries[groupId] = boundaries.filter(b => b !== kg);
+  renderCatEditorBody();
+  showToast(`🗑️ Removed ${kg}kg boundary`, "success");
+  // 🔥 KEY: recompute + autosave
+  recomputeCompetitorCategories();
+  scheduleAutoSave();
 }
+
 async function startWeightMarkerDrag(e, kg, disc, groupId) {
-e.preventDefault();
-e.stopPropagation();
-const wrap = document.getElementById(`weightTrackWrap_${groupId}`);
-const track = document.getElementById(`weightTrack_${groupId}`);
-if (!track) return;
-const trackRect = track.getBoundingClientRect();
-const marker = e.currentTarget;
-marker.classList.add("dragging");
-const maxKg = 120;
-let currentKg = kg;
-const onMove = (ev) => {
-const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
-currentKg = Math.max(1, Math.min(maxKg, Math.round(pct * maxKg * 2) / 2));
-marker.style.left = `calc(20px + (100% - 40px) * ${currentKg / maxKg})`;
-marker.querySelector(".weight-marker-label").textContent = currentKg + "kg";
-};
-const onEnd = async () => {
-document.removeEventListener("mousemove", onMove);
-document.removeEventListener("mouseup", onEnd);
-document.removeEventListener("touchmove", onMove);
-document.removeEventListener("touchend", onEnd);
-marker.classList.remove("dragging");
-if (currentKg !== kg) {
-const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
-const idx = boundaries.indexOf(kg);
-if (idx >= 0) {
-if (boundaries.includes(currentKg)) {
-showToast("⚠️ Boundary already exists at " + currentKg + "kg", "error");
-renderCatEditorBody();
-return;
+  e.preventDefault();
+  e.stopPropagation();
+  const wrap = document.getElementById(`weightTrackWrap_${groupId}`);
+  const track = document.getElementById(`weightTrack_${groupId}`);
+  if (!track) return;
+  const trackRect = track.getBoundingClientRect();
+  const marker = e.currentTarget;
+  marker.classList.add("dragging");
+  const maxKg = 120;
+  let currentKg = kg;
+  const onMove = (ev) => {
+    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
+    currentKg = Math.max(1, Math.min(maxKg, Math.round(pct * maxKg * 2) / 2));
+    marker.style.left = `calc(20px + (100% - 40px) * ${currentKg / maxKg})`;
+    marker.querySelector(".weight-marker-label").textContent = currentKg + "kg";
+  };
+  const onEnd = async () => {
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onEnd);
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("touchend", onEnd);
+    marker.classList.remove("dragging");
+    if (currentKg !== kg) {
+      const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
+      const idx = boundaries.indexOf(kg);
+      if (idx >= 0) {
+        if (boundaries.includes(currentKg)) {
+          showToast("⚠️ Boundary already exists at " + currentKg + "kg", "error");
+          renderCatEditorBody();
+          return;
+        }
+        boundaries[idx] = currentKg;
+        categoryConfig[disc].weightBoundaries[groupId] = boundaries;
+        renderCatEditorBody();
+        showToast(`✅ Moved boundary: ${kg}kg → ${currentKg}kg`, "success");
+        // 🔥 KEY: recompute + autosave
+        recomputeCompetitorCategories();
+        scheduleAutoSave();
+      }
+    }
+  };
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onEnd);
+  document.addEventListener("touchmove", onMove, {passive: false});
+  document.addEventListener("touchend", onEnd);
 }
-boundaries[idx] = currentKg;
-categoryConfig[disc].weightBoundaries[groupId] = boundaries;
-renderCatEditorBody();
-showToast(`✅ Moved boundary: ${kg}kg → ${currentKg}kg`, "success");
-}
-}
-};
-document.addEventListener("mousemove", onMove);
-document.addEventListener("mouseup", onEnd);
-document.addEventListener("touchmove", onMove, {passive: false});
-document.addEventListener("touchend", onEnd);
-}
+
 /* ----- SAVE / RESET ----- */
-async function saveAllCategoryConfig() {
-showToast("⏳ Saving...", "");
-let errors = 0;
-for (const disc of ["patterns", "sparring"]) {
-const groups = categoryConfig[disc].ageGroups;
-for (const g of groups) {
-if (g.id.startsWith("tmp_")) {
-// Insert new
-const { data: inserted, error } = await sb.from("age_groups").insert([{
-display_name: g.display_name,
-min_age: g.min_age,
-max_age: g.max_age,
-is_active: g.is_active,
-order_priority: g.order_priority,
-discipline: disc
-}]).select().single();
-if (error) { console.error(error); errors++; continue; }
-// Migrate temp boundaries
-if (categoryConfig[disc].weightBoundaries[g.id]) {
-const tmpBounds = categoryConfig[disc].weightBoundaries[g.id];
-delete categoryConfig[disc].weightBoundaries[g.id];
-categoryConfig[disc].weightBoundaries[inserted.id] = tmpBounds;
+/**
+ * Save all category config to DB.
+ * @param {boolean} silent - if true, don't show toasts (used by autosave)
+ */
+async function saveAllCategoryConfig(silent = false) {
+  if (!silent) updateAutosaveIndicator("saving", "Saving...");
+  let errors = 0;
+  try {
+    for (const disc of ["patterns", "sparring"]) {
+      const groups = categoryConfig[disc].ageGroups;
+      for (const g of groups) {
+        if (g.id.startsWith("tmp_")) {
+          const { data: inserted, error } = await sb.from("age_groups").insert([{
+            display_name: g.display_name,
+            min_age: g.min_age,
+            max_age: g.max_age,
+            is_active: g.is_active,
+            order_priority: g.order_priority,
+            discipline: disc
+          }]).select().single();
+          if (error) { console.error(error); errors++; continue; }
+          if (categoryConfig[disc].weightBoundaries[g.id]) {
+            const tmpBounds = categoryConfig[disc].weightBoundaries[g.id];
+            delete categoryConfig[disc].weightBoundaries[g.id];
+            categoryConfig[disc].weightBoundaries[inserted.id] = tmpBounds;
+          }
+          g.id = inserted.id;
+        } else {
+          const { error } = await sb.from("age_groups").update({
+            display_name: g.display_name,
+            min_age: g.min_age,
+            max_age: g.max_age,
+            is_active: g.is_active,
+            order_priority: g.order_priority
+          }).eq("id", g.id);
+          if (error) { console.error(error); errors++; }
+        }
+        // Sync weight boundaries
+        const currentBounds = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
+        const { data: existingBounds } = await sb.from("weight_boundaries").select("*").eq("age_group_id", g.id);
+        const existingKg = (existingBounds || []).map(b => b.boundary_kg);
+        for (const eb of (existingBounds || [])) {
+          if (!currentBounds.includes(eb.boundary_kg)) {
+            await sb.from("weight_boundaries").delete().eq("id", eb.id);
+          }
+        }
+        for (const kg of currentBounds) {
+          if (!existingKg.includes(kg)) {
+            await sb.from("weight_boundaries").insert([{ age_group_id: g.id, boundary_kg: kg }]);
+          }
+        }
+      }
+    }
+
+    // Reload config from DB to ensure consistency
+    await loadCategoryConfig();
+    // Recompute categories with fresh config
+    recomputeCompetitorCategories();
+
+    hasUnsavedChanges = false;
+    if (silent) {
+      updateAutosaveIndicator("saved", "✓ Saved");
+      setTimeout(() => {
+        if (autoSaveStatus === "saved") updateAutosaveIndicator("idle", "All changes saved");
+      }, 2000);
+    } else {
+      updateAutosaveIndicator("saved", "✓ Saved!");
+      if (errors === 0) showToast("✅ All categories saved!", "success");
+      else showToast(`⚠️ Saved with ${errors} error(s)`, "error");
+    }
+    // Re-render editor body with fresh IDs
+    renderCatEditorBody();
+  } catch (err) {
+    console.error("saveAllCategoryConfig error:", err);
+    updateAutosaveIndicator("error", "Save failed");
+    if (!silent) showToast("❌ Save failed: " + err.message, "error");
+  }
 }
-g.id = inserted.id;
-} else {
-// Update existing
-const { error } = await sb.from("age_groups").update({
-display_name: g.display_name,
-min_age: g.min_age,
-max_age: g.max_age,
-is_active: g.is_active,
-order_priority: g.order_priority
-}).eq("id", g.id);
-if (error) { console.error(error); errors++; }
-}
-// Sync weight boundaries
-const currentBounds = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
-const { data: existingBounds } = await sb.from("weight_boundaries").select("*").eq("age_group_id", g.id);
-const existingKg = (existingBounds || []).map(b => b.boundary_kg);
-// Delete removed
-for (const eb of (existingBounds || [])) {
-if (!currentBounds.includes(eb.boundary_kg)) {
-await sb.from("weight_boundaries").delete().eq("id", eb.id);
-}
-}
-// Add new
-for (const kg of currentBounds) {
-if (!existingKg.includes(kg)) {
-await sb.from("weight_boundaries").insert([{ age_group_id: g.id, boundary_kg: kg }]);
-}
-}
-}
-}
-await loadCategoryConfig();
-recomputeCompetitorCategories();
-if (errors === 0) showToast("✅ All categories saved!", "success");
-else showToast(`⚠️ Saved with ${errors} error(s)`, "error");
-if (currentCatDiscipline === disc) renderCatEditorBody();
-}
+
 async function resetToDefaults() {
-if (!confirm("Reset all categories to defaults? This will DELETE all current age groups and weight boundaries.")) return;
-await sb.from("weight_boundaries").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-await sb.from("age_groups").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-await seedDefaultCategories();
-await loadCategoryConfig();
-renderCatEditorBody();
-showToast("✅ Reset to defaults", "success");
+  if (!confirm("Reset all categories to defaults? This will DELETE all current age groups and weight boundaries.")) return;
+  updateAutosaveIndicator("saving", "Resetting...");
+  await sb.from("weight_boundaries").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  await sb.from("age_groups").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  await seedDefaultCategories();
+  await loadCategoryConfig();
+  recomputeCompetitorCategories();
+  hasUnsavedChanges = false;
+  updateAutosaveIndicator("saved", "✓ Reset complete");
+  renderCatEditorBody();
+  showToast("✅ Reset to defaults", "success");
 }
+
 /* ============================================================
 BRACKET / UNDO / SELECTION / ETC (UNCHANGED CORE LOGIC)
 ============================================================ */
@@ -2305,56 +2357,29 @@ else active.classList.add("btn-primary", "btn-active");
 }
 
 /* ============================================================
-📡 FETCH DATA — uses dynamic categories
+📡 FETCH DATA
 ============================================================ */
 async function fetchData() {
   try {
     lastDebugInfo = { registrations: [], competitors: [], judges: [], coaches: [], errors: [] };
-
-    // 1) Load category config FIRST (this loads weight_boundaries vectors)
     await loadCategoryConfig();
-
     const { data: allRegs, error: regError } = await sb.from(REG_TABLE).select("*");
     if (regError) { lastDebugInfo.errors.push("REG FETCH: " + regError.message); throw regError; }
     lastDebugInfo.registrations = allRegs || [];
-
-    const compRegs = (allRegs || []).filter((r) => {
-      const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase();
-      return t === "comp" || t === "competitor" || t === "c";
-    });
-    const judgeRegs = (allRegs || []).filter((r) => {
-      const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase();
-      return t === "judge" || t === "j";
-    });
-    const coachRegs = (allRegs || []).filter((r) => {
-      const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase();
-      return t === "coach" || t === "c2";
-    });
-
+    const compRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "comp" || t === "competitor" || t === "c"; });
+    const judgeRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "judge" || t === "j"; });
+    const coachRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "coach" || t === "c2"; });
     const compIds = [...new Set(compRegs.map((r) => r.entry_id).filter(Boolean))];
     const judgeIds = [...new Set(judgeRegs.map((r) => r.entry_id).filter(Boolean))];
     const coachIds = [...new Set(coachRegs.map((r) => r.entry_id).filter(Boolean))];
-
     let compDetails = [], judgeDetails = [], coachDetails = [];
-    if (compIds.length > 0) {
-      const { data, error } = await sb.from("competitors").select("*").in("id", compIds);
-      if (!error) compDetails = data || [];
-    }
-    if (judgeIds.length > 0) {
-      const { data, error } = await sb.from("judges").select("*").in("id", judgeIds);
-      if (!error) judgeDetails = data || [];
-    }
-    if (coachIds.length > 0) {
-      const { data, error } = await sb.from("coaches").select("*").in("id", coachIds);
-      if (!error) coachDetails = data || [];
-    }
-
+    if (compIds.length > 0) { const { data, error } = await sb.from("competitors").select("*").in("id", compIds); if (!error) compDetails = data || []; }
+    if (judgeIds.length > 0) { const { data, error } = await sb.from("judges").select("*").in("id", judgeIds); if (!error) judgeDetails = data || []; }
+    if (coachIds.length > 0) { const { data, error } = await sb.from("coaches").select("*").in("id", coachIds); if (!error) coachDetails = data || []; }
     lastDebugInfo.competitors = compDetails;
     lastDebugInfo.judges = judgeDetails;
     lastDebugInfo.coaches = coachDetails;
-
     competitors = []; judges = []; coaches = [];
-
     compDetails.forEach((person) => {
       const personRegs = compRegs.filter((r) => String(r.entry_id) === String(person.id));
       if (personRegs.length === 0) return;
@@ -2369,13 +2394,10 @@ async function fetchData() {
           entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline, label: reg.label }];
         }
         if (entries.length === 0) return;
-
         entries.forEach((entry) => {
           let fullCat = entry.full_cat || entry.category || entry.fullCat || "";
           let discipline = (entry.discipline || entry.type || "").toString().toLowerCase();
           let label = entry.label || entry.name || "";
-
-          // Extract original weight (just for storage — NOT used as category label)
           let origSubCat = "";
           let origWeight = null;
           if (discipline === "sparring") {
@@ -2388,7 +2410,6 @@ async function fetchData() {
             let parts = fullCat.split(" - ");
             if (parts.length >= 2) origSubCat = parts.slice(1).join(" - ").trim();
           }
-
           competitors.push({
             ...person,
             _reg_id: reg.id,
@@ -2405,30 +2426,18 @@ async function fetchData() {
         });
       });
     });
-
-    // 2) NOW recompute categories using the loaded weight_boundaries vectors
     recomputeCompetitorCategories();
-
     judgeDetails.forEach((person) => {
       const personRegs = judgeRegs.filter((r) => String(r.entry_id) === String(person.id));
       if (personRegs.length === 0) judges.push({ ...person });
       else personRegs.forEach((reg) => judges.push({ ...person, _reg_id: reg.id }));
     });
-
     coachDetails.forEach((person) => {
       const personRegs = coachRegs.filter((r) => String(r.entry_id) === String(person.id));
       if (personRegs.length === 0) coaches.push({ ...person });
       else personRegs.forEach((reg) => coaches.push({ ...person, _reg_id: reg.id }));
     });
-
     await loadJudgeRanks();
-
-    // Debug: show a few computed categories
-    console.log("📋 Sample computed sparring categories:");
-    competitors.filter(c => c._discipline === "sparring").slice(0, 5).forEach(c => {
-      console.log(`  ${c.name} | age=${c._computed_age} | weight=${c.weight_kg}kg | → ${c._full_cat}`);
-    });
-
   } catch (error) {
     console.error("fetchData error:", error);
     document.getElementById("content").innerHTML = `<div class="empty-state" style="padding:30px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;"><h3 style="color:#856404;">⚠️ Error loading data</h3><p style="margin:10px 0;">${error.message || error}</p><button class="btn btn-primary" onclick="showDebugInfo()"><i class="fas fa-bug"></i> View Debug Info</button></div>`;
@@ -2459,7 +2468,6 @@ document.getElementById("content").innerHTML = html;
 async function runFullDebug() { await fetchData(); showDebugInfo(); }
 function updateAgeForFilters() {
 tournamentDate = document.getElementById("tournamentDate").value;
-// Recompute categories with new date
 recomputeCompetitorCategories();
 const activeBtn = document.querySelector(".nav .btn.btn-active");
 if (activeBtn && activeBtn.id === "btnPatterns") runPatternFilter();
@@ -2472,10 +2480,8 @@ if (activeBtn && activeBtn.id === "btnSparring") runSparringFilter();
 async function showPatterns() {
 setActiveBtn("btnPatterns");
 await fetchData();
-// Build age filter options dynamically from config
 const ageGroups = categoryConfig.patterns.ageGroups.filter(g => g.is_active);
 const ageOptions = ageGroups.map(g => `<option value="${escapeAttr(g.display_name)}">${escapeHtml(g.display_name)} (${g.min_age}${g.max_age === null ? '+' : '-' + g.max_age})</option>`).join("");
-// Get unique belt ranks from competitors for the belt filter
 const beltRanks = new Set();
 competitors.filter(c => c._discipline === "patterns").forEach(c => {
 if (c._original_sub_cat) beltRanks.add(c._original_sub_cat);
@@ -2526,7 +2532,7 @@ await renderBracketView(groups, "Patterns");
 }
 
 /* ============================================================
-🥋 SPARRING — weight dropdown now uses boundaries vector
+🥋 SPARRING
 ============================================================ */
 async function showSparring() {
   setActiveBtn("btnSparring");
@@ -2543,10 +2549,6 @@ async function showSparring() {
   updateWeightDropdown();
 }
 
-/**
- * Build the weight dropdown STRICTLY from the weight_boundaries vector
- * loaded from the DB for the selected age group.
- */
 function updateWeightDropdown() {
   const age = document.getElementById("sAge").value;
   const gen = document.getElementById("sGen").value;
@@ -2559,11 +2561,7 @@ function updateWeightDropdown() {
   let weightDivisions = [];
 
   if (ageGroup) {
-    // 👇 THIS IS THE KEY: use the vector from weight_boundaries table
     const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).slice().sort((a, b) => a - b);
-
-    console.log(`🎯 updateWeightDropdown for "${ageGroup.display_name}" (id=${ageGroup.id}):`, bounds);
-
     if (bounds.length === 0) {
       weightDivisions = ["Open"];
     } else {
@@ -2573,10 +2571,8 @@ function updateWeightDropdown() {
       }
       weightDivisions.push(`+${bounds[bounds.length - 1]}kg`);
     }
-
     info.innerHTML = `<i class="fas fa-weight-hanging"></i> <strong>${escapeHtml(ageGroup.display_name)}:</strong> ${bounds.length} weight division${bounds.length !== 1 ? 's' : ''} configured (ages ${ageGroup.min_age}${ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age}) — boundaries: [${bounds.join(', ')}]kg`;
   } else if (age === "ALL") {
-    // Collect all unique weight categories from ALL age groups
     const allCats = new Set();
     competitors.filter(c => c._discipline === "sparring").forEach(c => {
       if (c._actual_sub_cat && c._actual_sub_cat !== "Open") allCats.add(c._actual_sub_cat);
