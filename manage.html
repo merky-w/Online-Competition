@@ -494,7 +494,7 @@ function getDisciplineUnit(disc) {
 }
 function formatDisciplineValue(val, disc) {
   if (disc === "patterns") {
-    const beltName = BELT_NAMES[Math.round(val)] || `Belt ${Math.round(val)}`;
+    const beltName = BELT_NAMES[Math.round(val)] || ("Belt " + Math.round(val));
     return beltName;
   }
   return val + "kg";
@@ -647,21 +647,21 @@ const boundaries = (categoryConfig[discipline]?.weightBoundaries?.[ageGroupId] |
 if (boundaries.length === 0) return "Open";
 if (discipline === "patterns") {
 const beltNum = Math.round(weightKg);
-if (beltNum <= boundaries[0]) return `-${BELT_NAMES[boundaries[0]] || boundaries[0]}`;
+if (beltNum <= boundaries[0]) return "-" + (BELT_NAMES[boundaries[0]] || boundaries[0]);
 for (let i = 0; i < boundaries.length - 1; i++) {
 if (beltNum > boundaries[i] && beltNum <= boundaries[i+1]) {
-return `${BELT_NAMES[Math.ceil(boundaries[i])] || Math.ceil(boundaries[i])}-${BELT_NAMES[boundaries[i+1]] || boundaries[i+1]}`;
+return (BELT_NAMES[Math.ceil(boundaries[i])] || Math.ceil(boundaries[i])) + "-" + (BELT_NAMES[boundaries[i+1]] || boundaries[i+1]);
 }
 }
-return `+${BELT_NAMES[boundaries[boundaries.length-1]] || boundaries[boundaries.length-1]}`;
+return "+" + (BELT_NAMES[boundaries[boundaries.length-1]] || boundaries[boundaries.length-1]);
 } else {
-if (weightKg <= boundaries[0]) return `-${boundaries[0]}kg`;
+if (weightKg <= boundaries[0]) return "-" + boundaries[0] + "kg";
 for (let i = 0; i < boundaries.length - 1; i++) {
 if (weightKg > boundaries[i] && weightKg <= boundaries[i+1]) {
-return `${Math.ceil(boundaries[i])}-${boundaries[i+1]}kg`;
+return Math.ceil(boundaries[i]) + "-" + boundaries[i+1] + "kg";
 }
 }
-return `+${boundaries[boundaries.length-1]}kg`;
+return "+" + boundaries[boundaries.length-1] + "kg";
 }
 }
 function computeAge(dob) {
@@ -691,10 +691,10 @@ const weightKg = parseFloat(c.weight_kg);
 if (!isNaN(weightKg) && weightKg > 0) {
 const wCat = getWeightCategoryLabel(weightKg, ageGroup.id, discipline);
 c._actual_sub_cat = wCat;
-c._full_cat = `${ageGroup.display_name} - ${wCat}`;
+c._full_cat = ageGroup.display_name + " - " + wCat;
 } else {
 c._actual_sub_cat = "Open";
-c._full_cat = `${ageGroup.display_name} - Open`;
+c._full_cat = ageGroup.display_name + " - Open";
 }
 } else if (discipline === "patterns") {
 const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
@@ -702,10 +702,10 @@ const beltNum = beltNameToNumber(origBeltName);
 if (beltNum !== null) {
 const bCat = getWeightCategoryLabel(beltNum, ageGroup.id, discipline);
 c._actual_sub_cat = bCat;
-c._full_cat = `${ageGroup.display_name} - ${bCat}`;
+c._full_cat = ageGroup.display_name + " - " + bCat;
 } else {
 c._actual_sub_cat = origBeltName || "Open";
-c._full_cat = `${ageGroup.display_name} - ${origBeltName || "Open"}`;
+c._full_cat = ageGroup.display_name + " - " + (origBeltName || "Open");
 }
 }
 } else {
@@ -719,7 +719,7 @@ c._full_cat = "No Group - Open";
 } else if (discipline === "patterns") {
 const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
 c._actual_sub_cat = origBeltName || "Open";
-c._full_cat = `No Group - ${origBeltName || "Open"}`;
+c._full_cat = "No Group - " + (origBeltName || "Open");
 }
 }
 } else {
@@ -733,7 +733,7 @@ c._full_cat = "No Group - Open";
 } else if (discipline === "patterns") {
 const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
 c._actual_sub_cat = origBeltName || "Open";
-c._full_cat = `No Group - ${origBeltName || "Open"}`;
+c._full_cat = "No Group - " + (origBeltName || "Open");
 }
 }
 });
@@ -742,29 +742,28 @@ async function showCategories() {
 setActiveBtn("btnCategories");
 await loadCategoryConfig();
 const content = document.getElementById("content");
-content.innerHTML = `
-<div class="cat-editor-wrap">
-<div class="cat-editor-header">
-<div>
-<div class="cat-editor-title"><i class="fas fa-sliders-h"></i> Category Configuration</div>
-<div class="cat-editor-subtitle">Configure age groups and ${currentCatDiscipline === 'patterns' ? 'belt' : 'weight'} divisions. Changes are saved to the database and used across the tournament.</div>
-</div>
-<div style="display:flex; gap:8px; flex-wrap:wrap;">
-<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig()"><i class="fas fa-save"></i> Save All</button>
-<button class="btn btn-warning btn-sm" onclick="resetToDefaults()"><i class="fas fa-undo"></i> Reset to Defaults</button>
-</div>
-</div>
-<div class="cat-discipline-tabs">
-<div class="cat-disc-tab ${currentCatDiscipline === 'patterns' ? 'active-patterns' : ''}" onclick="switchCatDiscipline('patterns')">
-<i class="fas fa-chess-board"></i> Patterns (Tul)
-</div>
-<div class="cat-disc-tab ${currentCatDiscipline === 'sparring' ? 'active-sparring' : ''}" onclick="switchCatDiscipline('sparring')">
-<i class="fas fa-fist-raised"></i> Sparring (Matsogi)
-</div>
-</div>
-<div id="catEditorBody"></div>
-</div>
-`;
+const divisionWord = currentCatDiscipline === 'patterns' ? 'belt' : 'weight';
+content.innerHTML = '<div class="cat-editor-wrap">' +
+'<div class="cat-editor-header">' +
+'<div>' +
+'<div class="cat-editor-title"><i class="fas fa-sliders-h"></i> Category Configuration</div>' +
+'<div class="cat-editor-subtitle">Configure age groups and ' + divisionWord + ' divisions. Changes are saved to the database and used across the tournament.</div>' +
+'</div>' +
+'<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+'<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig()"><i class="fas fa-save"></i> Save All</button>' +
+'<button class="btn btn-warning btn-sm" onclick="resetToDefaults()"><i class="fas fa-undo"></i> Reset to Defaults</button>' +
+'</div>' +
+'</div>' +
+'<div class="cat-discipline-tabs">' +
+'<div class="cat-disc-tab ' + (currentCatDiscipline === 'patterns' ? 'active-patterns' : '') + '" onclick="switchCatDiscipline(\'patterns\')">' +
+'<i class="fas fa-chess-board"></i> Patterns (Tul)' +
+'</div>' +
+'<div class="cat-disc-tab ' + (currentCatDiscipline === 'sparring' ? 'active-sparring' : '') + '" onclick="switchCatDiscipline(\'sparring\')">' +
+'<i class="fas fa-fist-raised"></i> Sparring (Matsogi)' +
+'</div>' +
+'</div>' +
+'<div id="catEditorBody"></div>' +
+'</div>';
 renderCatEditorBody();
 }
 function switchCatDiscipline(disc) {
@@ -781,38 +780,38 @@ if (!body) return;
 const disc = currentCatDiscipline;
 const groups = categoryConfig[disc].ageGroups || [];
 const divisionLabel = disc === "patterns" ? "Belt" : "Weight";
-body.innerHTML = `
-<div class="cat-section">
-<div class="cat-section-title"><i class="fas fa-calendar-alt" style="color:var(--cat-age)"></i> Age Groups Timeline</div>
-<div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off.</div>
-<div class="age-timeline-card">
-<div class="age-timeline" id="ageTimeline_${disc}">
-<div class="age-timeline-track" id="ageTrack_${disc}" onclick="handleAgeTrackClick(event, '${disc}')"></div>
-<div class="age-timeline-segments" id="ageSegments_${disc}"></div>
-<div class="age-scale" id="ageScale_${disc}"></div>
-</div>
-<div class="age-group-list" id="ageGroupList_${disc}"></div>
-<div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-<button class="btn btn-add btn-sm" onclick="addNewAgeGroup('${disc}')"><i class="fas fa-plus"></i> Add Age Group</button>
-</div>
-</div>
-</div>
-<div class="cat-section">
-<div class="cat-section-title"><i class="fas fa-${disc === 'patterns' ? 'award' : 'weight-hanging'}" style="color:var(--cat-weight)"></i> ${divisionLabel} Divisions per Age Group</div>
-<div class="cat-section-hint">For each age group, drag markers to set ${disc === 'patterns' ? 'belt' : 'weight'} boundaries. Click on the track to add a new boundary. Hover a marker to delete it.</div>
-<div id="weightSliders_${disc}"></div>
-</div>
-`;
+const divisionIcon = disc === "patterns" ? "award" : "weight-hanging";
+const divisionWord = disc === "patterns" ? "belt" : "weight";
+body.innerHTML = '<div class="cat-section">' +
+'<div class="cat-section-title"><i class="fas fa-calendar-alt" style="color:var(--cat-age)"></i> Age Groups Timeline</div>' +
+'<div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off.</div>' +
+'<div class="age-timeline-card">' +
+'<div class="age-timeline" id="ageTimeline_' + disc + '">' +
+'<div class="age-timeline-track" id="ageTrack_' + disc + '" onclick="handleAgeTrackClick(event, \'' + disc + '\')"></div>' +
+'<div class="age-timeline-segments" id="ageSegments_' + disc + '"></div>' +
+'<div class="age-scale" id="ageScale_' + disc + '"></div>' +
+'</div>' +
+'<div class="age-group-list" id="ageGroupList_' + disc + '"></div>' +
+'<div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">' +
+'<button class="btn btn-add btn-sm" onclick="addNewAgeGroup(\'' + disc + '\')"><i class="fas fa-plus"></i> Add Age Group</button>' +
+'</div>' +
+'</div>' +
+'</div>' +
+'<div class="cat-section">' +
+'<div class="cat-section-title"><i class="fas fa-' + divisionIcon + '" style="color:var(--cat-weight)"></i> ' + divisionLabel + ' Divisions per Age Group</div>' +
+'<div class="cat-section-hint">For each age group, drag markers to set ' + divisionWord + ' boundaries. Click on the track to add a new boundary. Hover a marker to delete it.</div>' +
+'<div id="weightSliders_' + disc + '"></div>' +
+'</div>';
 renderAgeTimeline(disc);
 renderAgeGroupList(disc);
 renderWeightSliders(disc);
 }
 function renderAgeTimeline(disc) {
 const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-const track = document.getElementById(`ageTrack_${disc}`);
-const segments = document.getElementById(`ageSegments_${disc}`);
-const scale = document.getElementById(`ageScale_${disc}`);
-const timeline = document.getElementById(`ageTimeline_${disc}`);
+const track = document.getElementById("ageTrack_" + disc);
+const segments = document.getElementById("ageSegments_" + disc);
+const scale = document.getElementById("ageScale_" + disc);
+const timeline = document.getElementById("ageTimeline_" + disc);
 if (!track || !segments || !scale || !timeline) return;
 timeline.querySelectorAll(".age-marker").forEach(m => m.remove());
 const maxAge = 70;
@@ -829,7 +828,7 @@ seg.style.position = "absolute";
 seg.style.left = startPct + "%";
 seg.style.width = widthPct + "%";
 seg.style.background = color;
-seg.innerHTML = `<span class="age-segment-label">${escapeHtml(g.display_name)}</span>`;
+seg.innerHTML = '<span class="age-segment-label">' + escapeHtml(g.display_name) + '</span>';
 segments.appendChild(seg);
 });
 const boundaries = new Set();
@@ -841,8 +840,8 @@ boundaries.forEach(age => {
 const pct = (age / maxAge) * 100;
 const marker = document.createElement("div");
 marker.className = "age-marker";
-marker.style.left = `calc(30px + (100% - 60px) * ${pct / 100})`;
-marker.innerHTML = `<div class="age-marker-label">${age}</div>`;
+marker.style.left = "calc(30px + (100% - 60px) * " + (pct / 100) + ")";
+marker.innerHTML = '<div class="age-marker-label">' + age + '</div>';
 marker.dataset.age = age;
 marker.addEventListener("mousedown", (e) => startAgeMarkerDrag(e, age, disc));
 marker.addEventListener("touchstart", (e) => startAgeMarkerDrag(e, age, disc), {passive: false});
@@ -864,12 +863,12 @@ const age = Math.max(1, Math.min(70, Math.round(pct * 70)));
 const groups = categoryConfig[disc].ageGroups;
 const targetGroup = groups.find(g => g.is_active !== false && age > g.min_age && (g.max_age === null || age < g.max_age));
 if (!targetGroup) {
-showToast("⚠️ Cannot add boundary here (no active group contains this age)", "error");
+showToast("Cannot add boundary here (no active group contains this age)", "error");
 return;
 }
 const existing = groups.find(g => g.min_age === age || g.max_age === age);
 if (existing) {
-showToast("️ Boundary already exists at age " + age, "error");
+showToast("Boundary already exists at age " + age, "error");
 return;
 }
 const oldMax = targetGroup.max_age;
@@ -886,13 +885,13 @@ targetGroup.max_age = age;
 categoryConfig[disc].ageGroups.push(newGroup);
 reorderAndRenumber(disc);
 renderCatEditorBody();
-showToast(`✅ Added age boundary at ${age}`, "success");
+showToast("Added age boundary at " + age, "success");
 }
 async function startAgeMarkerDrag(e, age, disc) {
 e.preventDefault();
 e.stopPropagation();
-const timeline = document.getElementById(`ageTimeline_${disc}`);
-const track = document.getElementById(`ageTrack_${disc}`);
+const timeline = document.getElementById("ageTimeline_" + disc);
+const track = document.getElementById("ageTrack_" + disc);
 if (!track) return;
 const trackRect = track.getBoundingClientRect();
 const marker = e.currentTarget;
@@ -903,7 +902,7 @@ const onMove = (ev) => {
 const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
 const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
 currentAge = Math.max(1, Math.min(70, Math.round(pct * maxAge)));
-marker.style.left = `calc(30px + (100% - 60px) * ${currentAge / maxAge})`;
+marker.style.left = "calc(30px + (100% - 60px) * " + (currentAge / maxAge) + ")";
 marker.querySelector(".age-marker-label").textContent = currentAge;
 };
 const onEnd = async () => {
@@ -921,7 +920,7 @@ if (g.max_age === age) { g.max_age = currentAge; updated = true; }
 });
 if (updated) {
 renderCatEditorBody();
-showToast(`✅ Age boundary moved: ${age} → ${currentAge}`, "success");
+showToast("Age boundary moved: " + age + " -> " + currentAge, "success");
 }
 }
 };
@@ -931,35 +930,33 @@ document.addEventListener("touchmove", onMove, {passive: false});
 document.addEventListener("touchend", onEnd);
 }
 function renderAgeGroupList(disc) {
-const list = document.getElementById(`ageGroupList_${disc}`);
+const list = document.getElementById("ageGroupList_" + disc);
 if (!list) return;
 const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
 list.innerHTML = groups.map((g, idx) => {
 const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const rangeText = g.max_age === null ? `${g.min_age}+` : `${g.min_age} - ${g.max_age}`;
-return `
-<div class="age-group-item ${g.is_active ? 'active' : 'inactive'}">
-<div class="age-group-color" style="background:${color}"></div>
-<div class="age-group-info">
-<input type="text" class="inline-input inline-input-wide" value="${escapeAttr(g.display_name)}" onchange="updateAgeGroupName('${disc}', '${g.id}', this.value)" />
-<div class="age-group-range">Ages: ${rangeText}</div>
-</div>
-<div class="age-group-actions">
-<label class="switch" title="${g.is_active ? 'Active' : 'Disabled'}">
-<input type="checkbox" ${g.is_active ? 'checked' : ''} onchange="toggleAgeGroupActive('${disc}', '${g.id}', this.checked)" />
-<span class="slider-toggle"></span>
-</label>
-<button class="btn btn-danger btn-xs" onclick="deleteAgeGroup('${disc}', '${g.id}')" title="Delete"><i class="fas fa-trash"></i></button>
-</div>
-</div>
-`;
+const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
+return '<div class="age-group-item ' + (g.is_active ? 'active' : 'inactive') + '">' +
+'<div class="age-group-color" style="background:' + color + '"></div>' +
+'<div class="age-group-info">' +
+'<input type="text" class="inline-input inline-input-wide" value="' + escapeAttr(g.display_name) + '" onchange="updateAgeGroupName(\'' + disc + '\', \'' + g.id + '\', this.value)" />' +
+'<div class="age-group-range">Ages: ' + rangeText + '</div>' +
+'</div>' +
+'<div class="age-group-actions">' +
+'<label class="switch" title="' + (g.is_active ? 'Active' : 'Disabled') + '">' +
+'<input type="checkbox" ' + (g.is_active ? 'checked' : '') + ' onchange="toggleAgeGroupActive(\'' + disc + '\', \'' + g.id + '\', this.checked)" />' +
+'<span class="slider-toggle"></span>' +
+'</label>' +
+'<button class="btn btn-danger btn-xs" onclick="deleteAgeGroup(\'' + disc + '\', \'' + g.id + '\')" title="Delete"><i class="fas fa-trash"></i></button>' +
+'</div>' +
+'</div>';
 }).join("");
 }
 function updateAgeGroupName(disc, groupId, newName) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (g) {
 g.display_name = newName.trim() || g.display_name;
-showToast(`✅ Renamed to "${g.display_name}"`, "success");
+showToast('Renamed to "' + g.display_name + '"', "success");
 }
 }
 function toggleAgeGroupActive(disc, groupId, isActive) {
@@ -967,13 +964,14 @@ const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (g) {
 g.is_active = isActive;
 renderCatEditorBody();
-showToast(isActive ? `✅ "${g.display_name}" enabled` : `⚠️ "${g.display_name}" disabled`, "success");
+showToast(isActive ? ('"' + g.display_name + '" enabled') : ('"' + g.display_name + '" disabled'), "success");
 }
 }
 async function deleteAgeGroup(disc, groupId) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (!g) return;
-if (!confirm(`Delete age group "${g.display_name}"? This will also delete its ${disc === 'patterns' ? 'belt' : 'weight'} boundaries.`)) return;
+const divWord = disc === 'patterns' ? 'belt' : 'weight';
+if (!confirm('Delete age group "' + g.display_name + '"? This will also delete its ' + divWord + ' boundaries.')) return;
 if (!g.id.startsWith("tmp_")) {
 await sb.from("age_groups").delete().eq("id", g.id);
 }
@@ -981,7 +979,7 @@ categoryConfig[disc].ageGroups = categoryConfig[disc].ageGroups.filter(x => x.id
 delete categoryConfig[disc].weightBoundaries[groupId];
 reorderAndRenumber(disc);
 renderCatEditorBody();
-showToast(`️ Deleted "${g.display_name}"`, "success");
+showToast('Deleted "' + g.display_name + '"', "success");
 }
 async function addNewAgeGroup(disc) {
 const groups = categoryConfig[disc].ageGroups;
@@ -1000,75 +998,72 @@ discipline: disc
 categoryConfig[disc].ageGroups.push(newGroup);
 reorderAndRenumber(disc);
 renderCatEditorBody();
-showToast(`✅ Added new age group. Drag markers to adjust.`, "success");
+showToast("Added new age group. Drag markers to adjust.", "success");
 }
 function reorderAndRenumber(disc) {
 categoryConfig[disc].ageGroups.sort((a,b) => a.min_age - b.min_age);
 categoryConfig[disc].ageGroups.forEach((g, i) => g.order_priority = i + 1);
 }
 function renderWeightSliders(disc) {
-const container = document.getElementById(`weightSliders_${disc}`);
+const container = document.getElementById("weightSliders_" + disc);
 if (!container) return;
 const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
 if (groups.length === 0) {
-container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined. Add age groups above first.</div>`;
+container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined. Add age groups above first.</div>';
 return;
 }
-const unit = getDisciplineUnit(disc);
 const maxVal = getDisciplineMaxValue(disc);
+const divisionLabel = disc === "patterns" ? "belt" : "weight";
 container.innerHTML = groups.map((g, idx) => {
 const boundaries = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
-const rangeText = g.max_age === null ? `${g.min_age}+` : `${g.min_age} - ${g.max_age}`;
+const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
 const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
 const chips = buildWeightCategoryChips(boundaries, disc);
-const divisionLabel = disc === "patterns" ? "belt" : "weight";
-return `
-<div class="weight-slider-card ${g.is_active ? 'active' : 'inactive'}">
-<div class="weight-slider-header">
-<div class="weight-slider-title">
-<span class="age-badge" style="background:${color}">${escapeHtml(g.display_name)}</span>
-<span style="font-size:0.85rem;color:var(--gray)">(${rangeText} years) — ${boundaries.length} ${divisionLabel} division${boundaries.length !== 1 ? 's' : ''}</span>
-</div>
-${g.is_active ? '' : '<span style="color:var(--cat-inactive);font-size:0.8rem;font-weight:700;"><i class="fas fa-pause-circle"></i> DISABLED</span>'}
-</div>
-<div class="weight-slider-track-wrap" id="weightTrackWrap_${g.id}">
-<div class="weight-slider-track" id="weightTrack_${g.id}" onclick="handleWeightTrackClick(event, '${disc}', '${g.id}')"></div>
-<div class="weight-scale" id="weightScale_${g.id}"></div>
-</div>
-<div class="weight-categories-display">${chips}</div>
-</div>
-`;
+return '<div class="weight-slider-card ' + (g.is_active ? 'active' : 'inactive') + '">' +
+'<div class="weight-slider-header">' +
+'<div class="weight-slider-title">' +
+'<span class="age-badge" style="background:' + color + '">' + escapeHtml(g.display_name) + '</span>' +
+'<span style="font-size:0.85rem;color:var(--gray)">(' + rangeText + ' years) — ' + boundaries.length + ' ' + divisionLabel + ' division' + (boundaries.length !== 1 ? 's' : '') + '</span>' +
+'</div>' +
+(g.is_active ? '' : '<span style="color:var(--cat-inactive);font-size:0.8rem;font-weight:700;"><i class="fas fa-pause-circle"></i> DISABLED</span>') +
+'</div>' +
+'<div class="weight-slider-track-wrap" id="weightTrackWrap_' + g.id + '">' +
+'<div class="weight-slider-track" id="weightTrack_' + g.id + '" onclick="handleWeightTrackClick(event, \'' + disc + '\', \'' + g.id + '\')"></div>' +
+'<div class="weight-scale" id="weightScale_' + g.id + '"></div>' +
+'</div>' +
+'<div class="weight-categories-display">' + chips + '</div>' +
+'</div>';
 }).join("");
 groups.forEach(g => {
 renderWeightMarkers(disc, g);
 });
 }
 function buildWeightCategoryChips(boundaries, disc) {
-if (boundaries.length === 0) return `<span class="weight-cat-chip">Open (no divisions)</span>`;
+if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
 const chips = [];
 if (disc === "patterns") {
-const firstBelt = BELT_NAMES[boundaries[0]] || `Belt ${boundaries[0]}`;
-chips.push(`<span class="weight-cat-chip first">-${firstBelt}</span>`);
+const firstBelt = BELT_NAMES[boundaries[0]] || ("Belt " + boundaries[0]);
+chips.push('<span class="weight-cat-chip first">-' + firstBelt + '</span>');
 for (let i = 0; i < boundaries.length - 1; i++) {
-const b1 = BELT_NAMES[Math.ceil(boundaries[i])] || `Belt ${Math.ceil(boundaries[i])}`;
-const b2 = BELT_NAMES[boundaries[i+1]] || `Belt ${boundaries[i+1]}`;
-chips.push(`<span class="weight-cat-chip">${b1}-${b2}</span>`);
+const b1 = BELT_NAMES[Math.ceil(boundaries[i])] || ("Belt " + Math.ceil(boundaries[i]));
+const b2 = BELT_NAMES[boundaries[i+1]] || ("Belt " + boundaries[i+1]);
+chips.push('<span class="weight-cat-chip">' + b1 + '-' + b2 + '</span>');
 }
-const lastBelt = BELT_NAMES[boundaries[boundaries.length-1]] || `Belt ${boundaries[boundaries.length-1]}`;
-chips.push(`<span class="weight-cat-chip last">+${lastBelt}</span>`);
+const lastBelt = BELT_NAMES[boundaries[boundaries.length-1]] || ("Belt " + boundaries[boundaries.length-1]);
+chips.push('<span class="weight-cat-chip last">+' + lastBelt + '</span>');
 } else {
-chips.push(`<span class="weight-cat-chip first">-${boundaries[0]}kg</span>`);
+chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + 'kg</span>');
 for (let i = 0; i < boundaries.length - 1; i++) {
-chips.push(`<span class="weight-cat-chip">${Math.ceil(boundaries[i])}-${boundaries[i+1]}kg</span>`);
+chips.push('<span class="weight-cat-chip">' + Math.ceil(boundaries[i]) + '-' + boundaries[i+1] + 'kg</span>');
 }
-chips.push(`<span class="weight-cat-chip last">+${boundaries[boundaries.length-1]}kg</span>`);
+chips.push('<span class="weight-cat-chip last">+' + boundaries[boundaries.length-1] + 'kg</span>');
 }
 return chips.join("");
 }
 function renderWeightMarkers(disc, group) {
-const wrap = document.getElementById(`weightTrackWrap_${group.id}`);
-const track = document.getElementById(`weightTrack_${group.id}`);
-const scale = document.getElementById(`weightScale_${group.id}`);
+const wrap = document.getElementById("weightTrackWrap_" + group.id);
+const track = document.getElementById("weightTrack_" + group.id);
+const scale = document.getElementById("weightScale_" + group.id);
 if (!wrap || !track || !scale) return;
 wrap.querySelectorAll(".weight-marker").forEach(m => m.remove());
 const maxVal = getDisciplineMaxValue(disc);
@@ -1077,12 +1072,10 @@ boundaries.forEach(val => {
 const pct = (val / maxVal) * 100;
 const marker = document.createElement("div");
 marker.className = "weight-marker";
-marker.style.left = `calc(20px + (100% - 40px) * ${pct / 100})`;
+marker.style.left = "calc(20px + (100% - 40px) * " + (pct / 100) + ")";
 const displayLabel = formatDisciplineValue(val, disc);
-marker.innerHTML = `
-<div class="weight-marker-label">${displayLabel}</div>
-<button class="weight-marker-delete" onclick="deleteWeightMarker(event, '${disc}', '${group.id}', ${val})" title="Delete"><i class="fas fa-times"></i></button>
-`;
+marker.innerHTML = '<div class="weight-marker-label">' + displayLabel + '</div>' +
+'<button class="weight-marker-delete" onclick="deleteWeightMarker(event, \'' + disc + '\', \'' + group.id + '\', ' + val + ')" title="Delete"><i class="fas fa-times"></i></button>';
 marker.addEventListener("mousedown", (e) => {
 if (e.target.closest(".weight-marker-delete")) return;
 startWeightMarkerDrag(e, val, disc, group.id);
@@ -1122,28 +1115,30 @@ val = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
 }
 const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
 if (boundaries.includes(val)) {
-showToast("⚠️ Boundary already exists at " + formatDisciplineValue(val, disc), "error");
+showToast("Boundary already exists at " + formatDisciplineValue(val, disc), "error");
 return;
 }
 boundaries.push(val);
 categoryConfig[disc].weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
-showToast(`✅ Added ${disc === 'patterns' ? 'belt' : 'weight'} boundary at ${formatDisciplineValue(val, disc)}`, "success");
+const divWord = disc === 'patterns' ? 'belt' : 'weight';
+showToast("Added " + divWord + " boundary at " + formatDisciplineValue(val, disc), "success");
 }
 async function deleteWeightMarker(e, disc, groupId, val) {
 e.preventDefault();
 e.stopPropagation();
-if (!confirm(`Remove ${disc === 'patterns' ? 'belt' : 'weight'} boundary at ${formatDisciplineValue(val, disc)}?`)) return;
+const divWord = disc === 'patterns' ? 'belt' : 'weight';
+if (!confirm("Remove " + divWord + " boundary at " + formatDisciplineValue(val, disc) + "?")) return;
 const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
 categoryConfig[disc].weightBoundaries[groupId] = boundaries.filter(b => b !== val);
 renderCatEditorBody();
-showToast(`️ Removed ${formatDisciplineValue(val, disc)} boundary`, "success");
+showToast("Removed " + formatDisciplineValue(val, disc) + " boundary", "success");
 }
 async function startWeightMarkerDrag(e, val, disc, groupId) {
 e.preventDefault();
 e.stopPropagation();
-const wrap = document.getElementById(`weightTrackWrap_${groupId}`);
-const track = document.getElementById(`weightTrack_${groupId}`);
+const wrap = document.getElementById("weightTrackWrap_" + groupId);
+const track = document.getElementById("weightTrack_" + groupId);
 if (!track) return;
 const trackRect = track.getBoundingClientRect();
 const marker = e.currentTarget;
@@ -1158,7 +1153,7 @@ currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal)));
 } else {
 currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
 }
-marker.style.left = `calc(20px + (100% - 40px) * ${currentVal / maxVal})`;
+marker.style.left = "calc(20px + (100% - 40px) * " + (currentVal / maxVal) + ")";
 marker.querySelector(".weight-marker-label").textContent = formatDisciplineValue(currentVal, disc);
 };
 const onEnd = async () => {
@@ -1172,14 +1167,14 @@ const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
 const idx = boundaries.indexOf(val);
 if (idx >= 0) {
 if (boundaries.includes(currentVal)) {
-showToast("⚠️ Boundary already exists at " + formatDisciplineValue(currentVal, disc), "error");
+showToast("Boundary already exists at " + formatDisciplineValue(currentVal, disc), "error");
 renderCatEditorBody();
 return;
 }
 boundaries[idx] = currentVal;
 categoryConfig[disc].weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
-showToast(`✅ Moved boundary: ${formatDisciplineValue(val, disc)} → ${formatDisciplineValue(currentVal, disc)}`, "success");
+showToast("Moved boundary: " + formatDisciplineValue(val, disc) + " -> " + formatDisciplineValue(currentVal, disc), "success");
 }
 }
 };
@@ -1189,7 +1184,7 @@ document.addEventListener("touchmove", onMove, {passive: false});
 document.addEventListener("touchend", onEnd);
 }
 async function saveAllCategoryConfig() {
-showToast("⏳ Saving...", "");
+showToast("Saving...", "");
 let errors = 0;
 for (const disc of ["patterns", "sparring"]) {
 const groups = categoryConfig[disc].ageGroups;
@@ -1237,8 +1232,8 @@ await sb.from("weight_boundaries").insert([{ age_group_id: g.id, boundary_kg: kg
 }
 await loadCategoryConfig();
 recomputeCompetitorCategories();
-if (errors === 0) showToast("✅ All categories saved!", "success");
-else showToast(`⚠️ Saved with ${errors} error(s)`, "error");
+if (errors === 0) showToast("All categories saved!", "success");
+else showToast("Saved with " + errors + " error(s)", "error");
 renderCatEditorBody();
 }
 async function resetToDefaults() {
@@ -1248,7 +1243,7 @@ await sb.from("age_groups").delete().neq("id", "00000000-0000-0000-0000-00000000
 await seedDefaultCategories();
 await loadCategoryConfig();
 renderCatEditorBody();
-showToast("✅ Reset to defaults", "success");
+showToast("Reset to defaults", "success");
 }
 function clearSelection() {
 if (selectedPlayerEl) selectedPlayerEl.classList.remove("selected");
@@ -1262,18 +1257,18 @@ document.getElementById("selectionBanner").classList.remove("visible");
 async function safeInsert(table, data) {
 try {
 const { error } = await sb.from(table).insert(data);
-if (error) console.warn(`Insert into ${table} failed:`, error.message);
+if (error) console.warn("Insert into " + table + " failed:", error.message);
 return { error };
-} catch (err) { console.warn(`Insert into ${table} threw:`, err); return { error: err }; }
+} catch (err) { console.warn("Insert into " + table + " threw:", err); return { error: err }; }
 }
 async function safeDelete(table, filters) {
 try {
 let q = sb.from(table).delete();
 for (const [k, v] of Object.entries(filters || {})) q = q.eq(k, v);
 const { error } = await q;
-if (error) console.warn(`Delete from ${table} failed:`, error.message);
+if (error) console.warn("Delete from " + table + " failed:", error.message);
 return { error };
-} catch (err) { console.warn(`Delete from ${table} threw:`, err); return { error: err }; }
+} catch (err) { console.warn("Delete from " + table + " threw:", err); return { error: err }; }
 }
 function getEffectiveBracketSize(categoryKey, playerCount) {
 if (bracketSizeOverrides[categoryKey]) return bracketSizeOverrides[categoryKey];
@@ -1296,10 +1291,10 @@ try {
 const { data, error } = await sb.from("bracket_winners").select("*");
 if (error) { bracketWinnersCache = {}; return; }
 bracketWinnersCache = {};
-(data || []).forEach(row => { bracketWinnersCache[`${row.category}|||${row.bracket_type}`] = row; });
+(data || []).forEach(row => { bracketWinnersCache[row.category + "|||" + row.bracket_type] = row; });
 } catch (err) { console.warn("Could not load bracket winners:", err); bracketWinnersCache = {}; }
 }
-function getWinnerKey(category, type) { return `${category}|||${type}`; }
+function getWinnerKey(category, type) { return category + "|||" + type; }
 async function saveWinnerToDb(category, type, winnerName, placements) {
 const key = getWinnerKey(category, type);
 await safeDelete("bracket_winners", { category: category, bracket_type: type });
@@ -1322,13 +1317,13 @@ const winnerZone = page.querySelector(".winner-drop-zone");
 const winnerName = winnerZone && winnerZone.dataset.value ? winnerZone.dataset.value.trim() : null;
 const placements = [];
 for (let i = 0; i < 4; i++) {
-const zone = page.querySelector(`.placement-drop-zone[data-placement="${i}"]`);
+const zone = page.querySelector('.placement-drop-zone[data-placement="' + i + '"]');
 placements.push(zone && zone.dataset.value ? zone.dataset.value.trim() : null);
 }
 return { winner: winnerName, placements };
 }
 async function saveWinnersForCategory(category, type) {
-const page = document.querySelector(`.a4-page[data-category="${CSS.escape(category)}"][data-type="${type}"]`);
+const page = document.querySelector('.a4-page[data-category="' + CSS.escape(category) + '"][data-type="' + type + '"]');
 if (!page) return;
 const { winner, placements } = readWinnerFromDom(page);
 await saveWinnerToDb(category, type, winner, placements);
@@ -1362,7 +1357,7 @@ if (!page) return;
 if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, "");
 else setPlacementZoneValue(zone, "");
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
-showToast("🗑️ Cleared", "success");
+showToast("Cleared", "success");
 return;
 }
 if (selectedPlayerData) {
@@ -1373,7 +1368,7 @@ if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, select
 else setPlacementZoneValue(zone, selectedPlayerData.name);
 clearSelection();
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
-showToast(`✅ "${selectedPlayerData.name}" placed`, "success");
+showToast('"' + selectedPlayerData.name + '" placed', "success");
 }
 }
 function handleWinnerDrop(e) {
@@ -1388,7 +1383,7 @@ if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, select
 else setPlacementZoneValue(zone, selectedPlayerData.name);
 clearSelection();
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
-showToast(`✅ "${selectedPlayerData.name}" placed`, "success");
+showToast('"' + selectedPlayerData.name + '" placed', "success");
 return;
 }
 const data = e.dataTransfer.getData("application/player");
@@ -1398,7 +1393,7 @@ try { player = JSON.parse(data); } catch { return; }
 if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, player.name);
 else setPlacementZoneValue(zone, player.name);
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
-showToast(`✅ "${player.name}" placed`, "success");
+showToast('"' + player.name + '" placed', "success");
 }
 async function takeSnapshot(description) {
 if (!currentBracketType) return;
@@ -1422,7 +1417,7 @@ if (!btn) return;
 const count = undoStack.length;
 btn.disabled = count === 0;
 badge.textContent = count;
-if (count > 0) tooltip.textContent = `Undo: ${undoStack[undoStack.length - 1].description}`;
+if (count > 0) tooltip.textContent = "Undo: " + undoStack[undoStack.length - 1].description;
 else tooltip.textContent = "Nothing to undo";
 }
 async function performUndo() {
@@ -1442,10 +1437,11 @@ if (snapshot.winnersSnapshot) bracketWinnersCache = snapshot.winnersSnapshot;
 clearSelection();
 await renderBracketView(currentGroups, snapshot.bracketType);
 updateUndoButton();
-showToast(`✅ Undone: ${snapshot.description}`, "success");
-} catch (err) { console.error("Undo failed:", err); showToast("❌ Undo failed: " + err.message, "error"); }
+showToast("Undone: " + snapshot.description, "success");
+} catch (err) { console.error("Undo failed:", err); showToast("Undo failed: " + err.message, "error"); }
 }
-function showToast(message, type = "") {
+function showToast(message, type) {
+type = type || "";
 const toast = document.getElementById("toast");
 toast.textContent = message;
 toast.className = "toast show " + type;
@@ -1462,21 +1458,21 @@ const name = (c.name || "").toLowerCase();
 const team = (c.team || "").toLowerCase();
 return name.includes(lower) || team.includes(lower);
 }).slice(0, 30);
-if (matches.length === 0) dropdown.innerHTML = `<div class="autocomplete-empty"><i class="fas fa-search"></i> No matches for "${term}"</div>`;
+if (matches.length === 0) dropdown.innerHTML = '<div class="autocomplete-empty"><i class="fas fa-search"></i> No matches for "' + term + '"</div>';
 else {
 dropdown.innerHTML = matches.map(c => {
 const safeName = escapeAttr(c.name);
 const safeTeam = escapeAttr(c.team);
 const discClass = c._discipline === "patterns" ? "patterns" : "sparring";
 const discLabel = c._discipline === "patterns" ? "Patterns" : "Sparring";
-return `<div class="autocomplete-item" draggable="true" ondragstart="dragAutocompleteItem(event, '${safeName}', '${safeTeam}')" ondragend="this.classList.remove('dragging-item')">
-<span class="autocomplete-item-name">${escapeHtml(c.name)}</span>
-<span class="autocomplete-item-meta">
-<span>${escapeHtml(c.team) || "N/A"}</span>
-<span class="disc-tag ${discClass}">${discLabel}</span>
-<span>${escapeHtml(c._full_cat)}</span>
-</span>
-</div>`;
+return '<div class="autocomplete-item" draggable="true" ondragstart="dragAutocompleteItem(event, \'' + safeName + '\', \'' + safeTeam + '\')" ondragend="this.classList.remove(\'dragging-item\')">' +
+'<span class="autocomplete-item-name">' + escapeHtml(c.name) + '</span>' +
+'<span class="autocomplete-item-meta">' +
+'<span>' + (escapeHtml(c.team) || "N/A") + '</span>' +
+'<span class="disc-tag ' + discClass + '">' + discLabel + '</span>' +
+'<span>' + escapeHtml(c._full_cat) + '</span>' +
+'</span>' +
+'</div>';
 }).join("");
 }
 dropdown.classList.add("visible");
@@ -1508,7 +1504,7 @@ const matchBox = e.currentTarget;
 matchBox.classList.remove("drop-hover");
 matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
 const slot = detectDroppedSlot(matchBox, e.clientY);
-const targetRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+const targetRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 if (selectedPlayerData) { moveSelectedPlayerToBye(matchBox, targetRow); return; }
 const data = e.dataTransfer.getData("application/player");
 if (!data) return;
@@ -1525,7 +1521,7 @@ const matchBox = e.currentTarget;
 matchBox.classList.add("drop-hover");
 const slot = detectDroppedSlot(matchBox, e.clientY);
 matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-const targetRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+const targetRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 if (targetRow) targetRow.classList.add("drop-hover-slot");
 }
 function handleByeSlotDragLeave(e) {
@@ -1538,11 +1534,11 @@ matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classL
 }
 async function addPlayerToSpecificSlot(name, team, categoryKey, type, round, match, slot) {
 const existsInRegistrations = competitors.some(c => (c.name || "").toLowerCase() === (name || "").toLowerCase() && c._discipline === (type === "Patterns" ? "patterns" : "sparring"));
-if (!existsInRegistrations) { showToast(`⚠️ "${name}" is not in the current registrations`, "error"); return; }
+if (!existsInRegistrations) { showToast('"' + name + '" is not in the current registrations', "error"); return; }
 const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
 const { data: existing } = await sb.from(table).select("*").eq("category", categoryKey);
 const alreadyExists = (existing || []).some(e => (e.name || "").toLowerCase() === (name || "").toLowerCase());
-await takeSnapshot(`Add "${name}" to ${categoryKey}`);
+await takeSnapshot('Add "' + name + '" to ' + categoryKey);
 if (alreadyExists) await sb.from(table).delete().eq("category", categoryKey).eq("name", name);
 let position;
 if (round === 0) {
@@ -1550,7 +1546,7 @@ const maxR1 = (existing || []).filter(e => (e.position_number || 0) < 10000).red
 position = maxR1 + 1;
 } else position = (round + 1) * 10000 + (match + 1) * 100 + (slot === "p1" ? 0 : 1);
 const { error } = await sb.from(table).insert([{ name, team, category: categoryKey, position_number: position }]);
-if (error) { showToast("❌ Failed to add: " + error.message, "error"); return; }
+if (error) { showToast("Failed to add: " + error.message, "error"); return; }
 if (currentGroups && currentGroups[categoryKey]) {
 const alreadyInGroup = currentGroups[categoryKey].some(c => (c.name || "").toLowerCase() === (name || "").toLowerCase());
 if (!alreadyInGroup) currentGroups[categoryKey].push({ name, team });
@@ -1558,32 +1554,32 @@ if (!alreadyInGroup) currentGroups[categoryKey].push({ name, team });
 clearAutocomplete();
 clearSelection();
 await renderBracketView(currentGroups, type);
-showToast(`✅ "${name}" added to Round ${round + 1}, Match ${match + 1}, ${slot === "p1" ? "top" : "bottom"} slot`, "success");
+showToast('"' + name + '" added to Round ' + (round + 1) + ', Match ' + (match + 1) + ', ' + (slot === "p1" ? "top" : "bottom") + ' slot', "success");
 }
 async function increaseBracketSize(categoryKey, type) {
 const list = currentGroups[categoryKey] || [];
 const currentSize = getEffectiveBracketSize(categoryKey, list.length);
 const newSize = currentSize * 2;
-if (newSize > 64) { showToast("⚠️ Maximum bracket size is 64", "error"); return; }
-await takeSnapshot(`Expand ${categoryKey} to ${newSize} slots`);
+if (newSize > 64) { showToast("Maximum bracket size is 64", "error"); return; }
+await takeSnapshot("Expand " + categoryKey + " to " + newSize + " slots");
 bracketSizeOverrides[categoryKey] = newSize;
 await saveBracketSizeOverride(categoryKey, type, newSize);
 clearSelection();
 await renderBracketView(currentGroups, type);
-showToast(`📈 Bracket expanded to ${newSize} slots`, "success");
+showToast("Bracket expanded to " + newSize + " slots", "success");
 }
 async function decreaseBracketSize(categoryKey, type) {
 const list = currentGroups[categoryKey] || [];
 const currentSize = getEffectiveBracketSize(categoryKey, list.length);
 const minNeeded = getBracketSize(list.length);
 const newSize = Math.max(2, Math.floor(currentSize / 2));
-if (newSize < minNeeded) { showToast(`⚠️ Cannot shrink below ${minNeeded} slots (you have ${list.length} players)`, "error"); return; }
-await takeSnapshot(`Shrink ${categoryKey} to ${newSize} slots`);
+if (newSize < minNeeded) { showToast("Cannot shrink below " + minNeeded + " slots (you have " + list.length + " players)", "error"); return; }
+await takeSnapshot("Shrink " + categoryKey + " to " + newSize + " slots");
 if (newSize === minNeeded) { delete bracketSizeOverrides[categoryKey]; await saveBracketSizeOverride(categoryKey, type, null); }
 else { bracketSizeOverrides[categoryKey] = newSize; await saveBracketSizeOverride(categoryKey, type, newSize); }
 clearSelection();
 await renderBracketView(currentGroups, type);
-showToast(`📉 Bracket shrunk to ${newSize} slots`, "success");
+showToast("Bracket shrunk to " + newSize + " slots", "success");
 }
 function getBracketSize(count) {
 if (count <= 1) return 1;
@@ -1701,12 +1697,13 @@ else if (slot === 1) rounds[round][match].p2 = { name: entry.name, team: entry.t
 });
 return { rounds, totalRounds, laterRoundEntries };
 }
-async function saveCategoryOrder(categoryKey, type, silent = false) {
+async function saveCategoryOrder(categoryKey, type, silent) {
+silent = silent || false;
 const table = type === "Patterns" ? "patterns_categories" : "sparring_categories";
-const page = document.querySelector(`.a4-page[data-category="${CSS.escape(categoryKey)}"][data-type="${type}"]`);
-if (!page) { if (!silent) alert("❌ Page not found for " + categoryKey); return { success: false, count: 0 }; }
+const page = document.querySelector('.a4-page[data-category="' + CSS.escape(categoryKey) + '"][data-type="' + type + '"]');
+if (!page) { if (!silent) alert("Page not found for " + categoryKey); return { success: false, count: 0 }; }
 const bracketTable = page.querySelector(".bracket-table");
-if (!bracketTable) { if (!silent) showToast("❌ Bracket table not found", "error"); return { success: false, count: 0 }; }
+if (!bracketTable) { if (!silent) showToast("Bracket table not found", "error"); return { success: false, count: 0 }; }
 const dataToSave = [];
 const matchBoxes = bracketTable.querySelectorAll(".match-box");
 const round1Players = [];
@@ -1738,15 +1735,15 @@ const position = (round + 1) * 10000 + (match + 1) * 100 + slot;
 dataToSave.push({ name, team, category: categoryKey, position_number: position });
 });
 });
-if (dataToSave.length === 0) { await saveWinnersForCategory(categoryKey, type); if (!silent) showToast("⚠️ No players to save", "error"); return { success: true, count: 0 }; }
+if (dataToSave.length === 0) { await saveWinnersForCategory(categoryKey, type); if (!silent) showToast("No players to save", "error"); return { success: true, count: 0 }; }
 await safeDelete(table, { category: categoryKey });
 const { error } = await sb.from(table).insert(dataToSave);
-if (error) { if (!silent) showToast("❌ Save error: " + error.message, "error"); return { success: false, count: 0, error }; }
-else { await saveWinnersForCategory(categoryKey, type); if (!silent) showToast(`✅ Saved ${dataToSave.length} players + winners`, "success"); return { success: true, count: dataToSave.length }; }
+if (error) { if (!silent) showToast("Save error: " + error.message, "error"); return { success: false, count: 0, error }; }
+else { await saveWinnersForCategory(categoryKey, type); if (!silent) showToast("Saved " + dataToSave.length + " players + winners", "success"); return { success: true, count: dataToSave.length }; }
 }
 async function saveAllCategories(type) {
-const pages = document.querySelectorAll(`.a4-page[data-type="${type}"]`);
-if (pages.length === 0) { showToast("⚠️ No brackets to save", "error"); return; }
+const pages = document.querySelectorAll('.a4-page[data-type="' + type + '"]');
+if (pages.length === 0) { showToast("No brackets to save", "error"); return; }
 let totalSaved = 0, totalCategories = 0, hasErrors = false;
 for (const page of pages) {
 const categoryKey = page.dataset.category;
@@ -1754,12 +1751,12 @@ const result = await saveCategoryOrder(categoryKey, type, true);
 if (result.success) { totalSaved += result.count; totalCategories++; }
 else hasErrors = true;
 }
-if (hasErrors) showToast(`⚠️ Saved ${totalSaved} players from ${totalCategories} categories (some errors)`, "error");
-else showToast(`✅ Saved ${totalSaved} players from ${totalCategories} categories + all winners`, "success");
+if (hasErrors) showToast("Saved " + totalSaved + " players from " + totalCategories + " categories (some errors)", "error");
+else showToast("Saved " + totalSaved + " players from " + totalCategories + " categories + all winners", "success");
 }
 async function deletePlayerFromBracket(name, team, category, type) {
-if (!confirm(`Delete "${name}" from ${category}?`)) return;
-await takeSnapshot(`Delete "${name}" from ${category}`);
+if (!confirm('Delete "' + name + '" from ' + category + '?')) return;
+await takeSnapshot('Delete "' + name + '" from ' + category);
 const delTable = type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
 await sb.from(delTable).insert([{ name, team, category, type, deleted_at: new Date().toISOString() }]);
 const catTable = type === "Patterns" ? "patterns_categories" : "sparring_categories";
@@ -1769,23 +1766,23 @@ const idx = currentGroups[category].findIndex(c => (c.name || "").toLowerCase() 
 if (idx >= 0) currentGroups[category].splice(idx, 1);
 }
 clearSelection();
-showToast(`🗑️ "${name}" moved to Deleted`, "success");
+showToast('"' + name + '" moved to Deleted', "success");
 await renderBracketView(currentGroups, type);
 }
 async function restorePlayer(name, team, category, type) {
-if (!confirm(`Restore "${name}" to ${category}?`)) return;
+if (!confirm('Restore "' + name + '" to ' + category + '?')) return;
 const delTable = type === "Patterns" ? "deleted_patterns" : "deleted_sparring";
 const catTable = type === "Patterns" ? "patterns_categories" : "sparring_categories";
 const { data: existing } = await sb.from(catTable).select("position_number").eq("category", category).order("position_number", { ascending: false }).limit(1);
 const nextPos = existing && existing[0] ? existing[0].position_number + 1 : 1;
 await sb.from(catTable).insert([{ name, team, category, position_number: nextPos }]);
 await sb.from(delTable).delete().eq("name", name).eq("category", category);
-alert(`️ "${name}" restored.`);
+alert('"' + name + '" restored.');
 showDeleted();
 }
 async function showDeleted() {
 setActiveBtn("btnDeleted");
-let html = `<div class="controls"><button class="btn btn-secondary" onclick="showPatterns()"><i class="fas fa-arrow-left"></i> Back</button></div>`;
+let html = '<div class="controls"><button class="btn btn-secondary" onclick="showPatterns()"><i class="fas fa-arrow-left"></i> Back</button></div>';
 let delPatterns = [], delSparring = [];
 try {
 const pr = await sb.from("deleted_patterns").select("*").order("deleted_at", { ascending: false });
@@ -1793,15 +1790,15 @@ delPatterns = pr.data || [];
 const sr = await sb.from("deleted_sparring").select("*").order("deleted_at", { ascending: false });
 delSparring = sr.data || [];
 } catch (e) {}
-if (delPatterns.length === 0 && delSparring.length === 0) html += `<div class="empty-state" style="text-align:center;padding:40px;color:var(--gray);">No deleted players.</div>`;
+if (delPatterns.length === 0 && delSparring.length === 0) html += '<div class="empty-state" style="text-align:center;padding:40px;color:var(--gray);">No deleted players.</div>';
 else {
 if (delPatterns.length > 0) {
-html += `<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">🎭 Deleted from Patterns</h3>`;
-delPatterns.forEach((p) => { html += `<div class="deleted-card"><div class="deleted-info"><strong>${escapeHtml(p.name) || "Unknown"}</strong><small>${escapeHtml(p.team) || "N/A"} • ${escapeHtml(p.category) || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${escapeAttr(p.name)}', '${escapeAttr(p.team)}', '${escapeAttr(p.category)}', 'Patterns')"><i class="fas fa-undo"></i> Restore</button></div></div>`; });
+html += '<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">Deleted from Patterns</h3>';
+delPatterns.forEach((p) => { html += '<div class="deleted-card"><div class="deleted-info"><strong>' + (escapeHtml(p.name) || "Unknown") + '</strong><small>' + (escapeHtml(p.team) || "N/A") + ' • ' + (escapeHtml(p.category) || "N/A") + '</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer(\'' + escapeAttr(p.name) + '\', \'' + escapeAttr(p.team) + '\', \'' + escapeAttr(p.category) + '\', \'Patterns\')"><i class="fas fa-undo"></i> Restore</button></div></div>'; });
 }
 if (delSparring.length > 0) {
-html += `<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">🥋 Deleted from Sparring</h3>`;
-delSparring.forEach((p) => { html += `<div class="deleted-card"><div class="deleted-info"><strong>${escapeHtml(p.name) || "Unknown"}</strong><small>${escapeHtml(p.team) || "N/A"} • ${escapeHtml(p.category) || "N/A"}</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer('${escapeAttr(p.name)}', '${escapeAttr(p.team)}', '${escapeAttr(p.category)}', 'Sparring')"><i class="fas fa-undo"></i> Restore</button></div></div>`; });
+html += '<h3 style="color:var(--primary);margin:20px 0 10px;border-bottom:2px solid var(--secondary);padding-bottom:5px;">Deleted from Sparring</h3>';
+delSparring.forEach((p) => { html += '<div class="deleted-card"><div class="deleted-info"><strong>' + (escapeHtml(p.name) || "Unknown") + '</strong><small>' + (escapeHtml(p.team) || "N/A") + ' • ' + (escapeHtml(p.category) || "N/A") + '</small></div><div class="deleted-actions"><button class="btn btn-success btn-xs" onclick="restorePlayer(\'' + escapeAttr(p.name) + '\', \'' + escapeAttr(p.team) + '\', \'' + escapeAttr(p.category) + '\', \'Sparring\')"><i class="fas fa-undo"></i> Restore</button></div></div>'; });
 }
 }
 document.getElementById("content").innerHTML = html;
@@ -1840,7 +1837,7 @@ if (!selectedPlayerEl) {
 selectedPlayerEl = playerRow;
 selectedPlayerData = { name, team, category, type, rowEl: playerRow };
 playerRow.classList.add("selected");
-document.getElementById("selectionBannerText").textContent = `Selected: "${name}" — click another player to swap, click BYE/Winner to move`;
+document.getElementById("selectionBannerText").textContent = 'Selected: "' + name + '" — click another player to swap, click BYE/Winner to move';
 document.getElementById("selectionBanner").classList.add("visible");
 return;
 }
@@ -1850,7 +1847,7 @@ clearSelection();
 selectedPlayerEl = playerRow;
 selectedPlayerData = { name, team, category, type, rowEl: playerRow };
 playerRow.classList.add("selected");
-document.getElementById("selectionBannerText").textContent = `Selected: "${name}" — click another player to swap`;
+document.getElementById("selectionBannerText").textContent = 'Selected: "' + name + '" — click another player to swap';
 document.getElementById("selectionBanner").classList.add("visible");
 }
 function handleByeClick(e) {
@@ -1865,7 +1862,7 @@ const clickedName = clickedRow.dataset.playerName;
 if (clickedName && clickedName !== "BYE" && clickedName !== "________________" && clickedName !== "") return;
 }
 const slot = detectDroppedSlot(matchBox, e.clientY);
-const targetRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+const targetRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 e.preventDefault();
 e.stopPropagation();
 moveSelectedPlayerToBye(matchBox, targetRow);
@@ -1877,13 +1874,13 @@ if (!page) return;
 const targetCategory = page.dataset.category;
 const targetType = page.dataset.type;
 const byeRow = targetRow || matchBox.querySelector('.player-row[data-player-name="BYE"]') || matchBox.querySelector('.player-row .p-name:empty')?.closest(".player-row");
-if (!byeRow) { showToast("⚠️ No empty slot found", "error"); return; }
+if (!byeRow) { showToast("No empty slot found", "error"); return; }
 const srcName = selectedPlayerData.name;
 const srcTeam = selectedPlayerData.team;
 const srcCategory = selectedPlayerData.category;
 const srcType = selectedPlayerData.type;
 const srcEl = selectedPlayerData.rowEl;
-await takeSnapshot(`Move "${srcName}" to new position`);
+await takeSnapshot('Move "' + srcName + '" to new position');
 const srcNameEl = srcEl.querySelector(".p-name");
 const srcTeamEl = srcEl.querySelector(".p-team");
 const byeNameEl = byeRow.querySelector(".p-name");
@@ -1906,14 +1903,14 @@ setTimeout(() => { byeRow.style.background = ""; srcEl.style.background = ""; },
 clearSelection();
 await saveCategoryOrder(srcCategory, srcType, true);
 if (srcCategory !== targetCategory) await saveCategoryOrder(targetCategory, targetType, true);
-showToast(`✅ "${srcName}" moved`, "success");
+showToast('"' + srcName + '" moved', "success");
 }
 async function performSwap(row1, row2, category, type) {
 const name1 = row1.querySelector(".p-name").innerText;
 const team1 = row1.querySelector(".p-team").innerText;
 const name2 = row2.querySelector(".p-name").innerText;
 const team2 = row2.querySelector(".p-team").innerText;
-await takeSnapshot(`Swap "${name1}" ↔ "${name2}"`);
+await takeSnapshot('Swap "' + name1 + '" <-> "' + name2 + '"');
 row1.dataset.playerName = name2;
 row1.dataset.playerTeam = team2;
 row2.dataset.playerName = name1;
@@ -1935,23 +1932,22 @@ undoStack = [];
 updateUndoButton();
 clearSelection();
 await loadBracketWinners();
-let html = `
-<div class="bracket-controls-bar">
-<div class="bracket-controls-left">
-<button class="btn btn-secondary btn-sm" onclick="${type === "Patterns" ? "showPatterns()" : "showSparring()"}"><i class="fas fa-arrow-left"></i> Back to List</button>
-<button class="btn btn-success btn-sm" onclick="saveAllCategories('${type}')"><i class="fas fa-save"></i> Save All Brackets</button>
-<button class="btn btn-info btn-sm" onclick="exportAllToExcel('${type}')"><i class="fas fa-file-excel"></i> Excel</button>
-<button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
-</div>
-<div class="bracket-controls-right">
-<div class="search-box">
-<i class="fas fa-search"></i>
-<input type="text" id="bracketSearch" placeholder="Highlight in brackets..." oninput="performInlineSearch(this.value)" />
-<button class="search-clear" id="searchClearBtn" onclick="clearInlineSearch()"><i class="fas fa-times"></i></button>
-<span class="search-count" id="searchCount"></span>
-</div>
-</div>
-</div>`;
+let html = '<div class="bracket-controls-bar">' +
+'<div class="bracket-controls-left">' +
+'<button class="btn btn-secondary btn-sm" onclick="' + (type === "Patterns" ? "showPatterns()" : "showSparring()") + '"><i class="fas fa-arrow-left"></i> Back to List</button>' +
+'<button class="btn btn-success btn-sm" onclick="saveAllCategories(\'' + type + '\')"><i class="fas fa-save"></i> Save All Brackets</button>' +
+'<button class="btn btn-info btn-sm" onclick="exportAllToExcel(\'' + type + '\')"><i class="fas fa-file-excel"></i> Excel</button>' +
+'<button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>' +
+'</div>' +
+'<div class="bracket-controls-right">' +
+'<div class="search-box">' +
+'<i class="fas fa-search"></i>' +
+'<input type="text" id="bracketSearch" placeholder="Highlight in brackets..." oninput="performInlineSearch(this.value)" />' +
+'<button class="search-clear" id="searchClearBtn" onclick="clearInlineSearch()"><i class="fas fa-times"></i></button>' +
+'<span class="search-count" id="searchCount"></span>' +
+'</div>' +
+'</div>' +
+'</div>';
 let categoryIndex = 0;
 for (const key in groups) {
 const list = groups[key];
@@ -1970,27 +1966,27 @@ const p1 = winnerData.placement_1 || "";
 const p2 = winnerData.placement_2 || "";
 const p3a = winnerData.placement_3a || "";
 const p3b = winnerData.placement_3b || "";
-html += `<div class="a4-page" id="page-${categoryIndex}" data-category="${key}" data-type="${type}" style="--row-count:${rowsCount}">
-<div class="bracket-header">
-<span style="font-size:12px;text-transform:uppercase;color:#666">${type}</span>
-<h2>${escapeHtml(key)}</h2>
-<span style="font-size:14px;color:var(--secondary);font-weight:bold">${list.length} Competitors
-<span class="bracket-size-indicator">${effectiveSize} slots${isOverridden ? ' ️' : ''}</span>
-</span>
-<div style="text-align:right;margin-top:5px">
-<button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory('${safeKey}', '${type}')"><i class="fas fa-random"></i> Shuffle</button>
-<button class="btn btn-success btn-sm" onclick="saveCategoryOrder('${safeKey}', '${type}')"><i class="fas fa-list-ol"></i> Save This Category</button>
-</div>
-<div class="bracket-header-actions">
-<button class="btn btn-remove btn-sm" onclick="decreaseBracketSize('${safeKey}', '${type}')"><i class="fas fa-minus"></i> Smaller</button>
-<button class="btn btn-add btn-sm" onclick="increaseBracketSize('${safeKey}', '${type}')"><i class="fas fa-plus"></i> Bigger</button>
-</div>
-</div>
-<table class="bracket-table"><thead><tr>`;
-for (let r = 1; r <= data.totalRounds; r++) html += `<th>Round ${r}</th>`;
-html += `</tr></thead><tbody>`;
+html += '<div class="a4-page" id="page-' + categoryIndex + '" data-category="' + key + '" data-type="' + type + '" style="--row-count:' + rowsCount + '">' +
+'<div class="bracket-header">' +
+'<span style="font-size:12px;text-transform:uppercase;color:#666">' + type + '</span>' +
+'<h2>' + escapeHtml(key) + '</h2>' +
+'<span style="font-size:14px;color:var(--secondary);font-weight:bold">' + list.length + ' Competitors ' +
+'<span class="bracket-size-indicator">' + effectiveSize + ' slots' + (isOverridden ? ' ⚙️' : '') + '</span>' +
+'</span>' +
+'<div style="text-align:right;margin-top:5px">' +
+'<button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-random"></i> Shuffle</button>' +
+'<button class="btn btn-success btn-sm" onclick="saveCategoryOrder(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-list-ol"></i> Save This Category</button>' +
+'</div>' +
+'<div class="bracket-header-actions">' +
+'<button class="btn btn-remove btn-sm" onclick="decreaseBracketSize(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-minus"></i> Smaller</button>' +
+'<button class="btn btn-add btn-sm" onclick="increaseBracketSize(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-plus"></i> Bigger</button>' +
+'</div>' +
+'</div>' +
+'<table class="bracket-table"><thead><tr>';
+for (let r = 1; r <= data.totalRounds; r++) html += '<th>Round ' + r + '</th>';
+html += '</tr></thead><tbody>';
 for (let i = 0; i < rowsCount; i++) {
-html += `<tr>`;
+html += '<tr>';
 for (let r = 0; r < data.totalRounds; r++) {
 const matchIndex = Math.floor(i / Math.pow(2, r));
 const step = Math.pow(2, r);
@@ -2002,52 +1998,52 @@ const mp1 = match.p1 || { name: "", team: "" };
 const mp2 = match.p2 || { name: "", team: "" };
 const isBye = mp1.name === "BYE" || mp2.name === "BYE";
 const isEmpty = !mp1.name && !mp2.name;
-const p1Id = `p1-${categoryIndex}-${r}-${matchIndex}-0`;
-const p2Id = `p2-${categoryIndex}-${r}-${matchIndex}-1`;
+const p1Id = 'p1-' + categoryIndex + '-' + r + '-' + matchIndex + '-0';
+const p2Id = 'p2-' + categoryIndex + '-' + r + '-' + matchIndex + '-1';
 const p1IsBye = mp1.name === "BYE" || !mp1.name;
 const p2IsBye = mp2.name === "BYE" || !mp2.name;
 const matchIsDroppable = isBye || isEmpty;
-const dropAttrs = matchIsDroppable ? `ondragover="handleByeSlotDragOver(event)" ondragleave="handleByeSlotDragLeave(event)" ondrop="handleByeSlotDrop(event)"` : "";
-html += `<td rowspan="${step}" style="vertical-align:middle"><div class="match-cell"><div class="match-box ${isBye ? "bye" : ""} ${isEmpty ? "empty" : ""}" data-round="${r}" data-match="${matchIndex}" ${dropAttrs}>`;
+const dropAttrs = matchIsDroppable ? 'ondragover="handleByeSlotDragOver(event)" ondragleave="handleByeSlotDragLeave(event)" ondrop="handleByeSlotDrop(event)"' : "";
+html += '<td rowspan="' + step + '" style="vertical-align:middle"><div class="match-cell"><div class="match-box ' + (isBye ? "bye" : "") + ' ' + (isEmpty ? "empty" : "") + '" data-round="' + r + '" data-match="' + matchIndex + '" ' + dropAttrs + '>';
 const p1SafeName = escapeAttr(mp1.name);
 const p1SafeTeam = escapeAttr(mp1.team);
-html += `<div class="player-row" data-player-id="${p1Id}" data-player-name="${p1SafeName}" data-player-team="${p1SafeTeam}" data-category="${key}" data-bracket-type="${type}" data-slot="p1">`;
-html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
-html += `<div class="player-info"><span class="p-name" contenteditable="true">${escapeHtml(mp1.name)}</span><span class="p-team">${escapeHtml(mp1.team) || "N/A"}</span></div>`;
-if (!p1IsBye && mp1.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
-html += `</div>`;
-html += `<div class="vs-divider">VS</div>`;
+html += '<div class="player-row" data-player-id="' + p1Id + '" data-player-name="' + p1SafeName + '" data-player-team="' + p1SafeTeam + '" data-category="' + key + '" data-bracket-type="' + type + '" data-slot="p1">';
+html += '<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>';
+html += '<div class="player-info"><span class="p-name" contenteditable="true">' + escapeHtml(mp1.name) + '</span><span class="p-team">' + (escapeHtml(mp1.team) || "N/A") + '</span></div>';
+if (!p1IsBye && mp1.name !== "________________") html += '<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>';
+html += '</div>';
+html += '<div class="vs-divider">VS</div>';
 const p2SafeName = escapeAttr(mp2.name);
 const p2SafeTeam = escapeAttr(mp2.team);
-html += `<div class="player-row" data-player-id="${p2Id}" data-player-name="${p2SafeName}" data-player-team="${p2SafeTeam}" data-category="${key}" data-bracket-type="${type}" data-slot="p2">`;
-html += `<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>`;
-html += `<div class="player-info"><span class="p-name" contenteditable="true">${escapeHtml(mp2.name)}</span><span class="p-team">${escapeHtml(mp2.team) || "N/A"}</span></div>`;
-if (!p2IsBye && mp2.name !== "________________") html += `<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>`;
-html += `</div></div>`;
+html += '<div class="player-row" data-player-id="' + p2Id + '" data-player-name="' + p2SafeName + '" data-player-team="' + p2SafeTeam + '" data-category="' + key + '" data-bracket-type="' + type + '" data-slot="p2">';
+html += '<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>';
+html += '<div class="player-info"><span class="p-name" contenteditable="true">' + escapeHtml(mp2.name) + '</span><span class="p-team">' + (escapeHtml(mp2.team) || "N/A") + '</span></div>';
+if (!p2IsBye && mp2.name !== "________________") html += '<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>';
+html += '</div></div>';
 if (isLastRound) {
 const winnerClass = winnerName ? "has-value" : "empty-zone";
 const p1Class = p1 ? "has-value" : "empty-zone";
 const p2Class = p2 ? "has-value" : "empty-zone";
 const p3aClass = p3a ? "has-value" : "empty-zone";
 const p3bClass = p3b ? "has-value" : "empty-zone";
-html += `<div class="winner-section">
-<div class="winner-label"><i class="fas fa-trophy"></i> WINNER</div>
-<div class="winner-drop-zone ${winnerClass}" data-placeholder="Drop winner here" data-value="${escapeAttr(winnerName)}">${escapeHtml(winnerName) || "Drop winner here"}<button class="clear-winner" title="Clear"><i class="fas fa-times"></i></button></div>
-<div class="winner-label" style="margin-top:6px"><i class="fas fa-medal"></i> PLACEMENTS</div>
-<div class="placements-list">
-<div class="placement-row"><span class="placement-rank gold">🥇 1.</span><div class="placement-drop-zone ${p1Class}" data-placement="0" data-placeholder="—" data-value="${escapeAttr(p1)}">${escapeHtml(p1) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
-<div class="placement-row"><span class="placement-rank silver">🥈 2.</span><div class="placement-drop-zone ${p2Class}" data-placement="1" data-placeholder="—" data-value="${escapeAttr(p2)}">${escapeHtml(p2) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
-<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ${p3aClass}" data-placement="2" data-placeholder="—" data-value="${escapeAttr(p3a)}">${escapeHtml(p3a) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
-<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ${p3bClass}" data-placement="3" data-placeholder="—" data-value="${escapeAttr(p3b)}">${escapeHtml(p3b) || "—"}<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>
-</div>
-</div>`;
+html += '<div class="winner-section">' +
+'<div class="winner-label"><i class="fas fa-trophy"></i> WINNER</div>' +
+'<div class="winner-drop-zone ' + winnerClass + '" data-placeholder="Drop winner here" data-value="' + escapeAttr(winnerName) + '">' + (escapeHtml(winnerName) || "Drop winner here") + '<button class="clear-winner" title="Clear"><i class="fas fa-times"></i></button></div>' +
+'<div class="winner-label" style="margin-top:6px"><i class="fas fa-medal"></i> PLACEMENTS</div>' +
+'<div class="placements-list">' +
+'<div class="placement-row"><span class="placement-rank gold">🥇 1.</span><div class="placement-drop-zone ' + p1Class + '" data-placement="0" data-placeholder="—" data-value="' + escapeAttr(p1) + '">' + (escapeHtml(p1) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
+'<div class="placement-row"><span class="placement-rank silver">🥈 2.</span><div class="placement-drop-zone ' + p2Class + '" data-placement="1" data-placeholder="—" data-value="' + escapeAttr(p2) + '">' + (escapeHtml(p2) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
+'<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ' + p3aClass + '" data-placement="2" data-placeholder="—" data-value="' + escapeAttr(p3a) + '">' + (escapeHtml(p3a) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
+'<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ' + p3bClass + '" data-placement="3" data-placeholder="—" data-value="' + escapeAttr(p3b) + '">' + (escapeHtml(p3b) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
+'</div>' +
+'</div>';
 }
-html += `</div></td>`;
+html += '</div></td>';
 }
 }
-html += `</tr>`;
+html += '</tr>';
 }
-html += `</tbody></table></div>`;
+html += '</tbody></table></div>';
 categoryIndex++;
 }
 document.getElementById("content").innerHTML = html;
@@ -2110,7 +2106,7 @@ const matchBox = elemBelow.closest(".match-box");
 if (matchBox && (matchBox.classList.contains("bye") || matchBox.classList.contains("empty"))) {
 matchBox.classList.add("bye-selected");
 const slot = detectDroppedSlot(matchBox, e.clientY);
-const slotRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+const slotRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 if (slotRow) slotRow.classList.add("drop-hover-slot");
 }
 const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
@@ -2136,7 +2132,7 @@ if (page) {
 if (winnerZone.classList.contains("winner-drop-zone")) setWinnerZoneValue(winnerZone, state.name);
 else setPlacementZoneValue(winnerZone, state.name);
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
-showToast(`✅ "${state.name}" placed`, "success");
+showToast('"' + state.name + '" placed', "success");
 }
 return;
 }
@@ -2155,7 +2151,7 @@ if (matchBox && (matchBox.classList.contains("bye") || matchBox.classList.contai
 selectedPlayerEl = state.sourceRow;
 selectedPlayerData = { name: state.name, team: state.team, category: state.category, type: state.type, rowEl: state.sourceRow };
 const slot = detectDroppedSlot(matchBox, e.clientY);
-const targetSlotRow = matchBox.querySelector(`.player-row[data-slot="${slot}"]`);
+const targetSlotRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 await moveSelectedPlayerToBye(matchBox, targetSlotRow);
 return;
 }
@@ -2181,7 +2177,7 @@ row.classList.add("search-match-row");
 matchCount++;
 }
 });
-if (countEl) { countEl.textContent = `${matchCount} match${matchCount !== 1 ? "es" : ""}`; countEl.classList.add("visible"); }
+if (countEl) { countEl.textContent = matchCount + " match" + (matchCount !== 1 ? "es" : ""); countEl.classList.add("visible"); }
 const firstMatch = document.querySelector(".search-highlight");
 if (firstMatch) firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -2201,7 +2197,7 @@ const category = row ? row.dataset.category : "";
 const bracketType = row ? row.dataset.bracketType : "";
 if (row) row.dataset.playerName = newVal;
 if (category && bracketType) {
-await takeSnapshot(`Edit name "${oldVal}" → "${newVal}"`);
+await takeSnapshot('Edit name "' + oldVal + '" -> "' + newVal + '"');
 await saveCategoryOrder(category, bracketType, true);
 }
 }
@@ -2210,7 +2206,7 @@ await saveCategoryOrder(category, bracketType, true);
 }
 async function shuffleSingleCategory(categoryKey, type) {
 if (!currentGroups || !currentGroups[categoryKey]) return;
-await takeSnapshot(`Shuffle ${categoryKey}`);
+await takeSnapshot("Shuffle " + categoryKey);
 const newGroups = { ...currentGroups };
 newGroups[categoryKey] = shuffle([...newGroups[categoryKey]]);
 clearSelection();
@@ -2219,8 +2215,7 @@ await renderBracketView(newGroups, type);
 function exportAllToExcel(type) {
 const pages = document.querySelectorAll(".a4-page");
 if (pages.length === 0) { alert("Please generate brackets first."); return; }
-let csvContent = "data:text/csv;charset=utf-8,Category,Round,Match,Player 1,Team 1,Player 2,Team 2
-";
+let csvContent = "data:text/csv;charset=utf-8,Category,Round,Match,Player 1,Team 1,Player 2,Team 2\n";
 pages.forEach((page) => {
 const title = page.querySelector("h2").innerText;
 const table = page.querySelector("table");
@@ -2239,8 +2234,7 @@ const p1Team = players[0].querySelector(".p-team").innerText;
 const p2Name = players[1].querySelector(".p-name").innerText;
 const p2Team = players[1].querySelector(".p-team").innerText;
 const matchNum = Math.floor(rowIndex / Math.pow(2, colIndex)) + 1;
-csvContent += `"${title}",${colIndex + 1},${matchNum},"${p1Name}","${p1Team}","${p2Name}","${p2Team}"
-`;
+csvContent += '"' + title + '",' + (colIndex + 1) + ',' + matchNum + ',"' + p1Name + '","' + p1Team + '","' + p2Name + '","' + p2Team + '"\n';
 }
 }
 }
@@ -2250,7 +2244,7 @@ csvContent += `"${title}",${colIndex + 1},${matchNum},"${p1Name}","${p1Team}","$
 const encodedUri = encodeURI(csvContent);
 const link = document.createElement("a");
 link.setAttribute("href", encodedUri);
-link.setAttribute("download", `${type}_Brackets_${new Date().toISOString().slice(0, 10)}.csv`);
+link.setAttribute("download", type + "_Brackets_" + new Date().toISOString().slice(0, 10) + ".csv");
 document.body.appendChild(link);
 link.click();
 document.body.removeChild(link);
@@ -2349,27 +2343,27 @@ else personRegs.forEach((reg) => coaches.push({ ...person, _reg_id: reg.id }));
 await loadJudgeRanks();
 } catch (error) {
 console.error("fetchData error:", error);
-document.getElementById("content").innerHTML = `<div class="empty-state" style="padding:30px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;"><h3 style="color:#856404;">⚠️ Error loading data</h3><p style="margin:10px 0;">${error.message || error}</p><button class="btn btn-primary" onclick="showDebugInfo()"><i class="fas fa-bug"></i> View Debug Info</button></div>`;
+document.getElementById("content").innerHTML = '<div class="empty-state" style="padding:30px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;"><h3 style="color:#856404;">Error loading data</h3><p style="margin:10px 0;">' + (error.message || error) + '</p><button class="btn btn-primary" onclick="showDebugInfo()"><i class="fas fa-bug"></i> View Debug Info</button></div>';
 }
 }
 function showDebugInfo() {
 setActiveBtn("btnDebug");
-let html = `<div class="controls"><button class="btn btn-secondary" onclick="showPatterns()"><i class="fas fa-arrow-left"></i> Back</button><button class="btn btn-warning" onclick="runFullDebug()"><i class="fas fa-sync"></i> Refresh</button></div>`;
-html += `<div class="category-card"><div class="category-header">📊 Data Summary</div><div style="padding:20px;">
-<p><strong>Registrations:</strong> ${lastDebugInfo.registrations.length}</p>
-<p><strong>Competitor Details:</strong> ${lastDebugInfo.competitors.length}</p>
-<p><strong>Final Entries:</strong> ${competitors.length}</p>
-<p><strong>Judges:</strong> ${judges.length}</p>
-<p><strong>Coaches:</strong> ${coaches.length}</p>
-<p><strong>Judge Ranks Assigned:</strong> ${Object.keys(judgeRanksMap).length}</p>
-<p><strong>Category Config (patterns age groups):</strong> ${categoryConfig.patterns.ageGroups.length}</p>
-<p><strong>Category Config (sparring age groups):</strong> ${categoryConfig.sparring.ageGroups.length}</p>
-</div></div>`;
+let html = '<div class="controls"><button class="btn btn-secondary" onclick="showPatterns()"><i class="fas fa-arrow-left"></i> Back</button><button class="btn btn-warning" onclick="runFullDebug()"><i class="fas fa-sync"></i> Refresh</button></div>';
+html += '<div class="category-card"><div class="category-header">Data Summary</div><div style="padding:20px;">' +
+'<p><strong>Registrations:</strong> ' + lastDebugInfo.registrations.length + '</p>' +
+'<p><strong>Competitor Details:</strong> ' + lastDebugInfo.competitors.length + '</p>' +
+'<p><strong>Final Entries:</strong> ' + competitors.length + '</p>' +
+'<p><strong>Judges:</strong> ' + judges.length + '</p>' +
+'<p><strong>Coaches:</strong> ' + coaches.length + '</p>' +
+'<p><strong>Judge Ranks Assigned:</strong> ' + Object.keys(judgeRanksMap).length + '</p>' +
+'<p><strong>Category Config (patterns age groups):</strong> ' + categoryConfig.patterns.ageGroups.length + '</p>' +
+'<p><strong>Category Config (sparring age groups):</strong> ' + categoryConfig.sparring.ageGroups.length + '</p>' +
+'</div></div>';
 if (lastDebugInfo.errors.length > 0) {
-html += `<div class="category-card"><div class="category-header" style="background:var(--danger);">❌ Errors</div><div style="padding:20px;">${lastDebugInfo.errors.map(e => `<div style="color:var(--danger);margin:5px 0;">• ${e}</div>`).join("")}</div></div>`;
+html += '<div class="category-card"><div class="category-header" style="background:var(--danger);">Errors</div><div style="padding:20px;">' + lastDebugInfo.errors.map(e => '<div style="color:var(--danger);margin:5px 0;">• ' + e + '</div>').join("") + '</div></div>';
 }
 if (lastDebugInfo.registrations.length > 0) {
-html += `<div class="category-card"><div class="category-header">📋 Sample Registration</div><div class="debug-box">${JSON.stringify(lastDebugInfo.registrations[0], null, 2)}</div></div>`;
+html += '<div class="category-card"><div class="category-header">Sample Registration</div><div class="debug-box">' + JSON.stringify(lastDebugInfo.registrations[0], null, 2) + '</div></div>';
 }
 document.getElementById("content").innerHTML = html;
 }
@@ -2385,18 +2379,18 @@ async function showPatterns() {
 setActiveBtn("btnPatterns");
 await fetchData();
 const ageGroups = categoryConfig.patterns.ageGroups.filter(g => g.is_active);
-const ageOptions = ageGroups.map(g => `<option value="${escapeAttr(g.display_name)}">${escapeHtml(g.display_name)} (${g.min_age}${g.max_age === null ? '+' : '-' + g.max_age})</option>`).join("");
+const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ')</option>').join("");
 const beltRanks = new Set();
 competitors.filter(c => c._discipline === "patterns").forEach(c => {
-if (c._actual_sub_cat) beltRanks.add(c._actual_sub_cat);
+if (c._original_sub_cat) beltRanks.add(c._original_sub_cat);
 });
-const beltOptions = Array.from(beltRanks).sort().map(b => `<option value="${escapeAttr(b)}">${escapeHtml(b)}</option>`).join("");
-document.getElementById("content").innerHTML = `<div class="filters-card"><div class="filters">
-<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages</option>${ageOptions}<option value="OTHER">Other/Uncategorized</option></select></div>
-<div class="filter-group"><label>Gender</label><select id="pGen" onchange="runPatternFilter()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>
-<div class="filter-group"><label>Belt Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Belts</option>${beltOptions}</select></div>
-<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generatePatternBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>
-</div></div><div id="listTarget"></div><div id="teamSummary"></div>`;
+const beltOptions = Array.from(beltRanks).sort().map(b => '<option value="' + escapeAttr(b) + '">' + escapeHtml(b) + '</option>').join("");
+document.getElementById("content").innerHTML = '<div class="filters-card"><div class="filters">' +
+'<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages</option>' + ageOptions + '<option value="OTHER">Other/Uncategorized</option></select></div>' +
+'<div class="filter-group"><label>Gender</label><select id="pGen" onchange="runPatternFilter()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
+'<div class="filter-group"><label>Belt Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Belts</option>' + beltOptions + '</select></div>' +
+'<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generatePatternBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>' +
+'</div></div><div id="listTarget"></div><div id="teamSummary"></div>';
 runPatternFilter();
 }
 function runPatternFilter() {
@@ -2407,15 +2401,15 @@ const dbGender = (c.gender || "").trim().toUpperCase();
 const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
 if (!mGen) return false;
 if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
-if (belt !== "ALL" && c._actual_sub_cat !== belt) return false;
+if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
 const t = document.getElementById("listTarget");
 t.innerHTML = "";
-if (Object.keys(groups).length === 0) t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>`;
-else for (const k in groups) t.innerHTML += createParallelCard(`Pattern: ${k}`, groups[k]);
+if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
+else for (const k in groups) t.innerHTML += createParallelCard("Pattern: " + k, groups[k]);
 renderTeamSummary(filtered, "Patterns");
 }
 async function generatePatternBrackets() {
@@ -2427,24 +2421,24 @@ const dbGender = (c.gender || "").trim().toUpperCase();
 const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
 if (!mGen) return false;
 if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
-if (belt !== "ALL" && c._actual_sub_cat !== belt) return false;
+if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
 await renderBracketView(groups, "Patterns");
 }
 async function showSparring() {
 setActiveBtn("btnSparring");
 await fetchData();
 const ageGroups = categoryConfig.sparring.ageGroups.filter(g => g.is_active);
-const ageOptions = ageGroups.map(g => `<option value="${escapeAttr(g.display_name)}">${escapeHtml(g.display_name)} (${g.min_age}${g.max_age === null ? '+' : '-' + g.max_age})</option>`).join("");
-document.getElementById("content").innerHTML = `<div class="filters-card"><div class="filters">
-<div class="filter-group"><label>Age Category</label><select id="sAge" onchange="updateWeightDropdown()"><option value="ALL">All Ages</option>${ageOptions}<option value="OTHER">Other/Uncategorized</option></select></div>
-<div class="filter-group"><label>Gender</label><select id="sGen" onchange="updateWeightDropdown()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>
-<div class="filter-group"><label>Weight Class</label><select id="sWeight" onchange="runSparringFilter()"><option value="ALL">All</option></select></div>
-<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generateSparringBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>
-</div><div id="sparringInfo" class="info-banner"><i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.</div></div><div id="listTarget"></div><div id="teamSummary"></div>`;
+const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ')</option>').join("");
+document.getElementById("content").innerHTML = '<div class="filters-card"><div class="filters">' +
+'<div class="filter-group"><label>Age Category</label><select id="sAge" onchange="updateWeightDropdown()"><option value="ALL">All Ages</option>' + ageOptions + '<option value="OTHER">Other/Uncategorized</option></select></div>' +
+'<div class="filter-group"><label>Gender</label><select id="sGen" onchange="updateWeightDropdown()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
+'<div class="filter-group"><label>Weight Class</label><select id="sWeight" onchange="runSparringFilter()"><option value="ALL">All</option></select></div>' +
+'<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generateSparringBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>' +
+'</div><div id="sparringInfo" class="info-banner"><i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.</div></div><div id="listTarget"></div><div id="teamSummary"></div>';
 updateWeightDropdown();
 }
 function updateWeightDropdown() {
@@ -2459,9 +2453,9 @@ const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).sli
 if (bounds.length === 0) {
 weightDivisions = ["Open"];
 } else {
-weightDivisions.push(`-${bounds[0]}kg`);
-for (let i = 0; i < bounds.length - 1; i++) weightDivisions.push(`${Math.ceil(bounds[i])}-${bounds[i+1]}kg`);
-weightDivisions.push(`+${bounds[bounds.length-1]}kg`);
+weightDivisions.push("-" + bounds[0] + "kg");
+for (let i = 0; i < bounds.length - 1; i++) weightDivisions.push(Math.ceil(bounds[i]) + "-" + bounds[i+1] + "kg");
+weightDivisions.push("+" + bounds[bounds.length-1] + "kg");
 }
 } else {
 const relevantComps = competitors.filter((c) => {
@@ -2479,12 +2473,12 @@ if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
 return a.localeCompare(b);
 }).map(w => w + "kg");
 }
-weightDivisions.forEach(w => { wDrop.innerHTML += `<option value="${w}">${w}</option>`; });
+weightDivisions.forEach(w => { wDrop.innerHTML += '<option value="' + w + '">' + w + '</option>'; });
 if (ageGroup) {
 const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).length;
-info.innerHTML = `<i class="fas fa-weight-hanging"></i> <strong>${escapeHtml(ageGroup.display_name)}:</strong> ${bounds} weight division${bounds !== 1 ? 's' : ''} configured (ages ${ageGroup.min_age}${ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age})`;
+info.innerHTML = '<i class="fas fa-weight-hanging"></i> <strong>' + escapeHtml(ageGroup.display_name) + ':</strong> ' + bounds + ' weight division' + (bounds !== 1 ? 's' : '') + ' configured (ages ' + ageGroup.min_age + (ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age) + ')';
 } else {
-info.innerHTML = `<i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.`;
+info.innerHTML = '<i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.';
 }
 runSparringFilter();
 }
@@ -2501,11 +2495,11 @@ if (weightReq !== "ALL" && cWeight !== weightReq) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
 const t = document.getElementById("listTarget");
 t.innerHTML = "";
-if (Object.keys(groups).length === 0) t.innerHTML = `<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>`;
-else for (const k in groups) t.innerHTML += createParallelCard(`Sparring: ${k}`, groups[k]);
+if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
+else for (const k in groups) t.innerHTML += createParallelCard("Sparring: " + k, groups[k]);
 renderTeamSummary(filtered, "Sparring");
 }
 async function generateSparringBrackets() {
@@ -2522,7 +2516,7 @@ if (weightReq !== "ALL" && cWeight !== weightReq) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = `${c._full_cat} - ${c.gender}`; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
 await renderBracketView(groups, "Sparring");
 }
 async function showTeamOverview() {
@@ -2530,7 +2524,7 @@ setActiveBtn("btnTeamOverview");
 await fetchData();
 await fetchTournamentPrices();
 if (competitors.length === 0) {
-document.getElementById("content").innerHTML = `<div class="empty-state" style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);"><h3 style="color:var(--primary);margin-bottom:10px;">No Competitors Loaded</h3></div>`;
+document.getElementById("content").innerHTML = '<div class="empty-state" style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);"><h3 style="color:var(--primary);margin-bottom:10px;">No Competitors Loaded</h3></div>';
 return;
 }
 const teamsMap = {};
@@ -2542,19 +2536,19 @@ if (c._discipline === "patterns") { teamsMap[teamName].patternsCategories.add(c.
 else if (c._discipline === "sparring") { teamsMap[teamName].sparringCategories.add(c._full_cat); teamsMap[teamName].sparringEntries.push(c); }
 });
 const teamNames = Object.keys(teamsMap).sort();
-let html = `<div class="controls"><h2 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-users-cog"></i> Team Overview</h2></div>`;
+let html = '<div class="controls"><h2 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-users-cog"></i> Team Overview</h2></div>';
 const totalPatternsCats = new Set(), totalSparringCats = new Set(), totalUniqueCompetitors = new Set();
 teamNames.forEach((tn) => {
 teamsMap[tn].patternsCategories.forEach((c) => totalPatternsCats.add(c));
 teamsMap[tn].sparringCategories.forEach((c) => totalSparringCats.add(c));
 teamsMap[tn].competitorNames.forEach((n) => totalUniqueCompetitors.add(n));
 });
-html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;">
-<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--primary);"><div style="font-size:2rem;font-weight:700;color:var(--primary);">${teamNames.length}</div><div style="color:var(--gray);font-size:0.9rem;">Teams</div></div>
-<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);"><div style="font-size:2rem;font-weight:700;color:var(--secondary);">${totalUniqueCompetitors.size}</div><div style="color:var(--gray);font-size:0.9rem;">Unique Competitors</div></div>
-<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #1565c0;"><div style="font-size:2rem;font-weight:700;color:#1565c0;">${totalPatternsCats.size}</div><div style="color:var(--gray);font-size:0.9rem;">Pattern Categories</div></div>
-<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #c2185b;"><div style="font-size:2rem;font-weight:700;color:#c2185b;">${totalSparringCats.size}</div><div style="color:var(--gray);font-size:0.9rem;">Sparring Categories</div></div>
-</div>`;
+html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;">' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--primary);"><div style="font-size:2rem;font-weight:700;color:var(--primary);">' + teamNames.length + '</div><div style="color:var(--gray);font-size:0.9rem;">Teams</div></div>' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);"><div style="font-size:2rem;font-weight:700;color:var(--secondary);">' + totalUniqueCompetitors.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Unique Competitors</div></div>' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #1565c0;"><div style="font-size:2rem;font-weight:700;color:#1565c0;">' + totalPatternsCats.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Pattern Categories</div></div>' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #c2185b;"><div style="font-size:2rem;font-weight:700;color:#c2185b;">' + totalSparringCats.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Sparring Categories</div></div>' +
+'</div>';
 teamNames.forEach((teamName) => {
 const t = teamsMap[teamName];
 const initial = teamName.charAt(0).toUpperCase();
@@ -2570,29 +2564,29 @@ const sparringTotal = (sparringPrice !== null && !isNaN(sparringPrice)) ? sparri
 const hasAnyPrice = patternsTotal !== null || sparringTotal !== null;
 const grandTotal = (patternsTotal || 0) + (sparringTotal || 0);
 let priceSummaryHtml = "";
-if (!hasAnyPrice) priceSummaryHtml = `<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>`;
+if (!hasAnyPrice) priceSummaryHtml = '<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>';
 else {
 const segments = [];
-if (patternsTotal !== null) segments.push(`<span class="price-segment patterns-price"><i class="fas fa-chess-board"></i> ${formatEuro(patternsPrice)} × ${t.patternsEntries.length} = <strong>${formatEuro(patternsTotal)}</strong></span>`);
-if (sparringTotal !== null) segments.push(`<span class="price-segment sparring-price"><i class="fas fa-fist-raised"></i> ${formatEuro(sparringPrice)} × ${t.sparringEntries.length} = <strong>${formatEuro(sparringTotal)}</strong></span>`);
-priceSummaryHtml = `<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ${segments.join('<span class="price-operator">+</span>')} <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ${formatEuro(grandTotal)}</span></div>`;
+if (patternsTotal !== null) segments.push('<span class="price-segment patterns-price"><i class="fas fa-chess-board"></i> ' + formatEuro(patternsPrice) + ' × ' + t.patternsEntries.length + ' = <strong>' + formatEuro(patternsTotal) + '</strong></span>');
+if (sparringTotal !== null) segments.push('<span class="price-segment sparring-price"><i class="fas fa-fist-raised"></i> ' + formatEuro(sparringPrice) + ' × ' + t.sparringEntries.length + ' = <strong>' + formatEuro(sparringTotal) + '</strong></span>');
+priceSummaryHtml = '<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ' + segments.join('<span class="price-operator">+</span>') + ' <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ' + formatEuro(grandTotal) + '</span></div>';
 }
-html += `<div class="team-overview-card">
-<div class="team-overview-header">
-<div class="team-name-block"><div class="team-icon">${initial}</div><div><div class="team-name">${escapeHtml(teamName)}</div><div style="font-size:0.85rem;color:var(--gray);">${t.competitorNames.size} competitors • ${totalEntries} entries</div></div></div>
-<div class="team-stats">
-<span class="stat-pill total"><i class="fas fa-layer-group"></i> Categories: <span class="stat-num">${totalCats}</span></span>
-<span class="stat-pill entries"><i class="fas fa-list"></i> Entries: <span class="stat-num">${totalEntries}</span></span>
-<span class="stat-pill patterns"><i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">${patternsCount}</span></span>
-<span class="stat-pill sparring"><i class="fas fa-fist-raised"></i> Sparring: <span class="stat-num">${sparringCount}</span></span>
-</div>
-</div>
-${priceSummaryHtml}
-<div class="team-actions">
-<button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'patterns')" ${patternsCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fas fa-chess-board"></i> View Patterns (${patternsCount})</button>
-<button class="btn btn-info btn-sm" onclick="showTeamDetail('${safeTeam}', 'sparring')" ${sparringCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}><i class="fas fa-fist-raised"></i> View Sparring (${sparringCount})</button>
-</div>
-</div>`;
+html += '<div class="team-overview-card">' +
+'<div class="team-overview-header">' +
+'<div class="team-name-block"><div class="team-icon">' + initial + '</div><div><div class="team-name">' + escapeHtml(teamName) + '</div><div style="font-size:0.85rem;color:var(--gray);">' + t.competitorNames.size + ' competitors • ' + totalEntries + ' entries</div></div></div>' +
+'<div class="team-stats">' +
+'<span class="stat-pill total"><i class="fas fa-layer-group"></i> Categories: <span class="stat-num">' + totalCats + '</span></span>' +
+'<span class="stat-pill entries"><i class="fas fa-list"></i> Entries: <span class="stat-num">' + totalEntries + '</span></span>' +
+'<span class="stat-pill patterns"><i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">' + patternsCount + '</span></span>' +
+'<span class="stat-pill sparring"><i class="fas fa-fist-raised"></i> Sparring: <span class="stat-num">' + sparringCount + '</span></span>' +
+'</div>' +
+'</div>' +
+priceSummaryHtml +
+'<div class="team-actions">' +
+'<button class="btn btn-info btn-sm" onclick="showTeamDetail(\'' + safeTeam + '\', \'patterns\')" ' + (patternsCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '><i class="fas fa-chess-board"></i> View Patterns (' + patternsCount + ')</button>' +
+'<button class="btn btn-info btn-sm" onclick="showTeamDetail(\'' + safeTeam + '\', \'sparring\')" ' + (sparringCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '><i class="fas fa-fist-raised"></i> View Sparring (' + sparringCount + ')</button>' +
+'</div>' +
+'</div>';
 });
 document.getElementById("content").innerHTML = html;
 }
@@ -2605,27 +2599,27 @@ const teamEntries = competitors.filter((c) => { const t = c.team || "Unassigned"
 const byName = {};
 teamEntries.forEach((c) => { if (!byName[c.name]) byName[c.name] = { entries: [], gender: c.gender || "" }; byName[c.name].entries.push(c); });
 const competitorNames = Object.keys(byName).sort();
-let html = `<div class="controls"><button class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-arrow-left"></i> Back</button></div>
-<div class="team-detail-modal"><div class="team-detail-header ${headerClass}"><h3><i class="fas ${iconClass}"></i> ${escapeHtml(teamName)} — ${disciplineLabel}</h3></div><div style="padding:15px 0;">`;
-if (competitorNames.length === 0) html += `<div class="empty-team-detail">No registrations.</div>`;
+let html = '<div class="controls"><button class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-arrow-left"></i> Back</button></div>' +
+'<div class="team-detail-modal"><div class="team-detail-header ' + headerClass + '"><h3><i class="fas ' + iconClass + '"></i> ' + escapeHtml(teamName) + ' — ' + disciplineLabel + '</h3></div><div style="padding:15px 0;">';
+if (competitorNames.length === 0) html += '<div class="empty-team-detail">No registrations.</div>';
 else {
 competitorNames.forEach((name) => {
 const data = byName[name];
 const uniqueCats = new Set(data.entries.map((e) => e._full_cat));
-html += `<div class="competitor-detail-card"><div class="competitor-detail-header"><div class="competitor-detail-name"><i class="fas fa-user-circle" style="color:var(--primary);"></i> ${escapeHtml(name)}</div><span class="category-count-badge">${uniqueCats.size} categor${uniqueCats.size !== 1 ? 'ies' : 'y'}</span></div><div class="category-list">`;
-data.entries.forEach((e) => { html += `<span class="category-tag ${tagClass}">${escapeHtml(e._full_cat)}</span>`; });
-html += `</div></div>`;
+html += '<div class="competitor-detail-card"><div class="competitor-detail-header"><div class="competitor-detail-name"><i class="fas fa-user-circle" style="color:var(--primary);"></i> ' + escapeHtml(name) + '</div><span class="category-count-badge">' + uniqueCats.size + ' categor' + (uniqueCats.size !== 1 ? 'ies' : 'y') + '</span></div><div class="category-list">';
+data.entries.forEach((e) => { html += '<span class="category-tag ' + tagClass + '">' + escapeHtml(e._full_cat) + '</span>'; });
+html += '</div></div>';
 });
 }
-html += `</div></div>`;
+html += '</div></div>';
 document.getElementById("content").innerHTML = html;
 window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function createParallelCard(title, list) {
-if (list.length === 0) return `<div class="empty-state">No competitors found.</div>`;
+if (list.length === 0) return '<div class="empty-state">No competitors found.</div>';
 let n = "", t = "";
-list.forEach((c) => { n += `<div class="row-item">${escapeHtml(c.name)}</div>`; t += `<div class="row-item">${escapeHtml(c.team) || "N/A"}</div>`; });
-return `<div class="category-card"><div class="category-header">${escapeHtml(title)} <span class="category-count">${list.length}</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>${n}</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>${t}</div></div></div>`;
+list.forEach((c) => { n += '<div class="row-item">' + escapeHtml(c.name) + '</div>'; t += '<div class="row-item">' + (escapeHtml(c.team) || "N/A") + '</div>'; });
+return '<div class="category-card"><div class="category-header">' + escapeHtml(title) + ' <span class="category-count">' + list.length + '</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>' + n + '</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>' + t + '</div></div></div>';
 }
 function renderTeamSummary(list, type) {
 const uniqueByTeam = {};
@@ -2639,20 +2633,20 @@ entriesByTeam[teamName]++;
 const teamKeys = Object.keys(uniqueByTeam).sort();
 let totalUnique = 0, totalEntries = 0;
 teamKeys.forEach((t) => { totalUnique += uniqueByTeam[t].size; totalEntries += entriesByTeam[t]; });
-let h = `<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (${type})</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">`;
-if (teamKeys.length === 0) h += `<span style="color:var(--gray);grid-column:1/-1">No data.</span>`;
+let h = '<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (' + type + ')</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">';
+if (teamKeys.length === 0) h += '<span style="color:var(--gray);grid-column:1/-1">No data.</span>';
 else {
 teamKeys.forEach((t) => {
 const uniqueCount = uniqueByTeam[t].size;
 const entryCount = entriesByTeam[t];
-const diffNote = entryCount > uniqueCount ? ` <span style="font-size:0.7rem;color:#e65100;">(${entryCount} entries)</span>` : '';
-h += `<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">${escapeHtml(t)}</strong><span style="font-size:0.85rem;color:var(--gray)">${uniqueCount} competitor${uniqueCount !== 1 ? 's' : ''}${diffNote}</span></div>`;
+const diffNote = entryCount > uniqueCount ? ' <span style="font-size:0.7rem;color:#e65100;">(' + entryCount + ' entries)</span>' : '';
+h += '<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">' + escapeHtml(t) + '</strong><span style="font-size:0.85rem;color:var(--gray)">' + uniqueCount + ' competitor' + (uniqueCount !== 1 ? 's' : '') + diffNote + '</span></div>';
 });
 }
-h += `</div><div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
-<div style="flex:1;min-width:150px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-user-check"></i> Unique: ${totalUnique}</div>
-<div style="flex:1;min-width:150px;padding:10px;background:var(--secondary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-list"></i> Total Entries: ${totalEntries}</div>
-</div>`;
+h += '</div><div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">' +
+'<div style="flex:1;min-width:150px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-user-check"></i> Unique: ' + totalUnique + '</div>' +
+'<div style="flex:1;min-width:150px;padding:10px;background:var(--secondary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-list"></i> Total Entries: ' + totalEntries + '</div>' +
+'</div>';
 document.getElementById("teamSummary").innerHTML = h;
 }
 async function loadJudgeRanks() {
@@ -2686,33 +2680,33 @@ const hint = document.getElementById("rangsHint");
 if (!hint) return;
 if (!rankSelectionMode) {
 hint.className = "rangs-hint";
-hint.innerHTML = `<i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.`;
+hint.innerHTML = '<i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.';
 } else {
 const labels = { head_referee: { name: "Head Referee", color: "headref" }, referee: { name: "Referee", color: "referee" }, computer_referee: { name: "Computer Referee", color: "computer" }, unassign: { name: "Unassign", color: "unassign" } };
 const info = labels[rankSelectionMode];
-hint.className = `rangs-hint active-rank-${info.color}`;
-hint.innerHTML = `<i class="fas ${getRankIcon(rankSelectionMode)}"></i> <strong>Mode: ${info.name}</strong> — now click on any judge row to ${rankSelectionMode === 'unassign' ? 'remove their rank' : `assign them as ${info.name.toLowerCase()}`}.`;
+hint.className = 'rangs-hint active-rank-' + info.color;
+hint.innerHTML = '<i class="fas ' + getRankIcon(rankSelectionMode) + '"></i> <strong>Mode: ' + info.name + '</strong> — now click on any judge row to ' + (rankSelectionMode === 'unassign' ? 'remove their rank' : 'assign them as ' + info.name.toLowerCase()) + '.';
 }
 document.querySelectorAll(".judges-table tbody tr").forEach(tr => { tr.classList.toggle("assignable", !!rankSelectionMode); });
 }
 async function assignJudgeRank(judgeId, judgeName) {
-if (!rankSelectionMode) { showToast("⚠️ Select a rank first (click Rangs button)", "error"); return; }
-const row = document.querySelector(`tr[data-judge-id="${CSS.escape(String(judgeId))}"]`);
+if (!rankSelectionMode) { showToast("Select a rank first (click Rangs button)", "error"); return; }
+const row = document.querySelector('tr[data-judge-id="' + CSS.escape(String(judgeId)) + '"]');
 const displayName = safeStr(judgeName) || "Unknown";
 try {
 if (rankSelectionMode === "unassign") {
 await safeDelete("judge_ranks", { judge_id: judgeId });
 delete judgeRanksMap[judgeId];
-showToast(`🗑️ Rank removed from "${displayName}"`, "success");
+showToast('Rank removed from "' + displayName + '"', "success");
 } else {
 await safeDelete("judge_ranks", { judge_id: judgeId });
 await safeInsert("judge_ranks", [{ judge_id: judgeId, rank: rankSelectionMode }]);
 judgeRanksMap[judgeId] = rankSelectionMode;
-showToast(`✅ "${displayName}" → ${getRankLabel(rankSelectionMode)}`, "success");
+showToast('"' + displayName + '" → ' + getRankLabel(rankSelectionMode), "success");
 }
 if (row) { row.classList.add("just-assigned"); setTimeout(() => row.classList.remove("just-assigned"), 1000); }
 await refreshJudgesTable();
-} catch (err) { console.error("Assign rank error:", err); showToast(" Failed: " + (err.message || err), "error"); }
+} catch (err) { console.error("Assign rank error:", err); showToast("Failed: " + (err.message || err), "error"); }
 }
 async function refreshJudgesTable() {
 const tbody = document.querySelector(".judges-table tbody");
@@ -2724,7 +2718,7 @@ const rank = getJudgeRank(judgeId);
 const rankCell = row.querySelector(".rank-cell");
 if (rankCell) {
 const rankClass = rank || "unassigned";
-rankCell.innerHTML = `<span class="rank-badge ${rankClass}"><i class="fas ${getRankIcon(rank)}"></i> ${getRankLabel(rank)}</span>`;
+rankCell.innerHTML = '<span class="rank-badge ' + rankClass + '"><i class="fas ' + getRankIcon(rank) + '"></i> ' + getRankLabel(rank) + '</span>';
 }
 });
 updateRankLegend();
@@ -2734,12 +2728,10 @@ const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0
 judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
 const legend = document.getElementById("rankLegend");
 if (legend) {
-legend.innerHTML = `
-<div class="rank-legend-item"><span class="rank-badge head_referee"><i class="fas fa-crown"></i> Head Referee</span> <span class="rank-legend-count">${counts.head_referee}</span></div>
-<div class="rank-legend-item"><span class="rank-badge referee"><i class="fas fa-user-shield"></i> Referee</span> <span class="rank-legend-count">${counts.referee}</span></div>
-<div class="rank-legend-item"><span class="rank-badge computer_referee"><i class="fas fa-desktop"></i> Computer Referee</span> <span class="rank-legend-count">${counts.computer_referee}</span></div>
-<div class="rank-legend-item"><span class="rank-badge unassigned"><i class="fas fa-question-circle"></i> Unassigned</span> <span class="rank-legend-count">${counts.unassigned}</span></div>
-`;
+legend.innerHTML = '<div class="rank-legend-item"><span class="rank-badge head_referee"><i class="fas fa-crown"></i> Head Referee</span> <span class="rank-legend-count">' + counts.head_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge referee"><i class="fas fa-user-shield"></i> Referee</span> <span class="rank-legend-count">' + counts.referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge computer_referee"><i class="fas fa-desktop"></i> Computer Referee</span> <span class="rank-legend-count">' + counts.computer_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge unassigned"><i class="fas fa-question-circle"></i> Unassigned</span> <span class="rank-legend-count">' + counts.unassigned + '</span></div>';
 }
 }
 async function showJudges() {
@@ -2748,34 +2740,33 @@ await fetchData();
 rankSelectionMode = null;
 const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0 };
 judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
-let html = `
-<div class="judges-toolbar">
-<div class="judges-toolbar-header">
-<div class="judges-toolbar-title"><i class="fas fa-gavel"></i> Judges List (${judges.length})</div>
-<button class="btn btn-warning btn-sm" id="toggleRangsBtn" onclick="toggleRangsPanel()"><i class="fas fa-layer-group"></i> Rangs</button>
-</div>
-<div class="rangs-panel" id="rangsPanel">
-<div class="rangs-panel-title"><i class="fas fa-layer-group"></i> Assign Rangs — Select a rank, then click a judge</div>
-<div class="rangs-buttons">
-<button class="rank-btn headref" data-rank="head_referee" onclick="selectRank('head_referee')"><i class="fas fa-crown"></i> Head Referee</button>
-<button class="rank-btn referee" data-rank="referee" onclick="selectRank('referee')"><i class="fas fa-user-shield"></i> Referee</button>
-<button class="rank-btn computer" data-rank="computer_referee" onclick="selectRank('computer_referee')"><i class="fas fa-desktop"></i> Computer Referee</button>
-<button class="rank-btn unassign" data-rank="unassign" onclick="selectRank('unassign')"><i class="fas fa-times-circle"></i> Unassign</button>
-</div>
-<div class="rangs-hint" id="rangsHint"><i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.</div>
-</div>
-<div class="rank-legend" id="rankLegend">
-<div class="rank-legend-item"><span class="rank-badge head_referee"><i class="fas fa-crown"></i> Head Referee</span> <span class="rank-legend-count">${counts.head_referee}</span></div>
-<div class="rank-legend-item"><span class="rank-badge referee"><i class="fas fa-user-shield"></i> Referee</span> <span class="rank-legend-count">${counts.referee}</span></div>
-<div class="rank-legend-item"><span class="rank-badge computer_referee"><i class="fas fa-desktop"></i> Computer Referee</span> <span class="rank-legend-count">${counts.computer_referee}</span></div>
-<div class="rank-legend-item"><span class="rank-badge unassigned"><i class="fas fa-question-circle"></i> Unassigned</span> <span class="rank-legend-count">${counts.unassigned}</span></div>
-</div>
-</div>`;
-if (judges.length === 0) html += `<div style="padding:30px;text-align:center;color:var(--gray);background:white;border-radius:12px;box-shadow:var(--shadow);">No judges registered.</div>`;
+let html = '<div class="judges-toolbar">' +
+'<div class="judges-toolbar-header">' +
+'<div class="judges-toolbar-title"><i class="fas fa-gavel"></i> Judges List (' + judges.length + ')</div>' +
+'<button class="btn btn-warning btn-sm" id="toggleRangsBtn" onclick="toggleRangsPanel()"><i class="fas fa-layer-group"></i> Rangs</button>' +
+'</div>' +
+'<div class="rangs-panel" id="rangsPanel">' +
+'<div class="rangs-panel-title"><i class="fas fa-layer-group"></i> Assign Rangs — Select a rank, then click a judge</div>' +
+'<div class="rangs-buttons">' +
+'<button class="rank-btn headref" data-rank="head_referee" onclick="selectRank(\'head_referee\')"><i class="fas fa-crown"></i> Head Referee</button>' +
+'<button class="rank-btn referee" data-rank="referee" onclick="selectRank(\'referee\')"><i class="fas fa-user-shield"></i> Referee</button>' +
+'<button class="rank-btn computer" data-rank="computer_referee" onclick="selectRank(\'computer_referee\')"><i class="fas fa-desktop"></i> Computer Referee</button>' +
+'<button class="rank-btn unassign" data-rank="unassign" onclick="selectRank(\'unassign\')"><i class="fas fa-times-circle"></i> Unassign</button>' +
+'</div>' +
+'<div class="rangs-hint" id="rangsHint"><i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.</div>' +
+'</div>' +
+'<div class="rank-legend" id="rankLegend">' +
+'<div class="rank-legend-item"><span class="rank-badge head_referee"><i class="fas fa-crown"></i> Head Referee</span> <span class="rank-legend-count">' + counts.head_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge referee"><i class="fas fa-user-shield"></i> Referee</span> <span class="rank-legend-count">' + counts.referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge computer_referee"><i class="fas fa-desktop"></i> Computer Referee</span> <span class="rank-legend-count">' + counts.computer_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge unassigned"><i class="fas fa-question-circle"></i> Unassigned</span> <span class="rank-legend-count">' + counts.unassigned + '</span></div>' +
+'</div>' +
+'</div>';
+if (judges.length === 0) html += '<div style="padding:30px;text-align:center;color:var(--gray);background:white;border-radius:12px;box-shadow:var(--shadow);">No judges registered.</div>';
 else {
-html += `<table class="judges-table"><thead><tr>
-<th style="width:5%">#</th><th>Name</th><th>Belt</th><th>Team</th><th style="width:20%">Current Rank</th>
-</tr></thead><tbody>`;
+html += '<table class="judges-table"><thead><tr>' +
+'<th style="width:5%">#</th><th>Name</th><th>Belt</th><th>Team</th><th style="width:20%">Current Rank</th>' +
+'</tr></thead><tbody>';
 judges.forEach((j, idx) => {
 const rank = getJudgeRank(j.id);
 const rankClass = rank || "unassigned";
@@ -2784,15 +2775,15 @@ const safeName = escapeAttr(j.name);
 const displayName = escapeHtml(j.name) || "Unknown";
 const displayBelt = escapeHtml(j.belt) || "N/A";
 const displayTeam = escapeHtml(j.team) || "N/A";
-html += `<tr data-judge-id="${safeId}" onclick="assignJudgeRank('${safeId}', '${safeName}')">
-<td style="color:var(--gray);font-weight:700">${idx + 1}</td>
-<td style="font-weight:600">${displayName}</td>
-<td>${displayBelt}</td>
-<td>${displayTeam}</td>
-<td class="rank-cell"><span class="rank-badge ${rankClass}"><i class="fas ${getRankIcon(rank)}"></i> ${getRankLabel(rank)}</span></td>
-</tr>`;
+html += '<tr data-judge-id="' + safeId + '" onclick="assignJudgeRank(\'' + safeId + '\', \'' + safeName + '\')">' +
+'<td style="color:var(--gray);font-weight:700">' + (idx + 1) + '</td>' +
+'<td style="font-weight:600">' + displayName + '</td>' +
+'<td>' + displayBelt + '</td>' +
+'<td>' + displayTeam + '</td>' +
+'<td class="rank-cell"><span class="rank-badge ' + rankClass + '"><i class="fas ' + getRankIcon(rank) + '"></i> ' + getRankLabel(rank) + '</span></td>' +
+'</tr>';
 });
-html += `</tbody></table>`;
+html += '</tbody></table>';
 }
 document.getElementById("content").innerHTML = html;
 }
@@ -2803,14 +2794,14 @@ if (panel) panel.classList.toggle("active");
 async function showCoaches() {
 setActiveBtn("btnCoaches");
 await fetchData();
-let h = `<div class="category-card"><div class="category-header">Coaches List (${coaches.length})</div>`;
-if (coaches.length === 0) h += `<div style="padding:30px;text-align:center;color:var(--gray);">No coaches.</div>`;
+let h = '<div class="category-card"><div class="category-header">Coaches List (' + coaches.length + ')</div>';
+if (coaches.length === 0) h += '<div style="padding:30px;text-align:center;color:var(--gray);">No coaches.</div>';
 else {
-h += `<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>`;
-coaches.forEach((c) => (h += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(c.name) || "Unknown"}</td><td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(c.belt) || "N/A"}</td><td style="padding:8px;border-bottom:1px solid #eee">${escapeHtml(c.team) || "N/A"}</td></tr>`));
-h += `</table>`;
+h += '<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>';
+coaches.forEach((c) => (h += '<tr><td style="padding:8px;border-bottom:1px solid #eee">' + (escapeHtml(c.name) || "Unknown") + '</td><td style="padding:8px;border-bottom:1px solid #eee">' + (escapeHtml(c.belt) || "N/A") + '</td><td style="padding:8px;border-bottom:1px solid #eee">' + (escapeHtml(c.team) || "N/A") + '</td></tr>'));
+h += '</table>';
 }
-document.getElementById("content").innerHTML = h + `</div>`;
+document.getElementById("content").innerHTML = h + '</div>';
 }
 async function showPriceOverview() {
 setActiveBtn("btnPriceOverview");
@@ -2836,52 +2827,51 @@ const compRefExpense = (compRefPrice !== null && !isNaN(compRefPrice)) ? compRef
 const totalExpense = headRefExpense + refExpense + compRefExpense;
 const netProfit = totalIncome - totalExpense;
 const isNegative = netProfit < 0;
-let html = `<div class="price-overview-container">
-<div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-<h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>
-<button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>
-</div>
-<div class="price-summary-grid">
-<div class="price-summary-card income"><div class="card-icon-big"><i class="fas fa-arrow-down"></i></div><div class="card-label">Total Income</div><div class="card-value">${formatEuro(totalIncome)}</div></div>
-<div class="price-summary-card expense"><div class="card-icon-big"><i class="fas fa-arrow-up"></i></div><div class="card-label">Total Expenses</div><div class="card-value">${formatEuro(totalExpense)}</div></div>
-<div class="price-summary-card profit ${isNegative ? 'negative' : ''}"><div class="card-icon-big"><i class="fas fa-${isNegative ? 'exclamation-triangle' : 'chart-line'}"></i></div><div class="card-label">Net ${isNegative ? 'Loss' : 'Profit'}</div><div class="card-value">${isNegative ? '-' : ''}${formatEuro(Math.abs(netProfit))}</div></div>
-<div class="price-summary-card count"><div class="card-icon-big"><i class="fas fa-users"></i></div><div class="card-label">Total Participants</div><div class="card-value">${competitors.length + judges.length + coaches.length}</div></div>
-</div>
-<div class="price-formula-bar">
-<span class="formula-segment income-seg"><i class="fas fa-arrow-down"></i> Income: <strong>${formatEuro(totalIncome)}</strong></span>
-<span class="formula-operator">−</span>
-<span class="formula-segment expense-seg"><i class="fas fa-arrow-up"></i> Expenses: <strong>${formatEuro(totalExpense)}</strong></span>
-<span class="formula-operator">=</span>
-<span class="formula-segment profit-seg ${isNegative ? 'negative' : ''}"><i class="fas fa-${isNegative ? 'minus' : 'equals'}"></i> ${isNegative ? 'Loss' : 'Profit'}: <strong>${formatEuro(Math.abs(netProfit))}</strong></span>
-</div>`;
+let html = '<div class="price-overview-container">' +
+'<div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+'<h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>' +
+'<button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>' +
+'</div>' +
+'<div class="price-summary-grid">' +
+'<div class="price-summary-card income"><div class="card-icon-big"><i class="fas fa-arrow-down"></i></div><div class="card-label">Total Income</div><div class="card-value">' + formatEuro(totalIncome) + '</div></div>' +
+'<div class="price-summary-card expense"><div class="card-icon-big"><i class="fas fa-arrow-up"></i></div><div class="card-label">Total Expenses</div><div class="card-value">' + formatEuro(totalExpense) + '</div></div>' +
+'<div class="price-summary-card profit ' + (isNegative ? 'negative' : '') + '"><div class="card-icon-big"><i class="fas fa-' + (isNegative ? 'exclamation-triangle' : 'chart-line') + '"></i></div><div class="card-label">Net ' + (isNegative ? 'Loss' : 'Profit') + '</div><div class="card-value">' + (isNegative ? '-' : '') + formatEuro(Math.abs(netProfit)) + '</div></div>' +
+'<div class="price-summary-card count"><div class="card-icon-big"><i class="fas fa-users"></i></div><div class="card-label">Total Participants</div><div class="card-value">' + (competitors.length + judges.length + coaches.length) + '</div></div>' +
+'</div>' +
+'<div class="price-formula-bar">' +
+'<span class="formula-segment income-seg"><i class="fas fa-arrow-down"></i> Income: <strong>' + formatEuro(totalIncome) + '</strong></span>' +
+'<span class="formula-operator">−</span>' +
+'<span class="formula-segment expense-seg"><i class="fas fa-arrow-up"></i> Expenses: <strong>' + formatEuro(totalExpense) + '</strong></span>' +
+'<span class="formula-operator">=</span>' +
+'<span class="formula-segment profit-seg ' + (isNegative ? 'negative' : '') + '"><i class="fas fa-' + (isNegative ? 'minus' : 'equals') + '"></i> ' + (isNegative ? 'Loss' : 'Profit') + ': <strong>' + formatEuro(Math.abs(netProfit)) + '</strong></span>' +
+'</div>';
 if (unassignedJudges.length > 0) {
-html += `<div style="background:#fff3cd;border:1px solid #ffc107;border-left:5px solid var(--warning);border-radius:8px;padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:0.9rem;color:#856404">
-<i class="fas fa-exclamation-triangle" style="font-size:1.3rem"></i>
-<div><strong>${unassignedJudges.length} judge${unassignedJudges.length !== 1 ? 's' : ''} unassigned</strong> — their fees are NOT being counted. Go to <strong>Judges → Rangs</strong> to assign ranks.</div>
-</div>`;
+html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-left:5px solid var(--warning);border-radius:8px;padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:0.9rem;color:#856404">' +
+'<i class="fas fa-exclamation-triangle" style="font-size:1.3rem"></i>' +
+'<div><strong>' + unassignedJudges.length + ' judge' + (unassignedJudges.length !== 1 ? 's' : '') + ' unassigned</strong> — their fees are NOT being counted. Go to <strong>Judges → Rangs</strong> to assign ranks.</div>' +
+'</div>';
 }
-html += `
-<div class="price-breakdown-section">
-<div class="price-breakdown-header income-header expanded" onclick="toggleBreakdown(this)">
-<div class="price-breakdown-title income-title"><i class="fas fa-arrow-down"></i> INCOME — Competitor Entry Fees</div>
-<div class="price-breakdown-total income-total"><i class="fas fa-euro-sign"></i> ${formatEuro(totalIncome)}</div>
-<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>
-</div>
-<div class="price-breakdown-body expanded">`;
-html += buildPriceLineItem("Patterns (Tul) Entry Fees", "fa-chess-board", "patterns-icon", patternsEntries.length, patternsPrice, patternsIncome, "income", patternsEntries, `per entry @ ${patternsPrice !== null ? formatEuro(patternsPrice) : 'N/A'}`);
-html += buildPriceLineItem("Sparring (Matsogi) Entry Fees", "fa-fist-raised", "sparring-icon", sparringEntries.length, sparringPrice, sparringIncome, "income", sparringEntries, `per entry @ ${sparringPrice !== null ? formatEuro(sparringPrice) : 'N/A'}`);
-html += `</div></div>
-<div class="price-breakdown-section">
-<div class="price-breakdown-header expense-header expanded" onclick="toggleBreakdown(this)">
-<div class="price-breakdown-title expense-title"><i class="fas fa-arrow-up"></i> EXPENSES — Referee Fees (by Rank)</div>
-<div class="price-breakdown-total expense-total"><i class="fas fa-euro-sign"></i> ${formatEuro(totalExpense)}</div>
-<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>
-</div>
-<div class="price-breakdown-body expanded">`;
-html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headReferees.length, headRefPrice, headRefExpense, "expense", headReferees, `${headReferees.length} judge${headReferees.length !== 1 ? 's' : ''} @ ${headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'}`);
-html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", regularReferees.length, refPrice, refExpense, "expense", regularReferees, `${regularReferees.length} judge${regularReferees.length !== 1 ? 's' : ''} @ ${refPrice !== null ? formatEuro(refPrice) : 'N/A'}`);
-html += buildPriceLineItem("Computer Referees", "fa-desktop", "computer-icon", computerReferees.length, compRefPrice, compRefExpense, "expense", computerReferees, `${computerReferees.length} judge${computerReferees.length !== 1 ? 's' : ''} @ ${compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'}`);
-html += `</div></div></div>`;
+html += '<div class="price-breakdown-section">' +
+'<div class="price-breakdown-header income-header expanded" onclick="toggleBreakdown(this)">' +
+'<div class="price-breakdown-title income-title"><i class="fas fa-arrow-down"></i> INCOME — Competitor Entry Fees</div>' +
+'<div class="price-breakdown-total income-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalIncome) + '</div>' +
+'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>' +
+'</div>' +
+'<div class="price-breakdown-body expanded">';
+html += buildPriceLineItem("Patterns (Tul) Entry Fees", "fa-chess-board", "patterns-icon", patternsEntries.length, patternsPrice, patternsIncome, "income", patternsEntries, 'per entry @ ' + (patternsPrice !== null ? formatEuro(patternsPrice) : 'N/A'));
+html += buildPriceLineItem("Sparring (Matsogi) Entry Fees", "fa-fist-raised", "sparring-icon", sparringEntries.length, sparringPrice, sparringIncome, "income", sparringEntries, 'per entry @ ' + (sparringPrice !== null ? formatEuro(sparringPrice) : 'N/A'));
+html += '</div></div>' +
+'<div class="price-breakdown-section">' +
+'<div class="price-breakdown-header expense-header expanded" onclick="toggleBreakdown(this)">' +
+'<div class="price-breakdown-title expense-title"><i class="fas fa-arrow-up"></i> EXPENSES — Referee Fees (by Rank)</div>' +
+'<div class="price-breakdown-total expense-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalExpense) + '</div>' +
+'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>' +
+'</div>' +
+'<div class="price-breakdown-body expanded">';
+html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headReferees.length, headRefPrice, headRefExpense, "expense", headReferees, headReferees.length + ' judge' + (headReferees.length !== 1 ? 's' : '') + ' @ ' + (headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'));
+html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", regularReferees.length, refPrice, refExpense, "expense", regularReferees, regularReferees.length + ' judge' + (regularReferees.length !== 1 ? 's' : '') + ' @ ' + (refPrice !== null ? formatEuro(refPrice) : 'N/A'));
+html += buildPriceLineItem("Computer Referees", "fa-desktop", "computer-icon", computerReferees.length, compRefPrice, compRefExpense, "expense", computerReferees, computerReferees.length + ' judge' + (computerReferees.length !== 1 ? 's' : '') + ' @ ' + (compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'));
+html += '</div></div></div>';
 document.getElementById("content").innerHTML = html;
 }
 function buildPriceLineItem(title, icon, iconClass, count, unitPrice, total, type, entries, subtitle) {
@@ -2890,35 +2880,35 @@ const sign = type === "income" ? "+" : "−";
 const hasPrice = unitPrice !== null && !isNaN(unitPrice);
 let detailsHtml = "";
 if (entries && entries.length > 0) {
-detailsHtml = `<div class="price-line-details">`;
-if (!hasPrice) detailsHtml += `<div class="price-empty-msg"><i class="fas fa-info-circle"></i> Unit price not configured — cannot calculate total</div>`;
+detailsHtml = '<div class="price-line-details">';
+if (!hasPrice) detailsHtml += '<div class="price-empty-msg"><i class="fas fa-info-circle"></i> Unit price not configured — cannot calculate total</div>';
 else {
 entries.forEach((e, idx) => {
 const name = escapeHtml(e.name) || "Unknown";
 const team = escapeHtml(e.team) || "N/A";
 const cat = escapeHtml(e._full_cat) || "";
-detailsHtml += `<div class="price-detail-row">
-<div class="price-detail-name"><span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span><span>${name}</span><span class="price-detail-team">• ${team}${cat ? ' • ' + cat : ''}</span></div>
-<div class="price-detail-amount ${amountClass}">${sign}${formatEuro(unitPrice)}</div>
-</div>`;
+detailsHtml += '<div class="price-detail-row">' +
+'<div class="price-detail-name"><span style="color:var(--gray);font-weight:700;width:22px">' + (idx + 1) + '.</span><span>' + name + '</span><span class="price-detail-team">• ' + team + (cat ? ' • ' + cat : '') + '</span></div>' +
+'<div class="price-detail-amount ' + amountClass + '">' + sign + formatEuro(unitPrice) + '</div>' +
+'</div>';
 });
 }
-detailsHtml += `</div>`;
-} else detailsHtml = `<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>`;
-return `<div class="price-line-item" onclick="togglePriceLine(this)">
-<div class="price-line-left">
-<div class="price-line-icon ${iconClass}"><i class="fas ${icon}"></i></div>
-<div class="price-line-info">
-<div class="price-line-title">${escapeHtml(title)} <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">${count}</span></div>
-<div class="price-line-subtitle">${escapeHtml(subtitle)}</div>
-</div>
-</div>
-<div class="price-line-right">
-<div class="price-line-amount ${amountClass}">${sign}${formatEuro(total)}</div>
-<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span>
-</div>
-${detailsHtml}
-</div>`;
+detailsHtml += '</div>';
+} else detailsHtml = '<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>';
+return '<div class="price-line-item" onclick="togglePriceLine(this)">' +
+'<div class="price-line-left">' +
+'<div class="price-line-icon ' + iconClass + '"><i class="fas ' + icon + '"></i></div>' +
+'<div class="price-line-info">' +
+'<div class="price-line-title">' + escapeHtml(title) + ' <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">' + count + '</span></div>' +
+'<div class="price-line-subtitle">' + escapeHtml(subtitle) + '</div>' +
+'</div>' +
+'</div>' +
+'<div class="price-line-right">' +
+'<div class="price-line-amount ' + amountClass + '">' + sign + formatEuro(total) + '</div>' +
+'<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span>' +
+'</div>' +
+detailsHtml +
+'</div>';
 }
 function toggleBreakdown(header) {
 header.classList.toggle("expanded");
@@ -2937,26 +2927,20 @@ const sparringEntries = competitors.filter(c => c._discipline === "sparring");
 const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
 const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
 const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
-let csv = "data:text/csv;charset=utf-8,Type,Category,Name,Team,Amount (EUR)
-";
-patternsEntries.forEach(e => { csv += `INCOME,Patterns,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(patternsPrice !== null ? patternsPrice : 0).toFixed(2)}
-`; });
-sparringEntries.forEach(e => { csv += `INCOME,Sparring,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(sparringPrice !== null ? sparringPrice : 0).toFixed(2)}
-`; });
-headReferees.forEach(e => { csv += `EXPENSE,Head Referee,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(headRefPrice !== null ? -headRefPrice : 0).toFixed(2)}
-`; });
-regularReferees.forEach(e => { csv += `EXPENSE,Referee,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(refPrice !== null ? -refPrice : 0).toFixed(2)}
-`; });
-computerReferees.forEach(e => { csv += `EXPENSE,Computer Referee,"${safeStr(e.name)}","${safeStr(e.team) || 'N/A'}",${(compRefPrice !== null ? -compRefPrice : 0).toFixed(2)}
-`; });
+let csv = "data:text/csv;charset=utf-8,Type,Category,Name,Team,Amount (EUR)\n";
+patternsEntries.forEach(e => { csv += 'INCOME,Patterns,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (patternsPrice !== null ? patternsPrice : 0).toFixed(2) + '\n'; });
+sparringEntries.forEach(e => { csv += 'INCOME,Sparring,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (sparringPrice !== null ? sparringPrice : 0).toFixed(2) + '\n'; });
+headReferees.forEach(e => { csv += 'EXPENSE,Head Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (headRefPrice !== null ? -headRefPrice : 0).toFixed(2) + '\n'; });
+regularReferees.forEach(e => { csv += 'EXPENSE,Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (refPrice !== null ? -refPrice : 0).toFixed(2) + '\n'; });
+computerReferees.forEach(e => { csv += 'EXPENSE,Computer Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (compRefPrice !== null ? -compRefPrice : 0).toFixed(2) + '\n'; });
 const encodedUri = encodeURI(csv);
 const link = document.createElement("a");
 link.setAttribute("href", encodedUri);
-link.setAttribute("download", `Financial_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+link.setAttribute("download", "Financial_Report_" + new Date().toISOString().slice(0, 10) + ".csv");
 document.body.appendChild(link);
 link.click();
 document.body.removeChild(link);
-showToast("✅ Financial report exported", "success");
+showToast("Financial report exported", "success");
 }
 document.addEventListener("keydown", (e) => {
 if (e.key === "Escape") clearSelection();
