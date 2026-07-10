@@ -424,9 +424,7 @@ body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exa
 <div class="floating-search-input-wrap">
 <i class="fas fa-user"></i>
 <input type="text" id="autocompleteInput" placeholder="Type name or team..." oninput="updateAutocomplete(this.value)" onfocus="updateAutocomplete(this.value)" />
-<button class="search-clear" id="autocompleteClear" onclick="clearAutocomplete()">
-<i class="fas fa-times"></i>
-</button>
+<button class="search-clear" id="autocompleteClear" onclick="clearAutocomplete()"><i class="fas fa-times"></i></button>
 </div>
 <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
 <div class="autocomplete-hint">
@@ -467,50 +465,94 @@ body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exa
 <div id="content"></div>
 </div>
 <script>
-// Belt mapping for patterns discipline
+// Kup/Dan to numeric value mapping (for patterns)
+// 10th kup = 10, 9th kup = 9, ..., 1st kup = 1
+// 1st dan = 0, 2nd dan = -1, ..., 6th dan = -5
+const KUP_DAN_LEVELS = {
+"10th kup": 10, "10 kup": 10, "10kup": 10,
+"9th kup": 9, "9 kup": 9, "9kup": 9,
+"8th kup": 8, "8 kup": 8, "8kup": 8,
+"7th kup": 7, "7 kup": 7, "7kup": 7,
+"6th kup": 6, "6 kup": 6, "6kup": 6,
+"5th kup": 5, "5 kup": 5, "5kup": 5,
+"4th kup": 4, "4 kup": 4, "4kup": 4,
+"3rd kup": 3, "3 kup": 3, "3kup": 3,
+"2nd kup": 2, "2 kup": 2, "2kup": 2,
+"1st kup": 1, "1 kup": 1, "1kup": 1,
+"1st dan": 0, "1 dan": 0, "1dan": 0,
+"2nd dan": -1, "2 dan": -1, "2dan": -1,
+"3rd dan": -2, "3 dan": -2, "3dan": -2,
+"4th dan": -3, "4 dan": -3, "4dan": -3,
+"5th dan": -4, "5 dan": -4, "5dan": -4,
+"6th dan": -5, "6 dan": -5, "6dan": -5
+};
+
+const KUP_DAN_NAMES = {
+10: "10th Kup", 9: "9th Kup", 8: "8th Kup", 7: "7th Kup",
+6: "6th Kup", 5: "5th Kup", 4: "4th Kup", 3: "3rd Kup",
+2: "2nd Kup", 1: "1st Kup", 0: "1st Dan",
+"-1": "2nd Dan", "-2": "3rd Dan", "-3": "4th Dan",
+"-4": "5th Dan", "-5": "6th Dan"
+};
+
 const BELT_LEVELS = {
-  "white": 1, "w": 1, "10th kup": 1, "10 kup": 1,
-  "yellow": 2, "y": 2, "9th kup": 2, "9 kup": 2,
-  "orange": 3, "o": 3, "8th kup": 3, "8 kup": 3,
-  "green": 4, "g": 4, "7th kup": 4, "7 kup": 4,
-  "blue": 5, "b": 5, "6th kup": 5, "6 kup": 5,
-  "brown": 6, "br": 6, "5th kup": 6, "5 kup": 6, "4th kup": 6, "4 kup": 6,
-  "red": 7, "r": 7, "3rd kup": 7, "3 kup": 7, "2nd kup": 7, "2 kup": 7,
-  "black": 8, "bl": 8, "1st kup": 8, "1 kup": 8, "1st dan": 8, "1 dan": 8,
-  "2nd dan": 9, "2 dan": 9, "3rd dan": 10, "3 dan": 10
+"white": 1, "w": 1, "10th kup": 1, "10 kup": 1,
+"yellow": 2, "y": 2, "9th kup": 2, "9 kup": 2,
+"orange": 3, "o": 3, "8th kup": 3, "8 kup": 3,
+"green": 4, "g": 4, "7th kup": 4, "7 kup": 4,
+"blue": 5, "b": 5, "6th kup": 5, "6 kup": 5,
+"brown": 6, "br": 6, "5th kup": 6, "5 kup": 6, "4th kup": 6, "4 kup": 6,
+"red": 7, "r": 7, "3rd kup": 7, "3 kup": 7, "2nd kup": 7, "2 kup": 7,
+"black": 8, "bl": 8, "1st kup": 8, "1 kup": 8, "1st dan": 8, "1 dan": 8,
+"2nd dan": 9, "2 dan": 9, "3rd dan": 10, "3 dan": 10
 };
+
 const BELT_NAMES = {
-  1: "White", 2: "Yellow", 3: "Orange", 4: "Green",
-  5: "Blue", 6: "Brown", 7: "Red", 8: "Black", 9: "2nd Dan", 10: "3rd Dan"
+1: "White", 2: "Yellow", 3: "Orange", 4: "Green",
+5: "Blue", 6: "Brown", 7: "Red", 8: "Black", 9: "2nd Dan", 10: "3rd Dan"
 };
-const PATTERNS_MAX_BELT = 10;
+
+const PATTERNS_MIN_VALUE = -5; // 6th dan
+const PATTERNS_MAX_VALUE = 10; // 10th kup
 const SPARRING_MAX_KG = 120;
 
 function getDisciplineMaxValue(disc) {
-  return disc === "patterns" ? PATTERNS_MAX_BELT : SPARRING_MAX_KG;
+return disc === "patterns" ? PATTERNS_MAX_VALUE : SPARRING_MAX_KG;
+}
+function getDisciplineMinValue(disc) {
+return disc === "patterns" ? PATTERNS_MIN_VALUE : 0;
 }
 function getDisciplineUnit(disc) {
-  return disc === "patterns" ? "belt" : "kg";
+return disc === "patterns" ? "kup/dan" : "kg";
 }
 function formatDisciplineValue(val, disc) {
-  if (disc === "patterns") {
-    const beltName = BELT_NAMES[Math.round(val)] || ("Belt " + Math.round(val));
-    return beltName;
-  }
-  return val + "kg";
+if (disc === "patterns") {
+const kupDanName = KUP_DAN_NAMES[Math.round(val)] || ("Level " + Math.round(val));
+return kupDanName;
+}
+return val + "kg";
+}
+function kupDanNameToNumber(name) {
+if (!name) return null;
+const normalized = name.toString().trim().toLowerCase();
+if (KUP_DAN_LEVELS[normalized] !== undefined) return KUP_DAN_LEVELS[normalized];
+const numMatch = normalized.match(/(\d+)/);
+if (numMatch) {
+const num = parseInt(numMatch[1]);
+if (normalized.includes('kup')) {
+if (num >= 1 && num <= 10) return num;
+} else if (normalized.includes('dan')) {
+if (num >= 1 && num <= 6) return -(num - 1);
+}
+}
+return null;
 }
 function beltNameToNumber(beltName) {
-  if (!beltName) return null;
-  const normalized = beltName.toString().trim().toLowerCase();
-  if (BELT_LEVELS[normalized] !== undefined) return BELT_LEVELS[normalized];
-  const numMatch = normalized.match(/(\d+)/);
-  if (numMatch) {
-    const num = parseInt(numMatch[1]);
-    if (num >= 1 && num <= PATTERNS_MAX_BELT) return num;
-  }
-  return null;
+if (!beltName) return null;
+const normalized = beltName.toString().trim().toLowerCase();
+if (BELT_LEVELS[normalized] !== undefined) return BELT_LEVELS[normalized];
+return kupDanNameToNumber(beltName);
 }
-
 function safeStr(val) {
 if (val === null || val === undefined) return "";
 if (typeof val !== "string") { try { return String(val); } catch (e) { return ""; } }
@@ -611,7 +653,7 @@ categoryConfig.sparring.ageGroups = DEFAULT_AGE_GROUPS.map(g => ({...g, discipli
 }
 async function seedDefaultCategories() {
 const defaultWeightBounds = [30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80];
-const defaultBeltBounds = [2, 4, 6, 8];
+const defaultKupDanBounds = [8, 6, 4, 2, 0]; // 8th kup, 6th kup, 4th kup, 2nd kup, 1st dan
 for (const disc of ["patterns", "sparring"]) {
 for (let i = 0; i < DEFAULT_AGE_GROUPS.length; i++) {
 const g = DEFAULT_AGE_GROUPS[i];
@@ -624,7 +666,7 @@ order_priority: g.order_priority,
 discipline: disc
 }]).select().single();
 if (!error && inserted) {
-const boundsToInsert = (disc === "sparring" ? defaultWeightBounds : defaultBeltBounds).map(kg => ({
+const boundsToInsert = (disc === "sparring" ? defaultWeightBounds : defaultKupDanBounds).map(kg => ({
 age_group_id: inserted.id,
 boundary_kg: kg
 }));
@@ -646,14 +688,14 @@ function getWeightCategoryLabel(weightKg, ageGroupId, discipline) {
 const boundaries = (categoryConfig[discipline]?.weightBoundaries?.[ageGroupId] || []).slice().sort((a,b) => a-b);
 if (boundaries.length === 0) return "Open";
 if (discipline === "patterns") {
-const beltNum = Math.round(weightKg);
-if (beltNum <= boundaries[0]) return "-" + (BELT_NAMES[boundaries[0]] || boundaries[0]);
+const kupDanNum = Math.round(weightKg);
+if (kupDanNum >= boundaries[0]) return "-" + (KUP_DAN_NAMES[boundaries[0]] || boundaries[0]);
 for (let i = 0; i < boundaries.length - 1; i++) {
-if (beltNum > boundaries[i] && beltNum <= boundaries[i+1]) {
-return (BELT_NAMES[Math.ceil(boundaries[i])] || Math.ceil(boundaries[i])) + "-" + (BELT_NAMES[boundaries[i+1]] || boundaries[i+1]);
+if (kupDanNum < boundaries[i] && kupDanNum >= boundaries[i+1]) {
+return (KUP_DAN_NAMES[boundaries[i]] || boundaries[i]) + "-" + (KUP_DAN_NAMES[boundaries[i+1]] || boundaries[i+1]);
 }
 }
-return "+" + (BELT_NAMES[boundaries[boundaries.length-1]] || boundaries[boundaries.length-1]);
+return "+" + (KUP_DAN_NAMES[boundaries[boundaries.length-1]] || boundaries[boundaries.length-1]);
 } else {
 if (weightKg <= boundaries[0]) return "-" + boundaries[0] + "kg";
 for (let i = 0; i < boundaries.length - 1; i++) {
@@ -698,9 +740,9 @@ c._full_cat = ageGroup.display_name + " - Open";
 }
 } else if (discipline === "patterns") {
 const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
-const beltNum = beltNameToNumber(origBeltName);
-if (beltNum !== null) {
-const bCat = getWeightCategoryLabel(beltNum, ageGroup.id, discipline);
+const kupDanNum = kupDanNameToNumber(origBeltName);
+if (kupDanNum !== null) {
+const bCat = getWeightCategoryLabel(kupDanNum, ageGroup.id, discipline);
 c._actual_sub_cat = bCat;
 c._full_cat = ageGroup.display_name + " - " + bCat;
 } else {
@@ -742,7 +784,7 @@ async function showCategories() {
 setActiveBtn("btnCategories");
 await loadCategoryConfig();
 const content = document.getElementById("content");
-const divisionWord = currentCatDiscipline === 'patterns' ? 'belt' : 'weight';
+const divisionWord = currentCatDiscipline === 'patterns' ? 'kup/dan' : 'weight';
 content.innerHTML = '<div class="cat-editor-wrap">' +
 '<div class="cat-editor-header">' +
 '<div>' +
@@ -779,9 +821,9 @@ const body = document.getElementById("catEditorBody");
 if (!body) return;
 const disc = currentCatDiscipline;
 const groups = categoryConfig[disc].ageGroups || [];
-const divisionLabel = disc === "patterns" ? "Belt" : "Weight";
+const divisionLabel = disc === "patterns" ? "Kup/Dan" : "Weight";
 const divisionIcon = disc === "patterns" ? "award" : "weight-hanging";
-const divisionWord = disc === "patterns" ? "belt" : "weight";
+const divisionWord = disc === "patterns" ? "kup/dan" : "weight";
 body.innerHTML = '<div class="cat-section">' +
 '<div class="cat-section-title"><i class="fas fa-calendar-alt" style="color:var(--cat-age)"></i> Age Groups Timeline</div>' +
 '<div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off.</div>' +
@@ -970,7 +1012,7 @@ showToast(isActive ? ('"' + g.display_name + '" enabled') : ('"' + g.display_nam
 async function deleteAgeGroup(disc, groupId) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (!g) return;
-const divWord = disc === 'patterns' ? 'belt' : 'weight';
+const divWord = disc === 'patterns' ? 'kup/dan' : 'weight';
 if (!confirm('Delete age group "' + g.display_name + '"? This will also delete its ' + divWord + ' boundaries.')) return;
 if (!g.id.startsWith("tmp_")) {
 await sb.from("age_groups").delete().eq("id", g.id);
@@ -1013,9 +1055,10 @@ container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gr
 return;
 }
 const maxVal = getDisciplineMaxValue(disc);
-const divisionLabel = disc === "patterns" ? "belt" : "weight";
+const minVal = getDisciplineMinValue(disc);
+const divisionLabel = disc === "patterns" ? "kup/dan" : "weight";
 container.innerHTML = groups.map((g, idx) => {
-const boundaries = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
+const boundaries = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => b-a);
 const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
 const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
 const chips = buildWeightCategoryChips(boundaries, disc);
@@ -1042,15 +1085,15 @@ function buildWeightCategoryChips(boundaries, disc) {
 if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
 const chips = [];
 if (disc === "patterns") {
-const firstBelt = BELT_NAMES[boundaries[0]] || ("Belt " + boundaries[0]);
-chips.push('<span class="weight-cat-chip first">-' + firstBelt + '</span>');
+const firstBound = boundaries[0];
+chips.push('<span class="weight-cat-chip first">-' + (KUP_DAN_NAMES[firstBound] || firstBound) + '</span>');
 for (let i = 0; i < boundaries.length - 1; i++) {
-const b1 = BELT_NAMES[Math.ceil(boundaries[i])] || ("Belt " + Math.ceil(boundaries[i]));
-const b2 = BELT_NAMES[boundaries[i+1]] || ("Belt " + boundaries[i+1]);
+const b1 = KUP_DAN_NAMES[boundaries[i]] || boundaries[i];
+const b2 = KUP_DAN_NAMES[boundaries[i+1]] || boundaries[i+1];
 chips.push('<span class="weight-cat-chip">' + b1 + '-' + b2 + '</span>');
 }
-const lastBelt = BELT_NAMES[boundaries[boundaries.length-1]] || ("Belt " + boundaries[boundaries.length-1]);
-chips.push('<span class="weight-cat-chip last">+' + lastBelt + '</span>');
+const lastBound = boundaries[boundaries.length-1];
+chips.push('<span class="weight-cat-chip last">+' + (KUP_DAN_NAMES[lastBound] || lastBound) + '</span>');
 } else {
 chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + 'kg</span>');
 for (let i = 0; i < boundaries.length - 1; i++) {
@@ -1067,9 +1110,10 @@ const scale = document.getElementById("weightScale_" + group.id);
 if (!wrap || !track || !scale) return;
 wrap.querySelectorAll(".weight-marker").forEach(m => m.remove());
 const maxVal = getDisciplineMaxValue(disc);
+const minVal = getDisciplineMinValue(disc);
 const boundaries = (categoryConfig[disc].weightBoundaries[group.id] || []).slice().sort((a,b) => a-b);
 boundaries.forEach(val => {
-const pct = (val / maxVal) * 100;
+const pct = ((val - minVal) / (maxVal - minVal)) * 100;
 const marker = document.createElement("div");
 marker.className = "weight-marker";
 marker.style.left = "calc(20px + (100% - 40px) * " + (pct / 100) + ")";
@@ -1088,9 +1132,9 @@ wrap.appendChild(marker);
 });
 scale.innerHTML = "";
 if (disc === "patterns") {
-for (let k = 1; k <= maxVal; k++) {
+for (let k = maxVal; k >= minVal; k--) {
 const span = document.createElement("span");
-span.textContent = BELT_NAMES[k] || k;
+span.textContent = KUP_DAN_NAMES[k] || k;
 scale.appendChild(span);
 }
 } else {
@@ -1107,9 +1151,10 @@ const track = e.currentTarget;
 const rect = track.getBoundingClientRect();
 const pct = (e.clientX - rect.left) / rect.width;
 const maxVal = getDisciplineMaxValue(disc);
+const minVal = getDisciplineMinValue(disc);
 let val;
 if (disc === "patterns") {
-val = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal)));
+val = Math.max(minVal, Math.min(maxVal, Math.round(minVal + pct * (maxVal - minVal))));
 } else {
 val = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
 }
@@ -1121,13 +1166,13 @@ return;
 boundaries.push(val);
 categoryConfig[disc].weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
-const divWord = disc === 'patterns' ? 'belt' : 'weight';
+const divWord = disc === 'patterns' ? 'kup/dan' : 'weight';
 showToast("Added " + divWord + " boundary at " + formatDisciplineValue(val, disc), "success");
 }
 async function deleteWeightMarker(e, disc, groupId, val) {
 e.preventDefault();
 e.stopPropagation();
-const divWord = disc === 'patterns' ? 'belt' : 'weight';
+const divWord = disc === 'patterns' ? 'kup/dan' : 'weight';
 if (!confirm("Remove " + divWord + " boundary at " + formatDisciplineValue(val, disc) + "?")) return;
 const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
 categoryConfig[disc].weightBoundaries[groupId] = boundaries.filter(b => b !== val);
@@ -1144,16 +1189,17 @@ const trackRect = track.getBoundingClientRect();
 const marker = e.currentTarget;
 marker.classList.add("dragging");
 const maxVal = getDisciplineMaxValue(disc);
+const minVal = getDisciplineMinValue(disc);
 let currentVal = val;
 const onMove = (ev) => {
 const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
 const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
 if (disc === "patterns") {
-currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal)));
+currentVal = Math.max(minVal, Math.min(maxVal, Math.round(minVal + pct * (maxVal - minVal))));
 } else {
 currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
 }
-marker.style.left = "calc(20px + (100% - 40px) * " + (currentVal / maxVal) + ")";
+marker.style.left = "calc(20px + (100% - 40px) * " + ((currentVal - minVal) / (maxVal - minVal)) + ")";
 marker.querySelector(".weight-marker-label").textContent = formatDisciplineValue(currentVal, disc);
 };
 const onEnd = async () => {
@@ -2380,15 +2426,20 @@ setActiveBtn("btnPatterns");
 await fetchData();
 const ageGroups = categoryConfig.patterns.ageGroups.filter(g => g.is_active);
 const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ')</option>').join("");
-const beltRanks = new Set();
+const kupDanRanks = new Set();
 competitors.filter(c => c._discipline === "patterns").forEach(c => {
-if (c._original_sub_cat) beltRanks.add(c._original_sub_cat);
+if (c._original_sub_cat) kupDanRanks.add(c._original_sub_cat);
 });
-const beltOptions = Array.from(beltRanks).sort().map(b => '<option value="' + escapeAttr(b) + '">' + escapeHtml(b) + '</option>').join("");
+const kupDanOptions = Array.from(kupDanRanks).sort((a,b) => {
+const numA = kupDanNameToNumber(a);
+const numB = kupDanNameToNumber(b);
+if (numA !== null && numB !== null) return numB - numA;
+return a.localeCompare(b);
+}).map(b => '<option value="' + escapeAttr(b) + '">' + escapeHtml(b) + '</option>').join("");
 document.getElementById("content").innerHTML = '<div class="filters-card"><div class="filters">' +
 '<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages</option>' + ageOptions + '<option value="OTHER">Other/Uncategorized</option></select></div>' +
 '<div class="filter-group"><label>Gender</label><select id="pGen" onchange="runPatternFilter()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
-'<div class="filter-group"><label>Belt Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Belts</option>' + beltOptions + '</select></div>' +
+'<div class="filter-group"><label>Kup/Dan Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Ranks</option>' + kupDanOptions + '</select></div>' +
 '<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generatePatternBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>' +
 '</div></div><div id="listTarget"></div><div id="teamSummary"></div>';
 runPatternFilter();
@@ -2960,4 +3011,3 @@ showPatterns();
 </script>
 </body>
 </html>
-
