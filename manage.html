@@ -360,25 +360,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .slider-toggle:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
 input:checked + .slider-toggle { background-color: var(--cat-active); }
 input:checked + .slider-toggle:before { transform: translateX(18px); }
-.pattern-range-card { background: white; border: 2px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; transition: var(--transition); }
-.pattern-range-card.active { border-color: var(--price-patterns); box-shadow: 0 2px 10px rgba(21, 101, 192, 0.15); }
-.pattern-range-card.inactive { opacity: 0.5; }
-.pattern-range-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
-.pattern-range-title { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-.pattern-range-title .age-badge { background: var(--cat-age); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; }
-.pattern-range-track-wrap { position: relative; height: 70px; margin: 8px 0 4px 0; user-select: none; }
-.pattern-range-track { position: absolute; top: 25px; left: 20px; right: 20px; height: 16px; background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 8px; border: 1px solid #90caf9; cursor: pointer; }
-.pattern-marker { position: absolute; top: 12px; width: 4px; height: 44px; background: var(--price-patterns); border-radius: 2px; cursor: ew-resize; z-index: 5; transform: translateX(-50%); transition: background 0.15s; }
-.pattern-marker:hover, .pattern-marker.dragging { background: var(--secondary); box-shadow: 0 0 10px rgba(212, 175, 55, 0.6); }
-.pattern-marker-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); background: var(--price-patterns); color: white; padding: 1px 6px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; pointer-events: none; }
-.pattern-marker.dragging .pattern-marker-label { background: var(--secondary); }
-.pattern-marker-delete { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--danger); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; z-index: 6; }
-.pattern-marker:hover .pattern-marker-delete { display: flex; }
-.pattern-scale { position: absolute; top: 45px; left: 20px; right: 20px; display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--gray); font-weight: 600; }
-.pattern-categories-display { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; padding-top: 10px; border-top: 1px dashed var(--border); }
-.pattern-cat-chip { background: #e3f2fd; color: #0d47a1; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; border: 1px solid #90caf9; }
-.pattern-cat-chip.first { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
-.pattern-cat-chip.last { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
 .weight-slider-card { background: white; border: 2px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; transition: var(--transition); }
 .weight-slider-card.active { border-color: var(--cat-weight); box-shadow: 0 2px 10px rgba(194, 24, 91, 0.15); }
 .weight-slider-card.inactive { opacity: 0.5; }
@@ -524,8 +505,8 @@ const BELT_NAMES = {
 1: "White", 2: "Yellow", 3: "Orange", 4: "Green",
 5: "Blue", 6: "Brown", 7: "Red", 8: "Black", 9: "2nd Dan", 10: "3rd Dan"
 };
-const PATTERNS_MIN_VALUE = -5;
-const PATTERNS_MAX_VALUE = 10;
+const PATTERNS_MIN_VALUE = 10;
+const PATTERNS_MAX_VALUE = -5;
 const SPARRING_MAX_KG = 120;
 function getDisciplineMaxValue(disc) {
 return disc === "patterns" ? PATTERNS_MAX_VALUE : SPARRING_MAX_KG;
@@ -857,11 +838,7 @@ body.innerHTML = '<div class="cat-section">' +
 '</div>';
 renderAgeTimeline(disc);
 renderAgeGroupList(disc);
-if (disc === "patterns") {
-renderPatternRanges(disc);
-} else {
 renderWeightSliders(disc);
-}
 }
 function renderAgeTimeline(disc) {
 const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
@@ -1061,172 +1038,6 @@ function reorderAndRenumber(disc) {
 categoryConfig[disc].ageGroups.sort((a,b) => a.min_age - b.min_age);
 categoryConfig[disc].ageGroups.forEach((g, i) => g.order_priority = i + 1);
 }
-function renderPatternRanges(disc) {
-const container = document.getElementById("weightSliders_" + disc);
-if (!container) return;
-const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-if (groups.length === 0) {
-container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined. Add age groups above first.</div>';
-return;
-}
-const maxVal = getDisciplineMaxValue(disc);
-const minVal = getDisciplineMinValue(disc);
-container.innerHTML = groups.map((g, idx) => {
-const boundaries = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
-const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const chips = buildPatternCategoryChips(boundaries, disc);
-return '<div class="pattern-range-card ' + (g.is_active ? 'active' : 'inactive') + '">' +
-'<div class="pattern-range-header">' +
-'<div class="pattern-range-title">' +
-'<span class="age-badge" style="background:' + color + '">' + escapeHtml(g.display_name) + '</span>' +
-'<span style="font-size:0.85rem;color:var(--gray)">(' + rangeText + ' years) — ' + boundaries.length + ' kup/dan division' + (boundaries.length !== 1 ? 's' : '') + '</span>' +
-'</div>' +
-(g.is_active ? '' : '<span style="color:var(--cat-inactive);font-size:0.8rem;font-weight:700;"><i class="fas fa-pause-circle"></i> DISABLED</span>') +
-'</div>' +
-'<div class="pattern-range-track-wrap" id="patternTrackWrap_' + g.id + '">' +
-'<div class="pattern-range-track" id="patternTrack_' + g.id + '" onclick="handlePatternTrackClick(event, \'' + disc + '\', \'' + g.id + '\')"></div>' +
-'<div class="pattern-scale" id="patternScale_' + g.id + '"></div>' +
-'</div>' +
-'<div class="pattern-categories-display">' + chips + '</div>' +
-'</div>';
-}).join("");
-groups.forEach(g => {
-renderPatternMarkers(disc, g);
-});
-}
-function buildPatternCategoryChips(boundaries, disc) {
-if (boundaries.length === 0) return '<span class="pattern-cat-chip">Open (no divisions)</span>';
-const chips = [];
-const firstBound = boundaries[0];
-chips.push('<span class="pattern-cat-chip first">-' + (KUP_DAN_NAMES[firstBound] || firstBound) + '</span>');
-for (let i = 0; i < boundaries.length - 1; i++) {
-const b1 = KUP_DAN_NAMES[boundaries[i]] || boundaries[i];
-const b2 = KUP_DAN_NAMES[boundaries[i+1]] || boundaries[i+1];
-chips.push('<span class="pattern-cat-chip">' + b1 + ' to ' + b2 + '</span>');
-}
-const lastBound = boundaries[boundaries.length-1];
-chips.push('<span class="pattern-cat-chip last">+' + (KUP_DAN_NAMES[lastBound] || lastBound) + '</span>');
-return chips.join("");
-}
-function renderPatternMarkers(disc, group) {
-const wrap = document.getElementById("patternTrackWrap_" + group.id);
-const track = document.getElementById("patternTrack_" + group.id);
-const scale = document.getElementById("patternScale_" + group.id);
-if (!wrap || !track || !scale) return;
-wrap.querySelectorAll(".pattern-marker").forEach(m => m.remove());
-const maxVal = getDisciplineMaxValue(disc);
-const minVal = getDisciplineMinValue(disc);
-const boundaries = (categoryConfig[disc].weightBoundaries[group.id] || []).slice().sort((a,b) => a-b);
-boundaries.forEach(val => {
-const pct = ((val - minVal) / (maxVal - minVal)) * 100;
-const marker = document.createElement("div");
-marker.className = "pattern-marker";
-marker.style.left = "calc(20px + (100% - 40px) * " + (pct / 100) + ")";
-const displayLabel = formatDisciplineValue(val, disc);
-marker.innerHTML = '<div class="pattern-marker-label">' + displayLabel + '</div>' +
-'<button class="pattern-marker-delete" onclick="deletePatternMarker(event, \'' + disc + '\', \'' + group.id + '\', ' + val + ')" title="Delete"><i class="fas fa-times"></i></button>';
-marker.addEventListener("mousedown", (e) => {
-if (e.target.closest(".pattern-marker-delete")) return;
-startPatternMarkerDrag(e, val, disc, group.id);
-});
-marker.addEventListener("touchstart", (e) => {
-if (e.target.closest(".pattern-marker-delete")) return;
-startPatternMarkerDrag(e, val, disc, group.id);
-}, {passive: false});
-wrap.appendChild(marker);
-});
-scale.innerHTML = "";
-for (let k = minVal; k <= maxVal; k++) {
-const span = document.createElement("span");
-span.textContent = KUP_DAN_NAMES[k] || k;
-scale.appendChild(span);
-}
-}
-function handlePatternTrackClick(e, disc, groupId) {
-if (e.target.classList.contains("pattern-marker") || e.target.closest(".pattern-marker")) return;
-const track = e.currentTarget;
-const rect = track.getBoundingClientRect();
-const pct = (e.clientX - rect.left) / rect.width;
-const maxVal = getDisciplineMaxValue(disc);
-const minVal = getDisciplineMinValue(disc);
-let val;
-if (disc === "patterns") {
-val = Math.max(minVal, Math.min(maxVal, Math.round(minVal + pct * (maxVal - minVal))));
-} else {
-val = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
-}
-const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
-if (boundaries.includes(val)) {
-showToast("Boundary already exists at " + formatDisciplineValue(val, disc), "error");
-return;
-}
-boundaries.push(val);
-categoryConfig[disc].weightBoundaries[groupId] = boundaries;
-renderCatEditorBody();
-const divWord = disc === 'patterns' ? 'kup/dan' : 'weight';
-showToast("Added " + divWord + " boundary at " + formatDisciplineValue(val, disc), "success");
-}
-async function deletePatternMarker(e, disc, groupId, val) {
-e.preventDefault();
-e.stopPropagation();
-const divWord = disc === 'patterns' ? 'kup/dan' : 'weight';
-if (!confirm("Remove " + divWord + " boundary at " + formatDisciplineValue(val, disc) + "?")) return;
-const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
-categoryConfig[disc].weightBoundaries[groupId] = boundaries.filter(b => b !== val);
-renderCatEditorBody();
-showToast("Removed " + formatDisciplineValue(val, disc) + " boundary", "success");
-}
-async function startPatternMarkerDrag(e, val, disc, groupId) {
-e.preventDefault();
-e.stopPropagation();
-const wrap = document.getElementById("patternTrackWrap_" + groupId);
-const track = document.getElementById("patternTrack_" + groupId);
-if (!track) return;
-const trackRect = track.getBoundingClientRect();
-const marker = e.currentTarget;
-marker.classList.add("dragging");
-const maxVal = getDisciplineMaxValue(disc);
-const minVal = getDisciplineMinValue(disc);
-let currentVal = val;
-const onMove = (ev) => {
-const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
-if (disc === "patterns") {
-currentVal = Math.max(minVal, Math.min(maxVal, Math.round(minVal + pct * (maxVal - minVal))));
-} else {
-currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
-}
-marker.style.left = "calc(20px + (100% - 40px) * " + ((currentVal - minVal) / (maxVal - minVal)) + ")";
-marker.querySelector(".pattern-marker-label").textContent = formatDisciplineValue(currentVal, disc);
-};
-const onEnd = async () => {
-document.removeEventListener("mousemove", onMove);
-document.removeEventListener("mouseup", onEnd);
-document.removeEventListener("touchmove", onMove);
-document.removeEventListener("touchend", onEnd);
-marker.classList.remove("dragging");
-if (currentVal !== val) {
-const boundaries = categoryConfig[disc].weightBoundaries[groupId] || [];
-const idx = boundaries.indexOf(val);
-if (idx >= 0) {
-if (boundaries.includes(currentVal)) {
-showToast("Boundary already exists at " + formatDisciplineValue(currentVal, disc), "error");
-renderCatEditorBody();
-return;
-}
-boundaries[idx] = currentVal;
-categoryConfig[disc].weightBoundaries[groupId] = boundaries;
-renderCatEditorBody();
-showToast("Moved boundary: " + formatDisciplineValue(val, disc) + " -> " + formatDisciplineValue(currentVal, disc), "success");
-}
-}
-};
-document.addEventListener("mousemove", onMove);
-document.addEventListener("mouseup", onEnd);
-document.addEventListener("touchmove", onMove, {passive: false});
-document.addEventListener("touchend", onEnd);
-}
 function renderWeightSliders(disc) {
 const container = document.getElementById("weightSliders_" + disc);
 if (!container) return;
@@ -1266,15 +1077,12 @@ function buildWeightCategoryChips(boundaries, disc) {
 if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
 const chips = [];
 if (disc === "patterns") {
-const firstBound = boundaries[0];
-chips.push('<span class="weight-cat-chip first">-' + (KUP_DAN_NAMES[firstBound] || firstBound) + '</span>');
-for (let i = 0; i < boundaries.length - 1; i++) {
-const b1 = KUP_DAN_NAMES[boundaries[i]] || boundaries[i];
-const b2 = KUP_DAN_NAMES[boundaries[i+1]] || boundaries[i+1];
-chips.push('<span class="weight-cat-chip">' + b1 + '-' + b2 + '</span>');
+const sortedBounds = boundaries.slice().sort((a,b) => b-a);
+for (let i = 0; i < sortedBounds.length - 1; i++) {
+const b1 = KUP_DAN_NAMES[sortedBounds[i]] || sortedBounds[i];
+const b2 = KUP_DAN_NAMES[sortedBounds[i+1]] || sortedBounds[i+1];
+chips.push('<span class="weight-cat-chip' + (i === 0 ? ' first' : '') + '">' + b1 + ' - ' + b2 + '</span>');
 }
-const lastBound = boundaries[boundaries.length-1];
-chips.push('<span class="weight-cat-chip last">+' + (KUP_DAN_NAMES[lastBound] || lastBound) + '</span>');
 } else {
 chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + 'kg</span>');
 for (let i = 0; i < boundaries.length - 1; i++) {
@@ -1313,7 +1121,7 @@ wrap.appendChild(marker);
 });
 scale.innerHTML = "";
 if (disc === "patterns") {
-for (let k = minVal; k <= maxVal; k++) {
+for (let k = minVal; k >= maxVal; k--) {
 const span = document.createElement("span");
 span.textContent = KUP_DAN_NAMES[k] || k;
 scale.appendChild(span);
@@ -1335,7 +1143,7 @@ const maxVal = getDisciplineMaxValue(disc);
 const minVal = getDisciplineMinValue(disc);
 let val;
 if (disc === "patterns") {
-val = Math.max(minVal, Math.min(maxVal, Math.round(minVal + pct * (maxVal - minVal))));
+val = Math.max(maxVal, Math.min(minVal, Math.round(minVal - pct * (minVal - maxVal))));
 } else {
 val = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
 }
@@ -1376,7 +1184,7 @@ const onMove = (ev) => {
 const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
 const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
 if (disc === "patterns") {
-currentVal = Math.max(minVal, Math.min(maxVal, Math.round(minVal + pct * (maxVal - minVal))));
+currentVal = Math.max(maxVal, Math.min(minVal, Math.round(minVal - pct * (minVal - maxVal))));
 } else {
 currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
 }
@@ -1413,9 +1221,13 @@ document.addEventListener("touchend", onEnd);
 async function saveAllCategoryConfig() {
 showToast("Saving...", "");
 let errors = 0;
+let successCount = 0;
+console.log("Starting save...", categoryConfig);
 for (const disc of ["patterns", "sparring"]) {
 const groups = categoryConfig[disc].ageGroups;
+console.log(`Processing ${disc}: ${groups.length} groups`);
 for (const g of groups) {
+console.log(`Processing group: ${g.display_name} (id: ${g.id})`);
 if (g.id.startsWith("tmp_")) {
 const { data: inserted, error } = await sb.from("age_groups").insert([{
 display_name: g.display_name,
@@ -1425,13 +1237,18 @@ is_active: g.is_active,
 order_priority: g.order_priority,
 discipline: disc
 }]).select().single();
-if (error) { console.error(error); errors++; continue; }
+if (error) { 
+console.error("Insert age group error:", error); 
+errors++; 
+continue; 
+}
 if (categoryConfig[disc].weightBoundaries[g.id]) {
 const tmpBounds = categoryConfig[disc].weightBoundaries[g.id];
 delete categoryConfig[disc].weightBoundaries[g.id];
 categoryConfig[disc].weightBoundaries[inserted.id] = tmpBounds;
 }
 g.id = inserted.id;
+console.log(`Inserted new age group with id: ${inserted.id}`);
 } else {
 const { error } = await sb.from("age_groups").update({
 display_name: g.display_name,
@@ -1440,30 +1257,57 @@ max_age: g.max_age,
 is_active: g.is_active,
 order_priority: g.order_priority
 }).eq("id", g.id);
-if (error) { console.error(error); errors++; }
+if (error) { 
+console.error("Update age group error:", error); 
+errors++; 
+} else {
+console.log(`Updated age group: ${g.id}`);
+}
 }
 const currentBounds = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
+console.log(`Current boundaries for ${g.id}:`, currentBounds);
 const { data: existingBounds, error: fetchErr } = await sb.from("weight_boundaries").select("*").eq("age_group_id", g.id);
-if (fetchErr) { console.error("Fetch error:", fetchErr); errors++; continue; }
+if (fetchErr) { 
+console.error("Fetch boundaries error:", fetchErr); 
+errors++; 
+continue; 
+}
+console.log(`Existing boundaries:`, existingBounds);
 const existingKg = (existingBounds || []).map(b => b.boundary_kg);
 for (const eb of (existingBounds || [])) {
 if (!currentBounds.includes(eb.boundary_kg)) {
 const { error: delErr } = await sb.from("weight_boundaries").delete().eq("id", eb.id);
-if (delErr) { console.error("Delete error:", delErr); errors++; }
+if (delErr) { 
+console.error("Delete boundary error:", delErr); 
+errors++; 
+} else {
+console.log(`Deleted boundary: ${eb.boundary_kg}`);
+}
 }
 }
 for (const kg of currentBounds) {
 if (!existingKg.includes(kg)) {
 const { error: insErr } = await sb.from("weight_boundaries").insert([{ age_group_id: g.id, boundary_kg: kg }]);
-if (insErr) { console.error("Insert error:", insErr); errors++; }
+if (insErr) { 
+console.error("Insert boundary error:", insErr); 
+errors++; 
+} else {
+console.log(`Inserted boundary: ${kg}`);
+successCount++;
+}
 }
 }
 }
 }
 await loadCategoryConfig();
 recomputeCompetitorCategories();
-if (errors === 0) showToast("All categories saved!", "success");
-else showToast("Saved with " + errors + " error(s)", "error");
+if (errors === 0) {
+showToast(`All categories saved! (${successCount} boundaries)`, "success");
+console.log("Save completed successfully");
+} else {
+showToast(`Saved with ${errors} error(s)`, "error");
+console.error("Save completed with errors");
+}
 renderCatEditorBody();
 }
 async function resetToDefaults() {
@@ -1580,7 +1424,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -2324,7 +2168,7 @@ dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
@@ -2350,7 +2194,7 @@ dragHandleState.ghost.remove();
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 const state = dragHandleState;
 dragHandleState = null;
