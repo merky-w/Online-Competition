@@ -382,11 +382,26 @@ input:checked + .slider-toggle:before { transform: translateX(18px); }
 .inline-input { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; width: 70px; font-family: inherit; }
 .inline-input:focus { border-color: var(--primary); outline: none; }
 .inline-input-wide { width: 140px; }
+.merge-toggle-banner { background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%); border: 2px solid #ffc107; border-radius: 10px; padding: 14px 18px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2); }
+.merge-toggle-banner.active { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-color: var(--success); }
+.merge-toggle-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 250px; }
+.merge-toggle-icon { font-size: 1.6rem; color: #e65100; }
+.merge-toggle-banner.active .merge-toggle-icon { color: var(--success); }
+.merge-toggle-title { font-weight: 700; color: #e65100; font-size: 1rem; }
+.merge-toggle-banner.active .merge-toggle-title { color: #155724; }
+.merge-toggle-desc { font-size: 0.85rem; color: #856404; margin-top: 2px; }
+.merge-toggle-banner.active .merge-toggle-desc { color: #155724; }
+.merge-switch { position: relative; display: inline-block; width: 60px; height: 30px; flex-shrink: 0; }
+.merge-switch input { opacity: 0; width: 0; height: 0; }
+.merge-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 30px; }
+.merge-slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.merge-switch input:checked + .merge-slider { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
+.merge-switch input:checked + .merge-slider:before { transform: translateX(30px); }
 @media print {
 @page { size: A4; margin: 10mm; }
 body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
 * { box-sizing: border-box; }
-.nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn, .clear-winner, .clear-placement, .judges-toolbar { display: none !important; }
+.nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn, .clear-winner, .clear-placement, .judges-toolbar, .merge-toggle-banner { display: none !important; }
 .container { max-width: none; width: 100%; margin: 0; padding: 0; }
 .a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
 .p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
@@ -407,6 +422,7 @@ body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exa
 .rangs-buttons { flex-direction: column; }
 .rank-btn { width: 100%; justify-content: center; }
 .age-group-list { grid-template-columns: 1fr; }
+.merge-toggle-banner { flex-direction: column; align-items: stretch; }
 }
 </style>
 </head>
@@ -580,6 +596,53 @@ patterns: { ageGroups: [], weightBoundaries: {} },
 sparring: { ageGroups: [], weightBoundaries: {} }
 };
 let currentCatDiscipline = "patterns";
+// ===== PATTERNS MERGE LOW KUP SETTING =====
+window.patternsMergeLowKups = false;
+
+async function loadPatternsMergeSetting() {
+  try {
+    const { data, error } = await sb.from("site_settings")
+      .select("patterns_merge_low_kups")
+      .eq("id", 1)
+      .single();
+    if (error) {
+      window.patternsMergeLowKups = false;
+      return;
+    }
+    window.patternsMergeLowKups = data?.patterns_merge_low_kups || false;
+  } catch (err) {
+    console.warn("Could not load patterns merge setting:", err);
+    window.patternsMergeLowKups = false;
+  }
+}
+
+async function savePatternsMergeSetting(enabled) {
+  try {
+    const { error } = await sb.from("site_settings")
+      .update({ patterns_merge_low_kups: enabled })
+      .eq("id", 1);
+    if (error) {
+      showToast("Failed to save setting: " + error.message, "error");
+      return false;
+    }
+    window.patternsMergeLowKups = enabled;
+    showToast(enabled ? "Low kup merge ENABLED — 10th-7th kup combined into ONE category" : "Low kup merge DISABLED — 10-9 and 8-7 are separate categories", "success");
+    return true;
+  } catch (err) {
+    showToast("Failed to save setting: " + err.message, "error");
+    return false;
+  }
+}
+
+async function togglePatternsMerge(enabled) {
+  const success = await savePatternsMergeSetting(enabled);
+  if (success) {
+    await fetchData();
+    runPatternFilter();
+  }
+}
+// ===== END PATTERNS MERGE SETTING =====
+
 const DEFAULT_AGE_GROUPS = [
 { id: "default_kids", display_name: "Kids", min_age: 6, max_age: 9, is_active: true, order_priority: 1 },
 { id: "default_youth", display_name: "Youth", min_age: 10, max_age: 11, is_active: true, order_priority: 2 },
@@ -677,9 +740,14 @@ return g;
 return null;
 }
 function getWeightCategoryLabel(weightKg, ageGroupId, discipline) {
-const boundaries = (categoryConfig[discipline]?.weightBoundaries?.[ageGroupId] || []).slice().sort((a,b) => a-b);
+let boundaries = (categoryConfig[discipline]?.weightBoundaries?.[ageGroupId] || []).slice().sort((a,b) => a-b);
 if (boundaries.length === 0) return "Open";
 if (discipline === "patterns") {
+// Apply merge logic: if enabled, remove the first (highest kup number) boundary
+// to merge the lowest kup groups (e.g., 10th-7th kup) into one category
+if (window.patternsMergeLowKups && boundaries.length > 1) {
+boundaries = boundaries.slice(1);
+}
 const kupDanNum = Math.round(weightKg);
 if (kupDanNum >= boundaries[0]) return "-" + (KUP_DAN_NAMES[boundaries[0]] || boundaries[0]);
 for (let i = 0; i < boundaries.length - 1; i++) {
@@ -1237,10 +1305,10 @@ is_active: g.is_active,
 order_priority: g.order_priority,
 discipline: disc
 }]).select().single();
-if (error) { 
-console.error("Insert age group error:", error); 
-errors++; 
-continue; 
+if (error) {
+console.error("Insert age group error:", error);
+errors++;
+continue;
 }
 if (categoryConfig[disc].weightBoundaries[g.id]) {
 const tmpBounds = categoryConfig[disc].weightBoundaries[g.id];
@@ -1257,9 +1325,9 @@ max_age: g.max_age,
 is_active: g.is_active,
 order_priority: g.order_priority
 }).eq("id", g.id);
-if (error) { 
-console.error("Update age group error:", error); 
-errors++; 
+if (error) {
+console.error("Update age group error:", error);
+errors++;
 } else {
 console.log(`Updated age group: ${g.id}`);
 }
@@ -1267,19 +1335,19 @@ console.log(`Updated age group: ${g.id}`);
 const currentBounds = (categoryConfig[disc].weightBoundaries[g.id] || []).slice().sort((a,b) => a-b);
 console.log(`Current boundaries for ${g.id}:`, currentBounds);
 const { data: existingBounds, error: fetchErr } = await sb.from("weight_boundaries").select("*").eq("age_group_id", g.id);
-if (fetchErr) { 
-console.error("Fetch boundaries error:", fetchErr); 
-errors++; 
-continue; 
+if (fetchErr) {
+console.error("Fetch boundaries error:", fetchErr);
+errors++;
+continue;
 }
 console.log(`Existing boundaries:`, existingBounds);
 const existingKg = (existingBounds || []).map(b => b.boundary_kg);
 for (const eb of (existingBounds || [])) {
 if (!currentBounds.includes(eb.boundary_kg)) {
 const { error: delErr } = await sb.from("weight_boundaries").delete().eq("id", eb.id);
-if (delErr) { 
-console.error("Delete boundary error:", delErr); 
-errors++; 
+if (delErr) {
+console.error("Delete boundary error:", delErr);
+errors++;
 } else {
 console.log(`Deleted boundary: ${eb.boundary_kg}`);
 }
@@ -1288,9 +1356,9 @@ console.log(`Deleted boundary: ${eb.boundary_kg}`);
 for (const kg of currentBounds) {
 if (!existingKg.includes(kg)) {
 const { error: insErr } = await sb.from("weight_boundaries").insert([{ age_group_id: g.id, boundary_kg: kg }]);
-if (insErr) { 
-console.error("Insert boundary error:", insErr); 
-errors++; 
+if (insErr) {
+console.error("Insert boundary error:", insErr);
+errors++;
 } else {
 console.log(`Inserted boundary: ${kg}`);
 successCount++;
@@ -1424,7 +1492,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -2168,7 +2236,7 @@ dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
@@ -2199,7 +2267,7 @@ const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 const state = dragHandleState;
 dragHandleState = null;
 if (!elemBelow) return;
-const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
+const winnerZone = elemBelow.closest(".winner-drop-zone, .placement_drop-zone");
 if (winnerZone) {
 const page = winnerZone.closest(".a4-page");
 if (page) {
@@ -2432,6 +2500,7 @@ html += '<div class="category-card"><div class="category-header">Data Summary</d
 '<p><strong>Judge Ranks Assigned:</strong> ' + Object.keys(judgeRanksMap).length + '</p>' +
 '<p><strong>Category Config (patterns age groups):</strong> ' + categoryConfig.patterns.ageGroups.length + '</p>' +
 '<p><strong>Category Config (sparring age groups):</strong> ' + categoryConfig.sparring.ageGroups.length + '</p>' +
+'<p><strong>Patterns Merge Low Kup:</strong> ' + (window.patternsMergeLowKups ? 'ENABLED' : 'DISABLED') + '</p>' +
 '</div></div>';
 if (lastDebugInfo.errors.length > 0) {
 html += '<div class="category-card"><div class="category-header" style="background:var(--danger);">Errors</div><div style="padding:20px;">' + lastDebugInfo.errors.map(e => '<div style="color:var(--danger);margin:5px 0;">• ' + e + '</div>').join("") + '</div></div>';
@@ -2464,7 +2533,26 @@ const numB = kupDanNameToNumber(b);
 if (numA !== null && numB !== null) return numB - numA;
 return a.localeCompare(b);
 }).map(b => '<option value="' + escapeAttr(b) + '">' + escapeHtml(b) + '</option>').join("");
-document.getElementById("content").innerHTML = '<div class="filters-card"><div class="filters">' +
+const mergeOn = !!window.patternsMergeLowKups;
+document.getElementById("content").innerHTML =
+'<div class="merge-toggle-banner ' + (mergeOn ? 'active' : '') + '">' +
+'<div class="merge-toggle-info">' +
+'<i class="fas fa-' + (mergeOn ? 'compress-arrows-alt' : 'expand-arrows-alt') + ' merge-toggle-icon"></i>' +
+'<div>' +
+'<div class="merge-toggle-title">Merge Low Kup Categories (10th-7th Kup)</div>' +
+'<div class="merge-toggle-desc">' +
+(mergeOn
+? '<strong>ON:</strong> 10th-7th kup combined into ONE category — fewer, bigger brackets for beginners'
+: '<strong>OFF:</strong> 10-9 kup and 8-7 kup are separate categories — more, smaller brackets') +
+'</div>' +
+'</div>' +
+'</div>' +
+'<label class="merge-switch" title="Toggle merge">' +
+'<input type="checkbox" ' + (mergeOn ? 'checked' : '') + ' onchange="togglePatternsMerge(this.checked)" />' +
+'<span class="merge-slider"></span>' +
+'</label>' +
+'</div>' +
+'<div class="filters-card"><div class="filters">' +
 '<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages</option>' + ageOptions + '<option value="OTHER">Other/Uncategorized</option></select></div>' +
 '<div class="filter-group"><label>Gender</label><select id="pGen" onchange="runPatternFilter()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
 '<div class="filter-group"><label>Kup/Dan Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Ranks</option>' + kupDanOptions + '</select></div>' +
@@ -3032,10 +3120,16 @@ e.preventDefault();
 performUndo();
 }
 });
-const today = new Date();
-document.getElementById("tournamentDate").valueAsDate = today;
-tournamentDate = today.toISOString().split("T")[0];
-showPatterns();
+
+// ===== INITIALIZATION =====
+async function initApp() {
+  await loadPatternsMergeSetting();
+  const today = new Date();
+  document.getElementById("tournamentDate").valueAsDate = today;
+  tournamentDate = today.toISOString().split("T")[0];
+  showPatterns();
+}
+initApp();
 </script>
 </body>
 </html>
