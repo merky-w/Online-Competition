@@ -360,17 +360,40 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .slider-toggle:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
 input:checked + .slider-toggle { background-color: var(--cat-active); }
 input:checked + .slider-toggle:before { transform: translateX(18px); }
-.weight-category-card { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; transition: var(--transition); }
-.weight-category-card.active { border-color: var(--cat-weight); background: #fce4ec; }
-.weight-category-card.inactive { opacity: 0.6; background: #f5f5f5; }
-.weight-category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
-.weight-category-title { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
-.weight-category-range { font-size: 0.85rem; color: var(--gray); }
-.weight-category-actions { display: flex; gap: 6px; align-items: center; }
-.inline-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; width: 80px; font-family: inherit; }
+/* Patterns range cards */
+.patterns-range-card { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 12px; transition: var(--transition); }
+.patterns-range-card.active { border-color: #1565c0; box-shadow: 0 2px 10px rgba(21, 101, 192, 0.15); }
+.patterns-range-card.inactive { opacity: 0.5; }
+.patterns-range-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.patterns-range-title { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.patterns-range-title .age-badge { background: var(--cat-age); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; }
+.patterns-range-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.patterns-range-row label { margin: 0; font-size: 0.85rem; color: var(--gray); }
+.patterns-range-row select, .patterns-range-row input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; font-family: inherit; min-width: 130px; }
+.patterns-range-preview { display: inline-block; padding: 4px 12px; background: #e3f2fd; color: #1565c0; border-radius: 12px; font-weight: 700; font-size: 0.85rem; border: 1px solid #90caf9; }
+/* Sparring sliders (old style) */
+.weight-slider-card { background: white; border: 2px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; transition: var(--transition); }
+.weight-slider-card.active { border-color: var(--cat-weight); box-shadow: 0 2px 10px rgba(194, 24, 91, 0.15); }
+.weight-slider-card.inactive { opacity: 0.5; }
+.weight-slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.weight-slider-title { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+.weight-slider-title .age-badge { background: var(--cat-age); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; }
+.weight-slider-track-wrap { position: relative; height: 70px; margin: 8px 0 4px 0; user-select: none; }
+.weight-slider-track { position: absolute; top: 25px; left: 20px; right: 20px; height: 16px; background: linear-gradient(90deg, #fce4ec 0%, #f8bbd0 100%); border-radius: 8px; border: 1px solid #f48fb1; cursor: pointer; }
+.weight-marker { position: absolute; top: 12px; width: 4px; height: 44px; background: var(--cat-weight); border-radius: 2px; cursor: ew-resize; z-index: 5; transform: translateX(-50%); transition: background 0.15s; }
+.weight-marker:hover, .weight-marker.dragging { background: var(--secondary); box-shadow: 0 0 10px rgba(212, 175, 55, 0.6); }
+.weight-marker-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); background: var(--cat-weight); color: white; padding: 1px 6px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; pointer-events: none; }
+.weight-marker.dragging .weight-marker-label { background: var(--secondary); }
+.weight-marker-delete { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--danger); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; z-index: 6; }
+.weight-marker:hover .weight-marker-delete { display: flex; }
+.weight-scale { position: absolute; top: 45px; left: 20px; right: 20px; display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--gray); font-weight: 600; }
+.weight-categories-display { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.weight-cat-chip { background: #fce4ec; color: #880e4f; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; border: 1px solid #f48fb1; }
+.weight-cat-chip.first { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
+.weight-cat-chip.last { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
+.inline-input { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; width: 70px; font-family: inherit; }
 .inline-input:focus { border-color: var(--primary); outline: none; }
-.inline-input-wide { width: 150px; }
-.weight-category-list { margin-top: 12px; }
+.inline-input-wide { width: 140px; }
 @media print {
 @page { size: A4; margin: 10mm; }
 body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
@@ -479,38 +502,13 @@ const KUP_DAN_NAMES = {
 "-1": "2nd Dan", "-2": "3rd Dan", "-3": "4th Dan",
 "-4": "5th Dan", "-5": "6th Dan"
 };
-const BELT_LEVELS = {
-"white": 1, "w": 1, "10th kup": 1, "10 kup": 1,
-"yellow": 2, "y": 2, "9th kup": 2, "9 kup": 2,
-"orange": 3, "o": 3, "8th kup": 3, "8 kup": 3,
-"green": 4, "g": 4, "7th kup": 4, "7 kup": 4,
-"blue": 5, "b": 5, "6th kup": 5, "6 kup": 5,
-"brown": 6, "br": 6, "5th kup": 6, "5 kup": 6, "4th kup": 6, "4 kup": 6,
-"red": 7, "r": 7, "3rd kup": 7, "3 kup": 7, "2nd kup": 7, "2 kup": 7,
-"black": 8, "bl": 8, "1st kup": 8, "1 kup": 8, "1st dan": 8, "1 dan": 8,
-"2nd dan": 9, "2 dan": 9, "3rd dan": 10, "3 dan": 10
-};
-const BELT_NAMES = {
-1: "White", 2: "Yellow", 3: "Orange", 4: "Green",
-5: "Blue", 6: "Brown", 7: "Red", 8: "Black", 9: "2nd Dan", 10: "3rd Dan"
-};
 const PATTERNS_MIN_VALUE = 10;
 const PATTERNS_MAX_VALUE = -5;
 const SPARRING_MAX_KG = 120;
-function getDisciplineMaxValue(disc) {
-return disc === "patterns" ? PATTERNS_MAX_VALUE : SPARRING_MAX_KG;
-}
-function getDisciplineMinValue(disc) {
-return disc === "patterns" ? PATTERNS_MIN_VALUE : 0;
-}
-function getDisciplineUnit(disc) {
-return disc === "patterns" ? "kup/dan" : "kg";
-}
+function getDisciplineMaxValue(disc) { return disc === "patterns" ? PATTERNS_MAX_VALUE : SPARRING_MAX_KG; }
+function getDisciplineMinValue(disc) { return disc === "patterns" ? PATTERNS_MIN_VALUE : 0; }
 function formatDisciplineValue(val, disc) {
-if (disc === "patterns") {
-const kupDanName = KUP_DAN_NAMES[Math.round(val)] || ("Level " + Math.round(val));
-return kupDanName;
-}
+if (disc === "patterns") return KUP_DAN_NAMES[Math.round(val)] || ("Level " + Math.round(val));
 return val + "kg";
 }
 function kupDanNameToNumber(name) {
@@ -520,31 +518,19 @@ if (KUP_DAN_LEVELS[normalized] !== undefined) return KUP_DAN_LEVELS[normalized];
 const numMatch = normalized.match(/(\d+)/);
 if (numMatch) {
 const num = parseInt(numMatch[1]);
-if (normalized.includes('kup')) {
-if (num >= 1 && num <= 10) return num;
-} else if (normalized.includes('dan')) {
-if (num >= 1 && num <= 6) return -(num - 1);
-}
+if (normalized.includes('kup') && num >= 1 && num <= 10) return num;
+if (normalized.includes('dan') && num >= 1 && num <= 6) return -(num - 1);
 }
 return null;
-}
-function beltNameToNumber(beltName) {
-if (!beltName) return null;
-const normalized = beltName.toString().trim().toLowerCase();
-if (BELT_LEVELS[normalized] !== undefined) return BELT_LEVELS[normalized];
-return kupDanNameToNumber(beltName);
 }
 function safeStr(val) {
 if (val === null || val === undefined) return "";
 if (typeof val !== "string") { try { return String(val); } catch (e) { return ""; } }
 return val;
 }
-function escapeAttr(str) {
-return safeStr(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
-}
-function escapeHtml(str) {
-return safeStr(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/, "&#39;");
-}
+function escapeAttr(str) { return safeStr(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
+function escapeHtml(str) { return safeStr(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/, "&#39;"); }
+
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -564,11 +550,14 @@ let selectedPlayerData = null;
 let bracketWinnersCache = {};
 let judgeRanksMap = {};
 let rankSelectionMode = null;
+
+// Split config: patterns uses ranges, sparring uses boundaries
 let categoryConfig = {
-patterns: { ageGroups: [], weightCategories: {} },
-sparring: { ageGroups: [], weightCategories: {} }
+patterns: { ageGroups: [], kupRanges: {} },      // NEW: explicit kup ranges
+sparring: { ageGroups: [], weightBoundaries: {} } // OLD: boundary sliders
 };
 let currentCatDiscipline = "patterns";
+
 const DEFAULT_AGE_GROUPS = [
 { id: "default_kids", display_name: "Kids", min_age: 6, max_age: 9, is_active: true, order_priority: 1 },
 { id: "default_youth", display_name: "Youth", min_age: 10, max_age: 11, is_active: true, order_priority: 2 },
@@ -578,19 +567,15 @@ const DEFAULT_AGE_GROUPS = [
 { id: "default_seniors", display_name: "Seniors", min_age: 20, max_age: 35, is_active: true, order_priority: 6 },
 { id: "default_masters", display_name: "Masters", min_age: 36, max_age: null, is_active: true, order_priority: 7 }
 ];
-const AGE_GROUP_COLORS = [
-"#1565c0", "#c2185b", "#2e7d32", "#e65100", "#6a1b9a",
-"#00838f", "#ad1457", "#4527a0", "#ef6c00", "#283593",
-"#558b2f", "#4e342e"
-];
+const AGE_GROUP_COLORS = ["#1565c0", "#c2185b", "#2e7d32", "#e65100", "#6a1b9a", "#00838f", "#ad1457", "#4527a0", "#ef6c00", "#283593", "#558b2f", "#4e342e"];
+
+// ============ LOAD CATEGORY CONFIG ============
 async function loadCategoryConfig() {
 try {
 const { data: ageGroups, error: ageErr } = await sb
-.from("age_groups")
-.select("*")
-.order("order_priority", { ascending: true });
+.from("age_groups").select("*").order("order_priority", { ascending: true });
 if (ageErr) {
-console.warn("Could not load age_groups, using defaults:", ageErr.message);
+console.warn("Could not load age_groups:", ageErr.message);
 categoryConfig.patterns.ageGroups = DEFAULT_AGE_GROUPS.map(g => ({...g, discipline: "patterns"}));
 categoryConfig.sparring.ageGroups = DEFAULT_AGE_GROUPS.map(g => ({...g, discipline: "sparring"}));
 return;
@@ -604,25 +589,31 @@ const patternsGroups = ageGroups.filter(g => g.discipline === "patterns").sort((
 const sparringGroups = ageGroups.filter(g => g.discipline === "sparring").sort((a,b) => a.order_priority - b.order_priority);
 categoryConfig.patterns.ageGroups = patternsGroups;
 categoryConfig.sparring.ageGroups = sparringGroups;
-const allGroupIds = [...patternsGroups, ...sparringGroups].map(g => g.id);
-if (allGroupIds.length > 0) {
-const { data: categories, error: cErr } = await sb
-.from("weight_categories")
-.select("*")
-.in("age_group_id", allGroupIds)
-.order("order_priority", { ascending: true });
-if (!cErr && categories) {
-categoryConfig.patterns.weightCategories = {};
-categoryConfig.sparring.weightCategories = {};
-categories.forEach(c => {
-const parentGroup = [...patternsGroups, ...sparringGroups].find(g => g.id === c.age_group_id);
-if (parentGroup) {
-const disc = parentGroup.discipline;
-if (!categoryConfig[disc].weightCategories[c.age_group_id]) {
-categoryConfig[disc].weightCategories[c.age_group_id] = [];
+
+// Load patterns kup ranges from patterns_kup_ranges table
+const pIds = patternsGroups.map(g => g.id);
+if (pIds.length > 0) {
+const { data: pRanges, error: pErr } = await sb
+.from("patterns_kup_ranges").select("*").in("age_group_id", pIds).order("order_priority", { ascending: true });
+categoryConfig.patterns.kupRanges = {};
+if (!pErr && pRanges) {
+pRanges.forEach(r => {
+if (!categoryConfig.patterns.kupRanges[r.age_group_id]) categoryConfig.patterns.kupRanges[r.age_group_id] = [];
+categoryConfig.patterns.kupRanges[r.age_group_id].push(r);
+});
 }
-categoryConfig[disc].weightCategories[c.age_group_id].push(c);
 }
+
+// Load sparring weight boundaries from weight_boundaries table (old)
+const sIds = sparringGroups.map(g => g.id);
+if (sIds.length > 0) {
+const { data: sBounds, error: sErr } = await sb
+.from("weight_boundaries").select("*").in("age_group_id", sIds).order("boundary_kg", { ascending: true });
+categoryConfig.sparring.weightBoundaries = {};
+if (!sErr && sBounds) {
+sBounds.forEach(b => {
+if (!categoryConfig.sparring.weightBoundaries[b.age_group_id]) categoryConfig.sparring.weightBoundaries[b.age_group_id] = [];
+categoryConfig.sparring.weightBoundaries[b.age_group_id].push(b.boundary_kg);
 });
 }
 }
@@ -632,78 +623,73 @@ categoryConfig.patterns.ageGroups = DEFAULT_AGE_GROUPS.map(g => ({...g, discipli
 categoryConfig.sparring.ageGroups = DEFAULT_AGE_GROUPS.map(g => ({...g, discipline: "sparring"}));
 }
 }
+
 async function seedDefaultCategories() {
-const defaultWeightCats = [
-{ min_value: 0, max_value: 30, display_name: "-30kg" },
-{ min_value: 30, max_value: 35, display_name: "30-35kg" },
-{ min_value: 35, max_value: 40, display_name: "35-40kg" },
-{ min_value: 40, max_value: 45, display_name: "40-45kg" },
-{ min_value: 45, max_value: 50, display_name: "45-50kg" },
-{ min_value: 50, max_value: 55, display_name: "55-60kg" },
-{ min_value: 55, max_value: 60, display_name: "60-65kg" },
-{ min_value: 60, max_value: 65, display_name: "65-70kg" },
-{ min_value: 65, max_value: 70, display_name: "70-75kg" },
-{ min_value: 70, max_value: 75, display_name: "75-80kg" },
-{ min_value: 75, max_value: 80, display_name: "80+kg" }
-];
-const defaultKupDanCats = [
-{ min_value: 10, max_value: 9, display_name: "10th-9th Kup" },
-{ min_value: 8, max_value: 7, display_name: "8th-7th Kup" },
-{ min_value: 6, max_value: 5, display_name: "6th-5th Kup" },
-{ min_value: 4, max_value: 3, display_name: "4th-3rd Kup" },
-{ min_value: 2, max_value: 1, display_name: "2nd-1st Kup" },
-{ min_value: 0, max_value: -5, display_name: "1st-6th Dan" }
+const defaultWeightBounds = [30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80];
+const defaultKupRanges = [
+{ min_kup: 10, max_kup: 9, display_name: "10th-9th Kup" },
+{ min_kup: 8, max_kup: 7, display_name: "8th-7th Kup" },
+{ min_kup: 6, max_kup: 5, display_name: "6th-5th Kup" },
+{ min_kup: 4, max_kup: 3, display_name: "4th-3rd Kup" },
+{ min_kup: 2, max_kup: 1, display_name: "2nd-1st Kup" },
+{ min_kup: 0, max_kup: -5, display_name: "1st-6th Dan" }
 ];
 for (const disc of ["patterns", "sparring"]) {
 for (let i = 0; i < DEFAULT_AGE_GROUPS.length; i++) {
 const g = DEFAULT_AGE_GROUPS[i];
 const { data: inserted, error } = await sb.from("age_groups").insert([{
-display_name: g.display_name,
-min_age: g.min_age,
-max_age: g.max_age,
-is_active: g.is_active,
-order_priority: g.order_priority,
-discipline: disc
+display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
+is_active: g.is_active, order_priority: g.order_priority, discipline: disc
 }]).select().single();
 if (!error && inserted) {
-const catsToInsert = (disc === "sparring" ? defaultWeightCats : defaultKupDanCats).map((c, idx) => ({
-age_group_id: inserted.id,
-min_value: c.min_value,
-max_value: c.max_value,
-display_name: c.display_name,
-is_active: true,
-order_priority: idx + 1
+if (disc === "sparring") {
+const boundsToInsert = defaultWeightBounds.map(kg => ({ age_group_id: inserted.id, boundary_kg: kg }));
+await sb.from("weight_boundaries").insert(boundsToInsert);
+} else {
+const rangesToInsert = defaultKupRanges.map((r, idx) => ({
+age_group_id: inserted.id, min_kup: r.min_kup, max_kup: r.max_kup,
+display_name: r.display_name, is_active: true, order_priority: idx + 1
 }));
-await sb.from("weight_categories").insert(catsToInsert);
+await sb.from("patterns_kup_ranges").insert(rangesToInsert);
 }
 }
 }
 }
+}
+
 function getAgeGroupForAge(age, discipline) {
 const groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active);
 for (const g of groups) {
-if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) {
-return g;
-}
+if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g;
 }
 return null;
 }
-function getWeightCategoryLabel(value, ageGroupId, discipline) {
-const categories = (categoryConfig[discipline]?.weightCategories?.[ageGroupId] || []).filter(c => c.is_active);
-if (categories.length === 0) return "Open";
-for (const cat of categories) {
-if (discipline === "patterns") {
-if (value <= cat.min_value && value >= cat.max_value) {
-return cat.display_name;
-}
-} else {
-if (value >= cat.min_value && value < cat.max_value) {
-return cat.display_name;
-}
-}
+
+// Patterns: use explicit kup ranges
+function getPatternsCategoryLabel(kupDanNum, ageGroupId) {
+const ranges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).filter(r => r.is_active !== false);
+if (ranges.length === 0) return "Open";
+for (const r of ranges) {
+const minK = r.min_kup, maxK = r.max_kup;
+const hi = Math.max(minK, maxK), lo = Math.min(minK, maxK);
+if (kupDanNum <= hi && kupDanNum >= lo) return r.display_name;
 }
 return "Open";
 }
+
+// Sparring: use old boundary-based logic
+function getSparringCategoryLabel(weightKg, ageGroupId) {
+const boundaries = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
+if (boundaries.length === 0) return "Open";
+if (weightKg <= boundaries[0]) return "-" + boundaries[0] + "kg";
+for (let i = 0; i < boundaries.length - 1; i++) {
+if (weightKg > boundaries[i] && weightKg <= boundaries[i+1]) {
+return Math.ceil(boundaries[i]) + "-" + boundaries[i+1] + "kg";
+}
+}
+return "+" + boundaries[boundaries.length-1] + "kg";
+}
+
 function computeAge(dob) {
 if (!dob || !tournamentDate) return null;
 try {
@@ -715,6 +701,7 @@ if (m < 0 || (m === 0 && tour.getDate() < birth.getDate())) age--;
 return age;
 } catch { return null; }
 }
+
 function recomputeCompetitorCategories() {
 competitors.forEach(c => {
 const age = computeAge(c.dob || c.date_of_birth);
@@ -729,18 +716,15 @@ c._computed_age = age;
 if (discipline === "sparring") {
 const weightKg = parseFloat(c.weight_kg);
 if (!isNaN(weightKg) && weightKg > 0) {
-const wCat = getWeightCategoryLabel(weightKg, ageGroup.id, discipline);
+const wCat = getSparringCategoryLabel(weightKg, ageGroup.id);
 c._actual_sub_cat = wCat;
 c._full_cat = ageGroup.display_name + " - " + wCat;
-} else {
-c._actual_sub_cat = "Open";
-c._full_cat = ageGroup.display_name + " - Open";
-}
+} else { c._actual_sub_cat = "Open"; c._full_cat = ageGroup.display_name + " - Open"; }
 } else if (discipline === "patterns") {
 const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
 const kupDanNum = kupDanNameToNumber(origBeltName);
 if (kupDanNum !== null) {
-const bCat = getWeightCategoryLabel(kupDanNum, ageGroup.id, discipline);
+const bCat = getPatternsCategoryLabel(kupDanNum, ageGroup.id);
 c._actual_sub_cat = bCat;
 c._full_cat = ageGroup.display_name + " - " + bCat;
 } else {
@@ -749,63 +733,44 @@ c._full_cat = ageGroup.display_name + " - " + (origBeltName || "Open");
 }
 }
 } else {
-c._actual_age_group = "OTHER";
-c._age_group_id = null;
-c._age_group_name = "No Group";
-c._computed_age = age;
-if (discipline === "sparring") {
-c._actual_sub_cat = "Open";
-c._full_cat = "No Group - Open";
-} else if (discipline === "patterns") {
+c._actual_age_group = "OTHER"; c._age_group_id = null; c._age_group_name = "No Group"; c._computed_age = age;
+if (discipline === "sparring") { c._actual_sub_cat = "Open"; c._full_cat = "No Group - Open"; }
+else if (discipline === "patterns") {
 const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
-c._actual_sub_cat = origBeltName || "Open";
-c._full_cat = "No Group - " + (origBeltName || "Open");
+c._actual_sub_cat = origBeltName || "Open"; c._full_cat = "No Group - " + (origBeltName || "Open");
 }
 }
 } else {
-c._actual_age_group = "OTHER";
-c._age_group_id = null;
-c._age_group_name = "No Group";
-c._computed_age = null;
-if (discipline === "sparring") {
-c._actual_sub_cat = "Open";
-c._full_cat = "No Group - Open";
-} else if (discipline === "patterns") {
+c._actual_age_group = "OTHER"; c._age_group_id = null; c._age_group_name = "No Group"; c._computed_age = null;
+if (discipline === "sparring") { c._actual_sub_cat = "Open"; c._full_cat = "No Group - Open"; }
+else if (discipline === "patterns") {
 const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
-c._actual_sub_cat = origBeltName || "Open";
-c._full_cat = "No Group - " + (origBeltName || "Open");
+c._actual_sub_cat = origBeltName || "Open"; c._full_cat = "No Group - " + (origBeltName || "Open");
 }
 }
 });
 }
+
+// ============ CATEGORIES UI ============
 async function showCategories() {
 setActiveBtn("btnCategories");
 await loadCategoryConfig();
 const content = document.getElementById("content");
-const divisionWord = currentCatDiscipline === 'patterns' ? 'kup/dan' : 'weight';
 content.innerHTML = '<div class="cat-editor-wrap">' +
-'<div class="cat-editor-header">' +
-'<div>' +
+'<div class="cat-editor-header"><div>' +
 '<div class="cat-editor-title"><i class="fas fa-sliders-h"></i> Category Configuration</div>' +
-'<div class="cat-editor-subtitle">Configure age groups and ' + divisionWord + ' categories. Changes are saved to the database and used across the tournament.</div>' +
-'</div>' +
-'<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+'<div class="cat-editor-subtitle">Configure age groups and divisions. Changes are saved to the database.</div>' +
+'</div><div style="display:flex; gap:8px; flex-wrap:wrap;">' +
 '<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig()"><i class="fas fa-save"></i> Save All</button>' +
 '<button class="btn btn-warning btn-sm" onclick="resetToDefaults()"><i class="fas fa-undo"></i> Reset to Defaults</button>' +
-'</div>' +
-'</div>' +
+'</div></div>' +
 '<div class="cat-discipline-tabs">' +
-'<div class="cat-disc-tab ' + (currentCatDiscipline === 'patterns' ? 'active-patterns' : '') + '" onclick="switchCatDiscipline(\'patterns\')">' +
-'<i class="fas fa-chess-board"></i> Patterns (Tul)' +
-'</div>' +
-'<div class="cat-disc-tab ' + (currentCatDiscipline === 'sparring' ? 'active-sparring' : '') + '" onclick="switchCatDiscipline(\'sparring\')">' +
-'<i class="fas fa-fist-raised"></i> Sparring (Matsogi)' +
-'</div>' +
-'</div>' +
-'<div id="catEditorBody"></div>' +
-'</div>';
+'<div class="cat-disc-tab ' + (currentCatDiscipline === 'patterns' ? 'active-patterns' : '') + '" onclick="switchCatDiscipline(\'patterns\')"><i class="fas fa-chess-board"></i> Patterns (Tul)</div>' +
+'<div class="cat-disc-tab ' + (currentCatDiscipline === 'sparring' ? 'active-sparring' : '') + '" onclick="switchCatDiscipline(\'sparring\')"><i class="fas fa-fist-raised"></i> Sparring (Matsogi)</div>' +
+'</div><div id="catEditorBody"></div></div>';
 renderCatEditorBody();
 }
+
 function switchCatDiscipline(disc) {
 currentCatDiscipline = disc;
 document.querySelectorAll(".cat-disc-tab").forEach(t => t.classList.remove("active-patterns", "active-sparring"));
@@ -814,38 +779,30 @@ if (disc === "patterns") tabs[0].classList.add("active-patterns");
 else tabs[1].classList.add("active-sparring");
 renderCatEditorBody();
 }
+
 function renderCatEditorBody() {
 const body = document.getElementById("catEditorBody");
 if (!body) return;
 const disc = currentCatDiscipline;
-const groups = categoryConfig[disc].ageGroups || [];
-const divisionLabel = disc === "patterns" ? "Kup/Dan" : "Weight";
-const divisionIcon = disc === "patterns" ? "award" : "weight-hanging";
-const divisionWord = disc === "patterns" ? "kup/dan" : "weight";
 body.innerHTML = '<div class="cat-section">' +
 '<div class="cat-section-title"><i class="fas fa-calendar-alt" style="color:var(--cat-age)"></i> Age Groups Timeline</div>' +
 '<div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off.</div>' +
-'<div class="age-timeline-card">' +
-'<div class="age-timeline" id="ageTimeline_' + disc + '">' +
+'<div class="age-timeline-card"><div class="age-timeline" id="ageTimeline_' + disc + '">' +
 '<div class="age-timeline-track" id="ageTrack_' + disc + '" onclick="handleAgeTrackClick(event, \'' + disc + '\')"></div>' +
 '<div class="age-timeline-segments" id="ageSegments_' + disc + '"></div>' +
-'<div class="age-scale" id="ageScale_' + disc + '"></div>' +
-'</div>' +
+'<div class="age-scale" id="ageScale_' + disc + '"></div></div>' +
 '<div class="age-group-list" id="ageGroupList_' + disc + '"></div>' +
 '<div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">' +
 '<button class="btn btn-add btn-sm" onclick="addNewAgeGroup(\'' + disc + '\')"><i class="fas fa-plus"></i> Add Age Group</button>' +
-'</div>' +
-'</div>' +
-'</div>' +
-'<div class="cat-section">' +
-'<div class="cat-section-title"><i class="fas fa-' + divisionIcon + '" style="color:var(--cat-weight)"></i> ' + divisionLabel + ' Categories per Age Group</div>' +
-'<div class="cat-section-hint">For each age group, define explicit ' + divisionWord + ' categories with min and max values. Add, edit, or remove categories as needed.</div>' +
-'<div id="weightCategories_' + disc + '"></div>' +
-'</div>';
+'</div></div></div>' +
+'<div class="cat-section" id="divisionSection_' + disc + '"></div>';
 renderAgeTimeline(disc);
 renderAgeGroupList(disc);
-renderWeightCategories(disc);
+if (disc === "patterns") renderPatternsRanges(disc);
+else renderWeightSliders(disc);
 }
+
+// ============ AGE GROUPS (shared) ============
 function renderAgeTimeline(disc) {
 const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
 const track = document.getElementById("ageTrack_" + disc);
@@ -872,10 +829,7 @@ seg.innerHTML = '<span class="age-segment-label">' + escapeHtml(g.display_name) 
 segments.appendChild(seg);
 });
 const boundaries = new Set();
-groups.forEach(g => {
-boundaries.add(g.min_age);
-if (g.max_age !== null) boundaries.add(g.max_age);
-});
+groups.forEach(g => { boundaries.add(g.min_age); if (g.max_age !== null) boundaries.add(g.max_age); });
 boundaries.forEach(age => {
 const pct = (age / maxAge) * 100;
 const marker = document.createElement("div");
@@ -894,6 +848,7 @@ span.textContent = a;
 scale.appendChild(span);
 }
 }
+
 function handleAgeTrackClick(e, disc) {
 if (e.target.classList.contains("age-marker")) return;
 const track = e.currentTarget;
@@ -902,34 +857,21 @@ const pct = (e.clientX - rect.left) / rect.width;
 const age = Math.max(1, Math.min(70, Math.round(pct * 70)));
 const groups = categoryConfig[disc].ageGroups;
 const targetGroup = groups.find(g => g.is_active !== false && age > g.min_age && (g.max_age === null || age < g.max_age));
-if (!targetGroup) {
-showToast("Cannot add boundary here (no active group contains this age)", "error");
-return;
-}
+if (!targetGroup) { showToast("Cannot add boundary here", "error"); return; }
 const existing = groups.find(g => g.min_age === age || g.max_age === age);
-if (existing) {
-showToast("Boundary already exists at age " + age, "error");
-return;
-}
+if (existing) { showToast("Boundary already exists at age " + age, "error"); return; }
 const oldMax = targetGroup.max_age;
-const newGroup = {
-id: "tmp_" + Date.now(),
-display_name: targetGroup.display_name + " (split)",
-min_age: age,
-max_age: oldMax,
-is_active: true,
-order_priority: targetGroup.order_priority + 0.5,
-discipline: disc
-};
+const newGroup = { id: "tmp_" + Date.now(), display_name: targetGroup.display_name + " (split)",
+min_age: age, max_age: oldMax, is_active: true, order_priority: targetGroup.order_priority + 0.5, discipline: disc };
 targetGroup.max_age = age;
 categoryConfig[disc].ageGroups.push(newGroup);
 reorderAndRenumber(disc);
 renderCatEditorBody();
 showToast("Added age boundary at " + age, "success");
 }
+
 async function startAgeMarkerDrag(e, age, disc) {
-e.preventDefault();
-e.stopPropagation();
+e.preventDefault(); e.stopPropagation();
 const timeline = document.getElementById("ageTimeline_" + disc);
 const track = document.getElementById("ageTrack_" + disc);
 if (!track) return;
@@ -945,7 +887,7 @@ currentAge = Math.max(1, Math.min(70, Math.round(pct * maxAge)));
 marker.style.left = "calc(30px + (100% - 60px) * " + (currentAge / maxAge) + ")";
 marker.querySelector(".age-marker-label").textContent = currentAge;
 };
-const onEnd = async () => {
+const onEnd = () => {
 document.removeEventListener("mousemove", onMove);
 document.removeEventListener("mouseup", onEnd);
 document.removeEventListener("touchmove", onMove);
@@ -958,10 +900,7 @@ groups.forEach(g => {
 if (g.min_age === age) { g.min_age = currentAge; updated = true; }
 if (g.max_age === age) { g.max_age = currentAge; updated = true; }
 });
-if (updated) {
-renderCatEditorBody();
-showToast("Age boundary moved: " + age + " -> " + currentAge, "success");
-}
+if (updated) { renderCatEditorBody(); showToast("Age boundary moved: " + age + " -> " + currentAge, "success"); }
 }
 };
 document.addEventListener("mousemove", onMove);
@@ -969,6 +908,7 @@ document.addEventListener("mouseup", onEnd);
 document.addEventListener("touchmove", onMove, {passive: false});
 document.addEventListener("touchend", onEnd);
 }
+
 function renderAgeGroupList(disc) {
 const list = document.getElementById("ageGroupList_" + disc);
 if (!list) return;
@@ -980,43 +920,30 @@ return '<div class="age-group-item ' + (g.is_active ? 'active' : 'inactive') + '
 '<div class="age-group-color" style="background:' + color + '"></div>' +
 '<div class="age-group-info">' +
 '<input type="text" class="inline-input inline-input-wide" value="' + escapeAttr(g.display_name) + '" onchange="updateAgeGroupName(\'' + disc + '\', \'' + g.id + '\', this.value)" />' +
-'<div class="age-group-range">Ages: ' + rangeText + '</div>' +
-'</div>' +
+'<div class="age-group-range">Ages: ' + rangeText + '</div></div>' +
 '<div class="age-group-actions">' +
-'<label class="switch" title="' + (g.is_active ? 'Active' : 'Disabled') + '">' +
-'<input type="checkbox" ' + (g.is_active ? 'checked' : '') + ' onchange="toggleAgeGroupActive(\'' + disc + '\', \'' + g.id + '\', this.checked)" />' +
-'<span class="slider-toggle"></span>' +
-'</label>' +
-'<button class="btn btn-danger btn-xs" onclick="deleteAgeGroup(\'' + disc + '\', \'' + g.id + '\')" title="Delete"><i class="fas fa-trash"></i></button>' +
-'</div>' +
-'</div>';
+'<label class="switch"><input type="checkbox" ' + (g.is_active ? 'checked' : '') + ' onchange="toggleAgeGroupActive(\'' + disc + '\', \'' + g.id + '\', this.checked)" /><span class="slider-toggle"></span></label>' +
+'<button class="btn btn-danger btn-xs" onclick="deleteAgeGroup(\'' + disc + '\', \'' + g.id + '\')"><i class="fas fa-trash"></i></button>' +
+'</div></div>';
 }).join("");
 }
+
 function updateAgeGroupName(disc, groupId, newName) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) {
-g.display_name = newName.trim() || g.display_name;
-showToast('Renamed to "' + g.display_name + '"', "success");
-}
+if (g) { g.display_name = newName.trim() || g.display_name; showToast('Renamed to "' + g.display_name + '"', "success"); }
 }
 function toggleAgeGroupActive(disc, groupId, isActive) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) {
-g.is_active = isActive;
-renderCatEditorBody();
-showToast(isActive ? ('"' + g.display_name + '" enabled') : ('"' + g.display_name + '" disabled'), "success");
-}
+if (g) { g.is_active = isActive; renderCatEditorBody(); showToast(isActive ? 'Enabled' : 'Disabled', "success"); }
 }
 async function deleteAgeGroup(disc, groupId) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (!g) return;
-const divWord = disc === 'patterns' ? 'kup/dan' : 'weight';
-if (!confirm('Delete age group "' + g.display_name + '"? This will also delete its ' + divWord + ' categories.')) return;
-if (!g.id.startsWith("tmp_")) {
-await sb.from("age_groups").delete().eq("id", g.id);
-}
+if (!confirm('Delete age group "' + g.display_name + '"?')) return;
+if (!g.id.startsWith("tmp_")) await sb.from("age_groups").delete().eq("id", g.id);
 categoryConfig[disc].ageGroups = categoryConfig[disc].ageGroups.filter(x => x.id !== groupId);
-delete categoryConfig[disc].weightCategories[groupId];
+if (disc === "patterns") delete categoryConfig.patterns.kupRanges[groupId];
+else delete categoryConfig.sparring.weightBoundaries[groupId];
 reorderAndRenumber(disc);
 renderCatEditorBody();
 showToast('Deleted "' + g.display_name + '"', "success");
@@ -1026,299 +953,386 @@ const groups = categoryConfig[disc].ageGroups;
 const maxPriority = groups.reduce((m, g) => Math.max(m, g.order_priority || 0), 0);
 const lastGroup = groups.sort((a,b) => b.order_priority - a.order_priority)[0];
 const defaultMin = lastGroup ? (lastGroup.max_age !== null ? lastGroup.max_age : 36) : 0;
-const newGroup = {
-id: "tmp_" + Date.now(),
-display_name: "New Group",
-min_age: defaultMin,
-max_age: defaultMin + 5,
-is_active: true,
-order_priority: maxPriority + 1,
-discipline: disc
-};
+const newGroup = { id: "tmp_" + Date.now(), display_name: "New Group",
+min_age: defaultMin, max_age: defaultMin + 5, is_active: true, order_priority: maxPriority + 1, discipline: disc };
 categoryConfig[disc].ageGroups.push(newGroup);
 reorderAndRenumber(disc);
 renderCatEditorBody();
-showToast("Added new age group. Drag markers to adjust.", "success");
+showToast("Added new age group", "success");
 }
 function reorderAndRenumber(disc) {
 categoryConfig[disc].ageGroups.sort((a,b) => a.min_age - b.min_age);
 categoryConfig[disc].ageGroups.forEach((g, i) => g.order_priority = i + 1);
 }
-function renderWeightCategories(disc) {
-const container = document.getElementById("weightCategories_" + disc);
-if (!container) return;
-const groups = (categoryConfig[disc].ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
+
+// ============ PATTERNS: EXPLICIT KUP RANGES ============
+function renderPatternsRanges(disc) {
+const section = document.getElementById("divisionSection_" + disc);
+if (!section) return;
+const groups = (categoryConfig.patterns.ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
 if (groups.length === 0) {
-container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined. Add age groups above first.</div>';
+section.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined.</div>';
 return;
 }
-const divisionLabel = disc === "patterns" ? "kup/dan" : "weight";
-container.innerHTML = groups.map((g, idx) => {
-const categories = (categoryConfig[disc].weightCategories[g.id] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
+let html = '<div class="cat-section-title"><i class="fas fa-award" style="color:#1565c0"></i> Kup/Dan Ranges per Age Group</div>' +
+'<div class="cat-section-hint">Define explicit kup/dan ranges for each age group. Use "From" and "To" to set the range. Click "Add Range" to add more.</div>';
+html += groups.map((g, idx) => {
+const ranges = (categoryConfig.patterns.kupRanges[g.id] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
 const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
 const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-return '<div style="margin-bottom:20px;">' +
-'<div style="background:' + color + ';color:white;padding:10px 15px;border-radius:8px 8px 0 0;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+return '<div style="margin-bottom:20px;border:2px solid ' + color + ';border-radius:12px;overflow:hidden;">' +
+'<div style="background:' + color + ';color:white;padding:10px 15px;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
 '<span>' + escapeHtml(g.display_name) + ' (' + rangeText + ' years)</span>' +
-'<button class="btn btn-sm" style="background:white;color:' + color + ';" onclick="addWeightCategory(\'' + disc + '\', \'' + g.id + '\')"><i class="fas fa-plus"></i> Add Category</button>' +
+'<button class="btn btn-sm" style="background:white;color:' + color + ';" onclick="addPatternsRange(\'' + g.id + '\')"><i class="fas fa-plus"></i> Add Range</button>' +
 '</div>' +
-'<div class="weight-category-list" id="weightCatList_' + g.id + '" style="border:2px solid ' + color + ';border-top:none;border-radius:0 0 8px 8px;padding:12px;">' +
-(g.is_active ? '' : '<div style="color:var(--cat-inactive);font-size:0.85rem;font-weight:700;margin-bottom:10px;"><i class="fas fa-pause-circle"></i> Age group is DISABLED</div>') +
-(categories.length === 0 ? '<div style="text-align:center;color:var(--gray);padding:20px;font-style:italic;">No categories defined. Click "Add Category" to create one.</div>' :
-categories.map((c, cIdx) => {
-const minLabel = disc === "patterns" ? (KUP_DAN_NAMES[c.min_value] || c.min_value) : (c.min_value + "kg");
-const maxLabel = disc === "patterns" ? (KUP_DAN_NAMES[c.max_value] || c.max_value) : (c.max_value + "kg");
-return '<div class="weight-category-card ' + (c.is_active ? 'active' : 'inactive') + '">' +
-'<div class="weight-category-header">' +
-'<div>' +
-'<input type="text" class="inline-input inline-input-wide" value="' + escapeAttr(c.display_name) + '" onchange="updateWeightCategoryName(\'' + disc + '\', \'' + g.id + '\', \'' + c.id + '\', this.value)" placeholder="Category name" />' +
-'<div class="weight-category-range">Range: ' + minLabel + ' to ' + maxLabel + '</div>' +
+'<div style="padding:12px;">' +
+(ranges.length === 0 ? '<div style="text-align:center;color:var(--gray);padding:15px;font-style:italic;">No ranges defined. Click "Add Range".</div>' :
+ranges.map((r, rIdx) => {
+const minLabel = KUP_DAN_NAMES[r.min_kup] || r.min_kup;
+const maxLabel = KUP_DAN_NAMES[r.max_kup] || r.max_kup;
+return '<div class="patterns-range-card ' + (r.is_active !== false ? 'active' : 'inactive') + '">' +
+'<div class="patterns-range-header">' +
+'<div class="patterns-range-title">' +
+'<input type="text" class="inline-input inline-input-wide" value="' + escapeAttr(r.display_name) + '" onchange="updatePatternsRangeName(\'' + g.id + '\', \'' + r.id + '\', this.value)" placeholder="Range name" />' +
 '</div>' +
-'<div class="weight-category-actions">' +
-'<label class="switch" title="' + (c.is_active ? 'Active' : 'Disabled') + '">' +
-'<input type="checkbox" ' + (c.is_active ? 'checked' : '') + ' onchange="toggleWeightCategoryActive(\'' + disc + '\', \'' + g.id + '\', \'' + c.id + '\', this.checked)" />' +
-'<span class="slider-toggle"></span>' +
-'</label>' +
-'<button class="btn btn-danger btn-xs" onclick="deleteWeightCategory(\'' + disc + '\', \'' + g.id + '\', \'' + c.id + '\')" title="Delete"><i class="fas fa-trash"></i></button>' +
-'</div>' +
-'</div>' +
-'<div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">' +
-'<label style="font-size:0.85rem;color:var(--gray);margin:0;">Min:</label>' +
-(disc === "patterns" ?
-'<select class="inline-input" onchange="updateWeightCategoryMin(\'' + disc + '\', \'' + g.id + '\', \'' + c.id + '\', this.value)">' +
-Array.from({length: 16}, (_, i) => 10 - i).map(k => '<option value="' + k + '" ' + (c.min_value === k ? 'selected' : '') + '>' + (KUP_DAN_NAMES[k] || k) + '</option>').join('') +
-'</select>' :
-'<input type="number" class="inline-input" value="' + c.min_value + '" onchange="updateWeightCategoryMin(\'' + disc + '\', \'' + g.id + '\', \'' + c.id + '\', this.value)" step="0.5" min="0" />') +
-'<label style="font-size:0.85rem;color:var(--gray);margin:0;">Max:</label>' +
-(disc === "patterns" ?
-'<select class="inline-input" onchange="updateWeightCategoryMax(\'' + disc + '\', \'' + g.id + '\', \'' + c.id + '\', this.value)">' +
-Array.from({length: 16}, (_, i) => 10 - i).map(k => '<option value="' + k + '" ' + (c.max_value === k ? 'selected' : '') + '>' + (KUP_DAN_NAMES[k] || k) + '</option>').join('') +
-'</select>' :
-'<input type="number" class="inline-input" value="' + c.max_value + '" onchange="updateWeightCategoryMax(\'' + disc + '\', \'' + g.id + '\', \'' + c.id + '\', this.value)" step="0.5" min="0" />') +
-'</div>' +
-'</div>';
+'<div style="display:flex;gap:6px;align-items:center;">' +
+'<label class="switch"><input type="checkbox" ' + (r.is_active !== false ? 'checked' : '') + ' onchange="togglePatternsRangeActive(\'' + g.id + '\', \'' + r.id + '\', this.checked)" /><span class="slider-toggle"></span></label>' +
+'<button class="btn btn-danger btn-xs" onclick="deletePatternsRange(\'' + g.id + '\', \'' + r.id + '\')"><i class="fas fa-trash"></i></button>' +
+'</div></div>' +
+'<div class="patterns-range-row">' +
+'<label>From:</label>' +
+'<select onchange="updatePatternsRangeMin(\'' + g.id + '\', \'' + r.id + '\', this.value)">' +
+Array.from({length: 16}, (_, i) => 10 - i).map(k => '<option value="' + k + '" ' + (r.min_kup === k ? 'selected' : '') + '>' + (KUP_DAN_NAMES[k] || k) + '</option>').join('') +
+'</select>' +
+'<label>To:</label>' +
+'<select onchange="updatePatternsRangeMax(\'' + g.id + '\', \'' + r.id + '\', this.value)">' +
+Array.from({length: 16}, (_, i) => 10 - i).map(k => '<option value="' + k + '" ' + (r.max_kup === k ? 'selected' : '') + '>' + (KUP_DAN_NAMES[k] || k) + '</option>').join('') +
+'</select>' +
+'<span class="patterns-range-preview">' + minLabel + ' → ' + maxLabel + '</span>' +
+'</div></div>';
 }).join('')) +
-'</div>' +
-'</div>';
+'</div></div>';
 }).join("");
+section.innerHTML = html;
 }
-async function addWeightCategory(disc, ageGroupId) {
-const categories = categoryConfig[disc].weightCategories[ageGroupId] || [];
-const maxPriority = categories.reduce((m, c) => Math.max(m, c.order_priority || 0), 0);
-const defaultMin = disc === "patterns" ? 10 : 0;
-const defaultMax = disc === "patterns" ? 9 : 30;
-const newCat = {
-id: "tmp_" + Date.now(),
-age_group_id: ageGroupId,
-min_value: defaultMin,
-max_value: defaultMax,
-display_name: disc === "patterns" ? "10th-9th Kup" : "-30kg",
-is_active: true,
-order_priority: maxPriority + 1
+
+function addPatternsRange(ageGroupId) {
+if (!categoryConfig.patterns.kupRanges[ageGroupId]) categoryConfig.patterns.kupRanges[ageGroupId] = [];
+const ranges = categoryConfig.patterns.kupRanges[ageGroupId];
+const maxPriority = ranges.reduce((m, r) => Math.max(m, r.order_priority || 0), 0);
+ranges.push({
+id: "tmp_" + Date.now() + "_" + Math.random().toString(36).substr(2,5),
+age_group_id: ageGroupId, min_kup: 10, max_kup: 9,
+display_name: "10th-9th Kup", is_active: true, order_priority: maxPriority + 1
+});
+renderCatEditorBody();
+showToast("Added new range. Adjust From/To.", "success");
+}
+function updatePatternsRangeName(ageGroupId, rangeId, newName) {
+const r = (categoryConfig.patterns.kupRanges[ageGroupId] || []).find(x => x.id === rangeId);
+if (r) { r.display_name = newName.trim() || r.display_name; showToast('Renamed', "success"); }
+}
+function updatePatternsRangeMin(ageGroupId, rangeId, newMin) {
+const r = (categoryConfig.patterns.kupRanges[ageGroupId] || []).find(x => x.id === rangeId);
+if (r) { r.min_kup = parseInt(newMin); renderCatEditorBody(); showToast("Updated", "success"); }
+}
+function updatePatternsRangeMax(ageGroupId, rangeId, newMax) {
+const r = (categoryConfig.patterns.kupRanges[ageGroupId] || []).find(x => x.id === rangeId);
+if (r) { r.max_kup = parseInt(newMax); renderCatEditorBody(); showToast("Updated", "success"); }
+}
+function togglePatternsRangeActive(ageGroupId, rangeId, isActive) {
+const r = (categoryConfig.patterns.kupRanges[ageGroupId] || []).find(x => x.id === rangeId);
+if (r) { r.is_active = isActive; renderCatEditorBody(); }
+}
+function deletePatternsRange(ageGroupId, rangeId) {
+const ranges = categoryConfig.patterns.kupRanges[ageGroupId] || [];
+const r = ranges.find(x => x.id === rangeId);
+if (!r) return;
+if (!confirm('Delete range "' + r.display_name + '"?')) return;
+if (!r.id.startsWith("tmp_")) {
+sb.from("patterns_kup_ranges").delete().eq("id", r.id).then(() => {});
+}
+categoryConfig.patterns.kupRanges[ageGroupId] = ranges.filter(x => x.id !== rangeId);
+renderCatEditorBody();
+showToast("Deleted", "success");
+}
+
+// ============ SPARRING: OLD SLIDER BOUNDARIES ============
+function renderWeightSliders(disc) {
+const section = document.getElementById("divisionSection_" + disc);
+if (!section) return;
+const groups = (categoryConfig.sparring.ageGroups || []).slice().sort((a,b) => a.order_priority - b.order_priority);
+if (groups.length === 0) {
+section.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No age groups defined.</div>';
+return;
+}
+let html = '<div class="cat-section-title"><i class="fas fa-weight-hanging" style="color:var(--cat-weight)"></i> Weight Divisions per Age Group</div>' +
+'<div class="cat-section-hint">For each age group, drag markers to set weight boundaries. Click on the track to add a new boundary. Hover a marker to delete it.</div>' +
+'<div id="weightSliders_' + disc + '"></div>';
+section.innerHTML = html;
+const container = document.getElementById("weightSliders_" + disc);
+const maxVal = SPARRING_MAX_KG;
+container.innerHTML = groups.map((g, idx) => {
+const boundaries = (categoryConfig.sparring.weightBoundaries[g.id] || []).slice().sort((a,b) => b-a);
+const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
+const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
+const chips = buildWeightCategoryChips(boundaries);
+return '<div class="weight-slider-card ' + (g.is_active ? 'active' : 'inactive') + '">' +
+'<div class="weight-slider-header"><div class="weight-slider-title">' +
+'<span class="age-badge" style="background:' + color + '">' + escapeHtml(g.display_name) + '</span>' +
+'<span style="font-size:0.85rem;color:var(--gray)">(' + rangeText + ' years) — ' + boundaries.length + ' weight division' + (boundaries.length !== 1 ? 's' : '') + '</span>' +
+'</div>' +
+(g.is_active ? '' : '<span style="color:var(--cat-inactive);font-size:0.8rem;font-weight:700;"><i class="fas fa-pause-circle"></i> DISABLED</span>') +
+'</div>' +
+'<div class="weight-slider-track-wrap" id="weightTrackWrap_' + g.id + '">' +
+'<div class="weight-slider-track" id="weightTrack_' + g.id + '" onclick="handleWeightTrackClick(event, \'' + g.id + '\')"></div>' +
+'<div class="weight-scale" id="weightScale_' + g.id + '"></div>' +
+'</div><div class="weight-categories-display">' + chips + '</div></div>';
+}).join("");
+groups.forEach(g => renderWeightMarkers(g));
+}
+
+function buildWeightCategoryChips(boundaries) {
+if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
+const chips = [];
+chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + 'kg</span>');
+for (let i = 0; i < boundaries.length - 1; i++) {
+chips.push('<span class="weight-cat-chip">' + Math.ceil(boundaries[i]) + '-' + boundaries[i+1] + 'kg</span>');
+}
+chips.push('<span class="weight-cat-chip last">+' + boundaries[boundaries.length-1] + 'kg</span>');
+return chips.join("");
+}
+
+function renderWeightMarkers(group) {
+const wrap = document.getElementById("weightTrackWrap_" + group.id);
+const track = document.getElementById("weightTrack_" + group.id);
+const scale = document.getElementById("weightScale_" + group.id);
+if (!wrap || !track || !scale) return;
+wrap.querySelectorAll(".weight-marker").forEach(m => m.remove());
+const maxVal = SPARRING_MAX_KG;
+const boundaries = (categoryConfig.sparring.weightBoundaries[group.id] || []).slice().sort((a,b) => a-b);
+boundaries.forEach(val => {
+const pct = (val / maxVal) * 100;
+const marker = document.createElement("div");
+marker.className = "weight-marker";
+marker.style.left = "calc(20px + (100% - 40px) * " + (pct / 100) + ")";
+marker.innerHTML = '<div class="weight-marker-label">' + val + 'kg</div>' +
+'<button class="weight-marker-delete" onclick="deleteWeightMarker(event, \'' + group.id + '\', ' + val + ')" title="Delete"><i class="fas fa-times"></i></button>';
+marker.addEventListener("mousedown", (e) => {
+if (e.target.closest(".weight-marker-delete")) return;
+startWeightMarkerDrag(e, val, group.id);
+});
+marker.addEventListener("touchstart", (e) => {
+if (e.target.closest(".weight-marker-delete")) return;
+startWeightMarkerDrag(e, val, group.id);
+}, {passive: false});
+wrap.appendChild(marker);
+});
+scale.innerHTML = "";
+for (let k = 0; k <= maxVal; k += 20) {
+const span = document.createElement("span");
+span.textContent = k + "kg";
+scale.appendChild(span);
+}
+}
+
+function handleWeightTrackClick(e, groupId) {
+if (e.target.classList.contains("weight-marker") || e.target.closest(".weight-marker")) return;
+const track = e.currentTarget;
+const rect = track.getBoundingClientRect();
+const pct = (e.clientX - rect.left) / rect.width;
+const val = Math.max(1, Math.min(SPARRING_MAX_KG, Math.round(pct * SPARRING_MAX_KG * 2) / 2));
+const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
+if (boundaries.includes(val)) { showToast("Boundary already exists at " + val + "kg", "error"); return; }
+boundaries.push(val);
+categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
+renderCatEditorBody();
+showToast("Added weight boundary at " + val + "kg", "success");
+}
+
+async function deleteWeightMarker(e, groupId, val) {
+e.preventDefault(); e.stopPropagation();
+if (!confirm("Remove weight boundary at " + val + "kg?")) return;
+const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
+categoryConfig.sparring.weightBoundaries[groupId] = boundaries.filter(b => b !== val);
+renderCatEditorBody();
+showToast("Removed " + val + "kg boundary", "success");
+}
+
+async function startWeightMarkerDrag(e, val, groupId) {
+e.preventDefault(); e.stopPropagation();
+const wrap = document.getElementById("weightTrackWrap_" + groupId);
+const track = document.getElementById("weightTrack_" + groupId);
+if (!track) return;
+const trackRect = track.getBoundingClientRect();
+const marker = e.currentTarget;
+marker.classList.add("dragging");
+const maxVal = SPARRING_MAX_KG;
+let currentVal = val;
+const onMove = (ev) => {
+const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
+currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
+marker.style.left = "calc(20px + (100% - 40px) * " + (currentVal / maxVal) + ")";
+marker.querySelector(".weight-marker-label").textContent = currentVal + "kg";
 };
-if (!categoryConfig[disc].weightCategories[ageGroupId]) {
-categoryConfig[disc].weightCategories[ageGroupId] = [];
-}
-categoryConfig[disc].weightCategories[ageGroupId].push(newCat);
+const onEnd = () => {
+document.removeEventListener("mousemove", onMove);
+document.removeEventListener("mouseup", onEnd);
+document.removeEventListener("touchmove", onMove);
+document.removeEventListener("touchend", onEnd);
+marker.classList.remove("dragging");
+if (currentVal !== val) {
+const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
+const idx = boundaries.indexOf(val);
+if (idx >= 0) {
+if (boundaries.includes(currentVal)) { showToast("Boundary already exists", "error"); renderCatEditorBody(); return; }
+boundaries[idx] = currentVal;
+categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
-showToast("Added new category. Adjust min/max values.", "success");
-}
-function updateWeightCategoryName(disc, ageGroupId, catId, newName) {
-const cats = categoryConfig[disc].weightCategories[ageGroupId] || [];
-const c = cats.find(x => x.id === catId);
-if (c) {
-c.display_name = newName.trim() || c.display_name;
-showToast('Renamed to "' + c.display_name + '"', "success");
+showToast("Moved: " + val + "kg -> " + currentVal + "kg", "success");
 }
 }
-function updateWeightCategoryMin(disc, ageGroupId, catId, newValue) {
-const cats = categoryConfig[disc].weightCategories[ageGroupId] || [];
-const c = cats.find(x => x.id === catId);
-if (c) {
-c.min_value = parseFloat(newValue);
-renderCatEditorBody();
-showToast("Updated min value", "success");
+};
+document.addEventListener("mousemove", onMove);
+document.addEventListener("mouseup", onEnd);
+document.addEventListener("touchmove", onMove, {passive: false});
+document.addEventListener("touchend", onEnd);
 }
-}
-function updateWeightCategoryMax(disc, ageGroupId, catId, newValue) {
-const cats = categoryConfig[disc].weightCategories[ageGroupId] || [];
-const c = cats.find(x => x.id === catId);
-if (c) {
-c.max_value = parseFloat(newValue);
-renderCatEditorBody();
-showToast("Updated max value", "success");
-}
-}
-function toggleWeightCategoryActive(disc, ageGroupId, catId, isActive) {
-const cats = categoryConfig[disc].weightCategories[ageGroupId] || [];
-const c = cats.find(x => x.id === catId);
-if (c) {
-c.is_active = isActive;
-renderCatEditorBody();
-showToast(isActive ? 'Category enabled' : 'Category disabled', "success");
-}
-}
-async function deleteWeightCategory(disc, ageGroupId, catId) {
-const cats = categoryConfig[disc].weightCategories[ageGroupId] || [];
-const c = cats.find(x => x.id === catId);
-if (!c) return;
-if (!confirm('Delete category "' + c.display_name + '"?')) return;
-if (!c.id.startsWith("tmp_")) {
-await sb.from("weight_categories").delete().eq("id", c.id);
-}
-categoryConfig[disc].weightCategories[ageGroupId] = cats.filter(x => x.id !== catId);
-renderCatEditorBody();
-showToast('Deleted "' + c.display_name + '"', "success");
-}
+
+// ============ SAVE ALL ============
 async function saveAllCategoryConfig() {
 showToast("Saving...", "");
 let errors = 0;
 let successCount = 0;
-console.log("Starting save...", categoryConfig);
+
 for (const disc of ["patterns", "sparring"]) {
 const groups = categoryConfig[disc].ageGroups;
-console.log(`Processing ${disc}: ${groups.length} groups`);
 for (const g of groups) {
-console.log(`Processing group: ${g.display_name} (id: ${g.id})`);
+// Save age group
 if (g.id.startsWith("tmp_")) {
 const { data: inserted, error } = await sb.from("age_groups").insert([{
-display_name: g.display_name,
-min_age: g.min_age,
-max_age: g.max_age,
-is_active: g.is_active,
-order_priority: g.order_priority,
-discipline: disc
+display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
+is_active: g.is_active, order_priority: g.order_priority, discipline: disc
 }]).select().single();
-if (error) {
-console.error("Insert age group error:", error);
-errors++;
-continue;
-}
-if (categoryConfig[disc].weightCategories[g.id]) {
-const tmpCats = categoryConfig[disc].weightCategories[g.id];
-delete categoryConfig[disc].weightCategories[g.id];
-categoryConfig[disc].weightCategories[inserted.id] = tmpCats;
+if (error) { console.error("Insert age group error:", error); errors++; continue; }
+// Transfer ranges/boundaries from tmp id to real id
+if (disc === "patterns" && categoryConfig.patterns.kupRanges[g.id]) {
+const tmpRanges = categoryConfig.patterns.kupRanges[g.id];
+delete categoryConfig.patterns.kupRanges[g.id];
+categoryConfig.patterns.kupRanges[inserted.id] = tmpRanges;
+} else if (disc === "sparring" && categoryConfig.sparring.weightBoundaries[g.id]) {
+const tmpBounds = categoryConfig.sparring.weightBoundaries[g.id];
+delete categoryConfig.sparring.weightBoundaries[g.id];
+categoryConfig.sparring.weightBoundaries[inserted.id] = tmpBounds;
 }
 g.id = inserted.id;
-console.log(`Inserted new age group with id: ${inserted.id}`);
 } else {
 const { error } = await sb.from("age_groups").update({
-display_name: g.display_name,
-min_age: g.min_age,
-max_age: g.max_age,
-is_active: g.is_active,
-order_priority: g.order_priority
+display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
+is_active: g.is_active, order_priority: g.order_priority
 }).eq("id", g.id);
-if (error) {
-console.error("Update age group error:", error);
-errors++;
-} else {
-console.log(`Updated age group: ${g.id}`);
+if (error) { console.error("Update age group error:", error); errors++; }
 }
-}
-const currentCats = (categoryConfig[disc].weightCategories[g.id] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-console.log(`Current categories for ${g.id}:`, currentCats);
-const { data: existingCats, error: fetchErr } = await sb.from("weight_categories").select("*").eq("age_group_id", g.id);
-if (fetchErr) {
-console.error("Fetch categories error:", fetchErr);
-errors++;
-continue;
-}
-console.log(`Existing categories:`, existingCats);
-const existingIds = (existingCats || []).map(c => c.id);
-for (const ec of (existingCats || [])) {
-const currentCat = currentCats.find(c => c.id === ec.id);
-if (!currentCat) {
-const { error: delErr } = await sb.from("weight_categories").delete().eq("id", ec.id);
-if (delErr) {
-console.error("Delete category error:", delErr);
-errors++;
-} else {
-console.log(`Deleted category: ${ec.display_name}`);
-}
-}
-}
-for (const cat of currentCats) {
-if (cat.id.startsWith("tmp_")) {
-const { data: inserted, error: insErr } = await sb.from("weight_categories").insert([{
-age_group_id: g.id,
-min_value: cat.min_value,
-max_value: cat.max_value,
-display_name: cat.display_name,
-is_active: cat.is_active,
-order_priority: cat.order_priority
-}]).select().single();
-if (insErr) {
-console.error("Insert category error:", insErr);
-errors++;
-} else {
-cat.id = inserted.id;
-console.log(`Inserted category: ${cat.display_name}`);
+
+// Save discipline-specific data
+if (disc === "patterns") {
+await savePatternsRangesForGroup(g.id);
 successCount++;
-}
 } else {
-const { error: updErr } = await sb.from("weight_categories").update({
-min_value: cat.min_value,
-max_value: cat.max_value,
-display_name: cat.display_name,
-is_active: cat.is_active,
-order_priority: cat.order_priority
-}).eq("id", cat.id);
-if (updErr) {
-console.error("Update category error:", updErr);
-errors++;
-} else {
-console.log(`Updated category: ${cat.display_name}`);
+await saveSparringBoundariesForGroup(g.id);
 successCount++;
 }
 }
 }
-}
-}
+
 await loadCategoryConfig();
 recomputeCompetitorCategories();
-if (errors === 0) {
-showToast(`All categories saved! (${successCount} categories)`, "success");
-console.log("Save completed successfully");
-} else {
-showToast(`Saved with ${errors} error(s)`, "error");
-console.error("Save completed with errors");
-}
+if (errors === 0) showToast("All categories saved! (" + successCount + " groups)", "success");
+else showToast("Saved with " + errors + " error(s)", "error");
 renderCatEditorBody();
 }
+
+async function savePatternsRangesForGroup(ageGroupId) {
+const currentRanges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
+const { data: existing, error: fetchErr } = await sb.from("patterns_kup_ranges").select("*").eq("age_group_id", ageGroupId);
+if (fetchErr) { console.error("Fetch patterns ranges error:", fetchErr); return; }
+const existingIds = (existing || []).map(r => r.id);
+
+// Delete removed
+for (const eb of (existing || [])) {
+const current = currentRanges.find(r => r.id === eb.id);
+if (!current) {
+const { error } = await sb.from("patterns_kup_ranges").delete().eq("id", eb.id);
+if (error) console.error("Delete range error:", error);
+}
+}
+// Insert/update
+for (const r of currentRanges) {
+if (r.id.startsWith("tmp_")) {
+const { data: inserted, error } = await sb.from("patterns_kup_ranges").insert([{
+age_group_id: ageGroupId, min_kup: r.min_kup, max_kup: r.max_kup,
+display_name: r.display_name, is_active: r.is_active !== false, order_priority: r.order_priority
+}]).select().single();
+if (error) console.error("Insert range error:", error);
+else r.id = inserted.id;
+} else {
+const { error } = await sb.from("patterns_kup_ranges").update({
+min_kup: r.min_kup, max_kup: r.max_kup, display_name: r.display_name,
+is_active: r.is_active !== false, order_priority: r.order_priority
+}).eq("id", r.id);
+if (error) console.error("Update range error:", error);
+}
+}
+}
+
+async function saveSparringBoundariesForGroup(ageGroupId) {
+const currentBounds = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
+const { data: existing, error: fetchErr } = await sb.from("weight_boundaries").select("*").eq("age_group_id", ageGroupId);
+if (fetchErr) { console.error("Fetch boundaries error:", fetchErr); return; }
+const existingKg = (existing || []).map(b => b.boundary_kg);
+
+for (const eb of (existing || [])) {
+if (!currentBounds.includes(eb.boundary_kg)) {
+const { error } = await sb.from("weight_boundaries").delete().eq("id", eb.id);
+if (error) console.error("Delete boundary error:", error);
+}
+}
+for (const kg of currentBounds) {
+if (!existingKg.includes(kg)) {
+const { error } = await sb.from("weight_boundaries").insert([{ age_group_id: ageGroupId, boundary_kg: kg }]);
+if (error) console.error("Insert boundary error:", error);
+}
+}
+}
+
 async function resetToDefaults() {
-if (!confirm("Reset all categories to defaults? This will DELETE all current age groups and weight/kup categories.")) return;
-await sb.from("weight_categories").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+if (!confirm("Reset all categories to defaults? This will DELETE all current age groups and divisions.")) return;
+await sb.from("weight_boundaries").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+await sb.from("patterns_kup_ranges").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 await sb.from("age_groups").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 await seedDefaultCategories();
 await loadCategoryConfig();
 renderCatEditorBody();
 showToast("Reset to defaults", "success");
 }
+
+// ============ BRACKET / SELECTION / UNDO (unchanged) ============
 function clearSelection() {
 if (selectedPlayerEl) selectedPlayerEl.classList.remove("selected");
-selectedPlayerEl = null;
-selectedPlayerData = null;
+selectedPlayerEl = null; selectedPlayerData = null;
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
 document.getElementById("selectionBanner").classList.remove("visible");
 }
 async function safeInsert(table, data) {
-try {
-const { error } = await sb.from(table).insert(data);
-if (error) console.warn("Insert into " + table + " failed:", error.message);
-return { error };
-} catch (err) { console.warn("Insert into " + table + " threw:", err); return { error: err }; }
+try { const { error } = await sb.from(table).insert(data); if (error) console.warn("Insert " + table + " failed:", error.message); return { error }; }
+catch (err) { return { error: err }; }
 }
 async function safeDelete(table, filters) {
-try {
-let q = sb.from(table).delete();
-for (const [k, v] of Object.entries(filters || {})) q = q.eq(k, v);
-const { error } = await q;
-if (error) console.warn("Delete from " + table + " failed:", error.message);
-return { error };
-} catch (err) { console.warn("Delete from " + table + " threw:", err); return { error: err }; }
+try { let q = sb.from(table).delete(); for (const [k, v] of Object.entries(filters || {})) q = q.eq(k, v); const { error } = await q; if (error) console.warn("Delete " + table + " failed:", error.message); return { error }; }
+catch (err) { return { error: err }; }
 }
 function getEffectiveBracketSize(categoryKey, playerCount) {
 if (bracketSizeOverrides[categoryKey]) return bracketSizeOverrides[categoryKey];
@@ -1334,7 +1348,7 @@ const { data, error } = await sb.from("bracket_overrides").select("*");
 if (error) { bracketSizeOverrides = {}; return; }
 bracketSizeOverrides = {};
 (data || []).forEach(row => { bracketSizeOverrides[row.category] = row.forced_size; });
-} catch (err) { console.warn("Could not load bracket overrides:", err); bracketSizeOverrides = {}; }
+} catch (err) { bracketSizeOverrides = {}; }
 }
 async function loadBracketWinners() {
 try {
@@ -1342,7 +1356,7 @@ const { data, error } = await sb.from("bracket_winners").select("*");
 if (error) { bracketWinnersCache = {}; return; }
 bracketWinnersCache = {};
 (data || []).forEach(row => { bracketWinnersCache[row.category + "|||" + row.bracket_type] = row; });
-} catch (err) { console.warn("Could not load bracket winners:", err); bracketWinnersCache = {}; }
+} catch (err) { bracketWinnersCache = {}; }
 }
 function getWinnerKey(category, type) { return category + "|||" + type; }
 async function saveWinnerToDb(category, type, winnerName, placements) {
@@ -1351,12 +1365,9 @@ await safeDelete("bracket_winners", { category: category, bracket_type: type });
 const hasData = winnerName || (placements && placements.some(p => p));
 if (hasData) {
 await safeInsert("bracket_winners", [{
-category: category, bracket_type: type,
-winner_name: winnerName || null,
-placement_1: (placements && placements[0]) || null,
-placement_2: (placements && placements[1]) || null,
-placement_3a: (placements && placements[2]) || null,
-placement_3b: (placements && placements[3]) || null
+category: category, bracket_type: type, winner_name: winnerName || null,
+placement_1: (placements && placements[0]) || null, placement_2: (placements && placements[1]) || null,
+placement_3a: (placements && placements[2]) || null, placement_3b: (placements && placements[3]) || null
 }]);
 bracketWinnersCache[key] = { category, bracket_type: type, winner_name: winnerName || null, placement_1: (placements && placements[0]) || null, placement_2: (placements && placements[1]) || null, placement_3a: (placements && placements[2]) || null, placement_3b: (placements && placements[3]) || null };
 } else delete bracketWinnersCache[key];
@@ -1400,7 +1411,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -1422,8 +1433,7 @@ showToast('"' + selectedPlayerData.name + '" placed', "success");
 }
 }
 function handleWinnerDrop(e) {
-e.preventDefault();
-e.stopPropagation();
+e.preventDefault(); e.stopPropagation();
 const zone = e.currentTarget;
 zone.classList.remove("drop-hover");
 const page = zone.closest(".a4-page");
@@ -1438,8 +1448,7 @@ return;
 }
 const data = e.dataTransfer.getData("application/player");
 if (!data) return;
-let player;
-try { player = JSON.parse(data); } catch { return; }
+let player; try { player = JSON.parse(data); } catch { return; }
 if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, player.name);
 else setPlacementZoneValue(zone, player.name);
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
@@ -1488,7 +1497,7 @@ clearSelection();
 await renderBracketView(currentGroups, snapshot.bracketType);
 updateUndoButton();
 showToast("Undone: " + snapshot.description, "success");
-} catch (err) { console.error("Undo failed:", err); showToast("Undo failed: " + err.message, "error"); }
+} catch (err) { showToast("Undo failed: " + err.message, "error"); }
 }
 function showToast(message, type) {
 type = type || "";
@@ -1517,12 +1526,9 @@ const discClass = c._discipline === "patterns" ? "patterns" : "sparring";
 const discLabel = c._discipline === "patterns" ? "Patterns" : "Sparring";
 return '<div class="autocomplete-item" draggable="true" ondragstart="dragAutocompleteItem(event, \'' + safeName + '\', \'' + safeTeam + '\')" ondragend="this.classList.remove(\'dragging-item\')">' +
 '<span class="autocomplete-item-name">' + escapeHtml(c.name) + '</span>' +
-'<span class="autocomplete-item-meta">' +
-'<span>' + (escapeHtml(c.team) || "N/A") + '</span>' +
+'<span class="autocomplete-item-meta"><span>' + (escapeHtml(c.team) || "N/A") + '</span>' +
 '<span class="disc-tag ' + discClass + '">' + discLabel + '</span>' +
-'<span>' + escapeHtml(c._full_cat) + '</span>' +
-'</span>' +
-'</div>';
+'<span>' + escapeHtml(c._full_cat) + '</span></span></div>';
 }).join("");
 }
 dropdown.classList.add("visible");
@@ -1548,8 +1554,7 @@ const midY = rect.top + rect.height / 2;
 return clientY < midY ? "p1" : "p2";
 }
 function handleByeSlotDrop(e) {
-e.preventDefault();
-e.stopPropagation();
+e.preventDefault(); e.stopPropagation();
 const matchBox = e.currentTarget;
 matchBox.classList.remove("drop-hover");
 matchBox.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
@@ -1558,15 +1563,13 @@ const targetRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]'
 if (selectedPlayerData) { moveSelectedPlayerToBye(matchBox, targetRow); return; }
 const data = e.dataTransfer.getData("application/player");
 if (!data) return;
-let player;
-try { player = JSON.parse(data); } catch { return; }
+let player; try { player = JSON.parse(data); } catch { return; }
 const page = matchBox.closest(".a4-page");
 if (!page) return;
 addPlayerToSpecificSlot(player.name, player.team, page.dataset.category, page.dataset.type, parseInt(matchBox.dataset.round || "0"), parseInt(matchBox.dataset.match || "0"), slot);
 }
 function handleByeSlotDragOver(e) {
-e.preventDefault();
-e.dataTransfer.dropEffect = "copy";
+e.preventDefault(); e.dataTransfer.dropEffect = "copy";
 const matchBox = e.currentTarget;
 matchBox.classList.add("drop-hover");
 const slot = detectDroppedSlot(matchBox, e.clientY);
@@ -1601,10 +1604,9 @@ if (currentGroups && currentGroups[categoryKey]) {
 const alreadyInGroup = currentGroups[categoryKey].some(c => (c.name || "").toLowerCase() === (name || "").toLowerCase());
 if (!alreadyInGroup) currentGroups[categoryKey].push({ name, team });
 }
-clearAutocomplete();
-clearSelection();
+clearAutocomplete(); clearSelection();
 await renderBracketView(currentGroups, type);
-showToast('"' + name + '" added to Round ' + (round + 1) + ', Match ' + (match + 1) + ', ' + (slot === "p1" ? "top" : "bottom") + ' slot', "success");
+showToast('"' + name + '" added', "success");
 }
 async function increaseBracketSize(categoryKey, type) {
 const list = currentGroups[categoryKey] || [];
@@ -1623,7 +1625,7 @@ const list = currentGroups[categoryKey] || [];
 const currentSize = getEffectiveBracketSize(categoryKey, list.length);
 const minNeeded = getBracketSize(list.length);
 const newSize = Math.max(2, Math.floor(currentSize / 2));
-if (newSize < minNeeded) { showToast("Cannot shrink below " + minNeeded + " slots (you have " + list.length + " players)", "error"); return; }
+if (newSize < minNeeded) { showToast("Cannot shrink below " + minNeeded + " slots", "error"); return; }
 await takeSnapshot("Shrink " + categoryKey + " to " + newSize + " slots");
 if (newSize === minNeeded) { delete bracketSizeOverrides[categoryKey]; await saveBracketSizeOverride(categoryKey, type, null); }
 else { bracketSizeOverrides[categoryKey] = newSize; await saveBracketSizeOverride(categoryKey, type, newSize); }
@@ -1632,13 +1634,8 @@ await renderBracketView(currentGroups, type);
 showToast("Bracket shrunk to " + newSize + " slots", "success");
 }
 function getBracketSize(count) {
-if (count <= 1) return 1;
-if (count === 2) return 2;
-if (count <= 4) return 4;
-if (count <= 8) return 8;
-if (count <= 16) return 16;
-if (count <= 32) return 32;
-return 64;
+if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4;
+if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64;
 }
 function shuffle(list) {
 const arr = [...list];
@@ -1689,13 +1686,11 @@ return data && data.length ? data : null;
 }
 async function generateBracketData(list, categoryKey, type) {
 const savedOrder = await getSavedOrder(categoryKey, type);
-const round1Entries = [];
-const laterRoundEntries = [];
+const round1Entries = [], laterRoundEntries = [];
 if (savedOrder && savedOrder.length > 0) {
 savedOrder.forEach(item => {
 const pos = item.position_number || 0;
-if (pos >= 10000) laterRoundEntries.push(item);
-else round1Entries.push(item);
+if (pos >= 10000) laterRoundEntries.push(item); else round1Entries.push(item);
 });
 }
 const laterRoundNames = new Set(laterRoundEntries.map(e => (e.name || "").trim().toLowerCase()));
@@ -1798,8 +1793,7 @@ let totalSaved = 0, totalCategories = 0, hasErrors = false;
 for (const page of pages) {
 const categoryKey = page.dataset.category;
 const result = await saveCategoryOrder(categoryKey, type, true);
-if (result.success) { totalSaved += result.count; totalCategories++; }
-else hasErrors = true;
+if (result.success) { totalSaved += result.count; totalCategories++; } else hasErrors = true;
 }
 if (hasErrors) showToast("Saved " + totalSaved + " players from " + totalCategories + " categories (some errors)", "error");
 else showToast("Saved " + totalSaved + " players from " + totalCategories + " categories + all winners", "success");
@@ -1862,8 +1856,7 @@ content.addEventListener("click", handleByeClick);
 function handleContentClick(e) {
 const deleteBtn = e.target.closest(".delete-btn");
 if (deleteBtn) {
-e.preventDefault();
-e.stopPropagation();
+e.preventDefault(); e.stopPropagation();
 const row = deleteBtn.closest(".player-row");
 if (!row) return;
 const name = row.dataset.playerName;
@@ -1887,7 +1880,7 @@ if (!selectedPlayerEl) {
 selectedPlayerEl = playerRow;
 selectedPlayerData = { name, team, category, type, rowEl: playerRow };
 playerRow.classList.add("selected");
-document.getElementById("selectionBannerText").textContent = 'Selected: "' + name + '" — click another player to swap, click BYE/Winner to move';
+document.getElementById("selectionBannerText").textContent = 'Selected: "' + name + '" — click another player to swap';
 document.getElementById("selectionBanner").classList.add("visible");
 return;
 }
@@ -1913,8 +1906,7 @@ if (clickedName && clickedName !== "BYE" && clickedName !== "________________" &
 }
 const slot = detectDroppedSlot(matchBox, e.clientY);
 const targetRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
-e.preventDefault();
-e.stopPropagation();
+e.preventDefault(); e.stopPropagation();
 moveSelectedPlayerToBye(matchBox, targetRow);
 }
 async function moveSelectedPlayerToBye(matchBox, targetRow) {
@@ -1961,43 +1953,30 @@ const team1 = row1.querySelector(".p-team").innerText;
 const name2 = row2.querySelector(".p-name").innerText;
 const team2 = row2.querySelector(".p-team").innerText;
 await takeSnapshot('Swap "' + name1 + '" <-> "' + name2 + '"');
-row1.dataset.playerName = name2;
-row1.dataset.playerTeam = team2;
-row2.dataset.playerName = name1;
-row2.dataset.playerTeam = team1;
+row1.dataset.playerName = name2; row1.dataset.playerTeam = team2;
+row2.dataset.playerName = name1; row2.dataset.playerTeam = team1;
 row1.querySelector(".p-name").innerText = name2;
 row2.querySelector(".p-name").innerText = name1;
 row1.querySelector(".p-team").innerText = team2;
 row2.querySelector(".p-team").innerText = team1;
-row1.style.background = "#c8e6c9";
-row2.style.background = "#c8e6c9";
+row1.style.background = "#c8e6c9"; row2.style.background = "#c8e6c9";
 setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 400);
 clearSelection();
 await saveCategoryOrder(category, type, true);
 }
 async function renderBracketView(groups, type) {
-currentGroups = groups;
-currentBracketType = type;
-undoStack = [];
-updateUndoButton();
-clearSelection();
+currentGroups = groups; currentBracketType = type;
+undoStack = []; updateUndoButton(); clearSelection();
 await loadBracketWinners();
-let html = '<div class="bracket-controls-bar">' +
-'<div class="bracket-controls-left">' +
+let html = '<div class="bracket-controls-bar"><div class="bracket-controls-left">' +
 '<button class="btn btn-secondary btn-sm" onclick="' + (type === "Patterns" ? "showPatterns()" : "showSparring()") + '"><i class="fas fa-arrow-left"></i> Back to List</button>' +
 '<button class="btn btn-success btn-sm" onclick="saveAllCategories(\'' + type + '\')"><i class="fas fa-save"></i> Save All Brackets</button>' +
 '<button class="btn btn-info btn-sm" onclick="exportAllToExcel(\'' + type + '\')"><i class="fas fa-file-excel"></i> Excel</button>' +
 '<button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button>' +
-'</div>' +
-'<div class="bracket-controls-right">' +
-'<div class="search-box">' +
-'<i class="fas fa-search"></i>' +
+'</div><div class="bracket-controls-right"><div class="search-box"><i class="fas fa-search"></i>' +
 '<input type="text" id="bracketSearch" placeholder="Highlight in brackets..." oninput="performInlineSearch(this.value)" />' +
 '<button class="search-clear" id="searchClearBtn" onclick="clearInlineSearch()"><i class="fas fa-times"></i></button>' +
-'<span class="search-count" id="searchCount"></span>' +
-'</div>' +
-'</div>' +
-'</div>';
+'<span class="search-count" id="searchCount"></span></div></div></div>';
 let categoryIndex = 0;
 for (const key in groups) {
 const list = groups[key];
@@ -2017,22 +1996,17 @@ const p2 = winnerData.placement_2 || "";
 const p3a = winnerData.placement_3a || "";
 const p3b = winnerData.placement_3b || "";
 html += '<div class="a4-page" id="page-' + categoryIndex + '" data-category="' + key + '" data-type="' + type + '" style="--row-count:' + rowsCount + '">' +
-'<div class="bracket-header">' +
-'<span style="font-size:12px;text-transform:uppercase;color:#666">' + type + '</span>' +
+'<div class="bracket-header"><span style="font-size:12px;text-transform:uppercase;color:#666">' + type + '</span>' +
 '<h2>' + escapeHtml(key) + '</h2>' +
 '<span style="font-size:14px;color:var(--secondary);font-weight:bold">' + list.length + ' Competitors ' +
-'<span class="bracket-size-indicator">' + effectiveSize + ' slots' + (isOverridden ? ' ⚙️' : '') + '</span>' +
-'</span>' +
+'<span class="bracket-size-indicator">' + effectiveSize + ' slots' + (isOverridden ? ' ⚙️' : '') + '</span></span>' +
 '<div style="text-align:right;margin-top:5px">' +
 '<button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-random"></i> Shuffle</button>' +
 '<button class="btn btn-success btn-sm" onclick="saveCategoryOrder(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-list-ol"></i> Save This Category</button>' +
-'</div>' +
-'<div class="bracket-header-actions">' +
+'</div><div class="bracket-header-actions">' +
 '<button class="btn btn-remove btn-sm" onclick="decreaseBracketSize(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-minus"></i> Smaller</button>' +
 '<button class="btn btn-add btn-sm" onclick="increaseBracketSize(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-plus"></i> Bigger</button>' +
-'</div>' +
-'</div>' +
-'<table class="bracket-table"><thead><tr>';
+'</div></div><table class="bracket-table"><thead><tr>';
 for (let r = 1; r <= data.totalRounds; r++) html += '<th>Round ' + r + '</th>';
 html += '</tr></thead><tbody>';
 for (let i = 0; i < rowsCount; i++) {
@@ -2061,8 +2035,7 @@ html += '<div class="player-row" data-player-id="' + p1Id + '" data-player-name=
 html += '<button class="drag-handle" title="Drag to move"><i class="fas fa-grip-vertical"></i></button>';
 html += '<div class="player-info"><span class="p-name" contenteditable="true">' + escapeHtml(mp1.name) + '</span><span class="p-team">' + (escapeHtml(mp1.team) || "N/A") + '</span></div>';
 if (!p1IsBye && mp1.name !== "________________") html += '<button class="delete-btn" title="Delete"><i class="fas fa-times"></i></button>';
-html += '</div>';
-html += '<div class="vs-divider">VS</div>';
+html += '</div><div class="vs-divider">VS</div>';
 const p2SafeName = escapeAttr(mp2.name);
 const p2SafeTeam = escapeAttr(mp2.team);
 html += '<div class="player-row" data-player-id="' + p2Id + '" data-player-name="' + p2SafeName + '" data-player-team="' + p2SafeTeam + '" data-category="' + key + '" data-bracket-type="' + type + '" data-slot="p2">';
@@ -2076,8 +2049,7 @@ const p1Class = p1 ? "has-value" : "empty-zone";
 const p2Class = p2 ? "has-value" : "empty-zone";
 const p3aClass = p3a ? "has-value" : "empty-zone";
 const p3bClass = p3b ? "has-value" : "empty-zone";
-html += '<div class="winner-section">' +
-'<div class="winner-label"><i class="fas fa-trophy"></i> WINNER</div>' +
+html += '<div class="winner-section"><div class="winner-label"><i class="fas fa-trophy"></i> WINNER</div>' +
 '<div class="winner-drop-zone ' + winnerClass + '" data-placeholder="Drop winner here" data-value="' + escapeAttr(winnerName) + '">' + (escapeHtml(winnerName) || "Drop winner here") + '<button class="clear-winner" title="Clear"><i class="fas fa-times"></i></button></div>' +
 '<div class="winner-label" style="margin-top:6px"><i class="fas fa-medal"></i> PLACEMENTS</div>' +
 '<div class="placements-list">' +
@@ -2085,8 +2057,7 @@ html += '<div class="winner-section">' +
 '<div class="placement-row"><span class="placement-rank silver">🥈 2.</span><div class="placement-drop-zone ' + p2Class + '" data-placement="1" data-placeholder="—" data-value="' + escapeAttr(p2) + '">' + (escapeHtml(p2) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
 '<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ' + p3aClass + '" data-placement="2" data-placeholder="—" data-value="' + escapeAttr(p3a) + '">' + (escapeHtml(p3a) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
 '<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ' + p3bClass + '" data-placement="3" data-placeholder="—" data-value="' + escapeAttr(p3b) + '">' + (escapeHtml(p3b) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
-'</div>' +
-'</div>';
+'</div></div>';
 }
 html += '</div></td>';
 }
@@ -2109,23 +2080,17 @@ function initDragHandleDrag() {
 document.querySelectorAll(".drag-handle").forEach(handle => { handle.addEventListener("mousedown", startDragHandle); });
 }
 function startDragHandle(e) {
-e.preventDefault();
-e.stopPropagation();
+e.preventDefault(); e.stopPropagation();
 const row = e.target.closest(".player-row");
 if (!row) return;
 const name = row.dataset.playerName;
 if (!name || name === "BYE" || name === "________________") return;
 clearSelection();
 const ghost = row.cloneNode(true);
-ghost.style.position = "fixed";
-ghost.style.pointerEvents = "none";
-ghost.style.zIndex = "10000";
-ghost.style.width = row.offsetWidth + "px";
-ghost.style.opacity = "0.85";
-ghost.style.background = "#fff3cd";
-ghost.style.border = "2px solid var(--warning)";
-ghost.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
-ghost.style.transform = "rotate(2deg)";
+ghost.style.position = "fixed"; ghost.style.pointerEvents = "none"; ghost.style.zIndex = "10000";
+ghost.style.width = row.offsetWidth + "px"; ghost.style.opacity = "0.85";
+ghost.style.background = "#fff3cd"; ghost.style.border = "2px solid var(--warning)";
+ghost.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"; ghost.style.transform = "rotate(2deg)";
 document.body.appendChild(ghost);
 dragHandleState = {
 sourceRow: row, ghost: ghost,
@@ -2144,7 +2109,7 @@ dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
@@ -2159,7 +2124,7 @@ const slot = detectDroppedSlot(matchBox, e.clientY);
 const slotRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 if (slotRow) slotRow.classList.add("drop-hover-slot");
 }
-const winnerZone = elemBelow.closest(".winner-drop-zone, .placement_drop-zone");
+const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
 if (winnerZone) winnerZone.classList.add("drop-hover");
 }
 async function onDragHandleEnd(e) {
@@ -2355,26 +2320,17 @@ let origSubCat = "";
 let origWeight = null;
 if (discipline === "sparring") {
 const wMatch = fullCat.match(/[-\s]?(\d+(?:\.\d+)?)\s*kg/i);
-if (wMatch) {
-origWeight = parseFloat(wMatch[1]);
-origSubCat = wMatch[1] + "kg";
-}
+if (wMatch) { origWeight = parseFloat(wMatch[1]); origSubCat = wMatch[1] + "kg"; }
 } else if (discipline === "patterns") {
 let parts = fullCat.split(" - ");
 if (parts.length >= 2) origSubCat = parts.slice(1).join(" - ").trim();
 }
 competitors.push({
-...person,
-_reg_id: reg.id,
-_discipline: discipline,
-_label: label,
-_full_cat: fullCat,
-_original_sub_cat: origSubCat,
+...person, _reg_id: reg.id, _discipline: discipline, _label: label,
+_full_cat: fullCat, _original_sub_cat: origSubCat,
 weight_kg: origWeight || person.weight_kg || null,
-_actual_age_group: "OTHER",
-_actual_sub_cat: origSubCat,
-_age_group_id: null,
-_age_group_name: null
+_actual_age_group: "OTHER", _actual_sub_cat: origSubCat,
+_age_group_id: null, _age_group_name: null
 });
 });
 });
@@ -2408,6 +2364,8 @@ html += '<div class="category-card"><div class="category-header">Data Summary</d
 '<p><strong>Judge Ranks Assigned:</strong> ' + Object.keys(judgeRanksMap).length + '</p>' +
 '<p><strong>Category Config (patterns age groups):</strong> ' + categoryConfig.patterns.ageGroups.length + '</p>' +
 '<p><strong>Category Config (sparring age groups):</strong> ' + categoryConfig.sparring.ageGroups.length + '</p>' +
+'<p><strong>Patterns kup ranges defined:</strong> ' + Object.values(categoryConfig.patterns.kupRanges).reduce((s, arr) => s + arr.length, 0) + '</p>' +
+'<p><strong>Sparring weight boundaries defined:</strong> ' + Object.values(categoryConfig.sparring.weightBoundaries).reduce((s, arr) => s + arr.length, 0) + '</p>' +
 '</div></div>';
 if (lastDebugInfo.errors.length > 0) {
 html += '<div class="category-card"><div class="category-header" style="background:var(--danger);">Errors</div><div style="padding:20px;">' + lastDebugInfo.errors.map(e => '<div style="color:var(--danger);margin:5px 0;">• ' + e + '</div>').join("") + '</div></div>';
@@ -2504,11 +2462,12 @@ wDrop.innerHTML = '<option value="ALL">All</option>';
 const ageGroup = categoryConfig.sparring.ageGroups.find(g => g.display_name === age && g.is_active);
 let weightDivisions = [];
 if (ageGroup) {
-const cats = (categoryConfig.sparring.weightCategories[ageGroup.id] || []).filter(c => c.is_active);
-if (cats.length === 0) {
-weightDivisions = ["Open"];
-} else {
-cats.forEach(c => weightDivisions.push(c.display_name));
+const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).slice().sort((a,b) => a-b);
+if (bounds.length === 0) { weightDivisions = ["Open"]; }
+else {
+weightDivisions.push("-" + bounds[0] + "kg");
+for (let i = 0; i < bounds.length - 1; i++) weightDivisions.push(Math.ceil(bounds[i]) + "-" + bounds[i+1] + "kg");
+weightDivisions.push("+" + bounds[bounds.length-1] + "kg");
 }
 } else {
 const relevantComps = competitors.filter((c) => {
@@ -2528,8 +2487,8 @@ return a.localeCompare(b);
 }
 weightDivisions.forEach(w => { wDrop.innerHTML += '<option value="' + w + '">' + w + '</option>'; });
 if (ageGroup) {
-const cats = (categoryConfig.sparring.weightCategories[ageGroup.id] || []).filter(c => c.is_active);
-info.innerHTML = '<i class="fas fa-weight-hanging"></i> <strong>' + escapeHtml(ageGroup.display_name) + ':</strong> ' + cats.length + ' weight categor' + (cats.length !== 1 ? 'ies' : 'y') + ' configured (ages ' + ageGroup.min_age + (ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age) + ')';
+const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).length;
+info.innerHTML = '<i class="fas fa-weight-hanging"></i> <strong>' + escapeHtml(ageGroup.display_name) + ':</strong> ' + bounds + ' weight division' + (bounds !== 1 ? 's' : '') + ' configured (ages ' + ageGroup.min_age + (ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age) + ')';
 } else {
 info.innerHTML = '<i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.';
 }
@@ -2624,22 +2583,18 @@ if (patternsTotal !== null) segments.push('<span class="price-segment patterns-p
 if (sparringTotal !== null) segments.push('<span class="price-segment sparring-price"><i class="fas fa-fist-raised"></i> ' + formatEuro(sparringPrice) + ' × ' + t.sparringEntries.length + ' = <strong>' + formatEuro(sparringTotal) + '</strong></span>');
 priceSummaryHtml = '<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ' + segments.join('<span class="price-operator">+</span>') + ' <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ' + formatEuro(grandTotal) + '</span></div>';
 }
-html += '<div class="team-overview-card">' +
-'<div class="team-overview-header">' +
+html += '<div class="team-overview-card"><div class="team-overview-header">' +
 '<div class="team-name-block"><div class="team-icon">' + initial + '</div><div><div class="team-name">' + escapeHtml(teamName) + '</div><div style="font-size:0.85rem;color:var(--gray);">' + t.competitorNames.size + ' competitors • ' + totalEntries + ' entries</div></div></div>' +
 '<div class="team-stats">' +
 '<span class="stat-pill total"><i class="fas fa-layer-group"></i> Categories: <span class="stat-num">' + totalCats + '</span></span>' +
 '<span class="stat-pill entries"><i class="fas fa-list"></i> Entries: <span class="stat-num">' + totalEntries + '</span></span>' +
 '<span class="stat-pill patterns"><i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">' + patternsCount + '</span></span>' +
 '<span class="stat-pill sparring"><i class="fas fa-fist-raised"></i> Sparring: <span class="stat-num">' + sparringCount + '</span></span>' +
-'</div>' +
-'</div>' +
-priceSummaryHtml +
+'</div></div>' + priceSummaryHtml +
 '<div class="team-actions">' +
 '<button class="btn btn-info btn-sm" onclick="showTeamDetail(\'' + safeTeam + '\', \'patterns\')" ' + (patternsCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '><i class="fas fa-chess-board"></i> View Patterns (' + patternsCount + ')</button>' +
 '<button class="btn btn-info btn-sm" onclick="showTeamDetail(\'' + safeTeam + '\', \'sparring\')" ' + (sparringCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '><i class="fas fa-fist-raised"></i> View Sparring (' + sparringCount + ')</button>' +
-'</div>' +
-'</div>';
+'</div></div>';
 });
 document.getElementById("content").innerHTML = html;
 }
@@ -2708,7 +2663,7 @@ const { data, error } = await sb.from("judge_ranks").select("judge_id, rank");
 if (error) { judgeRanksMap = {}; return; }
 judgeRanksMap = {};
 (data || []).forEach(row => { judgeRanksMap[row.judge_id] = row.rank; });
-} catch (err) { console.warn("Could not load judge ranks:", err); judgeRanksMap = {}; }
+} catch (err) { judgeRanksMap = {}; }
 }
 function getJudgeRank(judgeId) { return judgeRanksMap[judgeId] || null; }
 function getRankLabel(rank) {
@@ -2759,7 +2714,7 @@ showToast('"' + displayName + '" → ' + getRankLabel(rankSelectionMode), "succe
 }
 if (row) { row.classList.add("just-assigned"); setTimeout(() => row.classList.remove("just-assigned"), 1000); }
 await refreshJudgesTable();
-} catch (err) { console.error("Assign rank error:", err); showToast("Failed: " + (err.message || err), "error"); }
+} catch (err) { showToast("Failed: " + (err.message || err), "error"); }
 }
 async function refreshJudgesTable() {
 const tbody = document.querySelector(".judges-table tbody");
@@ -2793,28 +2748,23 @@ await fetchData();
 rankSelectionMode = null;
 const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0 };
 judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
-let html = '<div class="judges-toolbar">' +
-'<div class="judges-toolbar-header">' +
+let html = '<div class="judges-toolbar"><div class="judges-toolbar-header">' +
 '<div class="judges-toolbar-title"><i class="fas fa-gavel"></i> Judges List (' + judges.length + ')</div>' +
 '<button class="btn btn-warning btn-sm" id="toggleRangsBtn" onclick="toggleRangsPanel()"><i class="fas fa-layer-group"></i> Rangs</button>' +
-'</div>' +
-'<div class="rangs-panel" id="rangsPanel">' +
+'</div><div class="rangs-panel" id="rangsPanel">' +
 '<div class="rangs-panel-title"><i class="fas fa-layer-group"></i> Assign Rangs — Select a rank, then click a judge</div>' +
 '<div class="rangs-buttons">' +
 '<button class="rank-btn headref" data-rank="head_referee" onclick="selectRank(\'head_referee\')"><i class="fas fa-crown"></i> Head Referee</button>' +
 '<button class="rank-btn referee" data-rank="referee" onclick="selectRank(\'referee\')"><i class="fas fa-user-shield"></i> Referee</button>' +
 '<button class="rank-btn computer" data-rank="computer_referee" onclick="selectRank(\'computer_referee\')"><i class="fas fa-desktop"></i> Computer Referee</button>' +
 '<button class="rank-btn unassign" data-rank="unassign" onclick="selectRank(\'unassign\')"><i class="fas fa-times-circle"></i> Unassign</button>' +
-'</div>' +
-'<div class="rangs-hint" id="rangsHint"><i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.</div>' +
-'</div>' +
-'<div class="rank-legend" id="rankLegend">' +
+'</div><div class="rangs-hint" id="rangsHint"><i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.</div>' +
+'</div><div class="rank-legend" id="rankLegend">' +
 '<div class="rank-legend-item"><span class="rank-badge head_referee"><i class="fas fa-crown"></i> Head Referee</span> <span class="rank-legend-count">' + counts.head_referee + '</span></div>' +
 '<div class="rank-legend-item"><span class="rank-badge referee"><i class="fas fa-user-shield"></i> Referee</span> <span class="rank-legend-count">' + counts.referee + '</span></div>' +
 '<div class="rank-legend-item"><span class="rank-badge computer_referee"><i class="fas fa-desktop"></i> Computer Referee</span> <span class="rank-legend-count">' + counts.computer_referee + '</span></div>' +
 '<div class="rank-legend-item"><span class="rank-badge unassigned"><i class="fas fa-question-circle"></i> Unassigned</span> <span class="rank-legend-count">' + counts.unassigned + '</span></div>' +
-'</div>' +
-'</div>';
+'</div></div>';
 if (judges.length === 0) html += '<div style="padding:30px;text-align:center;color:var(--gray);background:white;border-radius:12px;box-shadow:var(--shadow);">No judges registered.</div>';
 else {
 html += '<table class="judges-table"><thead><tr>' +
@@ -2880,18 +2830,15 @@ const compRefExpense = (compRefPrice !== null && !isNaN(compRefPrice)) ? compRef
 const totalExpense = headRefExpense + refExpense + compRefExpense;
 const netProfit = totalIncome - totalExpense;
 const isNegative = netProfit < 0;
-let html = '<div class="price-overview-container">' +
-'<div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+let html = '<div class="price-overview-container"><div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
 '<h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>' +
 '<button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>' +
-'</div>' +
-'<div class="price-summary-grid">' +
+'</div><div class="price-summary-grid">' +
 '<div class="price-summary-card income"><div class="card-icon-big"><i class="fas fa-arrow-down"></i></div><div class="card-label">Total Income</div><div class="card-value">' + formatEuro(totalIncome) + '</div></div>' +
 '<div class="price-summary-card expense"><div class="card-icon-big"><i class="fas fa-arrow-up"></i></div><div class="card-label">Total Expenses</div><div class="card-value">' + formatEuro(totalExpense) + '</div></div>' +
 '<div class="price-summary-card profit ' + (isNegative ? 'negative' : '') + '"><div class="card-icon-big"><i class="fas fa-' + (isNegative ? 'exclamation-triangle' : 'chart-line') + '"></i></div><div class="card-label">Net ' + (isNegative ? 'Loss' : 'Profit') + '</div><div class="card-value">' + (isNegative ? '-' : '') + formatEuro(Math.abs(netProfit)) + '</div></div>' +
 '<div class="price-summary-card count"><div class="card-icon-big"><i class="fas fa-users"></i></div><div class="card-label">Total Participants</div><div class="card-value">' + (competitors.length + judges.length + coaches.length) + '</div></div>' +
-'</div>' +
-'<div class="price-formula-bar">' +
+'</div><div class="price-formula-bar">' +
 '<span class="formula-segment income-seg"><i class="fas fa-arrow-down"></i> Income: <strong>' + formatEuro(totalIncome) + '</strong></span>' +
 '<span class="formula-operator">−</span>' +
 '<span class="formula-segment expense-seg"><i class="fas fa-arrow-up"></i> Expenses: <strong>' + formatEuro(totalExpense) + '</strong></span>' +
@@ -2904,22 +2851,17 @@ html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-left:5px
 '<div><strong>' + unassignedJudges.length + ' judge' + (unassignedJudges.length !== 1 ? 's' : '') + ' unassigned</strong> — their fees are NOT being counted. Go to <strong>Judges → Rangs</strong> to assign ranks.</div>' +
 '</div>';
 }
-html += '<div class="price-breakdown-section">' +
-'<div class="price-breakdown-header income-header expanded" onclick="toggleBreakdown(this)">' +
+html += '<div class="price-breakdown-section"><div class="price-breakdown-header income-header expanded" onclick="toggleBreakdown(this)">' +
 '<div class="price-breakdown-title income-title"><i class="fas fa-arrow-down"></i> INCOME — Competitor Entry Fees</div>' +
 '<div class="price-breakdown-total income-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalIncome) + '</div>' +
-'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>' +
-'</div>' +
+'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span></div>' +
 '<div class="price-breakdown-body expanded">';
 html += buildPriceLineItem("Patterns (Tul) Entry Fees", "fa-chess-board", "patterns-icon", patternsEntries.length, patternsPrice, patternsIncome, "income", patternsEntries, 'per entry @ ' + (patternsPrice !== null ? formatEuro(patternsPrice) : 'N/A'));
 html += buildPriceLineItem("Sparring (Matsogi) Entry Fees", "fa-fist-raised", "sparring-icon", sparringEntries.length, sparringPrice, sparringIncome, "income", sparringEntries, 'per entry @ ' + (sparringPrice !== null ? formatEuro(sparringPrice) : 'N/A'));
-html += '</div></div>' +
-'<div class="price-breakdown-section">' +
-'<div class="price-breakdown-header expense-header expanded" onclick="toggleBreakdown(this)">' +
+html += '</div></div><div class="price-breakdown-section"><div class="price-breakdown-header expense-header expanded" onclick="toggleBreakdown(this)">' +
 '<div class="price-breakdown-title expense-title"><i class="fas fa-arrow-up"></i> EXPENSES — Referee Fees (by Rank)</div>' +
 '<div class="price-breakdown-total expense-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalExpense) + '</div>' +
-'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span>' +
-'</div>' +
+'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span></div>' +
 '<div class="price-breakdown-body expanded">';
 html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headReferees.length, headRefPrice, headRefExpense, "expense", headReferees, headReferees.length + ' judge' + (headReferees.length !== 1 ? 's' : '') + ' @ ' + (headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'));
 html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", regularReferees.length, refPrice, refExpense, "expense", regularReferees, regularReferees.length + ' judge' + (regularReferees.length !== 1 ? 's' : '') + ' @ ' + (refPrice !== null ? formatEuro(refPrice) : 'N/A'));
@@ -2940,28 +2882,19 @@ entries.forEach((e, idx) => {
 const name = escapeHtml(e.name) || "Unknown";
 const team = escapeHtml(e.team) || "N/A";
 const cat = escapeHtml(e._full_cat) || "";
-detailsHtml += '<div class="price-detail-row">' +
-'<div class="price-detail-name"><span style="color:var(--gray);font-weight:700;width:22px">' + (idx + 1) + '.</span><span>' + name + '</span><span class="price-detail-team">• ' + team + (cat ? ' • ' + cat : '') + '</span></div>' +
-'<div class="price-detail-amount ' + amountClass + '">' + sign + formatEuro(unitPrice) + '</div>' +
-'</div>';
+detailsHtml += '<div class="price-detail-row"><div class="price-detail-name"><span style="color:var(--gray);font-weight:700;width:22px">' + (idx + 1) + '.</span><span>' + name + '</span><span class="price-detail-team">• ' + team + (cat ? ' • ' + cat : '') + '</span></div>' +
+'<div class="price-detail-amount ' + amountClass + '">' + sign + formatEuro(unitPrice) + '</div></div>';
 });
 }
 detailsHtml += '</div>';
 } else detailsHtml = '<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>';
-return '<div class="price-line-item" onclick="togglePriceLine(this)">' +
-'<div class="price-line-left">' +
+return '<div class="price-line-item" onclick="togglePriceLine(this)"><div class="price-line-left">' +
 '<div class="price-line-icon ' + iconClass + '"><i class="fas ' + icon + '"></i></div>' +
-'<div class="price-line-info">' +
-'<div class="price-line-title">' + escapeHtml(title) + ' <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">' + count + '</span></div>' +
-'<div class="price-line-subtitle">' + escapeHtml(subtitle) + '</div>' +
-'</div>' +
-'</div>' +
-'<div class="price-line-right">' +
-'<div class="price-line-amount ' + amountClass + '">' + sign + formatEuro(total) + '</div>' +
-'<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span>' +
-'</div>' +
-detailsHtml +
-'</div>';
+'<div class="price-line-info"><div class="price-line-title">' + escapeHtml(title) + ' <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">' + count + '</span></div>' +
+'<div class="price-line-subtitle">' + escapeHtml(subtitle) + '</div></div></div>' +
+'<div class="price-line-right"><div class="price-line-amount ' + amountClass + '">' + sign + formatEuro(total) + '</div>' +
+'<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span></div>' +
+detailsHtml + '</div>';
 }
 function toggleBreakdown(header) {
 header.classList.toggle("expanded");
