@@ -393,14 +393,12 @@ const state = {
   ringChannel: null,
   heartbeatInterval: null,
   pollInterval: null,
+  matchPollInterval: null,
   heartbeatBusy: false,
-  missedChecks: 0,
   loggingIn: false,
 };
 
-/* ------------------------------------------------------------------ */
-/* FIX 1: session ids that work even without a secure-context crypto  */
-/* ------------------------------------------------------------------ */
+/* session ids that work even without secure-context crypto */
 function makeSessionId() {
   try {
     if (window.crypto && typeof window.crypto.randomUUID === "function") {
@@ -466,10 +464,8 @@ async function route() {
     return;
   }
 
-  /* ---------------------------------------------------------------- */
-  /* FIX 2: a hashchange (back button, programmatic clear…) must NOT  */
-  /* kick an active judge phone or laptop back to the landing screen  */
-  /* ---------------------------------------------------------------- */
+  /* a hashchange (back button, programmatic clear…) must NOT
+     kick an active judge phone or laptop back to the landing screen */
   if (name === "") {
     if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
     if (state.role === "laptop") { showView("laptop"); return; }
@@ -550,12 +546,8 @@ async function tryLogin() {
 async function enterPhone() {
   const maxJ = getMaxJudges();
 
-  /* ---------------------------------------------------------------- */
-  /* FIX 3: clear any ghost session this same device left behind      */
-  /* (page refresh, browser closed without cleanup…) so the laptop    */
-  /* stops showing a phone that is not really there, and the corner   */
-  /* becomes free again for this device                               */
-  /* ---------------------------------------------------------------- */
+  /* clear any ghost session this same device left behind
+     (page refresh, browser closed without cleanup…) */
   const prevSession = localStorage.getItem(phoneSessionKey());
   if (prevSession) {
     try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
@@ -611,25 +603,22 @@ async function enterPhone() {
   }
 
   state.phoneSessionId = sessionId;
-  state.missedChecks = 0;
   localStorage.setItem(phoneSessionKey(), sessionId);
 
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
-  /* ---------------------------------------------------------------- */
-  /* FIX 4: THE MAIN KICK BUG. The old heartbeat read the             */
-  /* ring_phones table directly with a normal SELECT. If RLS returns  */
-  /* no rows, the phone believed it was kicked after 4 seconds and    */
-  /* left — while the laptop still saw it through the RPC.            */
-  /* We now stay alive purely through RPC calls and only consider     */
-  /* ourselves kicked after 2 consecutive confirmed misses.           */
-  /* ---------------------------------------------------------------- */
+  /* ------------------------------------------------------------------ */
+  /* NO AUTO-KICK: the phone only sends its heartbeat so the server     */
+  /* knows it is alive. It never checks/kicks itself. The ONLY thing    */
+  /* that can remove a judge phone is the laptop operator (Kick button) */
+  /* ------------------------------------------------------------------ */
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
 
   subscribeMatch();
   subscribeRing();
+  startMatchPolling();
   showView("phone");
   setPhoneStatus("Connected as Judge " + slot + " — tap to score", false);
 }
@@ -640,28 +629,14 @@ async function phoneHeartbeatTick() {
   state.heartbeatBusy = true;
 
   try {
-    /* 1) tell the server we are still here */
     const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
-    if (hbErr) console.warn("Heartbeat RPC error:", hbErr.message);
-    if (state.phoneSessionId !== sid) return; // we left while awaiting
 
-    /* 2) verify membership through the same RPC the laptop uses */
-    const { data: active, error: listErr } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
-    if (state.phoneSessionId !== sid) return;
-
-    /* Never kick on a transient query failure — just retry next tick */
-    if (listErr) {
-      console.warn("Phone list RPC error:", listErr.message);
-      return;
-    }
-
-    const stillIn = (active || []).some(p => p.id === sid);
-    if (stillIn) {
-      state.missedChecks = 0;
-    } else {
-      state.missedChecks++;
-      /* require 2 consecutive misses so one glitch can't kick us */
-      if (state.missedChecks >= 2) {
+    /* Normal/transient errors are ignored — we NEVER kick ourselves.
+       Only if the server explicitly says this session no longer exists
+       (which means the LAPTOP operator pressed Kick) do we leave. */
+    if (hbErr) {
+      console.warn("Heartbeat RPC error:", hbErr.message);
+      if (/not (connected|registered|found)|kicked|removed|no session/i.test(hbErr.message || "")) {
         leavePhone("You were removed from the ring by the operator.");
       }
     }
@@ -676,20 +651,17 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-/* -------------------------------------------------------------------- */
-/* FIX 5: when the phone leaves for ANY reason, unregister the session  */
-/* so the laptop no longer shows a ghost "Connected" phone              */
-/* -------------------------------------------------------------------- */
 async function leavePhone(msg) {
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   state.heartbeatInterval = null;
+  if (state.matchPollInterval) clearInterval(state.matchPollInterval);
+  state.matchPollInterval = null;
 
   const sid = state.phoneSessionId;
   const wasActive = !!sid || !!state.judgeSlot;
 
   state.phoneSessionId = null;
   state.judgeSlot = null;
-  state.missedChecks = 0;
   state.role = null;
 
   if (sid) {
@@ -743,11 +715,15 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
     if (error) {
       console.error(error);
       setPhoneStatus("✗ " + error.message, true);
-      if (/not connected|kicked|fewer judges|not registered/i.test(error.message)) {
-        setTimeout(() => leavePhone(null), 800);
+      /* only leave if the server explicitly says the session is gone
+         (= the laptop operator kicked us) */
+      if (/not (connected|registered|found)|kicked|removed|fewer judges|no session/i.test(error.message || "")) {
+        setTimeout(() => leavePhone("You were removed from the ring by the operator."), 800);
       }
     } else {
       setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
+      /* refresh the match right away so every screen syncs fast */
+      fetchMatchNow();
     }
   });
 });
@@ -765,6 +741,7 @@ async function enterLaptop() {
   subscribeMatch();
   subscribeRing();
   startPhoneListPolling();
+  startMatchPolling();
   applyMaxJudgesUI();
   showView("laptop");
 }
@@ -787,6 +764,7 @@ document.getElementById("btn-reset-match").addEventListener("click", async () =>
     judge_red:  [0,0,0,0],
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
+  fetchMatchNow();
 });
 
 document.getElementById("btn-logout").addEventListener("click", () => {
@@ -817,6 +795,7 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
         p_delta: delta
       });
       if (error) alert("Error: " + error.message);
+      else fetchMatchNow();
       return;
     }
 
@@ -831,6 +810,7 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
          p_delta: delta
        });
        if (error) alert("Error: " + error.message);
+       else fetchMatchNow();
        return;
     }
 
@@ -844,6 +824,7 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
       p_delta: delta
     });
     if (error) alert("Error: " + error.message);
+    else fetchMatchNow();
   });
 });
 
@@ -895,17 +876,43 @@ document.getElementById("laptop-phones-list").addEventListener("click", async e 
   await refreshPhoneList();
 });
 
-/* FIX 6: never stack multiple polling intervals */
 function startPhoneListPolling() {
   if (state.pollInterval) clearInterval(state.pollInterval);
   refreshPhoneList();
   state.pollInterval = setInterval(refreshPhoneList, 3000);
 }
 
+/* -------------------------------------------------------------------- */
+/* FIX for "phone scores but laptop never changes":                     */
+/* every screen now also POLLS the match row every 2 seconds, so even   */
+/* if realtime/websocket updates are blocked, the scores always sync.   */
+/* -------------------------------------------------------------------- */
+async function fetchMatchNow() {
+  if (!state.ring) return;
+  const { data, error } = await sb
+    .from("matches")
+    .select("*")
+    .eq("ring_id", state.ring.id)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("Match poll error:", error.message);
+    return;
+  }
+  if (data) handleMatchUpdate({ new: data });
+}
+
+function startMatchPolling() {
+  if (state.matchPollInterval) clearInterval(state.matchPollInterval);
+  fetchMatchNow();
+  state.matchPollInterval = setInterval(fetchMatchNow, 2000);
+}
+
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
   subscribeMatch();
   subscribeRing();
+  startMatchPolling();
   applyMaxJudgesUI();
   showView("tv");
   document.body.style.cursor = "none";
@@ -995,8 +1002,9 @@ function subscribeRing() {
 
         applyMaxJudgesUI();
 
+        /* only the laptop operator can cause this (by choosing 3 refs) */
         if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
-          leavePhone("The ring now uses fewer referees — your corner was closed.");
+          leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
         }
       }
     )
@@ -1041,6 +1049,7 @@ function cleanup() {
   if (state.ringChannel) sb.removeChannel(state.ringChannel);
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   if (state.pollInterval) clearInterval(state.pollInterval);
+  if (state.matchPollInterval) clearInterval(state.matchPollInterval);
 
   if (state.phoneSessionId) {
     try {
@@ -1061,6 +1070,7 @@ function cleanup() {
   state.ringChannel = null;
   state.heartbeatInterval = null;
   state.pollInterval = null;
+  state.matchPollInterval = null;
   state.phoneSessionId = null;
 }
 
