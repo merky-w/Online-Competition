@@ -6,89 +6,20 @@
 <title>Taekwondo Scoring System</title>
 
 <!-- ═══════════════════════════════════════════════════════════════════
-  ⚠️  RUN THIS SQL ONCE IN YOUR SUPABASE SQL EDITOR  ⚠️
-  Adds the 4 judge corners to your existing tournament database.
+  ⚠️  RUN THE SQL BELOW IN SUPABASE → SQL EDITOR (full script is also
+      provided as a separate .sql block with this file)
 
-  ─────────────────────────────────────────────────────────────────────
-  -- 1) judge columns on matches
-  alter table public.matches
-    add column if not exists judge_blue integer[] not null default '{0,0,0,0}',
-    add column if not exists judge_red  integer[] not null default '{0,0,0,0}';
-
-  update public.matches set judge_blue = '{0,0,0,0}' where judge_blue is null;
-  update public.matches set judge_red  = '{0,0,0,0}' where judge_red  is null;
-
-  -- 2) corner assignment for each connected phone
-  alter table public.ring_phones
-    add column if not exists judge_slot integer;
-
-  -- 3) RPC used by the judge phones
-  create or replace function public.judge_score(
-    p_ring_id uuid,
-    p_slot    integer,
-    p_side    text,
-    p_points  integer
-  ) returns void
-  language plpgsql
-  security definer
-  set search_path = public
-  as $$
-  declare
-    nb integer[];
-    nr integer[];
-  begin
-    if p_slot is null or p_slot < 1 or p_slot > 4 then
-      raise exception 'judge slot must be between 1 and 4';
-    end if;
-    if p_side not in ('blue','red') then
-      raise exception 'side must be blue or red';
-    end if;
-    if p_points is null or p_points <= 0 then
-      raise exception 'points must be positive';
-    end if;
-
-    select coalesce(judge_blue,'{0,0,0,0}'), coalesce(judge_red,'{0,0,0,0}')
-      into nb, nr
-      from public.matches
-     where ring_id = p_ring_id
-     for update;
-
-    if not found then
-      raise exception 'no match row for this ring';
-    end if;
-
-    if p_side = 'blue' then
-      nb[p_slot] := coalesce(nb[p_slot],0) + p_points;
-    else
-      nr[p_slot] := coalesce(nr[p_slot],0) + p_points;
-    end if;
-
-    update public.matches
-       set judge_blue = nb,
-           judge_red  = nr,
-           blue_score = greatest(nb[1]-nr[1],0)+greatest(nb[2]-nr[2],0)
-                      + greatest(nb[3]-nr[3],0)+greatest(nb[4]-nr[4],0),
-           red_score  = greatest(nr[1]-nb[1],0)+greatest(nr[2]-nb[2],0)
-                      + greatest(nr[3]-nb[3],0)+greatest(nr[4]-nb[4],0),
-           updated_at = now()
-     where ring_id = p_ring_id;
-  end;
-  $$;
-
-  grant execute on function public.judge_score(uuid,integer,text,integer) to anon, authenticated;
-  ─────────────────────────────────────────────────────────────────────
-
-  HOW IT WORKS NOW
-  • Each phone that logs in with the phone password becomes JUDGE 1..4
-    (first phone = corner 1, and so on).
-  • A judge phone shows 5 BLUE buttons and 5 RED buttons (1–5 points).
-    No +/− mode anymore.
-  • Each judge corner shows that judge's NET score:
-      judge taps blue 2  → corner is BLUE showing 2
-      judge taps red 3   → corner is RED showing 1   (2 − 3 = −1)
-    So tapping the opposite colour "cancels" a mistake, like +/−.
-  • The big match score = sum of the 4 judges' winning nets.
-  • Gam-jeom / yellow cards on the laptop are unchanged.
+  WHAT CHANGED IN THIS VERSION
+  • Big BLUE / RED score = NUMBER OF JUDGES ruling for that side (0–4).
+      3 judges net-red  → big RED shows 3.
+  • Judge corners still show each judge's net points (blue given − red given).
+  • Phone connection tracking is now 100% server-time (no more clock bugs
+    where the laptop shows "no phone" while the judge can still score).
+    The phone also re-announces itself instantly when the screen wakes up.
+  • New TV CODE per ring (stored in the rings table). Open the page with
+      #tv  (or  #tv?code=1234) and enter the TV code shown on the laptop.
+  • TV display = 4 judge corners + big blue/red + gam-jeom & yellow counts.
+    No +/− buttons anywhere on the TV.
 ════════════════════════════════════════════════════════════════════ -->
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -112,7 +43,7 @@
   .side-blue { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
   .side-red  { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
 
-  /* ── judge corner boxes ─────────────────────────────── */
+  /* judge corner boxes */
   .judge-box { transition: background .25s ease, border-color .25s ease, box-shadow .25s ease; }
   .judge-neutral { background:#1e293b; border-color:#475569; color:#94a3b8; }
   .judge-blue    { background:linear-gradient(135deg,#1e3a8a,#2563eb); border-color:#93c5fd; color:#fff; box-shadow:0 0 26px rgba(37,99,235,.45); }
@@ -134,18 +65,18 @@
 <body class="bg-slate-900 text-white min-h-screen">
 
 <!-- ========================================================= -->
-<!-- VIEW: LANDING (enter ring password)                        -->
+<!-- VIEW: LANDING                                              -->
 <!-- ========================================================= -->
 <div id="view-landing" class="min-h-screen flex items-center justify-center p-4">
   <div class="w-full max-w-md bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700">
     <div class="text-center mb-8">
       <div class="text-5xl mb-3">🥋</div>
       <h1 class="text-3xl font-black mb-2">TKD Scoring</h1>
-      <p class="text-slate-400 text-sm">Enter the ring password to continue</p>
+      <p class="text-slate-400 text-sm">Enter the ring password or TV code</p>
     </div>
 
     <div class="mb-4">
-      <label class="block text-sm font-semibold text-slate-300 mb-2">Ring Password</label>
+      <label class="block text-sm font-semibold text-slate-300 mb-2">Ring Password / TV Code</label>
       <input id="inp-password" type="password" inputmode="numeric" maxlength="10"
         class="w-full bg-slate-900 border-2 border-slate-600 rounded-xl px-4 py-4 text-2xl text-center tracking-widest focus:border-blue-500"
         placeholder="••••" />
@@ -158,9 +89,9 @@
     <div id="landing-error" class="mt-4 text-center text-red-400 text-sm hidden"></div>
 
     <div class="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-500 space-y-1">
-      <p>Laptop password → Control panel</p>
-      <p>Phone password → Judge device (auto-assigned corner 1–4)</p>
-      <p class="mt-2">Append <code class="bg-slate-900 px-2 py-1 rounded">#tv</code> to the URL for TV display</p>
+      <p>Laptop password → Control panel (shows the TV code)</p>
+      <p>Phone password → Judge device (auto corner 1–4)</p>
+      <p>TV code → open the page with <code class="bg-slate-900 px-2 py-1 rounded">#tv</code> in the URL</p>
     </div>
   </div>
 </div>
@@ -183,7 +114,6 @@
   </div>
 
   <div class="grid grid-cols-2 gap-3 p-3 flex-1 min-h-0">
-    <!-- BLUE column -->
     <div class="side-blue rounded-2xl p-3 flex flex-col min-h-0 glow-blue">
       <div class="text-center font-black tracking-widest text-sm mb-2 opacity-90">🔵 BLUE · CHUNG</div>
       <div class="flex-1 grid grid-rows-5 gap-2 min-h-0">
@@ -210,7 +140,6 @@
       </div>
     </div>
 
-    <!-- RED column -->
     <div class="side-red rounded-2xl p-3 flex flex-col min-h-0 glow-red">
       <div class="text-center font-black tracking-widest text-sm mb-2 opacity-90">🔴 RED · HONG</div>
       <div class="flex-1 grid grid-rows-5 gap-2 min-h-0">
@@ -251,7 +180,10 @@
     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
       <div>
         <h1 id="laptop-ring-name" class="text-2xl font-black"></h1>
-        <p class="text-slate-400 text-sm">Control panel · <span id="laptop-ring-id" class="font-mono"></span></p>
+        <p class="text-slate-400 text-sm">
+          Control panel · <span id="laptop-ring-id" class="font-mono"></span> ·
+          TV code: <span id="laptop-tv-code" class="font-mono font-bold text-yellow-300">—</span>
+        </p>
       </div>
       <div class="flex gap-2">
         <button id="btn-open-tv" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold">📺 Open TV</button>
@@ -260,8 +192,7 @@
       </div>
     </div>
 
-    <!-- judge corners · top (1 = top-left, 2 = top-right) -->
-    <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">Judge corners</div>
+    <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">Judge corners · big score = judges ruling for each side</div>
     <div class="grid grid-cols-2 gap-3 mb-3">
       <div id="judge-laptop-1" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
         <div>
@@ -279,7 +210,6 @@
       </div>
     </div>
 
-    <!-- main score panels (unchanged) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="side-blue rounded-2xl p-6 glow-blue">
         <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
@@ -328,7 +258,6 @@
       </div>
     </div>
 
-    <!-- judge corners · bottom (3 = bottom-left, 4 = bottom-right) -->
     <div class="grid grid-cols-2 gap-3 mt-3 mb-4">
       <div id="judge-laptop-3" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
         <div>
@@ -346,7 +275,6 @@
       </div>
     </div>
 
-    <!-- connected phones (kept) -->
     <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-bold">Connected Judge Phones</h3>
@@ -363,7 +291,7 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- VIEW: TV DISPLAY                                           -->
+<!-- VIEW: TV DISPLAY (corners + big score + cards, no buttons) -->
 <!-- ========================================================= -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
   <div class="w-full h-full grid grid-cols-2">
@@ -402,7 +330,6 @@
     </div>
   </div>
 
-  <!-- four judge corners of the TV -->
   <div id="judge-tv-1" class="judge-tv-box judge-neutral absolute top-6 left-6">
     <div class="judge-tv-label">JUDGE 1</div>
     <div class="judge-net">0</div>
@@ -424,9 +351,6 @@
   <div id="tv-ring-name" class="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-black px-4 py-1 rounded-b-xl text-sm"></div>
 </div>
 
-<!-- ========================================================= -->
-<!-- SCRIPT                                                      -->
-<!-- ========================================================= -->
 <script>
 /* =========================================================
  * ⚙️  CONFIG
@@ -436,9 +360,6 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-/* =========================================================
- * 🧭  APP STATE
- * ========================================================= */
 const state = {
   role: null,
   ring: null,
@@ -450,7 +371,7 @@ const state = {
 };
 
 /* =========================================================
- * 🚦  ROUTER
+ * 🚦  ROUTER  (supports  #tv  and  #tv?code=1234)
  * ========================================================= */
 function showView(name) {
   ["landing","phone","laptop","tv"].forEach(v => {
@@ -458,10 +379,34 @@ function showView(name) {
   });
 }
 
-async function route() {
-  const hash = location.hash.replace("#","").toLowerCase();
+function parseHash() {
+  const raw = location.hash.replace(/^#/, "");
+  const qIndex = raw.indexOf("?");
+  const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase();
+  const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : "");
+  return { name: path, code: (params.get("code") || "").trim() };
+}
 
-  if (hash === "tv") {
+async function route() {
+  const { name, code } = parseHash();
+
+  if (name === "tv") {
+    // 1) explicit TV code in the URL
+    if (code) {
+      const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle();
+      if (data) {
+        state.ring = data;
+        sessionStorage.setItem("tkd_ring", JSON.stringify(data));
+        await enterTV();
+        return;
+      }
+      showView("landing");
+      const errEl = document.getElementById("landing-error");
+      errEl.textContent = "Invalid TV code. Check the code shown on the laptop control panel.";
+      errEl.classList.remove("hidden");
+      return;
+    }
+    // 2) cached ring (same browser)
     const cached = sessionStorage.getItem("tkd_ring");
     if (cached) {
       try {
@@ -470,6 +415,7 @@ async function route() {
         return;
       } catch(e){}
     }
+    // 3) ask for the TV code
     state.role = "tv-pending";
     showView("landing");
     return;
@@ -479,7 +425,7 @@ async function route() {
 }
 
 /* =========================================================
- * 🔐  LOGIN
+ * 🔐  LOGIN (password OR tv code)
  * ========================================================= */
 document.getElementById("btn-enter").addEventListener("click", tryLogin);
 document.getElementById("inp-password").addEventListener("keydown", e => {
@@ -492,7 +438,7 @@ async function tryLogin() {
   errEl.classList.add("hidden");
 
   if (!pwd) {
-    errEl.textContent = "Please enter a password.";
+    errEl.textContent = "Please enter a password or TV code.";
     errEl.classList.remove("hidden");
     return;
   }
@@ -500,18 +446,18 @@ async function tryLogin() {
   const { data, error } = await sb
     .from("rings")
     .select("*")
-    .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd}`)
+    .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`)
     .limit(1);
 
   if (error) {
     console.error("Supabase error:", error);
-    errEl.textContent = "Database error: " + error.message;
+    errEl.textContent = "Database error: " + error.message + " (did you run the new SQL?)";
     errEl.classList.remove("hidden");
     return;
   }
 
   if (!data || data.length === 0) {
-    errEl.textContent = "No ring found for that password. Make sure you ran the SQL to create the rings table.";
+    errEl.textContent = "No ring found for that password/code.";
     errEl.classList.remove("hidden");
     return;
   }
@@ -520,8 +466,8 @@ async function tryLogin() {
   state.ring = ring;
   sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
 
-  // TV window asking for a password → go straight to TV
-  if (location.hash.replace("#","").toLowerCase() === "tv") {
+  // this window is a TV display → go to TV no matter which secret matched
+  if (parseHash().name === "tv") {
     state.role = "tv";
     await enterTV();
     return;
@@ -530,9 +476,12 @@ async function tryLogin() {
   if (pwd === ring.laptop_password) {
     state.role = "laptop";
     await enterLaptop();
-  } else {
+  } else if (pwd === ring.phone_password) {
     state.role = "phone";
     await enterPhone();
+  } else {
+    errEl.textContent = "That is the TV code for this ring. Add #tv to the URL to open the TV display.";
+    errEl.classList.remove("hidden");
   }
 }
 
@@ -540,17 +489,12 @@ async function tryLogin() {
  * 📱  PHONE VIEW (judge device)
  * ========================================================= */
 async function enterPhone() {
-  const cutoff = new Date(Date.now() - 15000).toISOString();
-
-  const { data: active, error } = await sb
-    .from("ring_phones")
-    .select("judge_slot")
-    .eq("ring_id", state.ring.id)
-    .gt("last_seen", cutoff);
+  // server-time based list of active phones (no clock bugs)
+  const { data: active, error } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
 
   if (error) {
     alert("Database error: " + error.message +
-      "\n\nMake sure you ran the new SQL (judge_slot column on ring_phones).");
+      "\n\nMake sure you ran the latest SQL (get_active_phones / phone_register).");
     location.hash = "";
     showView("landing");
     return;
@@ -558,7 +502,6 @@ async function enterPhone() {
 
   const taken = new Set((active || []).map(p => p.judge_slot).filter(v => v != null));
 
-  // try to reclaim the corner this phone used before, else take lowest free
   let slot = null;
   const preferred = parseInt(localStorage.getItem("tkd_judge_slot_" + state.ring.id) || "", 10);
   if (preferred >= 1 && preferred <= 4 && !taken.has(preferred)) slot = preferred;
@@ -581,25 +524,38 @@ async function enterPhone() {
   const sessionId = crypto.randomUUID();
   state.phoneSessionId = sessionId;
 
-  await sb.from("ring_phones").upsert({
-    id: sessionId,
-    ring_id: state.ring.id,
-    judge_slot: slot,
-    last_seen: new Date().toISOString()
+  const { error: regErr } = await sb.rpc("phone_register", {
+    p_id: sessionId,
+    p_ring_id: state.ring.id,
+    p_slot: slot
   });
+
+  if (regErr) {
+    alert("Could not register this judge phone: " + regErr.message);
+    state.phoneSessionId = null;
+    location.hash = "";
+    showView("landing");
+    return;
+  }
 
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
   state.heartbeatInterval = setInterval(() => {
-    sb.from("ring_phones").update({
-      last_seen: new Date().toISOString()
-    }).eq("id", sessionId);
+    sb.rpc("phone_heartbeat", { p_id: sessionId });
   }, 5000);
 
   subscribeMatch();
   showView("phone");
 }
+
+// when the judge's screen wakes up, announce immediately (fixes the
+// "laptop shows no phone but scoring still works" bug)
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && state.phoneSessionId) {
+    sb.rpc("phone_heartbeat", { p_id: state.phoneSessionId });
+  }
+});
 
 function setPhoneStatus(msg, isError) {
   const el = document.getElementById("phone-status");
@@ -641,6 +597,7 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
 async function enterLaptop() {
   document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
   document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
+  document.getElementById("laptop-tv-code").textContent = state.ring.tv_code || "—";
 
   const { data: existing } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).maybeSingle();
   if (!existing) {
@@ -649,12 +606,14 @@ async function enterLaptop() {
 
   subscribeMatch();
   startPhoneListPolling();
-
   showView("laptop");
 }
 
 document.getElementById("btn-open-tv").addEventListener("click", () => {
-  const tvUrl = location.origin + location.pathname + "#tv";
+  let tvUrl = location.origin + location.pathname + "#tv";
+  if (state.ring && state.ring.tv_code) {
+    tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code);
+  }
   window.open(tvUrl, "_blank");
 });
 
@@ -696,13 +655,7 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
 
 async function startPhoneListPolling() {
   async function refresh() {
-    const cutoff = new Date(Date.now() - 15000).toISOString();
-    const { data } = await sb
-      .from("ring_phones")
-      .select("id, judge_slot")
-      .eq("ring_id", state.ring.id)
-      .gt("last_seen", cutoff)
-      .order("judge_slot", { ascending: true });
+    const { data } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
 
     const list  = document.getElementById("laptop-phones-list");
     const count = document.getElementById("laptop-phone-count");
@@ -793,6 +746,7 @@ function handleMatchUpdate(payload) {
     if (el) el.textContent = v;
   };
 
+  // big score = number of judges ruling for that side (0–4)
   set("l-blue-score", m.blue_score);
   set("l-red-score",  m.red_score);
   set("l-blue-gj",    m.blue_gam_jeom);
@@ -822,7 +776,7 @@ function cleanup() {
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   if (state.phoneSessionId) {
-    sb.from("ring_phones").delete().eq("id", state.phoneSessionId);
+    sb.rpc("phone_unregister", { p_id: state.phoneSessionId });
   }
   state.realtimeChannel = null;
   state.heartbeatInterval = null;
