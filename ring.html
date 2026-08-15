@@ -6,20 +6,17 @@
 <title>Taekwondo Scoring System</title>
 
 <!-- ═══════════════════════════════════════════════════════════════════
-  ⚠️  RUN THE SQL BELOW IN SUPABASE → SQL EDITOR (full script is also
-      provided as a separate .sql block with this file)
+  ⚠️  RUN THE NEW SQL FIRST (separate .sql block that comes with this file)
 
-  WHAT CHANGED IN THIS VERSION
-  • Big BLUE / RED score = NUMBER OF JUDGES ruling for that side (0–4).
-      3 judges net-red  → big RED shows 3.
-  • Judge corners still show each judge's net points (blue given − red given).
-  • Phone connection tracking is now 100% server-time (no more clock bugs
-    where the laptop shows "no phone" while the judge can still score).
-    The phone also re-announces itself instantly when the screen wakes up.
-  • New TV CODE per ring (stored in the rings table). Open the page with
-      #tv  (or  #tv?code=1234) and enter the TV code shown on the laptop.
-  • TV display = 4 judge corners + big blue/red + gam-jeom & yellow counts.
-    No +/− buttons anywhere on the TV.
+  WHAT IS NEW IN THIS VERSION
+  • Closed phone tabs unregister instantly (keepalive) + phones that were
+    kicked or deleted are detected by the phone itself within ~4 seconds.
+  • Laptop operator can choose 3 or 4 judges (for rings with fewer referees).
+  • Laptop operator can KICK any connected phone (the phone gets kicked out
+    of the app and cannot score anymore).
+  • Entering the TV code on the normal page now opens the TV directly
+    (no need to add #tv manually). #tv?code=XXXX still works too.
+  • Big blue/red score = number of judges ruling for that side (0–4).
 ════════════════════════════════════════════════════════════════════ -->
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -44,10 +41,11 @@
   .side-red  { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
 
   /* judge corner boxes */
-  .judge-box { transition: background .25s ease, border-color .25s ease, box-shadow .25s ease; }
+  .judge-box { transition: background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease; }
   .judge-neutral { background:#1e293b; border-color:#475569; color:#94a3b8; }
   .judge-blue    { background:linear-gradient(135deg,#1e3a8a,#2563eb); border-color:#93c5fd; color:#fff; box-shadow:0 0 26px rgba(37,99,235,.45); }
   .judge-red     { background:linear-gradient(135deg,#7f1d1d,#dc2626); border-color:#fca5a5; color:#fff; box-shadow:0 0 26px rgba(220,38,38,.45); }
+  .judge-off     { opacity:.4; filter:grayscale(.5); }
   .judge-net { font-variant-numeric: tabular-nums; }
   .judge-tv-box {
     width: clamp(96px, 11vw, 230px);
@@ -56,7 +54,7 @@
     border: 3px solid;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: .3vw;
-    transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+    transition: background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease;
   }
   .judge-tv-box .judge-net { font-size: clamp(2.2rem, 5.2vw, 6.5rem); font-weight: 900; line-height: 1; }
   .judge-tv-label { font-size: clamp(.55rem, 1vw, .95rem); font-weight: 800; letter-spacing: .16em; opacity: .85; }
@@ -90,14 +88,14 @@
 
     <div class="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-500 space-y-1">
       <p>Laptop password → Control panel (shows the TV code)</p>
-      <p>Phone password → Judge device (auto corner 1–4)</p>
-      <p>TV code → open the page with <code class="bg-slate-900 px-2 py-1 rounded">#tv</code> in the URL</p>
+      <p>Phone password → Judge device (auto corner)</p>
+      <p>TV code → opens the big screen display</p>
     </div>
   </div>
 </div>
 
 <!-- ========================================================= -->
-<!-- VIEW: PHONE (judge device — 5 blue + 5 red buttons)        -->
+<!-- VIEW: PHONE (judge device)                                 -->
 <!-- ========================================================= -->
 <div id="view-phone" class="hidden-view min-h-screen flex flex-col bg-slate-900">
   <div class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
@@ -276,9 +274,16 @@
     </div>
 
     <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
-      <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h3 class="font-bold">Connected Judge Phones</h3>
-        <span id="laptop-phone-count" class="text-sm text-slate-400">0 / 4</span>
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400 font-semibold">Referees:</span>
+          <div class="flex rounded-lg overflow-hidden border border-slate-600">
+            <button id="btn-max-3" class="px-3 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">3</button>
+            <button id="btn-max-4" class="px-3 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">4</button>
+          </div>
+          <span id="laptop-phone-count" class="text-sm text-slate-400">0 / 4</span>
+        </div>
       </div>
       <div id="laptop-phones-list" class="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 1 — empty</div>
@@ -291,7 +296,7 @@
 </div>
 
 <!-- ========================================================= -->
-<!-- VIEW: TV DISPLAY (corners + big score + cards, no buttons) -->
+<!-- VIEW: TV DISPLAY                                           -->
 <!-- ========================================================= -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
   <div class="w-full h-full grid grid-cols-2">
@@ -367,8 +372,14 @@ const state = {
   judgeSlot: null,
   phoneSessionId: null,
   realtimeChannel: null,
+  ringChannel: null,
   heartbeatInterval: null,
 };
+
+function getMaxJudges() {
+  const m = state.ring ? parseInt(state.ring.max_phones, 10) : 4;
+  return (m === 3) ? 3 : 4;
+}
 
 /* =========================================================
  * 🚦  ROUTER  (supports  #tv  and  #tv?code=1234)
@@ -391,7 +402,6 @@ async function route() {
   const { name, code } = parseHash();
 
   if (name === "tv") {
-    // 1) explicit TV code in the URL
     if (code) {
       const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle();
       if (data) {
@@ -406,7 +416,6 @@ async function route() {
       errEl.classList.remove("hidden");
       return;
     }
-    // 2) cached ring (same browser)
     const cached = sessionStorage.getItem("tkd_ring");
     if (cached) {
       try {
@@ -415,7 +424,6 @@ async function route() {
         return;
       } catch(e){}
     }
-    // 3) ask for the TV code
     state.role = "tv-pending";
     showView("landing");
     return;
@@ -425,7 +433,7 @@ async function route() {
 }
 
 /* =========================================================
- * 🔐  LOGIN (password OR tv code)
+ * 🔐  LOGIN
  * ========================================================= */
 document.getElementById("btn-enter").addEventListener("click", tryLogin);
 document.getElementById("inp-password").addEventListener("keydown", e => {
@@ -450,7 +458,6 @@ async function tryLogin() {
     .limit(1);
 
   if (error) {
-    console.error("Supabase error:", error);
     errEl.textContent = "Database error: " + error.message + " (did you run the new SQL?)";
     errEl.classList.remove("hidden");
     return;
@@ -466,8 +473,8 @@ async function tryLogin() {
   state.ring = ring;
   sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
 
-  // this window is a TV display → go to TV no matter which secret matched
-  if (parseHash().name === "tv") {
+  // TV: either the URL says #tv, or the user typed the TV code → open TV directly
+  if (parseHash().name === "tv" || (ring.tv_code && pwd === ring.tv_code)) {
     state.role = "tv";
     await enterTV();
     return;
@@ -480,7 +487,7 @@ async function tryLogin() {
     state.role = "phone";
     await enterPhone();
   } else {
-    errEl.textContent = "That is the TV code for this ring. Add #tv to the URL to open the TV display.";
+    errEl.textContent = "Password accepted but no role matched. Check the ring configuration.";
     errEl.classList.remove("hidden");
   }
 }
@@ -489,30 +496,30 @@ async function tryLogin() {
  * 📱  PHONE VIEW (judge device)
  * ========================================================= */
 async function enterPhone() {
-  // server-time based list of active phones (no clock bugs)
+  const maxJ = getMaxJudges();
+
   const { data: active, error } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
 
   if (error) {
-    alert("Database error: " + error.message +
-      "\n\nMake sure you ran the latest SQL (get_active_phones / phone_register).");
+    alert("Database error: " + error.message + "\n\nMake sure you ran the latest SQL.");
     location.hash = "";
     showView("landing");
     return;
   }
 
-  const taken = new Set((active || []).map(p => p.judge_slot).filter(v => v != null));
+  const taken = new Set((active || []).map(p => p.judge_slot).filter(v => v != null && v >= 1 && v <= maxJ));
 
   let slot = null;
   const preferred = parseInt(localStorage.getItem("tkd_judge_slot_" + state.ring.id) || "", 10);
-  if (preferred >= 1 && preferred <= 4 && !taken.has(preferred)) slot = preferred;
+  if (preferred >= 1 && preferred <= maxJ && !taken.has(preferred)) slot = preferred;
   if (!slot) {
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= maxJ; i++) {
       if (!taken.has(i)) { slot = i; break; }
     }
   }
 
   if (!slot) {
-    alert("All 4 judge corners of this ring are already taken.");
+    alert("This ring is set to " + maxJ + " referees and all corners are already taken.");
     location.hash = "";
     showView("landing");
     return;
@@ -541,21 +548,41 @@ async function enterPhone() {
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
-  state.heartbeatInterval = setInterval(() => {
+  // heartbeat + kick detection every 4 seconds
+  state.heartbeatInterval = setInterval(async () => {
+    const { data: row } = await sb.from("ring_phones").select("id").eq("id", sessionId).maybeSingle();
+    if (!row) {
+      leavePhone("You were removed from the ring by the operator.");
+      return;
+    }
     sb.rpc("phone_heartbeat", { p_id: sessionId });
-  }, 5000);
+  }, 4000);
 
   subscribeMatch();
+  subscribeRing();
   showView("phone");
 }
 
-// when the judge's screen wakes up, announce immediately (fixes the
-// "laptop shows no phone but scoring still works" bug)
+// announce immediately when the judge's screen wakes up
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && state.phoneSessionId) {
     sb.rpc("phone_heartbeat", { p_id: state.phoneSessionId });
   }
 });
+
+function leavePhone(msg) {
+  if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+  state.heartbeatInterval = null;
+  state.phoneSessionId = null;
+  state.judgeSlot = null;
+  if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+  if (state.ringChannel) sb.removeChannel(state.ringChannel);
+  state.realtimeChannel = null;
+  state.ringChannel = null;
+  if (msg) alert(msg);
+  location.hash = "";
+  showView("landing");
+}
 
 function setPhoneStatus(msg, isError) {
   const el = document.getElementById("phone-status");
@@ -579,12 +606,16 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
       p_ring_id: state.ring.id,
       p_slot:    state.judgeSlot,
       p_side:    side,
-      p_points:  val
+      p_points:  val,
+      p_session: state.phoneSessionId
     });
 
     if (error) {
       console.error(error);
-      setPhoneStatus("✗ " + error.message + " — did you run the judge_score SQL?", true);
+      setPhoneStatus("✗ " + error.message, true);
+      if (/not connected|kicked|fewer judges/i.test(error.message)) {
+        setTimeout(() => leavePhone(null), 800);
+      }
     } else {
       setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
     }
@@ -605,7 +636,9 @@ async function enterLaptop() {
   }
 
   subscribeMatch();
+  subscribeRing();
   startPhoneListPolling();
+  applyMaxJudgesUI();
   showView("laptop");
 }
 
@@ -653,33 +686,57 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
   });
 });
 
-async function startPhoneListPolling() {
-  async function refresh() {
-    const { data } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
+/* ---- 3 / 4 referees switch ------------------------------- */
+async function setMaxJudges(n) {
+  state.ring.max_phones = n;
+  applyMaxJudgesUI();
+  const { error } = await sb.from("rings").update({ max_phones: n }).eq("id", state.ring.id);
+  if (error) alert("Could not save referee count: " + error.message);
+}
+document.getElementById("btn-max-3").addEventListener("click", () => setMaxJudges(3));
+document.getElementById("btn-max-4").addEventListener("click", () => setMaxJudges(4));
 
-    const list  = document.getElementById("laptop-phones-list");
-    const count = document.getElementById("laptop-phone-count");
-    const bySlot = {};
-    (data || []).forEach(p => {
-      if (p.judge_slot >= 1 && p.judge_slot <= 4 && !bySlot[p.judge_slot]) bySlot[p.judge_slot] = p;
-    });
-    count.textContent = (data || []).length + " / 4";
+/* ---- phone list + kick ----------------------------------- */
+async function refreshPhoneList() {
+  const { data } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
+  const maxJ = getMaxJudges();
 
-    list.innerHTML = "";
-    for (let i = 1; i <= 4; i++) {
-      const div = document.createElement("div");
-      if (bySlot[i]) {
-        div.className = "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
-        div.innerHTML = `<div class="font-bold">📱 Judge ${i}</div><div class="text-xs text-green-300 mt-1">Connected</div>`;
-      } else {
-        div.className = "bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700";
-        div.textContent = `Corner ${i} — empty`;
-      }
-      list.appendChild(div);
+  const list  = document.getElementById("laptop-phones-list");
+  const count = document.getElementById("laptop-phone-count");
+  const bySlot = {};
+  (data || []).forEach(p => {
+    if (p.judge_slot >= 1 && p.judge_slot <= 4 && !bySlot[p.judge_slot]) bySlot[p.judge_slot] = p;
+  });
+  count.textContent = (data || []).length + " / " + maxJ;
+
+  list.innerHTML = "";
+  for (let i = 1; i <= 4; i++) {
+    const div = document.createElement("div");
+    if (bySlot[i]) {
+      div.className = "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
+      div.innerHTML =
+        `<div class="font-bold">📱 Judge ${i}</div>` +
+        `<div class="text-xs text-green-300 mt-1">Connected</div>` +
+        `<button data-kick="${bySlot[i].id}" class="mt-2 bg-red-600/80 hover:bg-red-600 rounded px-3 py-1 text-xs font-bold">Kick</button>`;
+    } else {
+      div.className = "bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700";
+      div.textContent = (i > maxJ) ? `Corner ${i} — off` : `Corner ${i} — empty`;
     }
+    list.appendChild(div);
   }
-  refresh();
-  setInterval(refresh, 3000);
+}
+
+document.getElementById("laptop-phones-list").addEventListener("click", async e => {
+  const btn = e.target.closest("[data-kick]");
+  if (!btn) return;
+  if (!confirm("Kick this judge phone out of the ring?")) return;
+  await sb.rpc("phone_unregister", { p_id: btn.dataset.kick });
+  await refreshPhoneList();
+});
+
+function startPhoneListPolling() {
+  refreshPhoneList();
+  setInterval(refreshPhoneList, 3000);
 }
 
 /* =========================================================
@@ -688,12 +745,14 @@ async function startPhoneListPolling() {
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
   subscribeMatch();
+  subscribeRing();
+  applyMaxJudgesUI();
   showView("tv");
   document.body.style.cursor = "none";
 }
 
 /* =========================================================
- * 🎯  JUDGE CORNER RENDERING
+ * 🎯  JUDGE CORNERS + MAX JUDGES UI
  * ========================================================= */
 function renderJudgeBox(el, givenBlue, givenRed) {
   if (!el) return;
@@ -714,13 +773,45 @@ function pad4(arr) {
   return out;
 }
 
+function applyMaxJudgesUI() {
+  const max = getMaxJudges();
+
+  const b3 = document.getElementById("btn-max-3");
+  const b4 = document.getElementById("btn-max-4");
+  if (b3 && b4) {
+    b3.className = "px-3 py-1.5 text-sm font-bold " + (max === 3 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
+    b4.className = "px-3 py-1.5 text-sm font-bold " + (max === 4 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
+  }
+
+  for (let i = 1; i <= 4; i++) {
+    ["judge-laptop-", "judge-tv-"].forEach(pref => {
+      const el = document.getElementById(pref + i);
+      if (!el) return;
+      if (i > max) {
+        el.classList.add("judge-off");
+        el.classList.remove("judge-blue", "judge-red");
+        el.classList.add("judge-neutral");
+        const net = el.querySelector(".judge-net");
+        if (net) net.textContent = "–";
+        const det = el.querySelector(".judge-detail");
+        if (det) det.textContent = "corner off";
+      } else {
+        el.classList.remove("judge-off");
+      }
+    });
+  }
+
+  const count = document.getElementById("laptop-phone-count");
+  if (count && state.match !== undefined) {
+    // denominator refresh happens in refreshPhoneList; keep it cheap here
+  }
+}
+
 /* =========================================================
- * 🔔  REALTIME SUBSCRIPTION
+ * 🔔  REALTIME SUBSCRIPTIONS
  * ========================================================= */
 function subscribeMatch() {
-  if (state.realtimeChannel) {
-    sb.removeChannel(state.realtimeChannel);
-  }
+  if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
 
   state.realtimeChannel = sb
     .channel("match-" + state.ring.id)
@@ -736,6 +827,34 @@ function subscribeMatch() {
     });
 }
 
+function subscribeRing() {
+  if (state.ringChannel) sb.removeChannel(state.ringChannel);
+
+  state.ringChannel = sb
+    .channel("ring-" + state.ring.id)
+    .on("postgres_changes",
+      { event: "UPDATE", schema: "public", table: "rings", filter: `id=eq.${state.ring.id}` },
+      payload => {
+        if (!payload.new) return;
+        state.ring = Object.assign({}, state.ring, payload.new);
+        sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
+
+        const tvName = document.getElementById("tv-ring-name");
+        if (tvName) tvName.textContent = state.ring.ring_name;
+        const tvCode = document.getElementById("laptop-tv-code");
+        if (tvCode) tvCode.textContent = state.ring.tv_code || "—";
+
+        applyMaxJudgesUI();
+
+        // a judge whose corner was switched off gets sent home
+        if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
+          leavePhone("The ring now uses fewer referees — your corner was closed.");
+        }
+      }
+    )
+    .subscribe();
+}
+
 function handleMatchUpdate(payload) {
   const m = payload.new;
   if (!m) return;
@@ -746,7 +865,6 @@ function handleMatchUpdate(payload) {
     if (el) el.textContent = v;
   };
 
-  // big score = number of judges ruling for that side (0–4)
   set("l-blue-score", m.blue_score);
   set("l-red-score",  m.red_score);
   set("l-blue-gj",    m.blue_gam_jeom);
@@ -767,23 +885,40 @@ function handleMatchUpdate(payload) {
     renderJudgeBox(document.getElementById("judge-laptop-" + (i + 1)), jb[i], jr[i]);
     renderJudgeBox(document.getElementById("judge-tv-"     + (i + 1)), jb[i], jr[i]);
   }
+  applyMaxJudgesUI();
 }
 
 /* =========================================================
- * 🧹  CLEANUP
+ * 🧹  CLEANUP (keepalive → works even when the tab closes)
  * ========================================================= */
 function cleanup() {
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+  if (state.ringChannel) sb.removeChannel(state.ringChannel);
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+
   if (state.phoneSessionId) {
-    sb.rpc("phone_unregister", { p_id: state.phoneSessionId });
+    try {
+      fetch(SUPABASE_URL + "/rest/v1/rpc/phone_unregister", {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "apikey": SUPABASE_ANON,
+          "Authorization": "Bearer " + SUPABASE_ANON,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ p_id: state.phoneSessionId })
+      });
+    } catch(e) {}
   }
+
   state.realtimeChannel = null;
+  state.ringChannel = null;
   state.heartbeatInterval = null;
   state.phoneSessionId = null;
 }
 
 window.addEventListener("beforeunload", cleanup);
+window.addEventListener("pagehide", cleanup);
 
 /* =========================================================
  * 🚀  INIT
