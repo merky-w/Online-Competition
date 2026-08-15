@@ -5,19 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Taekwondo Scoring System</title>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-  ⚠️  RUN THE NEW SQL FIRST (separate .sql block that comes with this file)
-
-  WHAT IS NEW IN THIS VERSION
-  • Closed phone tabs unregister instantly (keepalive) + phones that were
-    kicked or deleted are detected by the phone itself within ~4 seconds.
-  • Laptop operator can choose 3 or 4 judges (for rings with fewer referees).
-  • Laptop operator can KICK any connected phone (the phone gets kicked out
-    of the app and cannot score anymore).
-  • Entering the TV code on the normal page now opens the TV directly
-    (no need to add #tv manually). #tv?code=XXXX still works too.
-  • Big blue/red score = number of judges ruling for that side (0–4).
-════════════════════════════════════════════════════════════════════ -->
+<!-- Suppress Tailwind CDN Warning -->
+<script>
+  const originalWarn = console.warn;
+  console.warn = function(...args) {
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+    originalWarn.apply(console, args);
+  };
+</script>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,9 +57,7 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
 
-<!-- ========================================================= -->
-<!-- VIEW: LANDING                                              -->
-<!-- ========================================================= -->
+<!-- VIEW: LANDING -->
 <div id="view-landing" class="min-h-screen flex items-center justify-center p-4">
   <div class="w-full max-w-md bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700">
     <div class="text-center mb-8">
@@ -94,9 +87,7 @@
   </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- VIEW: PHONE (judge device)                                 -->
-<!-- ========================================================= -->
+<!-- VIEW: PHONE (judge device) -->
 <div id="view-phone" class="hidden-view min-h-screen flex flex-col bg-slate-900">
   <div class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
     <div class="flex items-center gap-2 min-w-0">
@@ -170,9 +161,7 @@
   </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- VIEW: LAPTOP (control panel)                               -->
-<!-- ========================================================= -->
+<!-- VIEW: LAPTOP (control panel) -->
 <div id="view-laptop" class="hidden-view min-h-screen bg-slate-900 p-4">
   <div class="max-w-6xl mx-auto">
     <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -196,6 +185,12 @@
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 1</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+          <div class="flex gap-1 mt-2">
+            <button data-act="judge-1-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
+            <button data-act="judge-1-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
+            <button data-act="judge-1-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
+            <button data-act="judge-1-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
       </div>
@@ -203,6 +198,12 @@
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 2</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+          <div class="flex gap-1 mt-2">
+            <button data-act="judge-2-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
+            <button data-act="judge-2-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
+            <button data-act="judge-2-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
+            <button data-act="judge-2-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
       </div>
@@ -212,6 +213,10 @@
       <div class="side-blue rounded-2xl p-6 glow-blue">
         <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
         <div id="l-blue-score" class="text-center text-8xl font-black tv-score">0</div>
+        <div class="flex gap-2 mt-2 justify-center">
+          <button data-act="blue-score-plus" class="laptop-card-btn bg-white/30 hover:bg-white/40 rounded-lg px-4 py-1 text-sm font-bold">+1 PT</button>
+          <button data-act="blue-score-minus" class="laptop-card-btn bg-white/10 hover:bg-white/20 rounded-lg px-4 py-1 text-sm font-bold">-1 PT</button>
+        </div>
         <div class="grid grid-cols-2 gap-3 mt-4">
           <div class="bg-black/30 rounded-xl p-3 text-center">
             <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
@@ -235,6 +240,10 @@
       <div class="side-red rounded-2xl p-6 glow-red">
         <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">RED · HONG</div>
         <div id="l-red-score" class="text-center text-8xl font-black tv-score">0</div>
+        <div class="flex gap-2 mt-2 justify-center">
+          <button data-act="red-score-plus" class="laptop-card-btn bg-white/30 hover:bg-white/40 rounded-lg px-4 py-1 text-sm font-bold">+1 PT</button>
+          <button data-act="red-score-minus" class="laptop-card-btn bg-white/10 hover:bg-white/20 rounded-lg px-4 py-1 text-sm font-bold">-1 PT</button>
+        </div>
         <div class="grid grid-cols-2 gap-3 mt-4">
           <div class="bg-black/30 rounded-xl p-3 text-center">
             <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
@@ -261,6 +270,12 @@
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 3</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+          <div class="flex gap-1 mt-2">
+            <button data-act="judge-3-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
+            <button data-act="judge-3-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
+            <button data-act="judge-3-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
+            <button data-act="judge-3-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
       </div>
@@ -268,6 +283,12 @@
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 4</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+          <div class="flex gap-1 mt-2">
+            <button data-act="judge-4-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
+            <button data-act="judge-4-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
+            <button data-act="judge-4-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
+            <button data-act="judge-4-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
       </div>
@@ -295,9 +316,7 @@
   </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- VIEW: TV DISPLAY                                           -->
-<!-- ========================================================= -->
+<!-- VIEW: TV DISPLAY -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
   <div class="w-full h-full grid grid-cols-2">
     <div class="side-blue flex flex-col p-6">
@@ -357,9 +376,6 @@
 </div>
 
 <script>
-/* =========================================================
- * ⚙️  CONFIG
- * ========================================================= */
 const SUPABASE_URL  = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 
@@ -381,9 +397,6 @@ function getMaxJudges() {
   return (m === 3) ? 3 : 4;
 }
 
-/* =========================================================
- * 🚦  ROUTER  (supports  #tv  and  #tv?code=1234)
- * ========================================================= */
 function showView(name) {
   ["landing","phone","laptop","tv"].forEach(v => {
     document.getElementById("view-" + v).classList.toggle("hidden-view", v !== name);
@@ -432,9 +445,6 @@ async function route() {
   showView("landing");
 }
 
-/* =========================================================
- * 🔐  LOGIN
- * ========================================================= */
 document.getElementById("btn-enter").addEventListener("click", tryLogin);
 document.getElementById("inp-password").addEventListener("keydown", e => {
   if (e.key === "Enter") tryLogin();
@@ -473,7 +483,6 @@ async function tryLogin() {
   state.ring = ring;
   sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
 
-  // TV: either the URL says #tv, or the user typed the TV code → open TV directly
   if (parseHash().name === "tv" || (ring.tv_code && pwd === ring.tv_code)) {
     state.role = "tv";
     await enterTV();
@@ -492,12 +501,8 @@ async function tryLogin() {
   }
 }
 
-/* =========================================================
- * 📱  PHONE VIEW (judge device)
- * ========================================================= */
 async function enterPhone() {
   const maxJ = getMaxJudges();
-
   const { data: active, error } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
 
   if (error) {
@@ -508,7 +513,6 @@ async function enterPhone() {
   }
 
   const taken = new Set((active || []).map(p => p.judge_slot).filter(v => v != null && v >= 1 && v <= maxJ));
-
   let slot = null;
   const preferred = parseInt(localStorage.getItem("tkd_judge_slot_" + state.ring.id) || "", 10);
   if (preferred >= 1 && preferred <= maxJ && !taken.has(preferred)) slot = preferred;
@@ -527,7 +531,6 @@ async function enterPhone() {
 
   state.judgeSlot = slot;
   localStorage.setItem("tkd_judge_slot_" + state.ring.id, String(slot));
-
   const sessionId = crypto.randomUUID();
   state.phoneSessionId = sessionId;
 
@@ -548,7 +551,6 @@ async function enterPhone() {
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
-  // heartbeat + kick detection every 4 seconds
   state.heartbeatInterval = setInterval(async () => {
     const { data: row } = await sb.from("ring_phones").select("id").eq("id", sessionId).maybeSingle();
     if (!row) {
@@ -563,7 +565,6 @@ async function enterPhone() {
   showView("phone");
 }
 
-// announce immediately when the judge's screen wakes up
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && state.phoneSessionId) {
     sb.rpc("phone_heartbeat", { p_id: state.phoneSessionId });
@@ -622,9 +623,6 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
   });
 });
 
-/* =========================================================
- * 💻  LAPTOP VIEW
- * ========================================================= */
 async function enterLaptop() {
   document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
   document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
@@ -673,7 +671,40 @@ document.getElementById("btn-logout").addEventListener("click", () => {
 document.querySelectorAll(".laptop-card-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const act = btn.dataset.act;
+    
+    // Handle individual judge adjustments
+    if (act.startsWith("judge-")) {
+      const parts = act.split("-"); // judge-1-blue-plus
+      const slot = parseInt(parts[1], 10);
+      const side = parts[2];
+      const op = parts[3];
+      const delta = (op === "plus") ? 1 : -1;
+
+      const { error } = await sb.rpc("adjust_judge_score", {
+        p_ring_id: state.ring.id,
+        p_slot: slot,
+        p_side: side,
+        p_delta: delta
+      });
+      if (error) alert("Error: " + error.message);
+      return;
+    }
+
     const [side, type, op] = act.split("-");
+    
+    // Handle main score adjustments
+    if (type === "score") {
+       const delta = (op === "plus") ? 1 : -1;
+       const { error } = await sb.rpc("adjust_card", {
+         p_ring_id: state.ring.id,
+         p_column: side + "_score",
+         p_delta: delta
+       });
+       if (error) alert("Error: " + error.message);
+       return;
+    }
+
+    // Handle cards (gam-jeom / yellow cards)
     const col = side + "_" + (type === "gj" ? "gam_jeom" : "yellow_cards");
     const delta = (op === "plus") ? 1 : -1;
 
@@ -686,7 +717,6 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
   });
 });
 
-/* ---- 3 / 4 referees switch ------------------------------- */
 async function setMaxJudges(n) {
   state.ring.max_phones = n;
   applyMaxJudgesUI();
@@ -696,7 +726,6 @@ async function setMaxJudges(n) {
 document.getElementById("btn-max-3").addEventListener("click", () => setMaxJudges(3));
 document.getElementById("btn-max-4").addEventListener("click", () => setMaxJudges(4));
 
-/* ---- phone list + kick ----------------------------------- */
 async function refreshPhoneList() {
   const { data } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
   const maxJ = getMaxJudges();
@@ -739,9 +768,6 @@ function startPhoneListPolling() {
   setInterval(refreshPhoneList, 3000);
 }
 
-/* =========================================================
- * 📺  TV VIEW
- * ========================================================= */
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
   subscribeMatch();
@@ -751,9 +777,6 @@ async function enterTV() {
   document.body.style.cursor = "none";
 }
 
-/* =========================================================
- * 🎯  JUDGE CORNERS + MAX JUDGES UI
- * ========================================================= */
 function renderJudgeBox(el, givenBlue, givenRed) {
   if (!el) return;
   const net = givenBlue - givenRed;
@@ -800,16 +823,8 @@ function applyMaxJudgesUI() {
       }
     });
   }
-
-  const count = document.getElementById("laptop-phone-count");
-  if (count && state.match !== undefined) {
-    // denominator refresh happens in refreshPhoneList; keep it cheap here
-  }
 }
 
-/* =========================================================
- * 🔔  REALTIME SUBSCRIPTIONS
- * ========================================================= */
 function subscribeMatch() {
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
 
@@ -846,7 +861,6 @@ function subscribeRing() {
 
         applyMaxJudgesUI();
 
-        // a judge whose corner was switched off gets sent home
         if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
           leavePhone("The ring now uses fewer referees — your corner was closed.");
         }
@@ -888,9 +902,6 @@ function handleMatchUpdate(payload) {
   applyMaxJudgesUI();
 }
 
-/* =========================================================
- * 🧹  CLEANUP (keepalive → works even when the tab closes)
- * ========================================================= */
 function cleanup() {
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
   if (state.ringChannel) sb.removeChannel(state.ringChannel);
@@ -920,9 +931,6 @@ function cleanup() {
 window.addEventListener("beforeunload", cleanup);
 window.addEventListener("pagehide", cleanup);
 
-/* =========================================================
- * 🚀  INIT
- * ========================================================= */
 route();
 window.addEventListener("hashchange", route);
 </script>
