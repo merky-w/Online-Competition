@@ -468,7 +468,7 @@ async function tryLogin() {
     .limit(1);
 
   if (error) {
-    errEl.textContent = "Database error: " + error.message + " (did you run the new SQL?)";
+    errEl.textContent = "Database error: " + error.message;
     errEl.classList.remove("hidden");
     return;
   }
@@ -506,7 +506,7 @@ async function enterPhone() {
   const { data: active, error } = await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
 
   if (error) {
-    alert("Database error: " + error.message + "\n\nMake sure you ran the latest SQL.");
+    alert("Database error: " + error.message);
     location.hash = "";
     showView("landing");
     return;
