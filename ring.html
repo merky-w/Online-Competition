@@ -7,9 +7,15 @@
 
 <!--
   ============================================================================
-  IMPORTANT — IF THE RED WARNING BANNER APPEARS ON THE LAPTOP PANEL:
-  It means the app cannot read/write the "matches" table (RLS / missing row).
-  Open Supabase → SQL Editor and run this once:
+  WHY YOUR SQL FAILED:
+  The line "alter publication ... add table public.matches" threw an error
+  because the table was ALREADY in the publication. When one statement fails,
+  Supabase rolls the WHOLE script back — so the security policies were never
+  created. That is why you still get:
+      403 (Forbidden) / "new row violates row-level security policy"
+
+  COPY AND PASTE THIS FIXED VERSION INTO SQL EDITOR AND PRESS RUN.
+  It cannot fail on the publication lines, and everything applies in one go:
 
     alter table public.matches enable row level security;
 
@@ -17,15 +23,27 @@
     create policy "matches_all" on public.matches
       for all using (true) with check (true);
 
-    -- (ignore "already a member" errors on these two lines if they appear)
-    alter publication supabase_realtime add table public.matches;
-    alter publication supabase_realtime add table public.rings;
+    do $$
+    begin
+      alter publication supabase_realtime add table public.matches;
+    exception
+      when duplicate_object then null;
+    end
+    $$;
+
+    do $$
+    begin
+      alter publication supabase_realtime add table public.rings;
+    exception
+      when duplicate_object then null;
+    end
+    $$;
 
     insert into public.matches (ring_id)
     select id from public.rings
     on conflict do nothing;
 
-  Without a readable/writable matches row, NO score/card can ever change.
+  After it says "Success", RELOAD the app page.
   ============================================================================
 -->
 
@@ -210,21 +228,33 @@
       </div>
     </div>
 
-    <!-- Database problem banner (shown only if matches table is unreadable/unwritable) -->
+    <!-- Database problem banner -->
     <div id="laptop-db-warning" class="hidden bg-red-950 border-2 border-red-500 rounded-xl p-3 mb-4 text-sm text-red-100">
       <div class="font-black mb-1">⚠ DATABASE PROBLEM — scores/cards cannot be saved until this is fixed</div>
       <div id="laptop-db-warning-msg" class="mb-2 break-words"></div>
       <details>
-        <summary class="cursor-pointer font-bold text-yellow-300">Show the SQL fix → run it once in Supabase → SQL Editor</summary>
+        <summary class="cursor-pointer font-bold text-yellow-300">Show the SQL fix → paste into Supabase SQL Editor → RUN → then RELOAD this page</summary>
         <pre class="bg-black/60 rounded-lg p-3 mt-2 text-[11px] leading-relaxed overflow-x-auto whitespace-pre select-text">alter table public.matches enable row level security;
 
 drop policy if exists "matches_all" on public.matches;
 create policy "matches_all" on public.matches
   for all using (true) with check (true);
 
--- (if these say "already a member", just ignore it)
-alter publication supabase_realtime add table public.matches;
-alter publication supabase_realtime add table public.rings;
+do $$
+begin
+  alter publication supabase_realtime add table public.matches;
+exception
+  when duplicate_object then null;
+end
+$$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.rings;
+exception
+  when duplicate_object then null;
+end
+$$;
 
 insert into public.matches (ring_id)
 select id from public.rings
@@ -446,12 +476,11 @@ const state = {
   pollInterval: null,
   matchPollInterval: null,
   heartbeatBusy: false,
-  seenInPhoneList: false,   // phone was confirmed present in the ring at least once
-  missedKickChecks: 0,      // consecutive confirmed absences (= laptop pressed Kick)
+  seenInPhoneList: false,
+  missedKickChecks: 0,
   loggingIn: false,
+  dbBroken: false, // set once when the matches table is unreadable/unwritable
 };
-
-let matchReadMode = null; // null = unknown yet, "rpc", or "rest"
 
 function makeSessionId() {
   try {
@@ -546,6 +575,7 @@ async function tryLogin() {
   }
 
   state.loggingIn = true;
+  state.dbBroken = false; // allow a fresh try on every login
   btn.disabled = true;
   btn.textContent = "Entering…";
 
@@ -597,9 +627,6 @@ async function tryLogin() {
 
 /* ===================================================================== */
 /* MATCH ROW HELPERS                                                     */
-/* Every score/card RPC updates the "matches" row. If that row does not  */
-/* exist or cannot be read/written (RLS), NOTHING can ever change —      */
-/* that is exactly what the red laptop banner warns about.               */
 /* ===================================================================== */
 
 function showDbWarning(msg) {
@@ -616,7 +643,7 @@ function hideDbWarning() {
 }
 
 async function ensureMatchRow(showWarnings) {
-  if (!state.ring) return;
+  if (!state.ring || state.dbBroken) return;
   const rid = state.ring.id;
 
   const { data: rows, error: selErr } = await sb
@@ -624,9 +651,10 @@ async function ensureMatchRow(showWarnings) {
 
   if (selErr) {
     console.warn("ensureMatchRow select error:", selErr.message);
+    state.dbBroken = true; // stop hammering the database
     if (showWarnings) {
       showDbWarning("The app cannot read the matches table (" + selErr.message +
-        "). Run the SQL fix below, then reload this page.");
+        "). Run the SQL fix below in Supabase → SQL Editor, then RELOAD this page.");
     }
     return;
   }
@@ -635,14 +663,15 @@ async function ensureMatchRow(showWarnings) {
     const { error: insErr } = await sb.from("matches").insert({ ring_id: rid });
     if (insErr) {
       console.warn("ensureMatchRow insert error:", insErr.message);
+      state.dbBroken = true; // stop hammering the database
       if (showWarnings) {
-        showDbWarning("The app cannot create the match row in the matches table (" +
-          insErr.message + "). Run the SQL fix below, then reload this page.");
+        showDbWarning("The app cannot write to the matches table (" + insErr.message +
+          "). Run the SQL fix below in Supabase → SQL Editor, then RELOAD this page.");
       }
       return;
     }
   } else if (rows.length > 1) {
-    /* keep only one match row per ring — duplicates break every reader */
+    /* keep only one match row per ring */
     const dupIds = rows.slice(1).map(r => r.id);
     const { error: delErr } = await sb.from("matches").delete().in("id", dupIds);
     if (delErr) console.warn("dedupe matches error:", delErr.message);
@@ -651,38 +680,25 @@ async function ensureMatchRow(showWarnings) {
   if (showWarnings) hideDbWarning();
 }
 
-/* Reads the match row. First tries a "get_match" RPC if the database has
-   one (RPCs bypass RLS), otherwise falls back to a normal SELECT. */
 async function readMatchRow() {
   if (!state.ring) return { row: null, error: null };
-
-  if (matchReadMode !== "rest") {
-    const { data, error } = await sb.rpc("get_match", { p_ring_id: state.ring.id });
-    if (!error) {
-      matchReadMode = "rpc";
-      const row = Array.isArray(data) ? (data[0] || null) : (data || null);
-      return { row, error: null };
-    }
-    matchReadMode = "rest"; // no such RPC — use plain select from now on
-  }
-
   const { data, error } = await sb
     .from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
-
   if (error) return { row: null, error };
   return { row: (data && data[0]) || null, error: null };
 }
 
 async function fetchMatchNow() {
-  if (!state.ring) return;
+  if (!state.ring || state.dbBroken) return;
 
   const { row, error } = await readMatchRow();
 
   if (error) {
     console.warn("Match read error:", error.message);
+    state.dbBroken = true;
     if (state.role === "laptop") {
       showDbWarning("The app cannot read the matches table (" + error.message +
-        "). Run the SQL fix below, then reload this page.");
+        "). Run the SQL fix below in Supabase → SQL Editor, then RELOAD this page.");
     }
     return;
   }
@@ -695,8 +711,7 @@ async function fetchMatchNow() {
   handleMatchUpdate({ new: row });
 }
 
-/* every screen re-reads the match every 2 s, so scores ALWAYS sync even
-   if realtime/websocket events are disabled in the database */
+/* every screen re-reads the match every 2 s so scores ALWAYS sync */
 function startMatchPolling() {
   if (state.matchPollInterval) clearInterval(state.matchPollInterval);
   fetchMatchNow();
@@ -710,7 +725,6 @@ function startMatchPolling() {
 async function enterPhone() {
   const maxJ = getMaxJudges();
 
-  /* clear any ghost session this same device left behind */
   const prevSession = localStorage.getItem(phoneSessionKey());
   if (prevSession) {
     try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
@@ -773,7 +787,6 @@ async function enterPhone() {
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
-  /* make sure a match row exists so judge_score has something to update */
   await ensureMatchRow(false);
 
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
@@ -791,7 +804,6 @@ async function phoneHeartbeatTick() {
   state.heartbeatBusy = true;
 
   try {
-    /* 1) keep-alive */
     const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
     if (hbErr) {
       console.warn("Heartbeat RPC error:", hbErr.message);
@@ -802,12 +814,10 @@ async function phoneHeartbeatTick() {
     }
     if (state.phoneSessionId !== sid) return;
 
-    /* 2) detect the laptop's KICK button.
-          The phone NEVER kicks itself for any other reason: it only
-          leaves when it was first confirmed present in the ring and is
-          now confirmed absent twice in a row (= its row was deleted by
-          the operator's Kick button). */
-    if (document.hidden) return; // screen off → don't judge, just wait
+    /* Detect the laptop's KICK button only. The phone never kicks itself
+       for any other reason: it must first be confirmed present, then be
+       confirmed absent twice in a row (= operator pressed Kick). */
+    if (document.hidden) return;
 
     const { data: active, error: listErr } =
       await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
@@ -832,7 +842,7 @@ async function phoneHeartbeatTick() {
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && state.role === "phone" && state.phoneSessionId) {
-    state.missedKickChecks = 0; // coming back from lock screen → fresh start
+    state.missedKickChecks = 0;
     sb.rpc("phone_heartbeat", { p_id: state.phoneSessionId });
   }
 });
@@ -907,7 +917,7 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
     } else {
       btn.classList.add("scored-flash");
       setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
-      fetchMatchNow(); // sync all screens immediately
+      fetchMatchNow();
     }
   });
 });
@@ -966,9 +976,8 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const act = btn.dataset.act;
 
-    // individual judge adjustments
     if (act.startsWith("judge-")) {
-      const parts = act.split("-"); // judge-1-blue-plus
+      const parts = act.split("-");
       const slot = parseInt(parts[1], 10);
       const side = parts[2];
       const op = parts[3];
@@ -988,7 +997,6 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
     const [side, type, op] = act.split("-");
     const delta = (op === "plus") ? 1 : -1;
 
-    // main score
     if (type === "score") {
       const { error } = await sb.rpc("adjust_card", {
         p_ring_id: state.ring.id,
@@ -1000,7 +1008,6 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
       return;
     }
 
-    // gam-jeom / yellow cards
     const col = side + "_" + (type === "gj" ? "gam_jeom" : "yellow_cards");
     const { error } = await sb.rpc("adjust_card", {
       p_ring_id: state.ring.id,
@@ -1059,8 +1066,6 @@ document.getElementById("laptop-phones-list").addEventListener("click", async e 
   const { error } = await sb.rpc("phone_unregister", { p_id: btn.dataset.kick });
   if (error) alert("Kick failed: " + error.message);
   await refreshPhoneList();
-  /* the kicked phone detects this through its heartbeat check
-     and returns to the login screen within a few seconds */
 });
 
 function startPhoneListPolling() {
@@ -1169,7 +1174,6 @@ function subscribeRing() {
 
         applyMaxJudgesUI();
 
-        /* caused only by the laptop operator switching to fewer referees */
         if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
           leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
         }
