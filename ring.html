@@ -5,6 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Taekwondo Scoring System</title>
 
+<!--
+  ============================================================================
+  IMPORTANT — IF THE RED WARNING BANNER APPEARS ON THE LAPTOP PANEL:
+  It means the app cannot read/write the "matches" table (RLS / missing row).
+  Open Supabase → SQL Editor and run this once:
+
+    alter table public.matches enable row level security;
+
+    drop policy if exists "matches_all" on public.matches;
+    create policy "matches_all" on public.matches
+      for all using (true) with check (true);
+
+    -- (ignore "already a member" errors on these two lines if they appear)
+    alter publication supabase_realtime add table public.matches;
+    alter publication supabase_realtime add table public.rings;
+
+    insert into public.matches (ring_id)
+    select id from public.rings
+    on conflict do nothing;
+
+  Without a readable/writable matches row, NO score/card can ever change.
+  ============================================================================
+-->
+
 <!-- Suppress Tailwind CDN Warning -->
 <script>
   const originalWarn = console.warn;
@@ -26,6 +50,11 @@
   .btn-score:active { transform: scale(0.94); }
   .pulse { animation: pulse 0.4s ease; }
   @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  .scored-flash { animation: scoredFlash 0.6s ease; }
+  @keyframes scoredFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.9); }
+    100% { box-shadow: 0 0 0 18px rgba(74,222,128,0); }
+  }
   .tv-score { font-variant-numeric: tabular-nums; text-shadow: 0 4px 24px rgba(0,0,0,0.25); }
   .glow-blue { box-shadow: 0 0 40px rgba(37,99,235,0.35); }
   .glow-red  { box-shadow: 0 0 40px rgba(220,38,38,0.35); }
@@ -179,6 +208,28 @@
         <button id="btn-reset-match" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold">⟲ Reset</button>
         <button id="btn-logout" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold">Logout</button>
       </div>
+    </div>
+
+    <!-- Database problem banner (shown only if matches table is unreadable/unwritable) -->
+    <div id="laptop-db-warning" class="hidden bg-red-950 border-2 border-red-500 rounded-xl p-3 mb-4 text-sm text-red-100">
+      <div class="font-black mb-1">⚠ DATABASE PROBLEM — scores/cards cannot be saved until this is fixed</div>
+      <div id="laptop-db-warning-msg" class="mb-2 break-words"></div>
+      <details>
+        <summary class="cursor-pointer font-bold text-yellow-300">Show the SQL fix → run it once in Supabase → SQL Editor</summary>
+        <pre class="bg-black/60 rounded-lg p-3 mt-2 text-[11px] leading-relaxed overflow-x-auto whitespace-pre select-text">alter table public.matches enable row level security;
+
+drop policy if exists "matches_all" on public.matches;
+create policy "matches_all" on public.matches
+  for all using (true) with check (true);
+
+-- (if these say "already a member", just ignore it)
+alter publication supabase_realtime add table public.matches;
+alter publication supabase_realtime add table public.rings;
+
+insert into public.matches (ring_id)
+select id from public.rings
+on conflict do nothing;</pre>
+      </details>
     </div>
 
     <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">Judge corners · big score = judges ruling for each side</div>
@@ -395,10 +446,13 @@ const state = {
   pollInterval: null,
   matchPollInterval: null,
   heartbeatBusy: false,
+  seenInPhoneList: false,   // phone was confirmed present in the ring at least once
+  missedKickChecks: 0,      // consecutive confirmed absences (= laptop pressed Kick)
   loggingIn: false,
 };
 
-/* session ids that work even without secure-context crypto */
+let matchReadMode = null; // null = unknown yet, "rpc", or "rest"
+
 function makeSessionId() {
   try {
     if (window.crypto && typeof window.crypto.randomUUID === "function") {
@@ -464,8 +518,6 @@ async function route() {
     return;
   }
 
-  /* a hashchange (back button, programmatic clear…) must NOT
-     kick an active judge phone or laptop back to the landing screen */
   if (name === "") {
     if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
     if (state.role === "laptop") { showView("laptop"); return; }
@@ -543,11 +595,122 @@ async function tryLogin() {
   }
 }
 
+/* ===================================================================== */
+/* MATCH ROW HELPERS                                                     */
+/* Every score/card RPC updates the "matches" row. If that row does not  */
+/* exist or cannot be read/written (RLS), NOTHING can ever change —      */
+/* that is exactly what the red laptop banner warns about.               */
+/* ===================================================================== */
+
+function showDbWarning(msg) {
+  const box = document.getElementById("laptop-db-warning");
+  const msgEl = document.getElementById("laptop-db-warning-msg");
+  if (!box || !msgEl) return;
+  msgEl.textContent = msg;
+  box.classList.remove("hidden");
+}
+
+function hideDbWarning() {
+  const box = document.getElementById("laptop-db-warning");
+  if (box) box.classList.add("hidden");
+}
+
+async function ensureMatchRow(showWarnings) {
+  if (!state.ring) return;
+  const rid = state.ring.id;
+
+  const { data: rows, error: selErr } = await sb
+    .from("matches").select("id").eq("ring_id", rid).limit(10);
+
+  if (selErr) {
+    console.warn("ensureMatchRow select error:", selErr.message);
+    if (showWarnings) {
+      showDbWarning("The app cannot read the matches table (" + selErr.message +
+        "). Run the SQL fix below, then reload this page.");
+    }
+    return;
+  }
+
+  if (!rows || rows.length === 0) {
+    const { error: insErr } = await sb.from("matches").insert({ ring_id: rid });
+    if (insErr) {
+      console.warn("ensureMatchRow insert error:", insErr.message);
+      if (showWarnings) {
+        showDbWarning("The app cannot create the match row in the matches table (" +
+          insErr.message + "). Run the SQL fix below, then reload this page.");
+      }
+      return;
+    }
+  } else if (rows.length > 1) {
+    /* keep only one match row per ring — duplicates break every reader */
+    const dupIds = rows.slice(1).map(r => r.id);
+    const { error: delErr } = await sb.from("matches").delete().in("id", dupIds);
+    if (delErr) console.warn("dedupe matches error:", delErr.message);
+  }
+
+  if (showWarnings) hideDbWarning();
+}
+
+/* Reads the match row. First tries a "get_match" RPC if the database has
+   one (RPCs bypass RLS), otherwise falls back to a normal SELECT. */
+async function readMatchRow() {
+  if (!state.ring) return { row: null, error: null };
+
+  if (matchReadMode !== "rest") {
+    const { data, error } = await sb.rpc("get_match", { p_ring_id: state.ring.id });
+    if (!error) {
+      matchReadMode = "rpc";
+      const row = Array.isArray(data) ? (data[0] || null) : (data || null);
+      return { row, error: null };
+    }
+    matchReadMode = "rest"; // no such RPC — use plain select from now on
+  }
+
+  const { data, error } = await sb
+    .from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
+
+  if (error) return { row: null, error };
+  return { row: (data && data[0]) || null, error: null };
+}
+
+async function fetchMatchNow() {
+  if (!state.ring) return;
+
+  const { row, error } = await readMatchRow();
+
+  if (error) {
+    console.warn("Match read error:", error.message);
+    if (state.role === "laptop") {
+      showDbWarning("The app cannot read the matches table (" + error.message +
+        "). Run the SQL fix below, then reload this page.");
+    }
+    return;
+  }
+
+  if (!row) {
+    await ensureMatchRow(state.role === "laptop");
+    return;
+  }
+
+  handleMatchUpdate({ new: row });
+}
+
+/* every screen re-reads the match every 2 s, so scores ALWAYS sync even
+   if realtime/websocket events are disabled in the database */
+function startMatchPolling() {
+  if (state.matchPollInterval) clearInterval(state.matchPollInterval);
+  fetchMatchNow();
+  state.matchPollInterval = setInterval(fetchMatchNow, 2000);
+}
+
+/* ===================================================================== */
+/* PHONE                                                                 */
+/* ===================================================================== */
+
 async function enterPhone() {
   const maxJ = getMaxJudges();
 
-  /* clear any ghost session this same device left behind
-     (page refresh, browser closed without cleanup…) */
+  /* clear any ghost session this same device left behind */
   const prevSession = localStorage.getItem(phoneSessionKey());
   if (prevSession) {
     try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
@@ -603,22 +766,21 @@ async function enterPhone() {
   }
 
   state.phoneSessionId = sessionId;
+  state.seenInPhoneList = false;
+  state.missedKickChecks = 0;
   localStorage.setItem(phoneSessionKey(), sessionId);
 
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
-  /* ------------------------------------------------------------------ */
-  /* NO AUTO-KICK: the phone only sends its heartbeat so the server     */
-  /* knows it is alive. It never checks/kicks itself. The ONLY thing    */
-  /* that can remove a judge phone is the laptop operator (Kick button) */
-  /* ------------------------------------------------------------------ */
+  /* make sure a match row exists so judge_score has something to update */
+  await ensureMatchRow(false);
+
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
 
   subscribeMatch();
   subscribeRing();
-  startMatchPolling();
   showView("phone");
   setPhoneStatus("Connected as Judge " + slot + " — tap to score", false);
 }
@@ -629,15 +791,38 @@ async function phoneHeartbeatTick() {
   state.heartbeatBusy = true;
 
   try {
+    /* 1) keep-alive */
     const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
-
-    /* Normal/transient errors are ignored — we NEVER kick ourselves.
-       Only if the server explicitly says this session no longer exists
-       (which means the LAPTOP operator pressed Kick) do we leave. */
     if (hbErr) {
       console.warn("Heartbeat RPC error:", hbErr.message);
       if (/not (connected|registered|found)|kicked|removed|no session/i.test(hbErr.message || "")) {
         leavePhone("You were removed from the ring by the operator.");
+        return;
+      }
+    }
+    if (state.phoneSessionId !== sid) return;
+
+    /* 2) detect the laptop's KICK button.
+          The phone NEVER kicks itself for any other reason: it only
+          leaves when it was first confirmed present in the ring and is
+          now confirmed absent twice in a row (= its row was deleted by
+          the operator's Kick button). */
+    if (document.hidden) return; // screen off → don't judge, just wait
+
+    const { data: active, error: listErr } =
+      await sb.rpc("get_active_phones", { p_ring_id: state.ring.id });
+    if (state.phoneSessionId !== sid) return;
+    if (listErr) { console.warn("Phone list error:", listErr.message); return; }
+
+    const present = (active || []).some(p => p.id === sid);
+
+    if (present) {
+      state.seenInPhoneList = true;
+      state.missedKickChecks = 0;
+    } else if (state.seenInPhoneList) {
+      state.missedKickChecks++;
+      if (state.missedKickChecks >= 2) {
+        leavePhone("You were kicked out by the operator.");
       }
     }
   } finally {
@@ -647,6 +832,7 @@ async function phoneHeartbeatTick() {
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && state.role === "phone" && state.phoneSessionId) {
+    state.missedKickChecks = 0; // coming back from lock screen → fresh start
     sb.rpc("phone_heartbeat", { p_id: state.phoneSessionId });
   }
 });
@@ -654,14 +840,14 @@ document.addEventListener("visibilitychange", () => {
 async function leavePhone(msg) {
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   state.heartbeatInterval = null;
-  if (state.matchPollInterval) clearInterval(state.matchPollInterval);
-  state.matchPollInterval = null;
 
   const sid = state.phoneSessionId;
   const wasActive = !!sid || !!state.judgeSlot;
 
   state.phoneSessionId = null;
   state.judgeSlot = null;
+  state.seenInPhoneList = false;
+  state.missedKickChecks = 0;
   state.role = null;
 
   if (sid) {
@@ -674,7 +860,7 @@ async function leavePhone(msg) {
   state.realtimeChannel = null;
   state.ringChannel = null;
 
-  if (!wasActive) return; // already left — avoid double alerts / redirects
+  if (!wasActive) return;
 
   if (msg) alert(msg);
   location.hash = "";
@@ -693,12 +879,12 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
     const val  = parseInt(btn.dataset.val, 10);
 
     if (navigator.vibrate) navigator.vibrate(30);
-    btn.classList.remove("pulse");
+    btn.classList.remove("pulse", "scored-flash");
     void btn.offsetWidth;
     btn.classList.add("pulse");
 
     if (!state.phoneSessionId || !state.judgeSlot || !state.ring) {
-      setPhoneStatus("✗ Not connected to the ring", true);
+      setPhoneStatus("✗ Not connected to the ring — log in again", true);
       return;
     }
 
@@ -715,28 +901,27 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
     if (error) {
       console.error(error);
       setPhoneStatus("✗ " + error.message, true);
-      /* only leave if the server explicitly says the session is gone
-         (= the laptop operator kicked us) */
       if (/not (connected|registered|found)|kicked|removed|fewer judges|no session/i.test(error.message || "")) {
         setTimeout(() => leavePhone("You were removed from the ring by the operator."), 800);
       }
     } else {
+      btn.classList.add("scored-flash");
       setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
-      /* refresh the match right away so every screen syncs fast */
-      fetchMatchNow();
+      fetchMatchNow(); // sync all screens immediately
     }
   });
 });
+
+/* ===================================================================== */
+/* LAPTOP                                                                */
+/* ===================================================================== */
 
 async function enterLaptop() {
   document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
   document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
   document.getElementById("laptop-tv-code").textContent = state.ring.tv_code || "—";
 
-  const { data: existing } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).maybeSingle();
-  if (!existing) {
-    await sb.from("matches").insert({ ring_id: state.ring.id });
-  }
+  await ensureMatchRow(true); // shows the red banner if the DB blocks us
 
   subscribeMatch();
   subscribeRing();
@@ -756,7 +941,7 @@ document.getElementById("btn-open-tv").addEventListener("click", () => {
 
 document.getElementById("btn-reset-match").addEventListener("click", async () => {
   if (!confirm("Reset all scores, cards and judge corners for this ring?")) return;
-  await sb.from("matches").update({
+  const { error } = await sb.from("matches").update({
     blue_score: 0, red_score: 0,
     blue_gam_jeom: 0, red_gam_jeom: 0,
     blue_yellow_cards: 0, red_yellow_cards: 0,
@@ -764,6 +949,7 @@ document.getElementById("btn-reset-match").addEventListener("click", async () =>
     judge_red:  [0,0,0,0],
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
+  if (error) alert("Reset failed: " + error.message);
   fetchMatchNow();
 });
 
@@ -780,7 +966,7 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const act = btn.dataset.act;
 
-    // Handle individual judge adjustments
+    // individual judge adjustments
     if (act.startsWith("judge-")) {
       const parts = act.split("-"); // judge-1-blue-plus
       const slot = parseInt(parts[1], 10);
@@ -800,24 +986,22 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
     }
 
     const [side, type, op] = act.split("-");
-
-    // Handle main score adjustments
-    if (type === "score") {
-       const delta = (op === "plus") ? 1 : -1;
-       const { error } = await sb.rpc("adjust_card", {
-         p_ring_id: state.ring.id,
-         p_column: side + "_score",
-         p_delta: delta
-       });
-       if (error) alert("Error: " + error.message);
-       else fetchMatchNow();
-       return;
-    }
-
-    // Handle cards (gam-jeom / yellow cards)
-    const col = side + "_" + (type === "gj" ? "gam_jeom" : "yellow_cards");
     const delta = (op === "plus") ? 1 : -1;
 
+    // main score
+    if (type === "score") {
+      const { error } = await sb.rpc("adjust_card", {
+        p_ring_id: state.ring.id,
+        p_column: side + "_score",
+        p_delta: delta
+      });
+      if (error) alert("Error: " + error.message);
+      else fetchMatchNow();
+      return;
+    }
+
+    // gam-jeom / yellow cards
+    const col = side + "_" + (type === "gj" ? "gam_jeom" : "yellow_cards");
     const { error } = await sb.rpc("adjust_card", {
       p_ring_id: state.ring.id,
       p_column: col,
@@ -872,8 +1056,11 @@ document.getElementById("laptop-phones-list").addEventListener("click", async e 
   const btn = e.target.closest("[data-kick]");
   if (!btn) return;
   if (!confirm("Kick this judge phone out of the ring?")) return;
-  await sb.rpc("phone_unregister", { p_id: btn.dataset.kick });
+  const { error } = await sb.rpc("phone_unregister", { p_id: btn.dataset.kick });
+  if (error) alert("Kick failed: " + error.message);
   await refreshPhoneList();
+  /* the kicked phone detects this through its heartbeat check
+     and returns to the login screen within a few seconds */
 });
 
 function startPhoneListPolling() {
@@ -882,34 +1069,13 @@ function startPhoneListPolling() {
   state.pollInterval = setInterval(refreshPhoneList, 3000);
 }
 
-/* -------------------------------------------------------------------- */
-/* FIX for "phone scores but laptop never changes":                     */
-/* every screen now also POLLS the match row every 2 seconds, so even   */
-/* if realtime/websocket updates are blocked, the scores always sync.   */
-/* -------------------------------------------------------------------- */
-async function fetchMatchNow() {
-  if (!state.ring) return;
-  const { data, error } = await sb
-    .from("matches")
-    .select("*")
-    .eq("ring_id", state.ring.id)
-    .maybeSingle();
-
-  if (error) {
-    console.warn("Match poll error:", error.message);
-    return;
-  }
-  if (data) handleMatchUpdate({ new: data });
-}
-
-function startMatchPolling() {
-  if (state.matchPollInterval) clearInterval(state.matchPollInterval);
-  fetchMatchNow();
-  state.matchPollInterval = setInterval(fetchMatchNow, 2000);
-}
+/* ===================================================================== */
+/* TV                                                                    */
+/* ===================================================================== */
 
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
+  await ensureMatchRow(false);
   subscribeMatch();
   subscribeRing();
   startMatchPolling();
@@ -917,6 +1083,10 @@ async function enterTV() {
   showView("tv");
   document.body.style.cursor = "none";
 }
+
+/* ===================================================================== */
+/* RENDERING + REALTIME                                                  */
+/* ===================================================================== */
 
 function renderJudgeBox(el, givenBlue, givenRed) {
   if (!el) return;
@@ -975,11 +1145,8 @@ function subscribeMatch() {
       { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` },
       handleMatchUpdate
     )
-    .subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        const { data } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).maybeSingle();
-        if (data) handleMatchUpdate({ new: data });
-      }
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") fetchMatchNow();
     });
 }
 
@@ -1002,7 +1169,7 @@ function subscribeRing() {
 
         applyMaxJudgesUI();
 
-        /* only the laptop operator can cause this (by choosing 3 refs) */
+        /* caused only by the laptop operator switching to fewer referees */
         if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
           leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
         }
