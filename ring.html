@@ -1,29 +1,102 @@
-
-                        <!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body {
-                  background-color: white; /* Ensure the iframe has a white background */
-                }
-
-                
-              </style>
-                        </head>
-                        <body>
-                            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Taekwondo Scoring System</title>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  ⚠️  RUN THIS SQL ONCE IN YOUR SUPABASE SQL EDITOR  ⚠️
+  Adds the 4 judge corners to your existing tournament database.
+
+  ─────────────────────────────────────────────────────────────────────
+  -- 1) judge columns on matches
+  alter table public.matches
+    add column if not exists judge_blue integer[] not null default '{0,0,0,0}',
+    add column if not exists judge_red  integer[] not null default '{0,0,0,0}';
+
+  update public.matches set judge_blue = '{0,0,0,0}' where judge_blue is null;
+  update public.matches set judge_red  = '{0,0,0,0}' where judge_red  is null;
+
+  -- 2) corner assignment for each connected phone
+  alter table public.ring_phones
+    add column if not exists judge_slot integer;
+
+  -- 3) RPC used by the judge phones
+  create or replace function public.judge_score(
+    p_ring_id uuid,
+    p_slot    integer,
+    p_side    text,
+    p_points  integer
+  ) returns void
+  language plpgsql
+  security definer
+  set search_path = public
+  as $$
+  declare
+    nb integer[];
+    nr integer[];
+  begin
+    if p_slot is null or p_slot < 1 or p_slot > 4 then
+      raise exception 'judge slot must be between 1 and 4';
+    end if;
+    if p_side not in ('blue','red') then
+      raise exception 'side must be blue or red';
+    end if;
+    if p_points is null or p_points <= 0 then
+      raise exception 'points must be positive';
+    end if;
+
+    select coalesce(judge_blue,'{0,0,0,0}'), coalesce(judge_red,'{0,0,0,0}')
+      into nb, nr
+      from public.matches
+     where ring_id = p_ring_id
+     for update;
+
+    if not found then
+      raise exception 'no match row for this ring';
+    end if;
+
+    if p_side = 'blue' then
+      nb[p_slot] := coalesce(nb[p_slot],0) + p_points;
+    else
+      nr[p_slot] := coalesce(nr[p_slot],0) + p_points;
+    end if;
+
+    update public.matches
+       set judge_blue = nb,
+           judge_red  = nr,
+           blue_score = greatest(nb[1]-nr[1],0)+greatest(nb[2]-nr[2],0)
+                      + greatest(nb[3]-nr[3],0)+greatest(nb[4]-nr[4],0),
+           red_score  = greatest(nr[1]-nb[1],0)+greatest(nr[2]-nb[2],0)
+                      + greatest(nr[3]-nb[3],0)+greatest(nr[4]-nb[4],0),
+           updated_at = now()
+     where ring_id = p_ring_id;
+  end;
+  $$;
+
+  grant execute on function public.judge_score(uuid,integer,text,integer) to anon, authenticated;
+  ─────────────────────────────────────────────────────────────────────
+
+  HOW IT WORKS NOW
+  • Each phone that logs in with the phone password becomes JUDGE 1..4
+    (first phone = corner 1, and so on).
+  • A judge phone shows 5 BLUE buttons and 5 RED buttons (1–5 points).
+    No +/− mode anymore.
+  • Each judge corner shows that judge's NET score:
+      judge taps blue 2  → corner is BLUE showing 2
+      judge taps red 3   → corner is RED showing 1   (2 − 3 = −1)
+    So tapping the opposite colour "cancels" a mistake, like +/−.
+  • The big match score = sum of the 4 judges' winning nets.
+  • Gam-jeom / yellow cards on the laptop are unchanged.
+════════════════════════════════════════════════════════════════════ -->
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { -webkit-tap-highlight-color: transparent; user-select: none; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overscroll-behavior: none; }
+  button { touch-action: manipulation; }
   .btn-score { transition: all 0.08s ease; }
   .btn-score:active { transform: scale(0.94); }
   .pulse { animation: pulse 0.4s ease; }
@@ -32,15 +105,30 @@
   .glow-blue { box-shadow: 0 0 40px rgba(37,99,235,0.35); }
   .glow-red  { box-shadow: 0 0 40px rgba(220,38,38,0.35); }
   .card-box { border: 3px solid; border-radius: 16px; display:flex; align-items:center; justify-content:center; flex-direction:column; }
-  .mode-plus  { background: #10b981; color: white; }
-  .mode-minus { background: #f59e0b; color: white; }
   .hidden-view { display: none !important; }
   input:focus { outline: none; }
-  .big-number { font-size: clamp(8rem, 22vw, 22rem); line-height: 1; font-weight: 900; }
-  .card-count { font-size: clamp(3rem, 8vw, 7rem); line-height: 1; font-weight: 800; }
+  .big-number { font-size: clamp(8rem, 20vw, 20rem); line-height: 1; font-weight: 900; }
+  .card-count { font-size: clamp(2.2rem, 5vw, 5.5rem); line-height: 1; font-weight: 800; }
   .side-blue { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
   .side-red  { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
-  .error-banner { background: #7f1d1d; border: 2px solid #dc2626; }
+
+  /* ── judge corner boxes ─────────────────────────────── */
+  .judge-box { transition: background .25s ease, border-color .25s ease, box-shadow .25s ease; }
+  .judge-neutral { background:#1e293b; border-color:#475569; color:#94a3b8; }
+  .judge-blue    { background:linear-gradient(135deg,#1e3a8a,#2563eb); border-color:#93c5fd; color:#fff; box-shadow:0 0 26px rgba(37,99,235,.45); }
+  .judge-red     { background:linear-gradient(135deg,#7f1d1d,#dc2626); border-color:#fca5a5; color:#fff; box-shadow:0 0 26px rgba(220,38,38,.45); }
+  .judge-net { font-variant-numeric: tabular-nums; }
+  .judge-tv-box {
+    width: clamp(96px, 11vw, 230px);
+    aspect-ratio: 1 / 1;
+    border-radius: 18px;
+    border: 3px solid;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: .3vw;
+    transition: background .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .judge-tv-box .judge-net { font-size: clamp(2.2rem, 5.2vw, 6.5rem); font-weight: 900; line-height: 1; }
+  .judge-tv-label { font-size: clamp(.55rem, 1vw, .95rem); font-weight: 800; letter-spacing: .16em; opacity: .85; }
 </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
@@ -69,54 +157,89 @@
 
     <div id="landing-error" class="mt-4 text-center text-red-400 text-sm hidden"></div>
 
-    <div class="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-500">
+    <div class="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-500 space-y-1">
       <p>Laptop password → Control panel</p>
-      <p>Phone password → Referee device</p>
+      <p>Phone password → Judge device (auto-assigned corner 1–4)</p>
       <p class="mt-2">Append <code class="bg-slate-900 px-2 py-1 rounded">#tv</code> to the URL for TV display</p>
     </div>
   </div>
 </div>
 
 <!-- ========================================================= -->
-<!-- VIEW: PHONE (referee device)                               -->
+<!-- VIEW: PHONE (judge device — 5 blue + 5 red buttons)        -->
 <!-- ========================================================= -->
 <div id="view-phone" class="hidden-view min-h-screen flex flex-col bg-slate-900">
   <div class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 min-w-0">
       <span class="text-xl">🥋</span>
-      <span id="phone-ring-name" class="font-bold"></span>
+      <span id="phone-ring-name" class="font-bold truncate"></span>
     </div>
-    <div class="text-xs text-slate-400">
-      <span id="phone-conn-status" class="inline-flex items-center gap-1">
+    <div class="flex items-center gap-3 shrink-0">
+      <span id="phone-judge-badge" class="bg-yellow-400 text-black font-black px-3 py-1 rounded-lg text-sm">JUDGE –</span>
+      <span class="text-xs text-slate-400 inline-flex items-center gap-1">
         <span class="w-2 h-2 rounded-full bg-green-500"></span>Live
       </span>
     </div>
   </div>
 
-  <div class="grid grid-cols-2 gap-2 p-3">
-    <button data-side="blue" class="phone-side-btn side-blue rounded-xl py-4 font-black text-xl border-4 border-transparent">
-      🔵 BLUE (CHUNG)
-    </button>
-    <button data-side="red" class="phone-side-btn side-red rounded-xl py-4 font-black text-xl border-4 border-transparent">
-      🔴 RED (HONG)
-    </button>
+  <div class="grid grid-cols-2 gap-3 p-3 flex-1 min-h-0">
+    <!-- BLUE column -->
+    <div class="side-blue rounded-2xl p-3 flex flex-col min-h-0 glow-blue">
+      <div class="text-center font-black tracking-widest text-sm mb-2 opacity-90">🔵 BLUE · CHUNG</div>
+      <div class="flex-1 grid grid-rows-5 gap-2 min-h-0">
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="1">
+          <span class="text-4xl sm:text-5xl font-black leading-none">1</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINT</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="2">
+          <span class="text-4xl sm:text-5xl font-black leading-none">2</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="3">
+          <span class="text-4xl sm:text-5xl font-black leading-none">3</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="4">
+          <span class="text-4xl sm:text-5xl font-black leading-none">4</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="5">
+          <span class="text-4xl sm:text-5xl font-black leading-none">5</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- RED column -->
+    <div class="side-red rounded-2xl p-3 flex flex-col min-h-0 glow-red">
+      <div class="text-center font-black tracking-widest text-sm mb-2 opacity-90">🔴 RED · HONG</div>
+      <div class="flex-1 grid grid-rows-5 gap-2 min-h-0">
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="1">
+          <span class="text-4xl sm:text-5xl font-black leading-none">1</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINT</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="2">
+          <span class="text-4xl sm:text-5xl font-black leading-none">2</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="3">
+          <span class="text-4xl sm:text-5xl font-black leading-none">3</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="4">
+          <span class="text-4xl sm:text-5xl font-black leading-none">4</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="5">
+          <span class="text-4xl sm:text-5xl font-black leading-none">5</span>
+          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        </button>
+      </div>
+    </div>
   </div>
 
-  <div class="px-3 pb-2">
-    <button id="btn-mode-toggle" class="w-full mode-plus rounded-xl py-3 font-black text-lg transition">
-      MODE: + ADD
-    </button>
-  </div>
-
-  <div class="grid grid-cols-2 gap-3 p-3 flex-1">
-    <button data-val="1" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">1</button>
-    <button data-val="2" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">2</button>
-    <button data-val="3" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">3</button>
-    <button data-val="4" class="btn-score bg-slate-700 hover:bg-slate-600 rounded-2xl text-6xl font-black py-8">4</button>
-  </div>
-
-  <div class="p-3 text-center text-xs text-slate-500">
-    Values = WT point system (punch 1 · body kick 2 · head kick 3 · spinning 4)
+  <div class="px-3 pb-3">
+    <div id="phone-status" class="text-center text-xs text-slate-500">Tap a button to award points — your corner updates live</div>
   </div>
 </div>
 
@@ -137,7 +260,27 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <!-- judge corners · top (1 = top-left, 2 = top-right) -->
+    <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">Judge corners</div>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div id="judge-laptop-1" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 1</div>
+          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+        </div>
+        <div class="judge-net text-5xl font-black">0</div>
+      </div>
+      <div id="judge-laptop-2" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 2</div>
+          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+        </div>
+        <div class="judge-net text-5xl font-black">0</div>
+      </div>
+    </div>
+
+    <!-- main score panels (unchanged) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="side-blue rounded-2xl p-6 glow-blue">
         <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
         <div id="l-blue-score" class="text-center text-8xl font-black tv-score">0</div>
@@ -185,16 +328,35 @@
       </div>
     </div>
 
+    <!-- judge corners · bottom (3 = bottom-left, 4 = bottom-right) -->
+    <div class="grid grid-cols-2 gap-3 mt-3 mb-4">
+      <div id="judge-laptop-3" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 3</div>
+          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+        </div>
+        <div class="judge-net text-5xl font-black">0</div>
+      </div>
+      <div id="judge-laptop-4" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 4</div>
+          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+        </div>
+        <div class="judge-net text-5xl font-black">0</div>
+      </div>
+    </div>
+
+    <!-- connected phones (kept) -->
     <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold">Connected Referee Phones</h3>
+        <h3 class="font-bold">Connected Judge Phones</h3>
         <span id="laptop-phone-count" class="text-sm text-slate-400">0 / 4</span>
       </div>
       <div id="laptop-phones-list" class="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 1 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 2 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 3 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Slot 4 — empty</div>
+        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 1 — empty</div>
+        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 2 — empty</div>
+        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 3 — empty</div>
+        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 4 — empty</div>
       </div>
     </div>
   </div>
@@ -205,40 +367,59 @@
 <!-- ========================================================= -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
   <div class="w-full h-full grid grid-cols-2">
-    <div class="side-blue flex flex-col p-6 relative">
+    <div class="side-blue flex flex-col p-6">
       <div class="text-center text-xl font-black tracking-widest opacity-80 mb-2">BLUE · CHUNG</div>
       <div class="flex-1 flex items-center justify-center">
         <div id="tv-blue-score" class="tv-score big-number text-white">0</div>
       </div>
-      <div class="grid grid-cols-2 gap-4 h-48">
-        <div class="card-box border-yellow-400 bg-black/40">
+      <div class="flex justify-center gap-[2vw] pb-2">
+        <div class="card-box border-yellow-400 bg-black/40 w-[10vw] h-[11vw] min-w-[110px] min-h-[115px]">
           <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
           <div id="tv-blue-gj" class="card-count text-yellow-300">0</div>
         </div>
-        <div class="card-box border-yellow-400 bg-black/40">
+        <div class="card-box border-yellow-400 bg-black/40 w-[10vw] h-[11vw] min-w-[110px] min-h-[115px]">
           <div class="text-xs opacity-70 mb-1">YELLOW</div>
           <div id="tv-blue-yc" class="card-count text-yellow-300">0</div>
         </div>
       </div>
     </div>
 
-    <div class="side-red flex flex-col p-6 relative">
+    <div class="side-red flex flex-col p-6">
       <div class="text-center text-xl font-black tracking-widest opacity-80 mb-2">RED · HONG</div>
       <div class="flex-1 flex items-center justify-center">
         <div id="tv-red-score" class="tv-score big-number text-white">0</div>
       </div>
-      <div class="grid grid-cols-2 gap-4 h-48">
-        <div class="card-box border-yellow-400 bg-black/40">
+      <div class="flex justify-center gap-[2vw] pb-2">
+        <div class="card-box border-yellow-400 bg-black/40 w-[10vw] h-[11vw] min-w-[110px] min-h-[115px]">
           <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
           <div id="tv-red-gj" class="card-count text-yellow-300">0</div>
         </div>
-        <div class="card-box border-yellow-400 bg-black/40">
+        <div class="card-box border-yellow-400 bg-black/40 w-[10vw] h-[11vw] min-w-[110px] min-h-[115px]">
           <div class="text-xs opacity-70 mb-1">YELLOW</div>
           <div id="tv-red-yc" class="card-count text-yellow-300">0</div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- four judge corners of the TV -->
+  <div id="judge-tv-1" class="judge-tv-box judge-neutral absolute top-6 left-6">
+    <div class="judge-tv-label">JUDGE 1</div>
+    <div class="judge-net">0</div>
+  </div>
+  <div id="judge-tv-2" class="judge-tv-box judge-neutral absolute top-6 right-6">
+    <div class="judge-tv-label">JUDGE 2</div>
+    <div class="judge-net">0</div>
+  </div>
+  <div id="judge-tv-3" class="judge-tv-box judge-neutral absolute bottom-6 left-6">
+    <div class="judge-tv-label">JUDGE 3</div>
+    <div class="judge-net">0</div>
+  </div>
+  <div id="judge-tv-4" class="judge-tv-box judge-neutral absolute bottom-6 right-6">
+    <div class="judge-tv-label">JUDGE 4</div>
+    <div class="judge-net">0</div>
+  </div>
+
   <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-yellow-400 -translate-x-1/2"></div>
   <div id="tv-ring-name" class="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-black px-4 py-1 rounded-b-xl text-sm"></div>
 </div>
@@ -248,14 +429,11 @@
 <!-- ========================================================= -->
 <script>
 /* =========================================================
- * ⚙️  CONFIG — TAKEN FROM YOUR TOURNAMENT MANAGER CODE
+ * ⚙️  CONFIG
  * ========================================================= */
 const SUPABASE_URL  = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 
-/* =========================================================
- * 🧱  SUPABASE CLIENT
- * ========================================================= */
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 /* =========================================================
@@ -265,8 +443,7 @@ const state = {
   role: null,
   ring: null,
   match: null,
-  phoneMode: "+",
-  phoneSide: "blue",
+  judgeSlot: null,
   phoneSessionId: null,
   realtimeChannel: null,
   heartbeatInterval: null,
@@ -343,6 +520,13 @@ async function tryLogin() {
   state.ring = ring;
   sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
 
+  // TV window asking for a password → go straight to TV
+  if (location.hash.replace("#","").toLowerCase() === "tv") {
+    state.role = "tv";
+    await enterTV();
+    return;
+  }
+
   if (pwd === ring.laptop_password) {
     state.role = "laptop";
     await enterLaptop();
@@ -353,21 +537,46 @@ async function tryLogin() {
 }
 
 /* =========================================================
- * 📱  PHONE VIEW
+ * 📱  PHONE VIEW (judge device)
  * ========================================================= */
 async function enterPhone() {
-  const { data: phones } = await sb
-    .from("ring_phones")
-    .select("id")
-    .eq("ring_id", state.ring.id)
-    .gt("last_seen", new Date(Date.now() - 15000).toISOString());
+  const cutoff = new Date(Date.now() - 15000).toISOString();
 
-  if (phones && phones.length >= 4) {
-    alert("This ring already has 4 phones connected. Please try again later.");
+  const { data: active, error } = await sb
+    .from("ring_phones")
+    .select("judge_slot")
+    .eq("ring_id", state.ring.id)
+    .gt("last_seen", cutoff);
+
+  if (error) {
+    alert("Database error: " + error.message +
+      "\n\nMake sure you ran the new SQL (judge_slot column on ring_phones).");
     location.hash = "";
     showView("landing");
     return;
   }
+
+  const taken = new Set((active || []).map(p => p.judge_slot).filter(v => v != null));
+
+  // try to reclaim the corner this phone used before, else take lowest free
+  let slot = null;
+  const preferred = parseInt(localStorage.getItem("tkd_judge_slot_" + state.ring.id) || "", 10);
+  if (preferred >= 1 && preferred <= 4 && !taken.has(preferred)) slot = preferred;
+  if (!slot) {
+    for (let i = 1; i <= 4; i++) {
+      if (!taken.has(i)) { slot = i; break; }
+    }
+  }
+
+  if (!slot) {
+    alert("All 4 judge corners of this ring are already taken.");
+    location.hash = "";
+    showView("landing");
+    return;
+  }
+
+  state.judgeSlot = slot;
+  localStorage.setItem("tkd_judge_slot_" + state.ring.id, String(slot));
 
   const sessionId = crypto.randomUUID();
   state.phoneSessionId = sessionId;
@@ -375,68 +584,53 @@ async function enterPhone() {
   await sb.from("ring_phones").upsert({
     id: sessionId,
     ring_id: state.ring.id,
+    judge_slot: slot,
     last_seen: new Date().toISOString()
   });
 
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
+  document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
-  state.heartbeatInterval = setInterval(async () => {
-    await sb.from("ring_phones").update({
+  state.heartbeatInterval = setInterval(() => {
+    sb.from("ring_phones").update({
       last_seen: new Date().toISOString()
     }).eq("id", sessionId);
   }, 5000);
-
-  window.addEventListener("beforeunload", () => {
-    sb.from("ring_phones").delete().eq("id", sessionId);
-  });
 
   subscribeMatch();
   showView("phone");
 }
 
-document.querySelectorAll(".phone-side-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    state.phoneSide = btn.dataset.side;
-    document.querySelectorAll(".phone-side-btn").forEach(b => {
-      b.classList.toggle("border-yellow-400", b === btn);
-      b.classList.toggle("border-transparent", b !== btn);
-    });
-  });
-});
-document.querySelector('.phone-side-btn[data-side="blue"]').classList.add("border-yellow-400");
+function setPhoneStatus(msg, isError) {
+  const el = document.getElementById("phone-status");
+  el.textContent = msg;
+  el.className = "text-center text-xs " + (isError ? "text-red-400" : "text-slate-500");
+}
 
-document.getElementById("btn-mode-toggle").addEventListener("click", () => {
-  state.phoneMode = (state.phoneMode === "+") ? "-" : "+";
-  const btn = document.getElementById("btn-mode-toggle");
-  if (state.phoneMode === "+") {
-    btn.className = "w-full mode-plus rounded-xl py-3 font-black text-lg transition";
-    btn.textContent = "MODE: + ADD";
-  } else {
-    btn.className = "w-full mode-minus rounded-xl py-3 font-black text-lg transition";
-    btn.textContent = "MODE: − SUBTRACT";
-  }
-});
-
-document.querySelectorAll("#view-phone .btn-score").forEach(btn => {
+document.querySelectorAll(".judge-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
-    const val = parseInt(btn.dataset.val, 10);
-    const delta = (state.phoneMode === "+") ? val : -val;
-    const side = state.phoneSide;
+    const side = btn.dataset.side;
+    const val  = parseInt(btn.dataset.val, 10);
 
     if (navigator.vibrate) navigator.vibrate(30);
-
+    btn.classList.remove("pulse");
+    void btn.offsetWidth;
     btn.classList.add("pulse");
-    setTimeout(() => btn.classList.remove("pulse"), 400);
 
-    const { error } = await sb.rpc("adjust_score", {
+    setPhoneStatus("+" + val + " " + side.toUpperCase() + " — sending…", false);
+
+    const { error } = await sb.rpc("judge_score", {
       p_ring_id: state.ring.id,
-      p_side: side,
-      p_delta: delta
+      p_slot:    state.judgeSlot,
+      p_side:    side,
+      p_points:  val
     });
 
     if (error) {
       console.error(error);
-      alert("Error: " + error.message);
+      setPhoneStatus("✗ " + error.message + " — did you run the judge_score SQL?", true);
+    } else {
+      setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
     }
   });
 });
@@ -465,11 +659,13 @@ document.getElementById("btn-open-tv").addEventListener("click", () => {
 });
 
 document.getElementById("btn-reset-match").addEventListener("click", async () => {
-  if (!confirm("Reset all scores and cards for this ring?")) return;
+  if (!confirm("Reset all scores, cards and judge corners for this ring?")) return;
   await sb.from("matches").update({
     blue_score: 0, red_score: 0,
     blue_gam_jeom: 0, red_gam_jeom: 0,
     blue_yellow_cards: 0, red_yellow_cards: 0,
+    judge_blue: [0,0,0,0],
+    judge_red:  [0,0,0,0],
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
 });
@@ -500,27 +696,31 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
 
 async function startPhoneListPolling() {
   async function refresh() {
+    const cutoff = new Date(Date.now() - 15000).toISOString();
     const { data } = await sb
       .from("ring_phones")
-      .select("id, last_seen")
+      .select("id, judge_slot")
       .eq("ring_id", state.ring.id)
-      .gt("last_seen", new Date(Date.now() - 15000).toISOString());
+      .gt("last_seen", cutoff)
+      .order("judge_slot", { ascending: true });
 
-    const list = document.getElementById("laptop-phones-list");
+    const list  = document.getElementById("laptop-phones-list");
     const count = document.getElementById("laptop-phone-count");
-    const slots = data || [];
-    count.textContent = slots.length + " / 4";
+    const bySlot = {};
+    (data || []).forEach(p => {
+      if (p.judge_slot >= 1 && p.judge_slot <= 4 && !bySlot[p.judge_slot]) bySlot[p.judge_slot] = p;
+    });
+    count.textContent = (data || []).length + " / 4";
 
     list.innerHTML = "";
-    for (let i = 0; i < 4; i++) {
-      const slot = slots[i];
+    for (let i = 1; i <= 4; i++) {
       const div = document.createElement("div");
-      if (slot) {
+      if (bySlot[i]) {
         div.className = "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
-        div.innerHTML = `<div class="font-bold">📱 Phone ${i+1}</div><div class="text-xs text-green-300 mt-1">Connected</div>`;
+        div.innerHTML = `<div class="font-bold">📱 Judge ${i}</div><div class="text-xs text-green-300 mt-1">Connected</div>`;
       } else {
         div.className = "bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700";
-        div.textContent = `Slot ${i+1} — empty`;
+        div.textContent = `Corner ${i} — empty`;
       }
       list.appendChild(div);
     }
@@ -537,6 +737,28 @@ async function enterTV() {
   subscribeMatch();
   showView("tv");
   document.body.style.cursor = "none";
+}
+
+/* =========================================================
+ * 🎯  JUDGE CORNER RENDERING
+ * ========================================================= */
+function renderJudgeBox(el, givenBlue, givenRed) {
+  if (!el) return;
+  const net = givenBlue - givenRed;
+  el.classList.remove("judge-neutral", "judge-blue", "judge-red");
+  el.classList.add(net > 0 ? "judge-blue" : net < 0 ? "judge-red" : "judge-neutral");
+  const netEl = el.querySelector(".judge-net");
+  if (netEl) netEl.textContent = Math.abs(net);
+  const detEl = el.querySelector(".judge-detail");
+  if (detEl) detEl.textContent = "B " + givenBlue + " · R " + givenRed;
+}
+
+function pad4(arr) {
+  const out = [0,0,0,0];
+  if (Array.isArray(arr)) {
+    for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
+  }
+  return out;
 }
 
 /* =========================================================
@@ -563,26 +785,33 @@ function subscribeMatch() {
 
 function handleMatchUpdate(payload) {
   const m = payload.new;
+  if (!m) return;
   state.match = m;
 
-  const lBS = document.getElementById("l-blue-score");
-  if (lBS) {
-    document.getElementById("l-blue-score").textContent = m.blue_score;
-    document.getElementById("l-red-score").textContent = m.red_score;
-    document.getElementById("l-blue-gj").textContent = m.blue_gam_jeom;
-    document.getElementById("l-red-gj").textContent = m.red_gam_jeom;
-    document.getElementById("l-blue-yc").textContent = m.blue_yellow_cards;
-    document.getElementById("l-red-yc").textContent = m.red_yellow_cards;
-  }
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
 
-  const tvBS = document.getElementById("tv-blue-score");
-  if (tvBS) {
-    document.getElementById("tv-blue-score").textContent = m.blue_score;
-    document.getElementById("tv-red-score").textContent = m.red_score;
-    document.getElementById("tv-blue-gj").textContent = m.blue_gam_jeom;
-    document.getElementById("tv-red-gj").textContent = m.red_gam_jeom;
-    document.getElementById("tv-blue-yc").textContent = m.blue_yellow_cards;
-    document.getElementById("tv-red-yc").textContent = m.red_yellow_cards;
+  set("l-blue-score", m.blue_score);
+  set("l-red-score",  m.red_score);
+  set("l-blue-gj",    m.blue_gam_jeom);
+  set("l-red-gj",     m.red_gam_jeom);
+  set("l-blue-yc",    m.blue_yellow_cards);
+  set("l-red-yc",     m.red_yellow_cards);
+
+  set("tv-blue-score", m.blue_score);
+  set("tv-red-score",  m.red_score);
+  set("tv-blue-gj",    m.blue_gam_jeom);
+  set("tv-red-gj",     m.red_gam_jeom);
+  set("tv-blue-yc",    m.blue_yellow_cards);
+  set("tv-red-yc",     m.red_yellow_cards);
+
+  const jb = pad4(m.judge_blue);
+  const jr = pad4(m.judge_red);
+  for (let i = 0; i < 4; i++) {
+    renderJudgeBox(document.getElementById("judge-laptop-" + (i + 1)), jb[i], jr[i]);
+    renderJudgeBox(document.getElementById("judge-tv-"     + (i + 1)), jb[i], jr[i]);
   }
 }
 
@@ -610,15 +839,3 @@ window.addEventListener("hashchange", route);
 </script>
 </body>
 </html>
-
-
-
-              <script>
-                              const SUPABASE_URL  = "https://cziwnycosdxeuacslcza.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
-
-
-              </script>
-                        </body>
-                        </html>
-                    
