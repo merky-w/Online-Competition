@@ -21,6 +21,14 @@
   Total match scores are NOT displayed anywhere anymore (they are still
   stored in the database, just hidden, as you asked).
 
+  NEW IN THIS VERSION (TV FIX):
+  - The TV now WRITES OUT the penalties: GAM-JEOM and YELLOW CARD counts are
+    shown as stat boxes under each side's big number (blue AND red side).
+    They update live and pulse when they change.
+  - The TV judge boxes now ALSO show the B · R breakdown for every judge
+    (small line under the net number), so the judges are written out too.
+  - No database change needed for this fix — just replace this HTML file.
+
   OTHER THINGS KEPT FROM THE LAST VERSION:
   - No automatic kicking: a phone is only removed by the manual KICK button.
   - Party size 3 blocks a 4th phone (app + database).
@@ -329,10 +337,43 @@ exception when others then null; end $$;
   .glow-red  { box-shadow: 0 0 40px rgba(220,38,38,0.35); }
   .hidden-view { display: none !important; }
   input:focus { outline: none; }
-  .big-number { font-size: clamp(8rem, 20vw, 20rem); line-height: 1; font-weight: 900; }
+  .big-number { font-size: clamp(7rem, 18vw, 18rem); line-height: 1; font-weight: 900; }
   .vote-caption { font-size: clamp(.7rem, 1.3vw, 1.15rem); letter-spacing: .28em; font-weight: 800; opacity: .8; }
   .side-blue { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
   .side-red  { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
+
+  /* ---- TV penalty stat boxes (GAM-JEOM + YELLOW CARD) ---- */
+  .tv-stats { display: flex; gap: clamp(10px, 2vw, 42px); margin-top: clamp(10px, 3vh, 36px); }
+  .tv-stat {
+    background: rgba(0,0,0,.38);
+    border: 2px solid rgba(255,255,255,.25);
+    border-radius: 18px;
+    padding: clamp(6px, 1.1vw, 18px) clamp(14px, 2.2vw, 40px);
+    text-align: center;
+    min-width: clamp(86px, 10vw, 190px);
+  }
+  .tv-stat-label {
+    font-size: clamp(.55rem, 1.05vw, 1rem);
+    letter-spacing: .2em;
+    font-weight: 800;
+    opacity: .85;
+    display: flex; align-items: center; justify-content: center; gap: .45em;
+    white-space: nowrap;
+  }
+  .tv-stat-num {
+    font-size: clamp(1.9rem, 4.6vw, 5.6rem);
+    font-weight: 900;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+  .card-chip {
+    display: inline-block;
+    width: .75em; height: 1.05em;
+    background: #facc15;
+    border-radius: .12em;
+    box-shadow: 0 0 10px rgba(250,204,21,.6);
+    flex: none;
+  }
 
   /* judge corner boxes */
   .judge-box { transition: background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease; }
@@ -350,8 +391,15 @@ exception when others then null; end $$;
     gap: .3vw;
     transition: background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease;
   }
-  .judge-tv-box .judge-net { font-size: clamp(2.2rem, 5.2vw, 6.5rem); font-weight: 900; line-height: 1; }
+  .judge-tv-box .judge-net { font-size: clamp(2rem, 4.8vw, 6rem); font-weight: 900; line-height: 1; }
   .judge-tv-label { font-size: clamp(.55rem, 1vw, .95rem); font-weight: 800; letter-spacing: .16em; opacity: .85; }
+  .judge-tv-box .judge-detail {
+    font-size: clamp(.55rem, .95vw, .95rem);
+    font-weight: 700;
+    opacity: .85;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
@@ -631,8 +679,9 @@ exception when others then null; end $$;
 </div>
 
 <!-- VIEW: TV DISPLAY
-     Only the 4 judge boxes + the 2 BIG numbers.
-     The BIG numbers ONLY count referees for each side (0-4, or 0-3 when party = 3). -->
+     4 judge boxes (each writing out its B · R breakdown) + the 2 BIG numbers
+     (referee counts only) + GAM-JEOM and YELLOW CARD counters written out
+     under each side. -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
   <div class="w-full h-full grid grid-cols-2">
     <div class="side-blue flex flex-col p-6">
@@ -640,6 +689,18 @@ exception when others then null; end $$;
       <div class="flex-1 flex flex-col items-center justify-center">
         <div id="tv-blue-score" class="tv-score big-number text-white">0</div>
         <div class="vote-caption mt-2">REFEREES FOR BLUE</div>
+
+        <!-- penalties written out for the BLUE side -->
+        <div class="tv-stats">
+          <div class="tv-stat">
+            <div class="tv-stat-label">GAM-JEOM</div>
+            <div id="tv-blue-gj" class="tv-stat-num text-red-200">0</div>
+          </div>
+          <div class="tv-stat">
+            <div class="tv-stat-label"><span class="card-chip"></span>YELLOW CARD</div>
+            <div id="tv-blue-yc" class="tv-stat-num text-yellow-300">0</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -648,6 +709,18 @@ exception when others then null; end $$;
       <div class="flex-1 flex flex-col items-center justify-center">
         <div id="tv-red-score" class="tv-score big-number text-white">0</div>
         <div class="vote-caption mt-2">REFEREES FOR RED</div>
+
+        <!-- penalties written out for the RED side -->
+        <div class="tv-stats">
+          <div class="tv-stat">
+            <div class="tv-stat-label">GAM-JEOM</div>
+            <div id="tv-red-gj" class="tv-stat-num text-red-200">0</div>
+          </div>
+          <div class="tv-stat">
+            <div class="tv-stat-label"><span class="card-chip"></span>YELLOW CARD</div>
+            <div id="tv-red-yc" class="tv-stat-num text-yellow-300">0</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -655,18 +728,22 @@ exception when others then null; end $$;
   <div id="judge-tv-1" class="judge-tv-box judge-neutral absolute top-6 left-6">
     <div class="judge-tv-label">JUDGE 1</div>
     <div class="judge-net">0</div>
+    <div class="judge-detail">B 0 · R 0</div>
   </div>
   <div id="judge-tv-2" class="judge-tv-box judge-neutral absolute top-6 right-6">
     <div class="judge-tv-label">JUDGE 2</div>
     <div class="judge-net">0</div>
+    <div class="judge-detail">B 0 · R 0</div>
   </div>
   <div id="judge-tv-3" class="judge-tv-box judge-neutral absolute bottom-6 left-6">
     <div class="judge-tv-label">JUDGE 3</div>
     <div class="judge-net">0</div>
+    <div class="judge-detail">B 0 · R 0</div>
   </div>
   <div id="judge-tv-4" class="judge-tv-box judge-neutral absolute bottom-6 right-6">
     <div class="judge-tv-label">JUDGE 4</div>
     <div class="judge-net">0</div>
+    <div class="judge-detail">B 0 · R 0</div>
   </div>
 
   <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-yellow-400 -translate-x-1/2"></div>
@@ -973,6 +1050,19 @@ function renderVoteScores() {
   /* laptop big numbers show the SAME referee counts */
   setEl("l-blue-score", v.blue);
   setEl("l-red-score",  v.red);
+}
+
+/* like set(), but pulses the TV stat when the value changes */
+function setStat(id, v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const s = String(v);
+  if (el.textContent !== s) {
+    el.textContent = s;
+    el.classList.remove("pulse");
+    void el.offsetWidth;
+    el.classList.add("pulse");
+  }
 }
 
 /* ===================================================================== */
@@ -1557,6 +1647,12 @@ function handleMatchUpdate(payload) {
   set("l-red-gj",  m.red_gam_jeom);
   set("l-blue-yc", m.blue_yellow_cards);
   set("l-red-yc",  m.red_yellow_cards);
+
+  /* SAME penalties written out on the TV (they pulse when they change) */
+  setStat("tv-blue-gj", m.blue_gam_jeom);
+  setStat("tv-red-gj",  m.red_gam_jeom);
+  setStat("tv-blue-yc", m.blue_yellow_cards);
+  setStat("tv-red-yc",  m.red_yellow_cards);
 
   /* BIG numbers = referee counts (0-4), on TV AND laptop */
   renderVoteScores();
