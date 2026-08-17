@@ -21,13 +21,20 @@
   Total match scores are NOT displayed anywhere anymore (they are still
   stored in the database, just hidden, as you asked).
 
-  NEW IN THIS VERSION (TV FIX):
-  - The TV now WRITES OUT the penalties: GAM-JEOM and YELLOW CARD counts are
-    shown as stat boxes under each side's big number (blue AND red side).
-    They update live and pulse when they change.
-  - The TV judge boxes now ALSO show the B · R breakdown for every judge
-    (small line under the net number), so the judges are written out too.
-  - No database change needed for this fix — just replace this HTML file.
+  NEW IN THIS VERSION (ROUNDS + TIMER + WINNER FLOW):
+  - Configurable ROUND TIMER (default 2 min). Laptop controls it; TV and
+    phones display it live via Supabase Realtime broadcast.
+  - 2 ROUNDS USUALLY. Round 3 is activated ONLY when at the end of Round 2
+    BOTH big numbers (referee counts) are exactly 2.
+  - When the match finishes, the side with the bigger big number wins.
+    A tie becomes a DRAW.
+  - LAPTOP TWO-STEP CONFIRMATION:
+      Step 1: "BLUE/RED WINS! Is this correct?" → Confirm / Deny
+      Step 2: "Did [OTHER SIDE] win?" → Yes / No (No = finalize result)
+  - If either step is denied, a "Reset Match" button appears, which itself
+    requires confirmation before wiping scores + timer.
+  - After finalization, TV shows a WINNER overlay until the match is reset.
+  - Scoring is BLOCKED on phones + laptop while the match is finished.
 
   OTHER THINGS KEPT FROM THE LAST VERSION:
   - No automatic kicking: a phone is only removed by the manual KICK button.
@@ -400,6 +407,13 @@ exception when others then null; end $$;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+
+  /* Timer display (monospaced so digits don't jump) */
+  .timer-display { font-variant-numeric: tabular-nums; }
+
+  /* Timer warning pulse when < 10s */
+  .timer-warning { color: #f87171 !important; animation: timerBlink 0.8s infinite; }
+  @keyframes timerBlink { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
@@ -447,6 +461,13 @@ exception when others then null; end $$;
         <span class="w-2 h-2 rounded-full bg-green-500"></span>Live
       </span>
     </div>
+  </div>
+
+  <!-- PHONE TIMER BAR -->
+  <div class="bg-black/60 px-4 py-2 flex items-center justify-between text-sm border-b border-slate-700">
+    <span class="font-bold">Round <span id="phone-timer-round">1</span></span>
+    <span id="phone-timer-time" class="font-black text-xl timer-display">2:00</span>
+    <span id="phone-timer-status" class="text-xs text-slate-400">Paused</span>
   </div>
 
   <div class="grid grid-cols-2 gap-3 p-3 flex-1 min-h-0">
@@ -541,6 +562,44 @@ exception when others then null; end $$;
       <div class="font-black mb-1">⚠ DATABASE PROBLEM — scores/cards cannot be saved until this is fixed</div>
       <div id="laptop-db-warning-msg" class="mb-1 break-words"></div>
       <div class="text-yellow-300 font-bold">👉 Run the SQL from the amber box above, then RELOAD this page.</div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- NEW: ROUND TIMER CONTROL PANEL                          -->
+    <!-- ===================================================== -->
+    <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 mb-4">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <h3 class="font-bold flex items-center gap-2">
+          ⏱ Round Timer
+          <span id="l-timer-status" class="text-xs font-normal text-slate-300 bg-slate-700 px-2 py-0.5 rounded">Round 1 · Paused</span>
+        </h3>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+        <div class="text-center bg-black/30 rounded-xl p-3">
+          <div class="text-xs opacity-70 mb-1">ROUND</div>
+          <div id="l-timer-round" class="text-4xl font-black">1</div>
+        </div>
+        <div class="text-center bg-black/30 rounded-xl p-3">
+          <div class="text-xs opacity-70 mb-1">TIME LEFT</div>
+          <div id="l-timer-time" class="text-4xl font-black timer-display">2:00</div>
+        </div>
+        <div class="col-span-2 flex flex-wrap gap-2 justify-center">
+          <button id="btn-timer-start" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg font-bold">▶ Start Round</button>
+          <button id="btn-timer-pause" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-2 rounded-lg font-bold hidden">⏸ Pause</button>
+          <button id="btn-timer-reset" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg font-bold">⟲ Reset Round</button>
+          <div class="flex items-center gap-1 ml-2">
+            <input id="inp-round-time" type="number" min="1" max="10" value="2" class="w-14 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-center text-sm">
+            <span class="text-sm text-slate-400">min</span>
+            <button id="btn-set-time" class="bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded text-sm font-bold">Set</button>
+          </div>
+        </div>
+      </div>
+      <div id="timer-round3-note" class="hidden text-xs text-yellow-300/90 mt-3 text-center bg-yellow-900/30 border border-yellow-500/40 rounded-lg py-2">
+        ⚡ Round 3 activated because both big numbers were 2 at the end of Round 2
+      </div>
+      <div class="text-[11px] text-slate-500 mt-3 text-center">
+        Round 3 only triggers when BOTH big numbers (referee counts) are exactly 2 at the end of Round 2.
+      </div>
     </div>
 
     <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">
@@ -678,10 +737,7 @@ exception when others then null; end $$;
   </div>
 </div>
 
-<!-- VIEW: TV DISPLAY
-     4 judge boxes (each writing out its B · R breakdown) + the 2 BIG numbers
-     (referee counts only) + GAM-JEOM and YELLOW CARD counters written out
-     under each side. -->
+<!-- VIEW: TV DISPLAY -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
   <div class="w-full h-full grid grid-cols-2">
     <div class="side-blue flex flex-col p-6">
@@ -725,6 +781,21 @@ exception when others then null; end $$;
     </div>
   </div>
 
+  <!-- TV TIMER DISPLAY (top center) -->
+  <div id="tv-timer" class="absolute top-14 left-1/2 -translate-x-1/2 bg-black/85 border-2 border-yellow-400 rounded-xl px-8 py-3 text-center z-10" style="min-width: 180px;">
+    <div class="text-sm font-black tracking-widest text-yellow-300">ROUND <span id="tv-timer-round">1</span></div>
+    <div id="tv-timer-time" class="text-5xl font-black timer-display mt-1">2:00</div>
+  </div>
+
+  <!-- TV WINNER OVERLAY (shown after final confirmation) -->
+  <div id="tv-winner-overlay" class="hidden absolute inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.88);">
+    <div class="bg-black/95 rounded-3xl border-4 border-yellow-400 p-12 text-center max-w-lg mx-4 shadow-2xl">
+      <div class="text-8xl mb-4">🏆</div>
+      <div id="tv-winner-text" class="text-7xl font-black">BLUE WINS!</div>
+      <div class="text-3xl mt-4 text-yellow-300 font-bold tracking-widest">MATCH COMPLETE</div>
+    </div>
+  </div>
+
   <div id="judge-tv-1" class="judge-tv-box judge-neutral absolute top-6 left-6">
     <div class="judge-tv-label">JUDGE 1</div>
     <div class="judge-net">0</div>
@@ -750,6 +821,26 @@ exception when others then null; end $$;
   <div id="tv-ring-name" class="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-black px-4 py-1 rounded-b-xl text-sm"></div>
 </div>
 
+<!-- ===================================================== -->
+<!-- LAPTOP WINNER CONFIRMATION MODAL                      -->
+<!-- ===================================================== -->
+<div id="modal-winner" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.88);">
+  <div class="bg-slate-800 rounded-2xl p-8 max-w-lg w-full border-2 border-yellow-400 shadow-2xl">
+    <h2 id="modal-winner-title" class="text-4xl font-black text-center mb-2">BLUE WINS!</h2>
+    <p id="modal-winner-question" class="text-center text-lg mb-6 text-slate-300">Is this correct?</p>
+
+    <div id="winner-btn-container" class="flex gap-4 mb-4">
+      <button id="btn-winner-confirm" class="flex-1 bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-xl">✓ Confirm</button>
+      <button id="btn-winner-deny" class="flex-1 bg-red-600 hover:bg-red-500 py-4 rounded-xl font-black text-xl">✗ Deny</button>
+    </div>
+
+    <div id="winner-deny-section" class="hidden mt-4 pt-4 border-t border-slate-700">
+      <p class="text-center text-lg mb-4 text-red-300">Result denied. Reset the match to try again.</p>
+      <button id="btn-winner-reset" class="w-full bg-orange-600 hover:bg-orange-500 py-3 rounded-xl font-black text-lg">⟲ Reset Match</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL  = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
@@ -771,6 +862,428 @@ const state = {
   loggingIn: false,
   dbBroken: false,
 };
+
+/* ===================================================================== */
+/* TIMER STATE (rounds + clock) — persisted in localStorage, broadcast  */
+/* to TV/phones via Supabase Realtime broadcast channel                 */
+/* ===================================================================== */
+const TIMER_CHANNEL_PREFIX = "timer-";
+let timerState = {
+  round: 1,
+  roundTime: 120,      // seconds (default 2 min)
+  startTime: null,     // Date.now() when running, null when paused
+  elapsed: 0,          // accumulated seconds
+  paused: true,
+  finished: false,
+  winner: null         // 'blue' | 'red' | 'draw' | null
+};
+let timerChannel = null;
+let timerTickInterval = null;
+let broadcastInterval = null;
+
+function getTimerKey() {
+  return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`;
+}
+
+function loadTimerState() {
+  try {
+    const saved = localStorage.getItem(getTimerKey());
+    if (saved) {
+      timerState = Object.assign({}, timerState, JSON.parse(saved));
+    }
+  } catch (e) {
+    console.warn("Failed to load timer state:", e);
+  }
+}
+
+function saveTimerState() {
+  try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e) {}
+}
+
+function broadcastTimerState() {
+  if (timerChannel && state.role === 'laptop') {
+    try {
+      timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState });
+    } catch (e) { /* ignore if channel not ready */ }
+  }
+}
+
+function subscribeTimer() {
+  if (timerChannel) sb.removeChannel(timerChannel);
+  if (!state.ring) return;
+
+  timerChannel = sb.channel(TIMER_CHANNEL_PREFIX + state.ring.id)
+    .on('broadcast', { event: 'timer-update' }, (msg) => {
+      const s = msg && msg.payload;
+      if (s) {
+        timerState = Object.assign({}, timerState, s);
+        saveTimerState();
+        renderTimer();
+      }
+    })
+    .on('broadcast', { event: 'timer-request' }, () => {
+      // Only the laptop responds with current state
+      if (state.role === 'laptop') broadcastTimerState();
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED' && state.role !== 'laptop') {
+        try {
+          timerChannel.send({ type: 'broadcast', event: 'timer-request' });
+        } catch (e) {}
+      }
+    });
+}
+
+function getRemaining() {
+  if (timerState.finished) return 0;
+  const now = Date.now();
+  let total = timerState.elapsed;
+  if (timerState.startTime) {
+    total += (now - timerState.startTime) / 1000;
+  }
+  return Math.max(0, timerState.roundTime - total);
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function renderTimer() {
+  const remaining = getRemaining();
+  const timeStr = formatTime(remaining);
+  const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished;
+
+  const setEl = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+
+  setEl('l-timer-round', timerState.round);
+  setEl('tv-timer-round', timerState.round);
+  setEl('phone-timer-round', timerState.round);
+
+  ['l-timer-time', 'tv-timer-time', 'phone-timer-time'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = timeStr;
+    el.classList.toggle('timer-warning', warn);
+  });
+
+  // Laptop status pill
+  const statusEl = document.getElementById('l-timer-status');
+  const phoneStatusEl = document.getElementById('phone-timer-status');
+  let status = '';
+  if (timerState.finished) {
+    status = timerState.winner === 'draw'
+      ? 'Match Complete · DRAW'
+      : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
+  } else if (timerState.paused) {
+    status = `Round ${timerState.round} · Paused`;
+  } else {
+    status = `Round ${timerState.round} · Running`;
+  }
+  if (statusEl) statusEl.textContent = status;
+  if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.paused ? 'Paused' : 'Running');
+
+  // Toggle start/pause buttons (laptop only has these)
+  const btnStart = document.getElementById('btn-timer-start');
+  const btnPause = document.getElementById('btn-timer-pause');
+  if (btnStart && btnPause) {
+    if (timerState.paused || timerState.finished) {
+      btnStart.classList.remove('hidden');
+      btnPause.classList.add('hidden');
+      btnStart.disabled = timerState.finished;
+    } else {
+      btnStart.classList.add('hidden');
+      btnPause.classList.remove('hidden');
+    }
+  }
+
+  // Round time input (only editable at start of round 1)
+  const inpTime = document.getElementById('inp-round-time');
+  const btnSetTime = document.getElementById('btn-set-time');
+  if (inpTime && btnSetTime) {
+    const canChange = !timerState.finished &&
+                      timerState.round === 1 &&
+                      timerState.elapsed === 0 &&
+                      !timerState.startTime;
+    inpTime.disabled = !canChange;
+    btnSetTime.disabled = !canChange;
+    inpTime.classList.toggle('opacity-50', !canChange);
+    btnSetTime.classList.toggle('opacity-50', !canChange);
+  }
+
+  // Round 3 note
+  const r3note = document.getElementById('timer-round3-note');
+  if (r3note) r3note.classList.toggle('hidden', timerState.round !== 3);
+
+  // TV winner overlay
+  const tvOverlay = document.getElementById('tv-winner-overlay');
+  const tvText = document.getElementById('tv-winner-text');
+  if (tvOverlay && tvText) {
+    if (timerState.finished && timerState.winner) {
+      if (timerState.winner === 'draw') {
+        tvText.textContent = 'DRAW!';
+      } else {
+        tvText.textContent = timerState.winner.toUpperCase() + ' WINS!';
+      }
+      tvOverlay.classList.remove('hidden');
+    } else {
+      tvOverlay.classList.add('hidden');
+    }
+  }
+}
+
+function tickTimer() {
+  if (timerState.finished) return;
+  renderTimer();
+  if (state.role === 'laptop' && !timerState.paused && getRemaining() <= 0) {
+    endRound();
+  }
+}
+
+function startTimerTick() {
+  if (timerTickInterval) clearInterval(timerTickInterval);
+  timerTickInterval = setInterval(tickTimer, 100);
+}
+
+function stopTimerTick() {
+  if (timerTickInterval) clearInterval(timerTickInterval);
+  timerTickInterval = null;
+}
+
+function startBroadcastLoop() {
+  if (broadcastInterval) clearInterval(broadcastInterval);
+  broadcastInterval = setInterval(() => {
+    if (state.role === 'laptop' && !timerState.paused && !timerState.finished) {
+      broadcastTimerState();
+    }
+  }, 1000);
+}
+
+function stopBroadcastLoop() {
+  if (broadcastInterval) clearInterval(broadcastInterval);
+  broadcastInterval = null;
+}
+
+function startTimer() {
+  if (timerState.finished || state.role !== 'laptop') return;
+  timerState.paused = false;
+  timerState.startTime = Date.now();
+  saveTimerState();
+  broadcastTimerState();
+  renderTimer();
+  startTimerTick();
+}
+
+function pauseTimer() {
+  if (timerState.finished || timerState.paused || state.role !== 'laptop') return;
+  const now = Date.now();
+  if (timerState.startTime) {
+    timerState.elapsed += (now - timerState.startTime) / 1000;
+  }
+  timerState.startTime = null;
+  timerState.paused = true;
+  saveTimerState();
+  broadcastTimerState();
+  renderTimer();
+}
+
+function resetRound() {
+  if (state.role !== 'laptop') return;
+  if (!confirm('Reset the current round timer?')) return;
+  timerState.elapsed = 0;
+  timerState.startTime = null;
+  timerState.paused = true;
+  saveTimerState();
+  broadcastTimerState();
+  renderTimer();
+  stopTimerTick();
+}
+
+function setRoundTime(minutes) {
+  if (state.role !== 'laptop') return;
+  minutes = Math.max(1, Math.min(10, Math.round(minutes || 2)));
+  const canChange = !timerState.finished &&
+                    timerState.round === 1 &&
+                    timerState.elapsed === 0 &&
+                    !timerState.startTime;
+  if (!canChange) {
+    alert("You can only change the round time at the start of Round 1. Reset the match first.");
+    return;
+  }
+  timerState.roundTime = minutes * 60;
+  saveTimerState();
+  broadcastTimerState();
+  renderTimer();
+}
+
+async function endRound() {
+  if (timerState.finished) return;
+
+  // Pause timer
+  timerState.paused = true;
+  timerState.startTime = null;
+  timerState.elapsed = timerState.roundTime;
+
+  // Get freshest match state to evaluate big numbers
+  await fetchMatchNow();
+
+  if (timerState.round === 1) {
+    timerState.round = 2;
+    timerState.elapsed = 0;
+    saveTimerState();
+    broadcastTimerState();
+    renderTimer();
+    // Operator manually starts round 2
+  } else if (timerState.round === 2) {
+    const votes = judgeVoteCounts();
+    if (votes.blue === 2 && votes.red === 2) {
+      // Trigger round 3
+      timerState.round = 3;
+      timerState.elapsed = 0;
+      saveTimerState();
+      broadcastTimerState();
+      renderTimer();
+    } else {
+      finishMatch();
+    }
+  } else if (timerState.round === 3) {
+    finishMatch();
+  }
+}
+
+function finishMatch() {
+  const votes = judgeVoteCounts();
+  timerState.finished = true;
+  timerState.paused = true;
+
+  if (votes.blue > votes.red)       timerState.winner = 'blue';
+  else if (votes.red > votes.blue)  timerState.winner = 'red';
+  else                              timerState.winner = 'draw';
+
+  saveTimerState();
+  broadcastTimerState();
+  renderTimer();
+  stopTimerTick();
+
+  if (state.role === 'laptop') {
+    showWinnerConfirmStep1();
+  }
+}
+
+/* ----- WINNER CONFIRMATION FLOW (LAPTOP) ----- */
+
+function showWinnerConfirmStep1() {
+  const modal   = document.getElementById('modal-winner');
+  const title   = document.getElementById('modal-winner-title');
+  const question= document.getElementById('modal-winner-question');
+  const btnContainer = document.getElementById('winner-btn-container');
+  const denySection  = document.getElementById('winner-deny-section');
+
+  if (timerState.winner === 'draw') {
+    title.textContent = 'DRAW!';
+  } else {
+    title.textContent = timerState.winner.toUpperCase() + ' WINS!';
+  }
+  question.textContent = 'Is this correct?';
+
+  btnContainer.innerHTML = `
+    <button id="btn-winner-confirm" class="flex-1 bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-xl">✓ Confirm</button>
+    <button id="btn-winner-deny" class="flex-1 bg-red-600 hover:bg-red-500 py-4 rounded-xl font-black text-xl">✗ Deny</button>
+  `;
+
+  document.getElementById('btn-winner-confirm').addEventListener('click', showWinnerConfirmStep2);
+  document.getElementById('btn-winner-deny').addEventListener('click', showWinnerDenied);
+
+  denySection.classList.add('hidden');
+  modal.classList.remove('hidden');
+}
+
+function showWinnerConfirmStep2() {
+  const title   = document.getElementById('modal-winner-title');
+  const question= document.getElementById('modal-winner-question');
+  const btnContainer = document.getElementById('winner-btn-container');
+
+  if (timerState.winner === 'draw') {
+    title.textContent = 'FINAL CHECK';
+    question.textContent = 'Was the match really a draw?';
+    btnContainer.innerHTML = `
+      <button id="btn-winner-yes" class="flex-1 bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-xl">Yes, it's a draw</button>
+      <button id="btn-winner-no" class="flex-1 bg-red-600 hover:bg-red-500 py-4 rounded-xl font-black text-xl">No, reset match</button>
+    `;
+    document.getElementById('btn-winner-yes').addEventListener('click', finalizeMatch);
+    document.getElementById('btn-winner-no').addEventListener('click', showWinnerDenied);
+  } else {
+    const other = timerState.winner === 'blue' ? 'RED' : 'BLUE';
+    title.textContent = 'FINAL CHECK';
+    question.textContent = `Did ${other} win?`;
+    btnContainer.innerHTML = `
+      <button id="btn-winner-no" class="flex-1 bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-xl">No, ${timerState.winner.toUpperCase()} won</button>
+      <button id="btn-winner-yes" class="flex-1 bg-red-600 hover:bg-red-500 py-4 rounded-xl font-black text-xl">Yes, ${other} won</button>
+    `;
+    document.getElementById('btn-winner-no').addEventListener('click', finalizeMatch);
+    document.getElementById('btn-winner-yes').addEventListener('click', showWinnerDenied);
+  }
+}
+
+function showWinnerDenied() {
+  const title   = document.getElementById('modal-winner-title');
+  const question= document.getElementById('modal-winner-question');
+  title.textContent = 'RESULT DENIED';
+  question.textContent = 'Please reset the match to try again.';
+  document.getElementById('winner-btn-container').innerHTML = '';
+  document.getElementById('winner-deny-section').classList.remove('hidden');
+}
+
+function finalizeMatch() {
+  document.getElementById('modal-winner').classList.add('hidden');
+  // Timer state is already "finished" — TV overlay stays visible until reset
+}
+
+async function resetMatch() {
+  if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
+
+  const { error } = await sb.from("matches").update({
+    blue_score: 0, red_score: 0,
+    blue_gam_jeom: 0, red_gam_jeom: 0,
+    blue_yellow_cards: 0, red_yellow_cards: 0,
+    judge_blue: [0,0,0,0],
+    judge_red:  [0,0,0,0],
+    updated_at: new Date().toISOString()
+  }).eq("ring_id", state.ring.id);
+
+  if (error) {
+    alert("Reset failed: " + error.message);
+    return;
+  }
+
+  // Reset timer back to round 1 (keep configured round time)
+  timerState = {
+    round: 1,
+    roundTime: timerState.roundTime,
+    startTime: null,
+    elapsed: 0,
+    paused: true,
+    finished: false,
+    winner: null
+  };
+  saveTimerState();
+  broadcastTimerState();
+
+  // Hide overlays & modal
+  document.getElementById('modal-winner').classList.add('hidden');
+  const tvOverlay = document.getElementById('tv-winner-overlay');
+  if (tvOverlay) tvOverlay.classList.add('hidden');
+
+  stopTimerTick();
+  renderTimer();
+  fetchMatchNow();
+}
+
+/* ===================================================================== */
 
 const SQL_HINT = "\n\nIf this keeps happening, run the SQL fix from the top of the HTML file in Supabase → SQL Editor.";
 
@@ -944,9 +1457,7 @@ async function ensureMatchRow(showWarnings) {
   if (selErr) {
     console.warn("ensureMatchRow select error:", selErr.message);
     state.dbBroken = true;
-    if (showWarnings) {
-      showDbWarning("The app cannot read the matches table (" + selErr.message + ").");
-    }
+    if (showWarnings) showDbWarning("The app cannot read the matches table (" + selErr.message + ").");
     return;
   }
 
@@ -955,9 +1466,7 @@ async function ensureMatchRow(showWarnings) {
     if (insErr) {
       console.warn("ensureMatchRow insert error:", insErr.message);
       state.dbBroken = true;
-      if (showWarnings) {
-        showDbWarning("The app cannot write to the matches table (" + insErr.message + ").");
-      }
+      if (showWarnings) showDbWarning("The app cannot write to the matches table (" + insErr.message + ").");
       return;
     }
   } else if (rows.length > 1) {
@@ -1008,16 +1517,6 @@ function startMatchPolling() {
 /* ===================================================================== */
 /* THE BIG NUMBERS — REFEREE COUNTS ONLY (0,1,2,3,4)                     */
 /* ===================================================================== */
-/*
-  The BIG BLUE and BIG RED numbers count how many referees currently favor
-  that colour. A referee favors the colour he gave more points to so far.
-
-      3 referees favoring BLUE + 1 referee favoring RED
-      =>  BIG BLUE = 3   and   BIG RED = 1
-
-  When the party size is 3, corner 4 is closed and never counted, so the
-  maximum is 3.
-*/
 function pad4(arr) {
   const out = [0,0,0,0];
   if (Array.isArray(arr)) {
@@ -1044,15 +1543,12 @@ function renderVoteScores() {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
   };
-  /* TV big numbers */
   setEl("tv-blue-score", v.blue);
   setEl("tv-red-score",  v.red);
-  /* laptop big numbers show the SAME referee counts */
   setEl("l-blue-score", v.blue);
   setEl("l-red-score",  v.red);
 }
 
-/* like set(), but pulses the TV stat when the value changes */
 function setStat(id, v) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -1085,7 +1581,6 @@ async function enterPhone() {
     else console.warn("get_active_phones error:", res.error.message);
   } catch (e) { console.warn(e); }
 
-  /* Party limit: if the ring is set to 3 referees, only 3 phones get in. */
   if (active.length >= maxJ) {
     alert("This ring is set to " + maxJ + " referees and all " + maxJ + " corners are already taken.");
     state.role = null;
@@ -1143,19 +1638,17 @@ async function enterPhone() {
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
 
+  loadTimerState();
+  subscribeTimer();
+  renderTimer();
+  startTimerTick();
+
   subscribeMatch();
   subscribeRing();
   showView("phone");
   setPhoneStatus("Connected as Judge " + slot + " — tap to score", false);
 }
 
-/*
-  NO AUTOMATIC KICKING.
-  A phone is only removed when a person presses KICK on the laptop.
-  The heartbeat also re-reads the party size directly from the rings table,
-  so if the operator switches the party to 3, a judge-4 phone closes its own
-  corner within a few seconds (works even if realtime is not configured).
-*/
 async function phoneHeartbeatTick() {
   const sid = state.phoneSessionId;
   if (!sid || state.heartbeatBusy) return;
@@ -1173,7 +1666,6 @@ async function phoneHeartbeatTick() {
       }
     }
 
-    /* party-size check: direct table read, no realtime needed */
     try {
       const { data: ringRow } = await sb
         .from("rings").select("max_phones").eq("id", state.ring.id).maybeSingle();
@@ -1221,6 +1713,8 @@ async function leavePhone(msg) {
   state.realtimeChannel = null;
   state.ringChannel = null;
 
+  stopTimerTick();
+
   if (!wasActive) return;
 
   if (msg) alert(msg);
@@ -1234,11 +1728,6 @@ function setPhoneStatus(msg, isError) {
   el.className = "text-center text-xs " + (isError ? "text-red-400" : "text-slate-500");
 }
 
-/*
-  Fallback used by the phone when the judge_score database function fails:
-  write the points directly into the matches table, so scoring keeps working
-  even on an old/broken database.
-*/
 async function phoneScoreFallback(side, points) {
   const { row, error: rErr } = await readMatchRow();
   if (rErr || !row) return false;
@@ -1258,6 +1747,12 @@ async function phoneScoreFallback(side, points) {
 
 document.querySelectorAll(".judge-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
+    // BLOCK scoring if match is finished
+    if (timerState.finished) {
+      setPhoneStatus("✗ Match is finished — cannot score", true);
+      return;
+    }
+
     const side = btn.dataset.side;
     const val  = parseInt(btn.dataset.val, 10);
 
@@ -1290,14 +1785,12 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
 
     console.error(error);
 
-    /* kicked / not registered => leave */
     if (/not registered|not connected|not found|kicked|removed|log in again/i.test(error.message || "")) {
       setPhoneStatus("✗ " + error.message, true);
       setTimeout(() => leavePhone("You were removed from the ring by the operator."), 800);
       return;
     }
 
-    /* any other failure => try the direct fallback */
     const ok = await phoneScoreFallback(side, val);
     if (ok) {
       btn.classList.add("scored-flash");
@@ -1320,6 +1813,15 @@ async function enterLaptop() {
 
   await ensureMatchRow(true);
 
+  loadTimerState();
+  const inpTime = document.getElementById('inp-round-time');
+  if (inpTime) inpTime.value = Math.round(timerState.roundTime / 60);
+
+  subscribeTimer();
+  renderTimer();
+  startTimerTick();
+  startBroadcastLoop();
+
   subscribeMatch();
   subscribeRing();
   startPhoneListPolling();
@@ -1337,19 +1839,8 @@ document.getElementById("btn-open-tv").addEventListener("click", () => {
   window.open(tvUrl, "_blank");
 });
 
-document.getElementById("btn-reset-match").addEventListener("click", async () => {
-  if (!confirm("Reset all scores, cards and judge corners for this ring?")) return;
-  const { error } = await sb.from("matches").update({
-    blue_score: 0, red_score: 0,
-    blue_gam_jeom: 0, red_gam_jeom: 0,
-    blue_yellow_cards: 0, red_yellow_cards: 0,
-    judge_blue: [0,0,0,0],
-    judge_red:  [0,0,0,0],
-    updated_at: new Date().toISOString()
-  }).eq("ring_id", state.ring.id);
-  if (error) alert("Reset failed: " + error.message);
-  fetchMatchNow();
-});
+// RESET MATCH BUTTON (top of laptop) — uses same shared resetMatch()
+document.getElementById("btn-reset-match").addEventListener("click", resetMatch);
 
 document.getElementById("btn-logout").addEventListener("click", () => {
   state.role = null;
@@ -1360,12 +1851,31 @@ document.getElementById("btn-logout").addEventListener("click", () => {
   document.getElementById("inp-password").value = "";
 });
 
+/* ----- TIMER CONTROL EVENT LISTENERS ----- */
+document.getElementById('btn-timer-start').addEventListener('click', startTimer);
+document.getElementById('btn-timer-pause').addEventListener('click', pauseTimer);
+document.getElementById('btn-timer-reset').addEventListener('click', resetRound);
+document.getElementById('btn-set-time').addEventListener('click', () => {
+  const mins = parseInt(document.getElementById('inp-round-time').value, 10);
+  setRoundTime(mins);
+});
+document.getElementById('inp-round-time').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const mins = parseInt(e.target.value, 10);
+    setRoundTime(mins);
+  }
+});
+document.getElementById('btn-winner-reset').addEventListener('click', resetMatch);
+
 /* ---------------------------------------------------------------------
-   ADD / DEDUCT ANY JUDGE'S POINTS.
-   Tries the database function first; if it fails (old/broken database)
-   it falls back to a direct update of the matches table.
+   ADD / DEDUCT ANY JUDGE'S POINTS (with finished-match guard)
 --------------------------------------------------------------------- */
 async function laptopAdjustJudge(slot, side, delta) {
+  if (timerState.finished) {
+    alert("Match is finished. Reset the match first.");
+    return;
+  }
+
   const { error } = await sb.rpc("adjust_judge_score", {
     p_ring_id: String(state.ring.id),
     p_slot: slot,
@@ -1404,6 +1914,10 @@ const CARD_COLUMNS = ["blue_score","red_score","blue_gam_jeom","red_gam_jeom","b
 
 async function laptopAdjustCard(column, delta) {
   if (!CARD_COLUMNS.includes(column)) return;
+  if (timerState.finished) {
+    alert("Match is finished. Reset the match first.");
+    return;
+  }
 
   const { error } = await sb.rpc("adjust_card", {
     p_ring_id: String(state.ring.id),
@@ -1458,12 +1972,10 @@ async function setMaxJudges(n) {
   state.ring.max_phones = n;
   sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
 
-  /* visible immediately on this screen */
   applyMaxJudgesUI();
   renderVoteScores();
   refreshPhoneList();
 
-  /* persist so phones and the TV see it too */
   const { error } = await sb.from("rings").update({ max_phones: n }).eq("id", state.ring.id);
   if (error) {
     alert("Could not save referee count in the database: " + error.message + SQL_HINT);
@@ -1506,7 +2018,6 @@ async function refreshPhoneList() {
   }
 }
 
-/* KICK — the ONLY way a phone gets removed. Manual, by a person. */
 document.getElementById("laptop-phones-list").addEventListener("click", async e => {
   const btn = e.target.closest("[data-kick]");
   if (!btn) return;
@@ -1529,6 +2040,12 @@ function startPhoneListPolling() {
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
   await ensureMatchRow(false);
+
+  loadTimerState();
+  subscribeTimer();
+  renderTimer();
+  startTimerTick();
+
   subscribeMatch();
   subscribeRing();
   startMatchPolling();
@@ -1623,7 +2140,6 @@ function subscribeRing() {
         applyMaxJudgesUI();
         renderVoteScores();
 
-        /* Operator shrank the party (e.g. 4 -> 3): close the extra corner. */
         if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
           leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
         }
@@ -1642,19 +2158,16 @@ function handleMatchUpdate(payload) {
     if (el) el.textContent = v;
   };
 
-  /* cards on the laptop (total scores stay hidden, only stored) */
   set("l-blue-gj", m.blue_gam_jeom);
   set("l-red-gj",  m.red_gam_jeom);
   set("l-blue-yc", m.blue_yellow_cards);
   set("l-red-yc",  m.red_yellow_cards);
 
-  /* SAME penalties written out on the TV (they pulse when they change) */
   setStat("tv-blue-gj", m.blue_gam_jeom);
   setStat("tv-red-gj",  m.red_gam_jeom);
   setStat("tv-blue-yc", m.blue_yellow_cards);
   setStat("tv-red-yc",  m.red_yellow_cards);
 
-  /* BIG numbers = referee counts (0-4), on TV AND laptop */
   renderVoteScores();
 
   const jb = pad4(m.judge_blue);
@@ -1664,14 +2177,23 @@ function handleMatchUpdate(payload) {
     renderJudgeBox(document.getElementById("judge-tv-"     + (i + 1)), jb[i], jr[i]);
   }
   applyMaxJudgesUI();
+
+  // Backup: if laptop is running and timer has expired, end the round
+  if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) {
+    endRound();
+  }
 }
 
 function cleanup() {
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
   if (state.ringChannel) sb.removeChannel(state.ringChannel);
+  if (timerChannel) sb.removeChannel(timerChannel);
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   if (state.pollInterval) clearInterval(state.pollInterval);
   if (state.matchPollInterval) clearInterval(state.matchPollInterval);
+
+  stopTimerTick();
+  stopBroadcastLoop();
 
   if (state.phoneSessionId) {
     try {
@@ -1690,6 +2212,7 @@ function cleanup() {
 
   state.realtimeChannel = null;
   state.ringChannel = null;
+  timerChannel = null;
   state.heartbeatInterval = null;
   state.pollInterval = null;
   state.matchPollInterval = null;
