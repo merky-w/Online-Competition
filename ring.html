@@ -7,28 +7,29 @@
 
 <!--
   ============================================================================
-  FIXES IN THIS VERSION
-  ============================================================================
-  1) BIG BLUE / BIG RED on the TV: they ONLY count how many referees currently
-     rule for each side -> 0,1,2,3,4 only (0-3 when party size = 3).
-     3 judges ruling blue + 1 judge ruling red  =>  BIG BLUE = 3, BIG RED = 1.
+  THE RULE FOR THE BIG NUMBERS (TV *AND* LAPTOP):
+  ----------------------------------------------------------------------------
+  The BIG BLUE and BIG RED numbers ONLY show 0, 1, 2, 3 or 4.
+  They count how many referees are currently favoring that colour.
 
-  2) PARTY SIZE = 3 NOW REALLY WORKS:
-     - The laptop instantly dims corner 4 and shows "corner off".
-     - A 4th phone cannot join anymore.
-     - If a phone is ALREADY connected as judge 4 when you switch to 3, that
-       phone detects the new party size every 3 seconds (direct table read,
-       does not depend on realtime) and closes its own corner.
-     - The database function also blocks a 4th phone (run the SQL below).
+      3 referees favoring BLUE + 1 referee favoring RED
+      =>  BIG BLUE = 3   and   BIG RED = 1
 
-  3) LAPTOP CAN ADD / DEDUCT ANY JUDGE'S POINTS:
-     Every judge box has big B+ / B- / R+ / R- buttons. They first use the
-     database function; if that fails (broken/old database) they automatically
-     fall back to a direct update of the matches table, so they keep working.
+  A referee favors the colour he gave more points to. When the party size is
+  3, the maximum is 3 (corner 4 is closed and never counted).
 
-  4) DATABASE FIX (fixes 400 errors, auto-kicking, party-size enforcement).
-     Run it ONCE, or AGAIN if you ran an older version:
-        Supabase -> SQL Editor -> paste -> RUN -> reload the app page
+  Total match scores are NOT displayed anywhere anymore (they are still
+  stored in the database, just hidden, as you asked).
+
+  OTHER THINGS KEPT FROM THE LAST VERSION:
+  - No automatic kicking: a phone is only removed by the manual KICK button.
+  - Party size 3 blocks a 4th phone (app + database).
+  - Laptop can add/deduct points for every judge (B+ / B- / R+ / R-).
+  - If the judge_score database call fails, the phone writes the points
+    directly to the matches table as a fallback, so scoring keeps working.
+
+  DATABASE FIX (run ONCE, or AGAIN if you ran an older version):
+      Supabase -> SQL Editor -> paste the SQL below -> RUN -> reload the app
 
 ==============================================================================
 -- TABLES (created only when missing - existing data is untouched)
@@ -264,7 +265,7 @@ begin
   where ring_id::text = p_ring_id;
 end $$;
 
--- laptop +/- on score / gam-jeom / yellow cards
+-- laptop +/- on gam-jeom / yellow cards / score
 create function public.adjust_card(p_ring_id text, p_column text, p_delta int)
 returns void language plpgsql security definer as
 $$
@@ -526,14 +527,12 @@ exception when others then null; end $$;
       </div>
     </div>
 
+    <!-- The big laptop numbers are REFEREE COUNTS too (0-4 only), same as TV -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="side-blue rounded-2xl p-6 glow-blue">
         <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
         <div id="l-blue-score" class="text-center text-8xl font-black tv-score">0</div>
-        <div class="flex gap-2 mt-2 justify-center">
-          <button data-act="blue-score-plus" class="laptop-card-btn bg-white/30 hover:bg-white/40 rounded-lg px-4 py-1 text-sm font-bold">+1 PT</button>
-          <button data-act="blue-score-minus" class="laptop-card-btn bg-white/10 hover:bg-white/20 rounded-lg px-4 py-1 text-sm font-bold">-1 PT</button>
-        </div>
+        <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR BLUE</div>
         <div class="grid grid-cols-2 gap-3 mt-4">
           <div class="bg-black/30 rounded-xl p-3 text-center">
             <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
@@ -557,10 +556,7 @@ exception when others then null; end $$;
       <div class="side-red rounded-2xl p-6 glow-red">
         <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">RED · HONG</div>
         <div id="l-red-score" class="text-center text-8xl font-black tv-score">0</div>
-        <div class="flex gap-2 mt-2 justify-center">
-          <button data-act="red-score-plus" class="laptop-card-btn bg-white/30 hover:bg-white/40 rounded-lg px-4 py-1 text-sm font-bold">+1 PT</button>
-          <button data-act="red-score-minus" class="laptop-card-btn bg-white/10 hover:bg-white/20 rounded-lg px-4 py-1 text-sm font-bold">-1 PT</button>
-        </div>
+        <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR RED</div>
         <div class="grid grid-cols-2 gap-3 mt-4">
           <div class="bg-black/30 rounded-xl p-3 text-center">
             <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
@@ -933,6 +929,53 @@ function startMatchPolling() {
 }
 
 /* ===================================================================== */
+/* THE BIG NUMBERS — REFEREE COUNTS ONLY (0,1,2,3,4)                     */
+/* ===================================================================== */
+/*
+  The BIG BLUE and BIG RED numbers count how many referees currently favor
+  that colour. A referee favors the colour he gave more points to so far.
+
+      3 referees favoring BLUE + 1 referee favoring RED
+      =>  BIG BLUE = 3   and   BIG RED = 1
+
+  When the party size is 3, corner 4 is closed and never counted, so the
+  maximum is 3.
+*/
+function pad4(arr) {
+  const out = [0,0,0,0];
+  if (Array.isArray(arr)) {
+    for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
+  }
+  return out;
+}
+
+function judgeVoteCounts() {
+  const jb = pad4(state.match ? state.match.judge_blue : null);
+  const jr = pad4(state.match ? state.match.judge_red : null);
+  const max = getMaxJudges();
+  let blue = 0, red = 0;
+  for (let i = 0; i < max; i++) {
+    if (jb[i] > jr[i]) blue++;
+    else if (jr[i] > jb[i]) red++;
+  }
+  return { blue, red };
+}
+
+function renderVoteScores() {
+  const v = judgeVoteCounts();
+  const setEl = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  /* TV big numbers */
+  setEl("tv-blue-score", v.blue);
+  setEl("tv-red-score",  v.red);
+  /* laptop big numbers show the SAME referee counts */
+  setEl("l-blue-score", v.blue);
+  setEl("l-red-score",  v.red);
+}
+
+/* ===================================================================== */
 /* PHONE                                                                 */
 /* ===================================================================== */
 
@@ -1101,6 +1144,28 @@ function setPhoneStatus(msg, isError) {
   el.className = "text-center text-xs " + (isError ? "text-red-400" : "text-slate-500");
 }
 
+/*
+  Fallback used by the phone when the judge_score database function fails:
+  write the points directly into the matches table, so scoring keeps working
+  even on an old/broken database.
+*/
+async function phoneScoreFallback(side, points) {
+  const { row, error: rErr } = await readMatchRow();
+  if (rErr || !row) return false;
+
+  const jb = pad4(row.judge_blue);
+  const jr = pad4(row.judge_red);
+  if (side === "blue") jb[state.judgeSlot - 1] += points;
+  else                 jr[state.judgeSlot - 1] += points;
+
+  const upd = { judge_blue: jb, judge_red: jr, updated_at: new Date().toISOString() };
+  if (side === "blue") upd.blue_score = Math.max(0, Number(row.blue_score || 0) + points);
+  else                 upd.red_score  = Math.max(0, Number(row.red_score  || 0) + points);
+
+  const { error: uErr } = await sb.from("matches").update(upd).eq("ring_id", state.ring.id);
+  return !uErr;
+}
+
 document.querySelectorAll(".judge-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
     const side = btn.dataset.side;
@@ -1126,16 +1191,30 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
       p_session: state.phoneSessionId
     });
 
-    if (error) {
-      console.error(error);
-      setPhoneStatus("✗ " + error.message, true);
-      if (/not registered|not connected|not found|kicked|removed|log in again/i.test(error.message || "")) {
-        setTimeout(() => leavePhone("You were removed from the ring by the operator."), 800);
-      }
-    } else {
+    if (!error) {
       btn.classList.add("scored-flash");
       setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
       fetchMatchNow();
+      return;
+    }
+
+    console.error(error);
+
+    /* kicked / not registered => leave */
+    if (/not registered|not connected|not found|kicked|removed|log in again/i.test(error.message || "")) {
+      setPhoneStatus("✗ " + error.message, true);
+      setTimeout(() => leavePhone("You were removed from the ring by the operator."), 800);
+      return;
+    }
+
+    /* any other failure => try the direct fallback */
+    const ok = await phoneScoreFallback(side, val);
+    if (ok) {
+      btn.classList.add("scored-flash");
+      setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
+      fetchMatchNow();
+    } else {
+      setPhoneStatus("✗ " + error.message + " — tell the operator to run the SQL fix", true);
     }
   });
 });
@@ -1156,6 +1235,7 @@ async function enterLaptop() {
   startPhoneListPolling();
   startMatchPolling();
   applyMaxJudgesUI();
+  renderVoteScores();
   showView("laptop");
 }
 
@@ -1193,8 +1273,7 @@ document.getElementById("btn-logout").addEventListener("click", () => {
 /* ---------------------------------------------------------------------
    ADD / DEDUCT ANY JUDGE'S POINTS.
    Tries the database function first; if it fails (old/broken database)
-   it falls back to a direct update of the matches table, so the buttons
-   keep working either way.
+   it falls back to a direct update of the matches table.
 --------------------------------------------------------------------- */
 async function laptopAdjustJudge(slot, side, delta) {
   const { error } = await sb.rpc("adjust_judge_score", {
@@ -1384,41 +1463,6 @@ function renderJudgeBox(el, givenBlue, givenRed) {
   if (detEl) detEl.textContent = "B " + givenBlue + " · R " + givenRed;
 }
 
-function pad4(arr) {
-  const out = [0,0,0,0];
-  if (Array.isArray(arr)) {
-    for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
-  }
-  return out;
-}
-
-/*
-  THE 2 BIG NUMBERS ON THE TV.
-  They only count how many referees currently rule for each side, so they
-  can only ever be 0,1,2,3,4 (0-3 when the party is set to 3 referees).
-  A judge rules for the side he gave more points to so far.
-  Example: 3 judges blue + 1 judge red  =>  BIG BLUE = 3, BIG RED = 1.
-*/
-function judgeVoteCounts() {
-  const jb = pad4(state.match ? state.match.judge_blue : null);
-  const jr = pad4(state.match ? state.match.judge_red : null);
-  const max = getMaxJudges();
-  let blue = 0, red = 0;
-  for (let i = 0; i < max; i++) {
-    if (jb[i] > jr[i]) blue++;
-    else if (jr[i] > jb[i]) red++;
-  }
-  return { blue, red };
-}
-
-function renderVoteScores() {
-  const v = judgeVoteCounts();
-  const tb = document.getElementById("tv-blue-score");
-  const tr = document.getElementById("tv-red-score");
-  if (tb) tb.textContent = v.blue;
-  if (tr) tr.textContent = v.red;
-}
-
 function applyMaxJudgesUI() {
   const max = getMaxJudges();
 
@@ -1508,15 +1552,13 @@ function handleMatchUpdate(payload) {
     if (el) el.textContent = v;
   };
 
-  /* laptop control panel keeps the stored totals + cards */
-  set("l-blue-score", m.blue_score);
-  set("l-red-score",  m.red_score);
-  set("l-blue-gj",    m.blue_gam_jeom);
-  set("l-red-gj",     m.red_gam_jeom);
-  set("l-blue-yc",    m.blue_yellow_cards);
-  set("l-red-yc",     m.red_yellow_cards);
+  /* cards on the laptop (total scores stay hidden, only stored) */
+  set("l-blue-gj", m.blue_gam_jeom);
+  set("l-red-gj",  m.red_gam_jeom);
+  set("l-blue-yc", m.blue_yellow_cards);
+  set("l-red-yc",  m.red_yellow_cards);
 
-  /* TV big numbers = how many referees rule for each side (0-4 only) */
+  /* BIG numbers = referee counts (0-4), on TV AND laptop */
   renderVoteScores();
 
   const jb = pad4(m.judge_blue);
