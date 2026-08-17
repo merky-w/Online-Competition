@@ -7,24 +7,27 @@
 
 <!--
   ============================================================================
-  FIXED AGAIN — LAYOUT BACK TO THE ORIGINAL + EVERYTHING YOU ASKED FOR
+  FIXES IN THIS VERSION
   ============================================================================
-  1) TV IS BACK TO THE ORIGINAL DESIGN: the 4 judge boxes in the corners and
-     the 2 BIG numbers (blue on the left, red on the right). No chips, no
-     redesign, no total scores, no cards on the TV.
-     The 2 BIG numbers now ONLY count how many referees rule for that side,
-     so they can only show 0,1,2,3,4 (0-3 when the party is set to 3).
-     Example: 3 judges red + 1 judge blue  =>  BIG RED = 3, BIG BLUE = 1.
-  2) NO AUTOMATIC KICKING. A phone is removed ONLY when a person presses the
-     KICK button on the laptop.
-  3) PARTY SET TO 3 = MAX 3 PHONES. The 4th phone is blocked in the code AND
-     in the database.
-  4) CONNECTION / 400 FIX. The previous SQL declared the ring id as INTEGER.
-     If your rings.id is not an integer (for example a uuid), every phone
-     call returned 400 and phones could not enter. THIS SQL below uses TEXT
-     ids, so it works with ANY id type. RUN IT AGAIN even if you already ran
-     the previous one (it replaces it):
+  1) BIG BLUE / BIG RED on the TV: they ONLY count how many referees currently
+     rule for each side -> 0,1,2,3,4 only (0-3 when party size = 3).
+     3 judges ruling blue + 1 judge ruling red  =>  BIG BLUE = 3, BIG RED = 1.
 
+  2) PARTY SIZE = 3 NOW REALLY WORKS:
+     - The laptop instantly dims corner 4 and shows "corner off".
+     - A 4th phone cannot join anymore.
+     - If a phone is ALREADY connected as judge 4 when you switch to 3, that
+       phone detects the new party size every 3 seconds (direct table read,
+       does not depend on realtime) and closes its own corner.
+     - The database function also blocks a 4th phone (run the SQL below).
+
+  3) LAPTOP CAN ADD / DEDUCT ANY JUDGE'S POINTS:
+     Every judge box has big B+ / B- / R+ / R- buttons. They first use the
+     database function; if that fails (broken/old database) they automatically
+     fall back to a direct update of the matches table, so they keep working.
+
+  4) DATABASE FIX (fixes 400 errors, auto-kicking, party-size enforcement).
+     Run it ONCE, or AGAIN if you ran an older version:
         Supabase -> SQL Editor -> paste -> RUN -> reload the app page
 
 ==============================================================================
@@ -474,13 +477,13 @@ exception when others then null; end $$;
       </div>
     </div>
 
-    <!-- Database setup banner (full SQL is in the comment at the top of this file) -->
+    <!-- Database setup banner -->
     <div class="bg-amber-950/60 border-2 border-amber-500/70 rounded-xl p-3 mb-4 text-sm text-amber-100">
       <div class="font-black mb-1">🛠 DATABASE SETUP — run the SQL once if phones can't connect, scores 400, or phones get kicked on their own</div>
       <div class="text-xs opacity-90 mb-2">
         Open this HTML file in a text editor, copy the big SQL block from the comment at the very top,
         paste it into Supabase → SQL Editor → RUN → then RELOAD this page.
-        Safe to run again — it replaces the previous version and fixes the phone-login 400 errors.
+        Safe to run again — it replaces older versions.
       </div>
     </div>
 
@@ -491,17 +494,19 @@ exception when others then null; end $$;
       <div class="text-yellow-300 font-bold">👉 Run the SQL from the amber box above, then RELOAD this page.</div>
     </div>
 
-    <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">Judge corners · big score = judges ruling for each side</div>
+    <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">
+      Judge corners · use B+ / B− / R+ / R− to add or deduct any judge's points
+    </div>
     <div class="grid grid-cols-2 gap-3 mb-3">
       <div id="judge-laptop-1" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 1</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1 mt-2">
-            <button data-act="judge-1-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
-            <button data-act="judge-1-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
-            <button data-act="judge-1-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
-            <button data-act="judge-1-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          <div class="flex gap-1.5 mt-2">
+            <button data-act="judge-1-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+            <button data-act="judge-1-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+            <button data-act="judge-1-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+            <button data-act="judge-1-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
           </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
@@ -510,11 +515,11 @@ exception when others then null; end $$;
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 2</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1 mt-2">
-            <button data-act="judge-2-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
-            <button data-act="judge-2-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
-            <button data-act="judge-2-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
-            <button data-act="judge-2-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          <div class="flex gap-1.5 mt-2">
+            <button data-act="judge-2-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+            <button data-act="judge-2-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+            <button data-act="judge-2-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+            <button data-act="judge-2-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
           </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
@@ -582,11 +587,11 @@ exception when others then null; end $$;
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 3</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1 mt-2">
-            <button data-act="judge-3-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
-            <button data-act="judge-3-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
-            <button data-act="judge-3-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
-            <button data-act="judge-3-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          <div class="flex gap-1.5 mt-2">
+            <button data-act="judge-3-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+            <button data-act="judge-3-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+            <button data-act="judge-3-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+            <button data-act="judge-3-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
           </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
@@ -595,11 +600,11 @@ exception when others then null; end $$;
         <div>
           <div class="text-xs font-black tracking-widest opacity-90">JUDGE 4</div>
           <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1 mt-2">
-            <button data-act="judge-4-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded px-1.5 py-0.5 text-[10px] font-bold">B+</button>
-            <button data-act="judge-4-blue-minus" class="laptop-card-btn bg-blue-800 hover:bg-blue-700 rounded px-1.5 py-0.5 text-[10px] font-bold">B-</button>
-            <button data-act="judge-4-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded px-1.5 py-0.5 text-[10px] font-bold">R+</button>
-            <button data-act="judge-4-red-minus" class="laptop-card-btn bg-red-800 hover:bg-red-700 rounded px-1.5 py-0.5 text-[10px] font-bold">R-</button>
+          <div class="flex gap-1.5 mt-2">
+            <button data-act="judge-4-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+            <button data-act="judge-4-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+            <button data-act="judge-4-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+            <button data-act="judge-4-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
           </div>
         </div>
         <div class="judge-net text-5xl font-black">0</div>
@@ -610,15 +615,15 @@ exception when others then null; end $$;
       <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h3 class="font-bold">Connected Judge Phones</h3>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-slate-400 font-semibold">Referees:</span>
+          <span class="text-xs text-slate-400 font-semibold">Party size:</span>
           <div class="flex rounded-lg overflow-hidden border border-slate-600">
-            <button id="btn-max-3" class="px-3 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">3</button>
-            <button id="btn-max-4" class="px-3 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">4</button>
+            <button id="btn-max-3" class="px-4 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">3</button>
+            <button id="btn-max-4" class="px-4 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">4</button>
           </div>
           <span id="laptop-phone-count" class="text-sm text-slate-400">0 / 4</span>
         </div>
       </div>
-      <div class="text-[11px] text-slate-500 mb-2">Phones are only removed when YOU press Kick — never automatically.</div>
+      <div id="party-note" class="text-[11px] text-yellow-300/90 font-semibold mb-2">Party size 4 — corners 1 to 4 are open. Phones are only removed when YOU press Kick.</div>
       <div id="laptop-phones-list" class="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 1 — empty</div>
         <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 2 — empty</div>
@@ -631,7 +636,7 @@ exception when others then null; end $$;
 
 <!-- VIEW: TV DISPLAY
      Only the 4 judge boxes + the 2 BIG numbers.
-     The BIG numbers count how many referees rule for each side (0-4 only). -->
+     The BIG numbers ONLY count referees for each side (0-4, or 0-3 when party = 3). -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden">
   <div class="w-full h-full grid grid-cols-2">
     <div class="side-blue flex flex-col p-6">
@@ -693,6 +698,8 @@ const state = {
   loggingIn: false,
   dbBroken: false,
 };
+
+const SQL_HINT = "\n\nIf this keeps happening, run the SQL fix from the top of the HTML file in Supabase → SQL Editor.";
 
 function makeSessionId() {
   try {
@@ -938,7 +945,6 @@ async function enterPhone() {
     localStorage.removeItem(phoneSessionKey());
   }
 
-  /* Lenient: if the list call fails we still try to register below. */
   let active = [];
   try {
     const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
@@ -985,8 +991,7 @@ async function enterPhone() {
   });
 
   if (regErr) {
-    alert("Could not register this judge phone: " + regErr.message +
-      "\n\nIf this keeps happening, run the SQL fix from the top of the HTML file in Supabase → SQL Editor.");
+    alert("Could not register this judge phone: " + regErr.message + SQL_HINT);
     state.judgeSlot = null;
     state.role = null;
     location.hash = "";
@@ -1013,10 +1018,10 @@ async function enterPhone() {
 
 /*
   NO AUTOMATIC KICKING.
-  The database never expires phones by itself. The only thing that deletes a
-  phone session is the KICK button pressed by a person on the laptop. When
-  that happens the next heartbeat answers "Phone not registered" and this
-  device is told it was removed.
+  A phone is only removed when a person presses KICK on the laptop.
+  The heartbeat also re-reads the party size directly from the rings table,
+  so if the operator switches the party to 3, a judge-4 phone closes its own
+  corner within a few seconds (works even if realtime is not configured).
 */
 async function phoneHeartbeatTick() {
   const sid = state.phoneSessionId;
@@ -1031,9 +1036,22 @@ async function phoneHeartbeatTick() {
       console.warn("Heartbeat RPC error:", hbErr.message);
       if (/not registered|not connected|not found|kicked|removed/i.test(hbErr.message || "")) {
         leavePhone("You were kicked out by the operator.");
+        return;
       }
-      /* any other error (network blip etc.) is ignored on purpose */
     }
+
+    /* party-size check: direct table read, no realtime needed */
+    try {
+      const { data: ringRow } = await sb
+        .from("rings").select("max_phones").eq("id", state.ring.id).maybeSingle();
+      if (ringRow && state.phoneSessionId === sid) {
+        state.ring.max_phones = ringRow.max_phones;
+        sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
+        if (state.judgeSlot && state.judgeSlot > getMaxJudges()) {
+          leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
+        }
+      }
+    } catch (e) { /* ignore */ }
   } finally {
     state.heartbeatBusy = false;
   }
@@ -1172,6 +1190,77 @@ document.getElementById("btn-logout").addEventListener("click", () => {
   document.getElementById("inp-password").value = "";
 });
 
+/* ---------------------------------------------------------------------
+   ADD / DEDUCT ANY JUDGE'S POINTS.
+   Tries the database function first; if it fails (old/broken database)
+   it falls back to a direct update of the matches table, so the buttons
+   keep working either way.
+--------------------------------------------------------------------- */
+async function laptopAdjustJudge(slot, side, delta) {
+  const { error } = await sb.rpc("adjust_judge_score", {
+    p_ring_id: String(state.ring.id),
+    p_slot: slot,
+    p_side: side,
+    p_delta: delta
+  });
+
+  if (!error) { fetchMatchNow(); return; }
+
+  console.warn("adjust_judge_score RPC failed, using direct fallback:", error.message);
+
+  const { row, error: rErr } = await readMatchRow();
+  if (rErr || !row) {
+    alert("Could not read the match row: " + (rErr ? rErr.message : "not found") + SQL_HINT);
+    return;
+  }
+
+  const jb = pad4(row.judge_blue);
+  const jr = pad4(row.judge_red);
+  const arr = (side === "blue") ? jb : jr;
+  const oldVal = arr[slot - 1];
+  const newVal = Math.max(0, oldVal + delta);
+  const applied = newVal - oldVal;
+  arr[slot - 1] = newVal;
+
+  const upd = { judge_blue: jb, judge_red: jr, updated_at: new Date().toISOString() };
+  if (side === "blue") upd.blue_score = Math.max(0, Number(row.blue_score || 0) + applied);
+  else                 upd.red_score  = Math.max(0, Number(row.red_score  || 0) + applied);
+
+  const { error: uErr } = await sb.from("matches").update(upd).eq("ring_id", state.ring.id);
+  if (uErr) alert("Could not adjust the judge: " + uErr.message + SQL_HINT);
+  fetchMatchNow();
+}
+
+const CARD_COLUMNS = ["blue_score","red_score","blue_gam_jeom","red_gam_jeom","blue_yellow_cards","red_yellow_cards"];
+
+async function laptopAdjustCard(column, delta) {
+  if (!CARD_COLUMNS.includes(column)) return;
+
+  const { error } = await sb.rpc("adjust_card", {
+    p_ring_id: String(state.ring.id),
+    p_column: column,
+    p_delta: delta
+  });
+
+  if (!error) { fetchMatchNow(); return; }
+
+  console.warn("adjust_card RPC failed, using direct fallback:", error.message);
+
+  const { row, error: rErr } = await readMatchRow();
+  if (rErr || !row) {
+    alert("Could not read the match row: " + (rErr ? rErr.message : "not found") + SQL_HINT);
+    return;
+  }
+
+  const newVal = Math.max(0, Number(row[column] || 0) + delta);
+  const { error: uErr } = await sb.from("matches").update({
+    [column]: newVal,
+    updated_at: new Date().toISOString()
+  }).eq("ring_id", state.ring.id);
+  if (uErr) alert("Could not adjust: " + uErr.message + SQL_HINT);
+  fetchMatchNow();
+}
+
 document.querySelectorAll(".laptop-card-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const act = btn.dataset.act;
@@ -1182,50 +1271,34 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
       const side = parts[2];
       const op = parts[3];
       const delta = (op === "plus") ? 1 : -1;
-
-      const { error } = await sb.rpc("adjust_judge_score", {
-        p_ring_id: String(state.ring.id),
-        p_slot: slot,
-        p_side: side,
-        p_delta: delta
-      });
-      if (error) alert("Error: " + error.message);
-      else fetchMatchNow();
+      await laptopAdjustJudge(slot, side, delta);
       return;
     }
 
     const [side, type, op] = act.split("-");
     const delta = (op === "plus") ? 1 : -1;
-
-    if (type === "score") {
-      const { error } = await sb.rpc("adjust_card", {
-        p_ring_id: String(state.ring.id),
-        p_column: side + "_score",
-        p_delta: delta
-      });
-      if (error) alert("Error: " + error.message);
-      else fetchMatchNow();
-      return;
-    }
-
-    const col = side + "_" + (type === "gj" ? "gam_jeom" : "yellow_cards");
-    const { error } = await sb.rpc("adjust_card", {
-      p_ring_id: String(state.ring.id),
-      p_column: col,
-      p_delta: delta
-    });
-    if (error) alert("Error: " + error.message);
-    else fetchMatchNow();
+    const column = side + "_" + (type === "score" ? "score" : (type === "gj" ? "gam_jeom" : "yellow_cards"));
+    await laptopAdjustCard(column, delta);
   });
 });
 
+/* ---------------------------------------------------------------------
+   PARTY SIZE (3 or 4 referees)
+--------------------------------------------------------------------- */
 async function setMaxJudges(n) {
   state.ring.max_phones = n;
   sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
+
+  /* visible immediately on this screen */
   applyMaxJudgesUI();
   renderVoteScores();
+  refreshPhoneList();
+
+  /* persist so phones and the TV see it too */
   const { error } = await sb.from("rings").update({ max_phones: n }).eq("id", state.ring.id);
-  if (error) alert("Could not save referee count: " + error.message);
+  if (error) {
+    alert("Could not save referee count in the database: " + error.message + SQL_HINT);
+  }
 }
 document.getElementById("btn-max-3").addEventListener("click", () => setMaxJudges(3));
 document.getElementById("btn-max-4").addEventListener("click", () => setMaxJudges(4));
@@ -1248,10 +1321,13 @@ async function refreshPhoneList() {
   for (let i = 1; i <= 4; i++) {
     const div = document.createElement("div");
     if (bySlot[i]) {
-      div.className = "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
+      const overParty = i > maxJ;
+      div.className = overParty
+        ? "bg-orange-900/40 border-2 border-orange-500 rounded-lg p-3 text-center text-sm"
+        : "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
       div.innerHTML =
         `<div class="font-bold">📱 Judge ${i}</div>` +
-        `<div class="text-xs text-green-300 mt-1">Connected</div>` +
+        `<div class="text-xs mt-1 ${overParty ? "text-orange-300" : "text-green-300"}">${overParty ? "Corner closing…" : "Connected"}</div>` +
         `<button data-kick="${bySlot[i].id}" class="mt-2 bg-red-600/80 hover:bg-red-600 rounded px-3 py-1 text-xs font-bold">Kick</button>`;
     } else {
       div.className = "bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700";
@@ -1267,7 +1343,7 @@ document.getElementById("laptop-phones-list").addEventListener("click", async e 
   if (!btn) return;
   if (!confirm("Kick this judge phone out of the ring?")) return;
   const { error } = await sb.rpc("phone_unregister", { p_id: btn.dataset.kick });
-  if (error) alert("Kick failed: " + error.message);
+  if (error) alert("Kick failed: " + error.message + SQL_HINT);
   await refreshPhoneList();
 });
 
@@ -1321,7 +1397,7 @@ function pad4(arr) {
   They only count how many referees currently rule for each side, so they
   can only ever be 0,1,2,3,4 (0-3 when the party is set to 3 referees).
   A judge rules for the side he gave more points to so far.
-  Example: 3 judges red + 1 judge blue  =>  BIG RED = 3, BIG BLUE = 1.
+  Example: 3 judges blue + 1 judge red  =>  BIG BLUE = 3, BIG RED = 1.
 */
 function judgeVoteCounts() {
   const jb = pad4(state.match ? state.match.judge_blue : null);
@@ -1349,8 +1425,15 @@ function applyMaxJudgesUI() {
   const b3 = document.getElementById("btn-max-3");
   const b4 = document.getElementById("btn-max-4");
   if (b3 && b4) {
-    b3.className = "px-3 py-1.5 text-sm font-bold " + (max === 3 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
-    b4.className = "px-3 py-1.5 text-sm font-bold " + (max === 4 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
+    b3.className = "px-4 py-1.5 text-sm font-bold " + (max === 3 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
+    b4.className = "px-4 py-1.5 text-sm font-bold " + (max === 4 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
+  }
+
+  const note = document.getElementById("party-note");
+  if (note) {
+    note.textContent = (max === 3)
+      ? "Party size 3 — corner 4 is CLOSED. A 4th phone cannot join. Phones are only removed when YOU press Kick."
+      : "Party size 4 — corners 1 to 4 are open. Phones are only removed when YOU press Kick.";
   }
 
   for (let i = 1; i <= 4; i++) {
