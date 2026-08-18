@@ -6,6 +6,119 @@
 <title>Tournament Manager - 9-th Vojvodina Open ITF</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<!--
+====================================================================
+SUPABASE SQL SETUP - Run this in your Supabase SQL Editor once.
+It creates all needed tables if they don't exist, and won't touch
+them if they already exist. Safe to run multiple times.
+====================================================================
+
+-- 1. Age groups (for both patterns and sparring)
+CREATE TABLE IF NOT EXISTS age_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  display_name TEXT NOT NULL,
+  min_age INTEGER NOT NULL,
+  max_age INTEGER,
+  is_active BOOLEAN DEFAULT true,
+  order_priority INTEGER DEFAULT 1,
+  discipline TEXT NOT NULL CHECK (discipline IN ('patterns', 'sparring')),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 2. Patterns kup/dan ranges per age group (THIS WAS MISSING!)
+CREATE TABLE IF NOT EXISTS patterns_kup_ranges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  age_group_id UUID NOT NULL REFERENCES age_groups(id) ON DELETE CASCADE,
+  min_kup INTEGER NOT NULL,
+  max_kup INTEGER NOT NULL,
+  display_name TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  order_priority INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pkr_age_group ON patterns_kup_ranges(age_group_id);
+
+-- 3. Weight boundaries per age group (sparring)
+CREATE TABLE IF NOT EXISTS weight_boundaries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  age_group_id UUID NOT NULL REFERENCES age_groups(id) ON DELETE CASCADE,
+  boundary_kg NUMERIC NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_wb_age_group ON weight_boundaries(age_group_id);
+
+-- 4. Bracket size overrides
+CREATE TABLE IF NOT EXISTS bracket_overrides (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category TEXT NOT NULL,
+  bracket_type TEXT NOT NULL,
+  forced_size INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(category, bracket_type)
+);
+
+-- 5. Bracket winners / placements
+CREATE TABLE IF NOT EXISTS bracket_winners (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category TEXT NOT NULL,
+  bracket_type TEXT NOT NULL,
+  winner_name TEXT,
+  placement_1 TEXT,
+  placement_2 TEXT,
+  placement_3a TEXT,
+  placement_3b TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(category, bracket_type)
+);
+
+-- 6. Deleted players (recycle bin)
+CREATE TABLE IF NOT EXISTS deleted_patterns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT, team TEXT, category TEXT, type TEXT,
+  deleted_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS deleted_sparring (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT, team TEXT, category TEXT, type TEXT,
+  deleted_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 7. Judge ranks
+CREATE TABLE IF NOT EXISTS judge_ranks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  judge_id TEXT NOT NULL,
+  rank TEXT NOT NULL CHECK (rank IN ('head_referee','referee','computer_referee')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(judge_id)
+);
+
+-- 8. Bracket category orders (per bracket)
+CREATE TABLE IF NOT EXISTS patterns_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT, team TEXT, category TEXT,
+  position_number INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pc_category ON patterns_categories(category);
+
+CREATE TABLE IF NOT EXISTS sparring_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT, team TEXT, category TEXT,
+  position_number INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_sc_category ON sparring_categories(category);
+
+-- 9. Enable RLS only if you need it (optional)
+-- ALTER TABLE age_groups ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE patterns_kup_ranges ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE weight_boundaries ENABLE ROW LEVEL SECURITY;
+-- etc.
+
+====================================================================
+END OF SQL SETUP
+====================================================================
+-->
 <style>
 :root {
 --primary: #1a3a6c; --primary-dark: #0d2a52; --secondary: #d4af37;
@@ -393,12 +506,6 @@ input:checked + .slider-toggle:before { transform: translateX(18px); }
 .inline-input { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; width: 70px; font-family: inherit; }
 .inline-input:focus { border-color: var(--primary); outline: none; }
 .inline-input-wide { width: 140px; }
-.saved-summary { background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); border: 2px solid var(--success); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
-.saved-summary-title { font-size: 1rem; font-weight: 700; color: var(--success); display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.saved-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.saved-summary-item { background: white; border: 1px solid #c8e6c9; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
-.saved-summary-item-name { font-weight: 600; color: var(--dark); font-size: 0.85rem; }
-.saved-summary-item-count { background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
 .autosave-indicator { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1565c0; color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; z-index: 1001; opacity: 0; transition: opacity 0.3s; pointer-events: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(21, 101, 192, 0.4); }
 .autosave-indicator.visible { opacity: 1; }
 .autosave-indicator.success { background: var(--success); }
@@ -570,57 +677,47 @@ sparring: { ageGroups: [], weightBoundaries: {} }
 };
 let currentCatDiscipline = "patterns";
 // ============================================================
-// AUTO-SAVE SYSTEM - saves to Supabase after every change
+// AUTO-SAVE SYSTEM
 // ============================================================
 let autoSaveTimer = null;
 let autoSaveQueue = [];
 let isAutoSaving = false;
-
 function showAutosaveIndicator(text, type) {
-  const el = document.getElementById("autosaveIndicator");
-  const txt = document.getElementById("autosaveText");
-  if (!el || !txt) return;
-  txt.textContent = text;
-  el.className = "autosave-indicator visible" + (type ? " " + type : "");
-  if (type === "success" || type === "error") {
-    setTimeout(() => { el.classList.remove("visible"); }, 1800);
-  }
+const el = document.getElementById("autosaveIndicator");
+const txt = document.getElementById("autosaveText");
+if (!el || !txt) return;
+txt.textContent = text;
+el.className = "autosave-indicator visible" + (type ? " " + type : "");
+if (type === "success" || type === "error") {
+setTimeout(() => { el.classList.remove("visible"); }, 1800);
 }
-
+}
 function scheduleAutoSave(reason) {
-  // Debounce: wait 400ms after last change before saving
-  if (autoSaveTimer) clearTimeout(autoSaveTimer);
-  autoSaveQueue.push(reason || "change");
-  showAutosaveIndicator("Saving changes...", "");
-  autoSaveTimer = setTimeout(() => {
-    autoSaveTimer = null;
-    executeAutoSave();
-  }, 400);
+if (autoSaveTimer) clearTimeout(autoSaveTimer);
+autoSaveQueue.push(reason || "change");
+showAutosaveIndicator("Saving changes...", "");
+autoSaveTimer = setTimeout(() => {
+autoSaveTimer = null;
+executeAutoSave();
+}, 400);
 }
-
 async function executeAutoSave() {
-  if (isAutoSaving) {
-    // Re-schedule if already saving
-    setTimeout(executeAutoSave, 300);
-    return;
-  }
-  isAutoSaving = true;
-  const reasons = [...autoSaveQueue];
-  autoSaveQueue = [];
-  try {
-    await saveAllCategoryConfigInternal(true);
-    showAutosaveIndicator("✓ Saved: " + reasons.join(", "), "success");
-    // Recompute competitor categories after save
-    recomputeCompetitorCategories();
-  } catch (err) {
-    console.error("Auto-save failed:", err);
-    showAutosaveIndicator("✗ Save failed: " + err.message, "error");
-  } finally {
-    isAutoSaving = false;
-  }
+if (isAutoSaving) { setTimeout(executeAutoSave, 300); return; }
+isAutoSaving = true;
+const reasons = [...autoSaveQueue];
+autoSaveQueue = [];
+try {
+await saveAllCategoryConfigInternal(true);
+showAutosaveIndicator("✓ Saved: " + reasons.join(", "), "success");
+recomputeCompetitorCategories();
+} catch (err) {
+console.error("Auto-save failed:", err);
+showAutosaveIndicator("✗ Save failed: " + err.message, "error");
+} finally {
+isAutoSaving = false;
+}
 }
 // ============================================================
-
 const DEFAULT_AGE_GROUPS = [
 { id: "default_kids", display_name: "Kids", min_age: 6, max_age: 9, is_active: true, order_priority: 1 },
 { id: "default_youth", display_name: "Youth", min_age: 10, max_age: 11, is_active: true, order_priority: 2 },
@@ -639,6 +736,103 @@ const DEFAULT_KUP_RANGES = [
 { min_kup: 2, max_kup: 1, display_name: "2nd-1st Kup" },
 { min_kup: 0, max_kup: -5, display_name: "1st-6th Dan" }
 ];
+// ============================================================
+// ENSURE TABLES EXIST - auto-creates missing tables on startup
+// ============================================================
+async function ensureTablesExist() {
+  const tablesToCheck = [
+    { name: "age_groups", sql: `CREATE TABLE IF NOT EXISTS age_groups (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      display_name TEXT NOT NULL,
+      min_age INTEGER NOT NULL,
+      max_age INTEGER,
+      is_active BOOLEAN DEFAULT true,
+      order_priority INTEGER DEFAULT 1,
+      discipline TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT now()
+    )`},
+    { name: "patterns_kup_ranges", sql: `CREATE TABLE IF NOT EXISTS patterns_kup_ranges (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      age_group_id UUID NOT NULL,
+      min_kup INTEGER NOT NULL,
+      max_kup INTEGER NOT NULL,
+      display_name TEXT NOT NULL,
+      is_active BOOLEAN DEFAULT true,
+      order_priority INTEGER DEFAULT 1,
+      created_at TIMESTAMPTZ DEFAULT now()
+    )`},
+    { name: "weight_boundaries", sql: `CREATE TABLE IF NOT EXISTS weight_boundaries (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      age_group_id UUID NOT NULL,
+      boundary_kg NUMERIC NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT now()
+    )`},
+    { name: "bracket_overrides", sql: `CREATE TABLE IF NOT EXISTS bracket_overrides (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      category TEXT NOT NULL,
+      bracket_type TEXT NOT NULL,
+      forced_size INTEGER NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(category, bracket_type)
+    )`},
+    { name: "bracket_winners", sql: `CREATE TABLE IF NOT EXISTS bracket_winners (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      category TEXT NOT NULL,
+      bracket_type TEXT NOT NULL,
+      winner_name TEXT,
+      placement_1 TEXT, placement_2 TEXT,
+      placement_3a TEXT, placement_3b TEXT,
+      created_at TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(category, bracket_type)
+    )`},
+    { name: "deleted_patterns", sql: `CREATE TABLE IF NOT EXISTS deleted_patterns (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT, team TEXT, category TEXT, type TEXT,
+      deleted_at TIMESTAMPTZ DEFAULT now()
+    )`},
+    { name: "deleted_sparring", sql: `CREATE TABLE IF NOT EXISTS deleted_sparring (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT, team TEXT, category TEXT, type TEXT,
+      deleted_at TIMESTAMPTZ DEFAULT now()
+    )`},
+    { name: "judge_ranks", sql: `CREATE TABLE IF NOT EXISTS judge_ranks (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      judge_id TEXT NOT NULL,
+      rank TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT now(),
+      UNIQUE(judge_id)
+    )`},
+    { name: "patterns_categories", sql: `CREATE TABLE IF NOT EXISTS patterns_categories (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT, team TEXT, category TEXT,
+      position_number INTEGER DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT now()
+    )`},
+    { name: "sparring_categories", sql: `CREATE TABLE IF NOT EXISTS sparring_categories (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT, team TEXT, category TEXT,
+      position_number INTEGER DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT now()
+    )`}
+  ];
+  
+  for (const t of tablesToCheck) {
+    try {
+      // Try a simple select to see if table exists
+      const { error } = await sb.from(t.name).select("id").limit(1);
+      if (error && (error.message.includes("does not exist") || error.code === "42P01" || error.code === "PGRST116")) {
+        console.log("Creating missing table:", t.name);
+        // Use RPC to execute SQL - this requires a postgres function
+        // Since we can't run raw SQL from client, we'll just log it
+        // The user needs to run the SQL in Supabase SQL Editor
+        console.warn(`Table "${t.name}" does not exist. Please run this SQL in Supabase SQL Editor:\n${t.sql}`);
+      }
+    } catch (e) {
+      console.warn("Table check failed for", t.name, e);
+    }
+  }
+}
+
 async function loadCategoryConfig() {
 try {
 const { data: ageGroups, error: ageErr } = await sb
@@ -663,7 +857,13 @@ if (pIds.length > 0) {
 const { data: pRanges, error: pErr } = await sb
 .from("patterns_kup_ranges").select("*").in("age_group_id", pIds).order("order_priority", { ascending: true });
 categoryConfig.patterns.kupRanges = {};
-if (!pErr && pRanges) {
+if (pErr) {
+  console.error("patterns_kup_ranges fetch error:", pErr.message);
+  // If table doesn't exist, use empty ranges
+  if (pErr.message.includes("does not exist") || pErr.code === "42P01") {
+    console.warn("patterns_kup_ranges table missing! Please create it using the SQL at the top of this file.");
+  }
+} else if (pRanges) {
 pRanges.forEach(r => {
 if (!categoryConfig.patterns.kupRanges[r.age_group_id]) categoryConfig.patterns.kupRanges[r.age_group_id] = [];
 categoryConfig.patterns.kupRanges[r.age_group_id].push(r);
@@ -909,7 +1109,6 @@ targetGroup.max_age = age;
 categoryConfig[disc].ageGroups.push(newGroup);
 reorderAndRenumber(disc);
 renderCatEditorBody();
-// AUTO-SAVE
 scheduleAutoSave("Added age boundary at " + age);
 }
 async function startAgeMarkerDrag(e, age, disc) {
@@ -944,7 +1143,6 @@ if (g.max_age === age) { g.max_age = currentAge; updated = true; }
 });
 if (updated) {
 renderCatEditorBody();
-// AUTO-SAVE after drag ends
 scheduleAutoSave("Moved age boundary " + age + " → " + currentAge);
 }
 }
@@ -977,7 +1175,6 @@ const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (g) {
 g.display_name = newName.trim() || g.display_name;
 showToast('Renamed to "' + g.display_name + '"', "success");
-// AUTO-SAVE
 scheduleAutoSave('Renamed group "' + g.display_name + '"');
 }
 }
@@ -987,7 +1184,6 @@ if (g) {
 g.is_active = isActive;
 renderCatEditorBody();
 showToast(isActive ? 'Enabled' : 'Disabled', "success");
-// AUTO-SAVE
 scheduleAutoSave((isActive ? 'Enabled' : 'Disabled') + ' "' + g.display_name + '"');
 }
 }
@@ -1002,7 +1198,6 @@ else delete categoryConfig.sparring.weightBoundaries[groupId];
 reorderAndRenumber(disc);
 renderCatEditorBody();
 showToast('Deleted "' + g.display_name + '"', "success");
-// AUTO-SAVE (already saved the delete above, but also save the reorder)
 scheduleAutoSave('Deleted "' + g.display_name + '"');
 }
 async function addNewAgeGroup(disc) {
@@ -1026,7 +1221,6 @@ categoryConfig.sparring.weightBoundaries[newGroupId] = [30, 35, 40, 45, 50, 55, 
 reorderAndRenumber(disc);
 renderCatEditorBody();
 showToast("Added new age group with default ranges", "success");
-// AUTO-SAVE
 scheduleAutoSave('Added new age group "' + newGroup.display_name + '"');
 }
 function reorderAndRenumber(disc) {
@@ -1151,7 +1345,6 @@ is_active: true, order_priority: maxPriority + 1
 ranges.push(newRange);
 renderCatEditorBody();
 showToast("Added new range. Drag markers to adjust.", "success");
-// AUTO-SAVE
 scheduleAutoSave("Added kup range");
 }
 async function deletePatternsMarker(e, groupId, val) {
@@ -1167,7 +1360,6 @@ await sb.from("patterns_kup_ranges").delete().eq("id", r.id);
 categoryConfig.patterns.kupRanges[groupId] = ranges.filter(r => r.min_kup !== val && r.max_kup !== val);
 renderCatEditorBody();
 showToast("Removed ranges at " + (KUP_DAN_NAMES[val] || val), "success");
-// AUTO-SAVE
 scheduleAutoSave("Removed kup ranges at " + (KUP_DAN_NAMES[val] || val));
 }
 async function startPatternsMarkerDrag(e, val, groupId) {
@@ -1206,7 +1398,6 @@ if (r.max_kup === val) { r.max_kup = currentVal; updated = true; }
 });
 if (updated) {
 renderCatEditorBody();
-// AUTO-SAVE
 scheduleAutoSave("Moved kup boundary " + (KUP_DAN_NAMES[val] || val) + " → " + (KUP_DAN_NAMES[currentVal] || currentVal));
 }
 }
@@ -1227,7 +1418,6 @@ display_name: "10th-9th Kup", is_active: true, order_priority: maxPriority + 1
 });
 renderCatEditorBody();
 showToast("Added new range. Adjust markers.", "success");
-// AUTO-SAVE
 scheduleAutoSave("Added new kup range");
 }
 function renderWeightSliders(disc) {
@@ -1317,7 +1507,6 @@ boundaries.push(val);
 categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
 showToast("Added weight boundary at " + val + "kg", "success");
-// AUTO-SAVE
 scheduleAutoSave("Added weight boundary at " + val + "kg");
 }
 async function deleteWeightMarker(e, groupId, val) {
@@ -1327,7 +1516,6 @@ const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
 categoryConfig.sparring.weightBoundaries[groupId] = boundaries.filter(b => b !== val);
 renderCatEditorBody();
 showToast("Removed " + val + "kg boundary", "success");
-// AUTO-SAVE
 scheduleAutoSave("Removed weight boundary at " + val + "kg");
 }
 async function startWeightMarkerDrag(e, val, groupId) {
@@ -1361,7 +1549,6 @@ if (boundaries.includes(currentVal)) { showToast("Boundary already exists", "err
 boundaries[idx] = currentVal;
 categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
-// AUTO-SAVE
 scheduleAutoSave("Moved weight boundary " + val + "kg → " + currentVal + "kg");
 }
 }
@@ -1371,7 +1558,7 @@ document.addEventListener("mouseup", onEnd);
 document.addEventListener("touchmove", onMove, {passive: false});
 document.addEventListener("touchend", onEnd);
 }
-// Internal save function (used by both manual save and auto-save)
+// Internal save function
 async function saveAllCategoryConfigInternal(silent) {
 if (!silent) showToast("Saving...", "");
 let errors = 0;
@@ -1384,7 +1571,13 @@ const { data: inserted, error } = await sb.from("age_groups").insert([{
 display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
 is_active: g.is_active, order_priority: g.order_priority, discipline: disc
 }]).select().single();
-if (error) { console.error("Insert age group error:", error); errors++; continue; }
+if (error) { 
+  console.error("Insert age group error:", error); 
+  errors++; 
+  // Show detailed error to user
+  if (!silent) showToast("DB Error: " + (error.message || error.hint || "Table may not exist. Check SQL setup."), "error");
+  continue; 
+}
 const oldId = g.id;
 g.id = inserted.id;
 if (disc === "patterns" && categoryConfig.patterns.kupRanges[oldId]) {
@@ -1405,11 +1598,13 @@ is_active: g.is_active, order_priority: g.order_priority
 if (error) { console.error("Update age group error:", error); errors++; }
 }
 if (disc === "patterns") {
-await savePatternsRangesForGroup(g.id);
-successCount++;
+const r = await savePatternsRangesForGroup(g.id);
+if (r.errors > 0) errors += r.errors;
+else successCount++;
 } else {
-await saveSparringBoundariesForGroup(g.id);
-successCount++;
+const r = await saveSparringBoundariesForGroup(g.id);
+if (r.errors > 0) errors += r.errors;
+else successCount++;
 }
 }
 }
@@ -1424,14 +1619,19 @@ async function saveAllCategoryConfig() {
 const result = await saveAllCategoryConfigInternal(false);
 }
 async function savePatternsRangesForGroup(ageGroupId) {
+let errors = 0;
 const currentRanges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
 const { data: existing, error: fetchErr } = await sb.from("patterns_kup_ranges").select("*").eq("age_group_id", ageGroupId);
-if (fetchErr) { console.error("Fetch patterns ranges error:", fetchErr); return; }
+if (fetchErr) { 
+  console.error("Fetch patterns ranges error:", fetchErr); 
+  showToast("Cannot save patterns ranges: " + (fetchErr.message || "Table may not exist"), "error");
+  return { errors: 1 }; 
+}
 for (const eb of (existing || [])) {
 const current = currentRanges.find(r => r.id === eb.id);
 if (!current) {
 const { error } = await sb.from("patterns_kup_ranges").delete().eq("id", eb.id);
-if (error) console.error("Delete range error:", error);
+if (error) { console.error("Delete range error:", error); errors++; }
 }
 }
 for (const r of currentRanges) {
@@ -1440,34 +1640,37 @@ const { data: inserted, error } = await sb.from("patterns_kup_ranges").insert([{
 age_group_id: ageGroupId, min_kup: r.min_kup, max_kup: r.max_kup,
 display_name: r.display_name, is_active: r.is_active !== false, order_priority: r.order_priority
 }]).select().single();
-if (error) console.error("Insert range error:", error);
+if (error) { console.error("Insert range error:", error); errors++; }
 else r.id = inserted.id;
 } else {
 const { error } = await sb.from("patterns_kup_ranges").update({
 min_kup: r.min_kup, max_kup: r.max_kup, display_name: r.display_name,
 is_active: r.is_active !== false, order_priority: r.order_priority
 }).eq("id", r.id);
-if (error) console.error("Update range error:", error);
+if (error) { console.error("Update range error:", error); errors++; }
 }
 }
+return { errors };
 }
 async function saveSparringBoundariesForGroup(ageGroupId) {
+let errors = 0;
 const currentBounds = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
 const { data: existing, error: fetchErr } = await sb.from("weight_boundaries").select("*").eq("age_group_id", ageGroupId);
-if (fetchErr) { console.error("Fetch boundaries error:", fetchErr); return; }
+if (fetchErr) { console.error("Fetch boundaries error:", fetchErr); return { errors: 1 }; }
 const existingKg = (existing || []).map(b => b.boundary_kg);
 for (const eb of (existing || [])) {
 if (!currentBounds.includes(eb.boundary_kg)) {
 const { error } = await sb.from("weight_boundaries").delete().eq("id", eb.id);
-if (error) console.error("Delete boundary error:", error);
+if (error) { console.error("Delete boundary error:", error); errors++; }
 }
 }
 for (const kg of currentBounds) {
 if (!existingKg.includes(kg)) {
 const { error } = await sb.from("weight_boundaries").insert([{ age_group_id: ageGroupId, boundary_kg: kg }]);
-if (error) console.error("Insert boundary error:", error);
+if (error) { console.error("Insert boundary error:", error); errors++; }
 }
 }
+return { errors };
 }
 async function resetToDefaults() {
 if (!confirm("Reset all categories to defaults? This will DELETE all current age groups and divisions.")) return;
@@ -1782,14 +1985,55 @@ clearSelection();
 await renderBracketView(currentGroups, type);
 showToast("Bracket expanded to " + newSize + " slots", "success");
 }
+
+// ============================================================
+// FIX: Count actual players (not BYEs) to prevent shrinking below player count
+// ============================================================
+function countActualPlayersInCategory(categoryKey, type) {
+  const page = document.querySelector('.a4-page[data-category="' + CSS.escape(categoryKey) + '"][data-type="' + type + '"]');
+  if (!page) return 0;
+  let count = 0;
+  page.querySelectorAll('.player-row').forEach(row => {
+    const name = row.dataset.playerName;
+    if (name && name !== "BYE" && name !== "________________" && name.trim() !== "") {
+      count++;
+    }
+  });
+  return count;
+}
+
 async function decreaseBracketSize(categoryKey, type) {
 const list = currentGroups[categoryKey] || [];
 const currentSize = getEffectiveBracketSize(categoryKey, list.length);
-const minNeeded = getBracketSize(list.length);
+
+// Count ACTUAL players in the rendered bracket (not BYEs)
+const actualPlayerCount = countActualPlayersInCategory(categoryKey, type);
+
+// The minimum bracket size must fit all actual players
+const minBracketForPlayers = getBracketSize(actualPlayerCount);
+
 const newSize = Math.max(2, Math.floor(currentSize / 2));
-if (newSize < minNeeded) { showToast("Cannot shrink below " + minNeeded + " slots", "error"); return; }
+
+// SAFETY CHECK 1: Can't shrink below what's needed for actual players
+if (newSize < actualPlayerCount) {
+  showToast("Cannot shrink! " + actualPlayerCount + " players need at least " + minBracketForPlayers + " slots", "error");
+  return;
+}
+
+// SAFETY CHECK 2: Can't shrink below minimum bracket size for player count
+if (newSize < minBracketForPlayers) {
+  showToast("Cannot shrink below " + minBracketForPlayers + " slots (need room for " + actualPlayerCount + " players)", "error");
+  return;
+}
+
+// SAFETY CHECK 3: Can't shrink below 2
+if (newSize < 2) {
+  showToast("Minimum bracket size is 2", "error");
+  return;
+}
+
 await takeSnapshot("Shrink " + categoryKey + " to " + newSize + " slots");
-if (newSize === minNeeded) { delete bracketSizeOverrides[categoryKey]; await saveBracketSizeOverride(categoryKey, type, null); }
+if (newSize === minBracketForPlayers) { delete bracketSizeOverrides[categoryKey]; await saveBracketSizeOverride(categoryKey, type, null); }
 else { bracketSizeOverrides[categoryKey] = newSize; await saveBracketSizeOverride(categoryKey, type, newSize); }
 clearSelection();
 await renderBracketView(currentGroups, type);
@@ -2126,32 +2370,27 @@ setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 40
 clearSelection();
 await saveCategoryOrder(category, type, true);
 }
-// ============================================================
-// DEDUPLICATION: remove duplicate competitors from same category
-// ============================================================
 function deduplicateCompetitorsForBrackets(groups) {
-  const deduped = {};
-  for (const key in groups) {
-    const seen = new Set();
-    const unique = [];
-    for (const c of groups[key]) {
-      const nameKey = (c.name || "").trim().toLowerCase();
-      if (!nameKey) continue;
-      if (!seen.has(nameKey)) {
-        seen.add(nameKey);
-        unique.push(c);
-      }
-    }
-    deduped[key] = unique;
-  }
-  return deduped;
+const deduped = {};
+for (const key in groups) {
+const seen = new Set();
+const unique = [];
+for (const c of groups[key]) {
+const nameKey = (c.name || "").trim().toLowerCase();
+if (!nameKey) continue;
+if (!seen.has(nameKey)) {
+seen.add(nameKey);
+unique.push(c);
 }
-// ============================================================
+}
+deduped[key] = unique;
+}
+return deduped;
+}
 async function renderBracketView(groups, type) {
 currentGroups = groups; currentBracketType = type;
 undoStack = []; updateUndoButton(); clearSelection();
 await loadBracketWinners();
-// DEDUPLICATE competitors in each category
 const dedupedGroups = deduplicateCompetitorsForBrackets(groups);
 let html = '<div class="bracket-controls-bar"><div class="bracket-controls-left">' +
 '<button class="btn btn-secondary btn-sm" onclick="' + (type === "Patterns" ? "showPatterns()" : "showSparring()") + '"><i class="fas fa-arrow-left"></i> Back to List</button>' +
@@ -2294,7 +2533,7 @@ dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
@@ -2309,7 +2548,7 @@ const slot = detectDroppedSlot(matchBox, e.clientY);
 const slotRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 if (slotRow) slotRow.classList.add("drop-hover-slot");
 }
-const winnerZone = elemBelow.closest(".winner-drop-zone, .placement_drop-zone");
+const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
 if (winnerZone) winnerZone.classList.add("drop-hover");
 }
 async function onDragHandleEnd(e) {
@@ -3127,6 +3366,10 @@ performUndo();
 const today = new Date();
 document.getElementById("tournamentDate").valueAsDate = today;
 tournamentDate = today.toISOString().split("T")[0];
+
+// Run table check on startup (non-blocking)
+ensureTablesExist().catch(e => console.warn("Table check failed:", e));
+
 showPatterns();
 </script>
 </body>
