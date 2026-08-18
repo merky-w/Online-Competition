@@ -279,6 +279,7 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.success { background: var(--success); }
 .toast.error { background: var(--danger); }
+.toast.saving { background: #1565c0; }
 .selection-banner { position: fixed; top: 0; left: 0; right: 0; background: var(--warning); color: #212529; padding: 8px 20px; text-align: center; font-weight: 600; font-size: 0.9rem; z-index: 997; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: none; }
 .selection-banner.visible { display: block; }
 .selection-banner button { background: var(--dark); color: white; border: none; padding: 4px 12px; border-radius: 4px; margin-left: 10px; cursor: pointer; font-size: 0.8rem; }
@@ -398,11 +399,17 @@ input:checked + .slider-toggle:before { transform: translateX(18px); }
 .saved-summary-item { background: white; border: 1px solid #c8e6c9; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
 .saved-summary-item-name { font-weight: 600; color: var(--dark); font-size: 0.85rem; }
 .saved-summary-item-count { background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+.autosave-indicator { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1565c0; color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; z-index: 1001; opacity: 0; transition: opacity 0.3s; pointer-events: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(21, 101, 192, 0.4); }
+.autosave-indicator.visible { opacity: 1; }
+.autosave-indicator.success { background: var(--success); }
+.autosave-indicator.error { background: var(--danger); }
+.autosave-indicator .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 @media print {
 @page { size: A4; margin: 10mm; }
 body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
 * { box-sizing: border-box; }
-.nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn, .clear-winner, .clear-placement, .judges-toolbar { display: none !important; }
+.nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn, .clear-winner, .clear-placement, .judges-toolbar, .autosave-indicator { display: none !important; }
 .container { max-width: none; width: 100%; margin: 0; padding: 0; }
 .a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
 .p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
@@ -427,6 +434,10 @@ body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exa
 </style>
 </head>
 <body>
+<div class="autosave-indicator" id="autosaveIndicator">
+<span class="spinner"></span>
+<span id="autosaveText">Saving...</span>
+</div>
 <div class="selection-banner" id="selectionBanner">
 <i class="fas fa-hand-pointer"></i>
 <span id="selectionBannerText">Player selected — click another player to swap, or a BYE slot to move</span>
@@ -558,6 +569,58 @@ patterns: { ageGroups: [], kupRanges: {} },
 sparring: { ageGroups: [], weightBoundaries: {} }
 };
 let currentCatDiscipline = "patterns";
+// ============================================================
+// AUTO-SAVE SYSTEM - saves to Supabase after every change
+// ============================================================
+let autoSaveTimer = null;
+let autoSaveQueue = [];
+let isAutoSaving = false;
+
+function showAutosaveIndicator(text, type) {
+  const el = document.getElementById("autosaveIndicator");
+  const txt = document.getElementById("autosaveText");
+  if (!el || !txt) return;
+  txt.textContent = text;
+  el.className = "autosave-indicator visible" + (type ? " " + type : "");
+  if (type === "success" || type === "error") {
+    setTimeout(() => { el.classList.remove("visible"); }, 1800);
+  }
+}
+
+function scheduleAutoSave(reason) {
+  // Debounce: wait 400ms after last change before saving
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveQueue.push(reason || "change");
+  showAutosaveIndicator("Saving changes...", "");
+  autoSaveTimer = setTimeout(() => {
+    autoSaveTimer = null;
+    executeAutoSave();
+  }, 400);
+}
+
+async function executeAutoSave() {
+  if (isAutoSaving) {
+    // Re-schedule if already saving
+    setTimeout(executeAutoSave, 300);
+    return;
+  }
+  isAutoSaving = true;
+  const reasons = [...autoSaveQueue];
+  autoSaveQueue = [];
+  try {
+    await saveAllCategoryConfigInternal(true);
+    showAutosaveIndicator("✓ Saved: " + reasons.join(", "), "success");
+    // Recompute competitor categories after save
+    recomputeCompetitorCategories();
+  } catch (err) {
+    console.error("Auto-save failed:", err);
+    showAutosaveIndicator("✗ Save failed: " + err.message, "error");
+  } finally {
+    isAutoSaving = false;
+  }
+}
+// ============================================================
+
 const DEFAULT_AGE_GROUPS = [
 { id: "default_kids", display_name: "Kids", min_age: 6, max_age: 9, is_active: true, order_priority: 1 },
 { id: "default_youth", display_name: "Youth", min_age: 10, max_age: 11, is_active: true, order_priority: 2 },
@@ -743,9 +806,9 @@ const content = document.getElementById("content");
 content.innerHTML = '<div class="cat-editor-wrap">' +
 '<div class="cat-editor-header"><div>' +
 '<div class="cat-editor-title"><i class="fas fa-sliders-h"></i> Category Configuration</div>' +
-'<div class="cat-editor-subtitle">Configure age groups and divisions. Changes are saved to the database.</div>' +
+'<div class="cat-editor-subtitle">Configure age groups and divisions. <strong style="color:var(--success)">Changes auto-save to database.</strong></div>' +
 '</div><div style="display:flex; gap:8px; flex-wrap:wrap;">' +
-'<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig()"><i class="fas fa-save"></i> Save All</button>' +
+'<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig()"><i class="fas fa-save"></i> Save All Now</button>' +
 '<button class="btn btn-warning btn-sm" onclick="resetToDefaults()"><i class="fas fa-undo"></i> Reset to Defaults</button>' +
 '</div></div>' +
 '<div class="cat-discipline-tabs">' +
@@ -768,7 +831,7 @@ if (!body) return;
 const disc = currentCatDiscipline;
 body.innerHTML = '<div class="cat-section">' +
 '<div class="cat-section-title"><i class="fas fa-calendar-alt" style="color:var(--cat-age)"></i> Age Groups Timeline</div>' +
-'<div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off.</div>' +
+'<div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off. <strong>All changes auto-save.</strong></div>' +
 '<div class="age-timeline-card"><div class="age-timeline" id="ageTimeline_' + disc + '">' +
 '<div class="age-timeline-track" id="ageTrack_' + disc + '" onclick="handleAgeTrackClick(event, \'' + disc + '\')"></div>' +
 '<div class="age-timeline-segments" id="ageSegments_' + disc + '"></div>' +
@@ -846,7 +909,8 @@ targetGroup.max_age = age;
 categoryConfig[disc].ageGroups.push(newGroup);
 reorderAndRenumber(disc);
 renderCatEditorBody();
-showToast("Added age boundary at " + age, "success");
+// AUTO-SAVE
+scheduleAutoSave("Added age boundary at " + age);
 }
 async function startAgeMarkerDrag(e, age, disc) {
 e.preventDefault(); e.stopPropagation();
@@ -878,7 +942,11 @@ groups.forEach(g => {
 if (g.min_age === age) { g.min_age = currentAge; updated = true; }
 if (g.max_age === age) { g.max_age = currentAge; updated = true; }
 });
-if (updated) { renderCatEditorBody(); showToast("Age boundary moved: " + age + " -> " + currentAge, "success"); }
+if (updated) {
+renderCatEditorBody();
+// AUTO-SAVE after drag ends
+scheduleAutoSave("Moved age boundary " + age + " → " + currentAge);
+}
 }
 };
 document.addEventListener("mousemove", onMove);
@@ -906,11 +974,22 @@ return '<div class="age-group-item ' + (g.is_active ? 'active' : 'inactive') + '
 }
 function updateAgeGroupName(disc, groupId, newName) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) { g.display_name = newName.trim() || g.display_name; showToast('Renamed to "' + g.display_name + '"', "success"); }
+if (g) {
+g.display_name = newName.trim() || g.display_name;
+showToast('Renamed to "' + g.display_name + '"', "success");
+// AUTO-SAVE
+scheduleAutoSave('Renamed group "' + g.display_name + '"');
+}
 }
 function toggleAgeGroupActive(disc, groupId, isActive) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) { g.is_active = isActive; renderCatEditorBody(); showToast(isActive ? 'Enabled' : 'Disabled', "success"); }
+if (g) {
+g.is_active = isActive;
+renderCatEditorBody();
+showToast(isActive ? 'Enabled' : 'Disabled', "success");
+// AUTO-SAVE
+scheduleAutoSave((isActive ? 'Enabled' : 'Disabled') + ' "' + g.display_name + '"');
+}
 }
 async function deleteAgeGroup(disc, groupId) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
@@ -923,6 +1002,8 @@ else delete categoryConfig.sparring.weightBoundaries[groupId];
 reorderAndRenumber(disc);
 renderCatEditorBody();
 showToast('Deleted "' + g.display_name + '"', "success");
+// AUTO-SAVE (already saved the delete above, but also save the reorder)
+scheduleAutoSave('Deleted "' + g.display_name + '"');
 }
 async function addNewAgeGroup(disc) {
 const groups = categoryConfig[disc].ageGroups;
@@ -945,6 +1026,8 @@ categoryConfig.sparring.weightBoundaries[newGroupId] = [30, 35, 40, 45, 50, 55, 
 reorderAndRenumber(disc);
 renderCatEditorBody();
 showToast("Added new age group with default ranges", "success");
+// AUTO-SAVE
+scheduleAutoSave('Added new age group "' + newGroup.display_name + '"');
 }
 function reorderAndRenumber(disc) {
 categoryConfig[disc].ageGroups.sort((a,b) => a.min_age - b.min_age);
@@ -1068,6 +1151,8 @@ is_active: true, order_priority: maxPriority + 1
 ranges.push(newRange);
 renderCatEditorBody();
 showToast("Added new range. Drag markers to adjust.", "success");
+// AUTO-SAVE
+scheduleAutoSave("Added kup range");
 }
 async function deletePatternsMarker(e, groupId, val) {
 e.preventDefault(); e.stopPropagation();
@@ -1082,6 +1167,8 @@ await sb.from("patterns_kup_ranges").delete().eq("id", r.id);
 categoryConfig.patterns.kupRanges[groupId] = ranges.filter(r => r.min_kup !== val && r.max_kup !== val);
 renderCatEditorBody();
 showToast("Removed ranges at " + (KUP_DAN_NAMES[val] || val), "success");
+// AUTO-SAVE
+scheduleAutoSave("Removed kup ranges at " + (KUP_DAN_NAMES[val] || val));
 }
 async function startPatternsMarkerDrag(e, val, groupId) {
 e.preventDefault(); e.stopPropagation();
@@ -1117,7 +1204,11 @@ ranges.forEach(r => {
 if (r.min_kup === val) { r.min_kup = currentVal; updated = true; }
 if (r.max_kup === val) { r.max_kup = currentVal; updated = true; }
 });
-if (updated) { renderCatEditorBody(); showToast("Moved: " + (KUP_DAN_NAMES[val] || val) + " -> " + (KUP_DAN_NAMES[currentVal] || currentVal), "success"); }
+if (updated) {
+renderCatEditorBody();
+// AUTO-SAVE
+scheduleAutoSave("Moved kup boundary " + (KUP_DAN_NAMES[val] || val) + " → " + (KUP_DAN_NAMES[currentVal] || currentVal));
+}
 }
 };
 document.addEventListener("mousemove", onMove);
@@ -1136,6 +1227,8 @@ display_name: "10th-9th Kup", is_active: true, order_priority: maxPriority + 1
 });
 renderCatEditorBody();
 showToast("Added new range. Adjust markers.", "success");
+// AUTO-SAVE
+scheduleAutoSave("Added new kup range");
 }
 function renderWeightSliders(disc) {
 const section = document.getElementById("divisionSection_" + disc);
@@ -1224,6 +1317,8 @@ boundaries.push(val);
 categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
 showToast("Added weight boundary at " + val + "kg", "success");
+// AUTO-SAVE
+scheduleAutoSave("Added weight boundary at " + val + "kg");
 }
 async function deleteWeightMarker(e, groupId, val) {
 e.preventDefault(); e.stopPropagation();
@@ -1232,6 +1327,8 @@ const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
 categoryConfig.sparring.weightBoundaries[groupId] = boundaries.filter(b => b !== val);
 renderCatEditorBody();
 showToast("Removed " + val + "kg boundary", "success");
+// AUTO-SAVE
+scheduleAutoSave("Removed weight boundary at " + val + "kg");
 }
 async function startWeightMarkerDrag(e, val, groupId) {
 e.preventDefault(); e.stopPropagation();
@@ -1264,7 +1361,8 @@ if (boundaries.includes(currentVal)) { showToast("Boundary already exists", "err
 boundaries[idx] = currentVal;
 categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
 renderCatEditorBody();
-showToast("Moved: " + val + "kg -> " + currentVal + "kg", "success");
+// AUTO-SAVE
+scheduleAutoSave("Moved weight boundary " + val + "kg → " + currentVal + "kg");
 }
 }
 };
@@ -1273,8 +1371,9 @@ document.addEventListener("mouseup", onEnd);
 document.addEventListener("touchmove", onMove, {passive: false});
 document.addEventListener("touchend", onEnd);
 }
-async function saveAllCategoryConfig() {
-showToast("Saving...", "");
+// Internal save function (used by both manual save and auto-save)
+async function saveAllCategoryConfigInternal(silent) {
+if (!silent) showToast("Saving...", "");
 let errors = 0;
 let successCount = 0;
 for (const disc of ["patterns", "sparring"]) {
@@ -1316,9 +1415,13 @@ successCount++;
 }
 await loadCategoryConfig();
 recomputeCompetitorCategories();
-if (errors === 0) showToast("All categories saved! (" + successCount + " groups)", "success");
-else showToast("Saved with " + errors + " error(s)", "error");
-renderCatEditorBody();
+if (!silent && errors === 0) showToast("All categories saved! (" + successCount + " groups)", "success");
+else if (!silent) showToast("Saved with " + errors + " error(s)", "error");
+if (document.getElementById("catEditorBody")) renderCatEditorBody();
+return { errors, successCount };
+}
+async function saveAllCategoryConfig() {
+const result = await saveAllCategoryConfigInternal(false);
 }
 async function savePatternsRangesForGroup(ageGroupId) {
 const currentRanges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
@@ -1373,6 +1476,7 @@ await sb.from("patterns_kup_ranges").delete().neq("id", "00000000-0000-0000-0000
 await sb.from("age_groups").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 await seedDefaultCategories();
 await loadCategoryConfig();
+recomputeCompetitorCategories();
 renderCatEditorBody();
 showToast("Reset to defaults", "success");
 }
@@ -2022,10 +2126,33 @@ setTimeout(() => { row1.style.background = ""; row2.style.background = ""; }, 40
 clearSelection();
 await saveCategoryOrder(category, type, true);
 }
+// ============================================================
+// DEDUPLICATION: remove duplicate competitors from same category
+// ============================================================
+function deduplicateCompetitorsForBrackets(groups) {
+  const deduped = {};
+  for (const key in groups) {
+    const seen = new Set();
+    const unique = [];
+    for (const c of groups[key]) {
+      const nameKey = (c.name || "").trim().toLowerCase();
+      if (!nameKey) continue;
+      if (!seen.has(nameKey)) {
+        seen.add(nameKey);
+        unique.push(c);
+      }
+    }
+    deduped[key] = unique;
+  }
+  return deduped;
+}
+// ============================================================
 async function renderBracketView(groups, type) {
 currentGroups = groups; currentBracketType = type;
 undoStack = []; updateUndoButton(); clearSelection();
 await loadBracketWinners();
+// DEDUPLICATE competitors in each category
+const dedupedGroups = deduplicateCompetitorsForBrackets(groups);
 let html = '<div class="bracket-controls-bar"><div class="bracket-controls-left">' +
 '<button class="btn btn-secondary btn-sm" onclick="' + (type === "Patterns" ? "showPatterns()" : "showSparring()") + '"><i class="fas fa-arrow-left"></i> Back to List</button>' +
 '<button class="btn btn-success btn-sm" onclick="saveAllCategories(\'' + type + '\')"><i class="fas fa-save"></i> Save All Brackets</button>' +
@@ -2036,8 +2163,8 @@ let html = '<div class="bracket-controls-bar"><div class="bracket-controls-left"
 '<button class="search-clear" id="searchClearBtn" onclick="clearInlineSearch()"><i class="fas fa-times"></i></button>' +
 '<span class="search-count" id="searchCount"></span></div></div></div>';
 let categoryIndex = 0;
-for (const key in groups) {
-const list = groups[key];
+for (const key in dedupedGroups) {
+const list = dedupedGroups[key];
 const data = await generateBracketData(list, key, type);
 const existing = await getSavedOrder(key, type);
 if (!existing) await saveCategoryOrder(key, type, true);
