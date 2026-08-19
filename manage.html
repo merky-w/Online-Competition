@@ -332,7 +332,6 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .cat-disc-tab { padding: 10px 22px; border-radius: 10px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: white; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; }
 .cat-disc-tab.active-patterns { background: #1565c0; color: white; border-color: #1565c0; box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3); }
 .cat-disc-tab.active-sparring { background: #c2185b; color: white; border-color: #c2185b; box-shadow: 0 4px 12px rgba(194, 24, 91, 0.3); }
-/* GENDER TABS */
 .cat-gender-tabs { display: flex; gap: 8px; margin-bottom: 18px; padding: 10px 14px; background: linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%); border-radius: 10px; border: 1px solid var(--border); }
 .cat-gender-tab { padding: 10px 22px; border-radius: 10px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: white; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
 .cat-gender-tab .gender-count { background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; }
@@ -573,13 +572,19 @@ if (typeof val !== "string") { try { return String(val); } catch (e) { return ""
 return val;
 }
 function escapeAttr(str) { return safeStr(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
-function escapeHtml(str) { return safeStr(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/, "&#39;"); }
+function escapeHtml(str) { return safeStr(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 function normalizeGender(g) {
 if (!g) return "male";
 const v = g.toString().trim().toLowerCase();
 if (v === "female" || v === "f" || v === "w") return "female";
 if (v === "male" || v === "m") return "male";
 return "male";
+}
+// NEW: Get gender from competitor record robustly
+function getCompetitorGender(c) {
+if (!c) return "male";
+const g = c.gender || c.Gender || c.sex || c.Sex || "";
+return normalizeGender(g);
 }
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
@@ -601,8 +606,8 @@ let bracketWinnersCache = {};
 let judgeRanksMap = {};
 let rankSelectionMode = null;
 let categoryConfig = {
-patterns: { ageGroups: [] },
-sparring: { ageGroups: [] }
+patterns: { ageGroups: [], kupRanges: {} },
+sparring: { ageGroups: [], weightBoundaries: {} }
 };
 let currentCatDiscipline = "patterns";
 let currentCatGender = "male";
@@ -687,6 +692,8 @@ if (ageErr) {
 console.warn("Could not load age_groups:", ageErr.message);
 categoryConfig.patterns.ageGroups = [];
 categoryConfig.sparring.ageGroups = [];
+categoryConfig.patterns.kupRanges = {};
+categoryConfig.sparring.weightBoundaries = {};
 return;
 }
 if (!ageGroups || ageGroups.length === 0) {
@@ -701,10 +708,10 @@ const sparringGroups = ageGroups.filter(g => g.discipline === "sparring").sort((
 categoryConfig.patterns.ageGroups = patternsGroups;
 categoryConfig.sparring.ageGroups = sparringGroups;
 const pIds = patternsGroups.map(g => g.id);
+categoryConfig.patterns.kupRanges = {};
 if (pIds.length > 0) {
 const { data: pRanges, error: pErr } = await sb
 .from("patterns_kup_ranges").select("*").in("age_group_id", pIds).order("order_priority", { ascending: true });
-categoryConfig.patterns.kupRanges = {};
 if (!pErr && pRanges) {
 pRanges.forEach(r => {
 if (!categoryConfig.patterns.kupRanges[r.age_group_id]) categoryConfig.patterns.kupRanges[r.age_group_id] = [];
@@ -713,10 +720,10 @@ categoryConfig.patterns.kupRanges[r.age_group_id].push(r);
 }
 }
 const sIds = sparringGroups.map(g => g.id);
+categoryConfig.sparring.weightBoundaries = {};
 if (sIds.length > 0) {
 const { data: sBounds, error: sErr } = await sb
 .from("weight_boundaries").select("*").in("age_group_id", sIds).order("boundary_kg", { ascending: true });
-categoryConfig.sparring.weightBoundaries = {};
 if (!sErr && sBounds) {
 sBounds.forEach(b => {
 if (!categoryConfig.sparring.weightBoundaries[b.age_group_id]) categoryConfig.sparring.weightBoundaries[b.age_group_id] = [];
@@ -728,6 +735,8 @@ categoryConfig.sparring.weightBoundaries[b.age_group_id].push(b.boundary_kg);
 console.error("loadCategoryConfig error:", err);
 categoryConfig.patterns.ageGroups = [];
 categoryConfig.sparring.ageGroups = [];
+categoryConfig.patterns.kupRanges = {};
+categoryConfig.sparring.weightBoundaries = {};
 }
 }
 async function seedDefaultCategories() {
@@ -799,7 +808,7 @@ function recomputeCompetitorCategories() {
 competitors.forEach(c => {
 const age = computeAge(c.dob || c.date_of_birth);
 const discipline = c._discipline;
-const gender = normalizeGender(c.gender);
+const gender = getCompetitorGender(c);
 if (age !== null) {
 const ageGroup = getAgeGroupForAge(age, discipline, gender);
 if (ageGroup) {
@@ -1484,7 +1493,9 @@ let successCount = 0;
 for (const disc of ["patterns", "sparring"]) {
 const groups = categoryConfig[disc].ageGroups;
 for (const g of groups) {
+// CRITICAL FIX: Always include gender when saving
 const gender = normalizeGender(g.gender);
+g.gender = gender; // ensure it's set on the object
 if (g.id.startsWith("tmp_")) {
 const { data: inserted, error } = await sb.from("age_groups").insert([{
 display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
@@ -2626,12 +2637,15 @@ if (wMatch) { origWeight = parseFloat(wMatch[1]); origSubCat = wMatch[1] + "kg";
 let parts = fullCat.split(" - ");
 if (parts.length >= 2) origSubCat = parts.slice(1).join(" - ").trim();
 }
+// CRITICAL FIX: preserve gender from person record
+const personGender = getCompetitorGender(person);
 competitors.push({
 ...person, _reg_id: reg.id, _discipline: discipline, _label: label,
 _full_cat: fullCat, _original_sub_cat: origSubCat,
 weight_kg: origWeight || person.weight_kg || null,
 _actual_age_group: "OTHER", _actual_sub_cat: origSubCat,
-_age_group_id: null, _age_group_name: null
+_age_group_id: null, _age_group_name: null,
+gender: personGender
 });
 });
 });
@@ -2690,6 +2704,7 @@ if (activeBtn && activeBtn.id === "btnSparring") runSparringFilter();
 async function showPatterns() {
 setActiveBtn("btnPatterns");
 const dupCount = await fetchData();
+// Get unique age group names for the selected gender
 const ageGroups = categoryConfig.patterns.ageGroups.filter(g => g.is_active);
 const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ') <' + normalizeGender(g.gender) + '></option>').join("");
 const kupDanRanks = new Set();
@@ -2720,15 +2735,20 @@ function runPatternFilter() {
 const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
 const filtered = competitors.filter((c) => {
 if (c._discipline !== "patterns") return false;
-const dbGender = (c.gender || "").trim().toUpperCase();
-const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+const cGender = getCompetitorGender(c);
+const mGen = gen === "ALL" || cGender === normalizeGender(gen === "MALE" ? "male" : gen === "FEMALE" ? "female" : "ALL");
 if (!mGen) return false;
 if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
 if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
 const t = document.getElementById("listTarget");
 t.innerHTML = "";
 if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
@@ -2740,15 +2760,20 @@ await loadBracketSizeOverrides();
 const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
 const filtered = competitors.filter((c) => {
 if (c._discipline !== "patterns") return false;
-const dbGender = (c.gender || "").trim().toUpperCase();
-const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+const cGender = getCompetitorGender(c);
+const mGen = gen === "ALL" || cGender === normalizeGender(gen === "MALE" ? "male" : gen === "FEMALE" ? "female" : "ALL");
 if (!mGen) return false;
 if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
 if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
 await renderBracketView(groups, "Patterns");
 }
 async function showSparring() {
@@ -2775,8 +2800,8 @@ const age = document.getElementById("sAge").value, gen = document.getElementById
 const wDrop = document.getElementById("sWeight");
 const info = document.getElementById("sparringInfo");
 wDrop.innerHTML = '<option value="ALL">All</option>';
-// Find age group matching selected gender
 const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
+// Find age group matching selected gender
 const ageGroup = categoryConfig.sparring.ageGroups.find(g => g.display_name === age && g.is_active && (normGen === null || normalizeGender(g.gender) === normGen));
 let weightDivisions = [];
 if (ageGroup) {
@@ -2791,8 +2816,8 @@ weightDivisions.push("+" + bounds[bounds.length-1] + "kg");
 const relevantComps = competitors.filter((c) => {
 if (c._discipline !== "sparring") return false;
 if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
-const dbGender = (c.gender || "").trim().toUpperCase();
-return gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
+const cGender = getCompetitorGender(c);
+return normGen === null || cGender === normGen;
 });
 const weights = new Set();
 relevantComps.forEach((c) => { const w = (c._actual_sub_cat || "").replace("kg", ""); if (w && w !== "N/A" && w !== "Open") weights.add(w); });
@@ -2815,18 +2840,23 @@ runSparringFilter();
 }
 function runSparringFilter() {
 const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
+const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
 const filtered = competitors.filter((c) => {
 if (c._discipline !== "sparring") return false;
 if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
-const dbGender = (c.gender || "").trim().toUpperCase();
-const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
-if (!mGen) return false;
+const cGender = getCompetitorGender(c);
+if (normGen !== null && cGender !== normGen) return false;
 const cWeight = c._actual_sub_cat || "";
 if (weightReq !== "ALL" && cWeight !== weightReq) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
 const t = document.getElementById("listTarget");
 t.innerHTML = "";
 if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
@@ -2836,18 +2866,23 @@ renderTeamSummary(filtered, "Sparring");
 async function generateSparringBrackets() {
 await loadBracketSizeOverrides();
 const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
+const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
 const filtered = competitors.filter((c) => {
 if (c._discipline !== "sparring") return false;
 if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
-const dbGender = (c.gender || "").trim().toUpperCase();
-const mGen = gen === "ALL" || dbGender === gen || (gen === "MALE" && (dbGender === "M" || dbGender === "MALE")) || (gen === "FEMALE" && (dbGender === "F" || dbGender === "FEMALE"));
-if (!mGen) return false;
+const cGender = getCompetitorGender(c);
+if (normGen !== null && cGender !== normGen) return false;
 const cWeight = c._actual_sub_cat || "";
 if (weightReq !== "ALL" && cWeight !== weightReq) return false;
 return true;
 });
 const groups = {};
-filtered.forEach((c) => { const k = c._full_cat + " - " + c.gender; if (!groups[k]) groups[k] = []; groups[k].push(c); });
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
 await renderBracketView(groups, "Sparring");
 }
 async function showTeamOverview() {
