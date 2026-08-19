@@ -580,7 +580,6 @@ if (v === "female" || v === "f" || v === "w") return "female";
 if (v === "male" || v === "m") return "male";
 return "male";
 }
-// NEW: Get gender from competitor record robustly
 function getCompetitorGender(c) {
 if (!c) return "male";
 const g = c.gender || c.Gender || c.sex || c.Sex || "";
@@ -614,9 +613,6 @@ let currentCatGender = "male";
 let autoSaveTimer = null;
 let isAutoSaving = false;
 let pendingSave = false;
-// ============================================================
-// DUPLICATE RESOLUTION
-// ============================================================
 async function resolveDuplicates() {
 const seen = new Map();
 const toDelete = [];
@@ -701,7 +697,6 @@ await seedDefaultCategories();
 await loadCategoryConfig();
 return;
 }
-// Normalize gender for each group (default to "male" if missing)
 ageGroups.forEach(g => { g.gender = normalizeGender(g.gender); });
 const patternsGroups = ageGroups.filter(g => g.discipline === "patterns").sort((a,b) => a.order_priority - b.order_priority);
 const sparringGroups = ageGroups.filter(g => g.discipline === "sparring").sort((a,b) => a.order_priority - b.order_priority);
@@ -1493,9 +1488,8 @@ let successCount = 0;
 for (const disc of ["patterns", "sparring"]) {
 const groups = categoryConfig[disc].ageGroups;
 for (const g of groups) {
-// CRITICAL FIX: Always include gender when saving
 const gender = normalizeGender(g.gender);
-g.gender = gender; // ensure it's set on the object
+g.gender = gender;
 if (g.id.startsWith("tmp_")) {
 const { data: inserted, error } = await sb.from("age_groups").insert([{
 display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
@@ -1705,7 +1699,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -2637,7 +2631,6 @@ if (wMatch) { origWeight = parseFloat(wMatch[1]); origSubCat = wMatch[1] + "kg";
 let parts = fullCat.split(" - ");
 if (parts.length >= 2) origSubCat = parts.slice(1).join(" - ").trim();
 }
-// CRITICAL FIX: preserve gender from person record
 const personGender = getCompetitorGender(person);
 competitors.push({
 ...person, _reg_id: reg.id, _discipline: discipline, _label: label,
@@ -2704,7 +2697,6 @@ if (activeBtn && activeBtn.id === "btnSparring") runSparringFilter();
 async function showPatterns() {
 setActiveBtn("btnPatterns");
 const dupCount = await fetchData();
-// Get unique age group names for the selected gender
 const ageGroups = categoryConfig.patterns.ageGroups.filter(g => g.is_active);
 const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ') <' + normalizeGender(g.gender) + '></option>').join("");
 const kupDanRanks = new Set();
@@ -2801,7 +2793,6 @@ const wDrop = document.getElementById("sWeight");
 const info = document.getElementById("sparringInfo");
 wDrop.innerHTML = '<option value="ALL">All</option>';
 const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
-// Find age group matching selected gender
 const ageGroup = categoryConfig.sparring.ageGroups.find(g => g.display_name === age && g.is_active && (normGen === null || normalizeGender(g.gender) === normGen));
 let weightDivisions = [];
 if (ageGroup) {
