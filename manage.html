@@ -989,7 +989,7 @@ if (existing) { showToast("Boundary already exists at age " + age, "error"); ret
 const oldMax = targetGroup.max_age;
 const newGroup = { id: "tmp_" + Date.now(), display_name: targetGroup.display_name + " (split)",
 min_age: age, max_age: oldMax, is_active: true, order_priority: targetGroup.order_priority + 0.5, discipline: disc, gender: gender };
-targetGroup.max_age = age;
+targetGroup.max_age = age - 1;
 categoryConfig[disc].ageGroups.push(newGroup);
 reorderAndRenumber(disc, gender);
 renderCatEditorBody();
@@ -1022,9 +1022,27 @@ if (currentAge !== age) {
 const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender);
 let updated = false;
 groups.forEach(g => {
-if (g.min_age === age) { g.min_age = currentAge; updated = true; }
-if (g.max_age === age) { g.max_age = currentAge; updated = true; }
+if (g.min_age === age) { 
+g.min_age = currentAge; 
+updated = true; 
+}
+if (g.max_age === age) { 
+const isLastGroupMax = !groups.some(otherG => otherG.min_age === age);
+if (isLastGroupMax) {
+g.max_age = currentAge;
+} else {
+g.max_age = currentAge - 1;
+}
+updated = true; 
+}
 });
+
+groups.forEach(g => {
+if (g.max_age !== null && g.min_age > g.max_age) {
+g.min_age = g.max_age;
+}
+});
+
 if (updated) {
 renderCatEditorBody();
 scheduleAutoSave("Moved " + gender + " age boundary " + age + " → " + currentAge);
@@ -1088,7 +1106,7 @@ async function addNewAgeGroup(disc, gender) {
 const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender);
 const maxPriority = groups.reduce((m, g) => Math.max(m, g.order_priority || 0), 0);
 const lastGroup = groups.sort((a,b) => b.order_priority - a.order_priority)[0];
-const defaultMin = lastGroup ? (lastGroup.max_age !== null ? lastGroup.max_age : 36) : 0;
+const defaultMin = lastGroup ? (lastGroup.max_age !== null ? lastGroup.max_age + 1 : 36) : 0;
 const newGroupId = "tmp_" + Date.now();
 const newGroup = { id: newGroupId, display_name: "New Group",
 min_age: defaultMin, max_age: defaultMin + 5, is_active: true, order_priority: maxPriority + 1, discipline: disc, gender: gender };
@@ -1488,7 +1506,6 @@ let successCount = 0;
 for (const disc of ["patterns", "sparring"]) {
 const groups = categoryConfig[disc].ageGroups;
 for (const g of groups) {
-// CRITICAL FIX: Always normalize and set gender
 const gender = normalizeGender(g.gender);
 g.gender = gender;
 if (g.id.startsWith("tmp_")) {
@@ -1515,7 +1532,6 @@ delete categoryConfig.sparring.weightBoundaries[oldId];
 categoryConfig.sparring.weightBoundaries[inserted.id] = tmpBounds;
 }
 } else {
-// CRITICAL FIX: Always send gender on update
 const { error } = await sb.from("age_groups").update({
 display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
 is_active: g.is_active, order_priority: g.order_priority, gender: gender
