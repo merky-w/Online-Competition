@@ -1488,6 +1488,7 @@ let successCount = 0;
 for (const disc of ["patterns", "sparring"]) {
 const groups = categoryConfig[disc].ageGroups;
 for (const g of groups) {
+// CRITICAL FIX: Always normalize and set gender
 const gender = normalizeGender(g.gender);
 g.gender = gender;
 if (g.id.startsWith("tmp_")) {
@@ -1514,6 +1515,7 @@ delete categoryConfig.sparring.weightBoundaries[oldId];
 categoryConfig.sparring.weightBoundaries[inserted.id] = tmpBounds;
 }
 } else {
+// CRITICAL FIX: Always send gender on update
 const { error } = await sb.from("age_groups").update({
 display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
 is_active: g.is_active, order_priority: g.order_priority, gender: gender
@@ -2362,7 +2364,7 @@ html += '<div class="winner-section"><div class="winner-label"><i class="fas fa-
 '<div class="placement-row"><span class="placement-rank gold">🥇 1.</span><div class="placement-drop-zone ' + p1Class + '" data-placement="0" data-placeholder="—" data-value="' + escapeAttr(p1) + '">' + (escapeHtml(p1) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
 '<div class="placement-row"><span class="placement-rank silver">🥈 2.</span><div class="placement-drop-zone ' + p2Class + '" data-placement="1" data-placeholder="—" data-value="' + escapeAttr(p2) + '">' + (escapeHtml(p2) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
 '<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ' + p3aClass + '" data-placement="2" data-placeholder="—" data-value="' + escapeAttr(p3a) + '">' + (escapeHtml(p3a) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
-'<div class="placement-row"><span class="placement-rank bronze">🥉 3.</span><div class="placement-drop-zone ' + p3bClass + '" data-placement="3" data-placeholder="—" data-value="' + escapeAttr(p3b) + '">' + (escapeHtml(p3b) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
+'<div class="placement-row"><span class="placement-rank bronze"> 3.</span><div class="placement-drop-zone ' + p3bClass + '" data-placement="3" data-placeholder="—" data-value="' + escapeAttr(p3b) + '">' + (escapeHtml(p3b) || "—") + '<button class="clear-placement" title="Clear"><i class="fas fa-times"></i></button></div></div>' +
 '</div></div>';
 }
 html += '</div></td>';
