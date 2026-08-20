@@ -1019,31 +1019,35 @@ document.removeEventListener("touchmove", onMove);
 document.removeEventListener("touchend", onEnd);
 marker.classList.remove("dragging");
 if (currentAge !== age) {
-const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender);
+const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender).sort((a,b) => a.min_age - b.min_age);
 let updated = false;
-groups.forEach(g => {
-if (g.min_age === age) { 
-g.min_age = currentAge; 
-updated = true; 
-}
-if (g.max_age === age) { 
-const isLastGroupMax = !groups.some(otherG => otherG.min_age === age);
-if (isLastGroupMax) {
-g.max_age = currentAge;
-} else {
-g.max_age = currentAge - 1;
-}
-updated = true; 
-}
+let groupMaxIdx = -1;
+let groupMinIdx = -1;
+groups.forEach((g, idx) => {
+if (g.max_age === age) groupMaxIdx = idx;
+if (g.min_age === age) groupMinIdx = idx;
 });
-
-groups.forEach(g => {
-if (g.max_age !== null && g.min_age > g.max_age) {
-g.min_age = g.max_age;
+if (groupMaxIdx !== -1) {
+groups[groupMaxIdx].max_age = currentAge;
+updated = true;
 }
-});
-
+if (groupMinIdx !== -1) {
+groups[groupMinIdx].min_age = currentAge;
+updated = true;
+}
+// Enforce strict non-overlapping and valid ranges globally
+for (let i = 0; i < groups.length; i++) {
+if (groups[i].max_age !== null && groups[i].min_age > groups[i].max_age) {
+groups[i].min_age = groups[i].max_age;
+}
+if (i < groups.length - 1 && groups[i].max_age !== null) {
+if (groups[i].max_age >= groups[i+1].min_age) {
+groups[i+1].min_age = groups[i].max_age + 1;
+}
+}
+}
 if (updated) {
+reorderAndRenumber(disc, gender);
 renderCatEditorBody();
 scheduleAutoSave("Moved " + gender + " age boundary " + age + " → " + currentAge);
 }
