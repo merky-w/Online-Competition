@@ -650,8 +650,6 @@
         
         if (nextIdx === boundaries.length) {
           return "+" + boundaries[boundaries.length-1] + "kg";
-        } else if (nextIdx === 0) {
-          return "-" + boundaries[0] + "kg";
         } else {
           return Math.ceil(boundaries[nextIdx-1]) + "-" + boundaries[nextIdx] + "kg";
         }
@@ -678,6 +676,7 @@
         return age;
       }
 
+      // STRICTLY BOUNDARY-SYNCED CATEGORY COMPUTATION
       function computePersonCategories(personObj) {
         const age = calcAge(personObj.birthdate);
         const gChar = (personObj.gender || "").trim().toUpperCase().startsWith("M") ? "M" : "F";
@@ -706,8 +705,9 @@
                 fullCat: ageGroup.display_name + " - " + weightLabel
               };
 
+              // 1. Weight +1: Must be a valid NEXT weight class in the SAME age group
               const nextWeight = getNextWeightClass(weightLabel, ageGroup.id);
-              if (nextWeight) {
+              if (nextWeight && nextWeight !== weightLabel) {
                 result.sparring.weightUp = {
                   ageGroup: ageGroup.display_name,
                   ageGroupId: ageGroup.id,
@@ -716,38 +716,31 @@
                 };
               }
 
+              // 2. Age +1 and Both +1: Must have a valid NEXT age group WITH configured boundaries
               const nextAgeGroup = getNextAgeGroup(ageGroup, "sparring");
               if (nextAgeGroup) {
-                let weightInNextAge = getSparringWeightLabel(weightNum, nextAgeGroup.id);
-                
-                // FALLBACK: If next age group lacks weight boundaries, reuse current weight label
-                // This ensures "Age +1" still appears even if admin hasn't configured the next group's boundaries yet.
-                if (!weightInNextAge) {
-                  weightInNextAge = weightLabel; 
-                }
-
-                if (weightInNextAge) {
-                  result.sparring.ageUp = {
-                    ageGroup: nextAgeGroup.display_name,
-                    ageGroupId: nextAgeGroup.id,
-                    weightLabel: weightInNextAge,
-                    fullCat: nextAgeGroup.display_name + " - " + weightInNextAge
-                  };
-
-                  let nextWeightInNextAge = getNextWeightClass(weightInNextAge, nextAgeGroup.id);
+                // STRICT CHECK: Only proceed if the next age group actually has boundaries configured
+                const nextBoundaries = categoryConfig.sparring.weightBoundaries[nextAgeGroup.id];
+                if (nextBoundaries && nextBoundaries.length > 0) {
+                  const weightInNextAge = getSparringWeightLabel(weightNum, nextAgeGroup.id);
                   
-                  // FALLBACK for Both +1: if next age group lacks boundaries, try calculating from current age group
-                  if (!nextWeightInNextAge) {
-                    nextWeightInNextAge = getNextWeightClass(weightLabel, ageGroup.id);
-                  }
-
-                  if (nextWeightInNextAge && nextWeightInNextAge !== weightInNextAge) {
-                    result.sparring.bothUp = {
+                  if (weightInNextAge) {
+                    result.sparring.ageUp = {
                       ageGroup: nextAgeGroup.display_name,
                       ageGroupId: nextAgeGroup.id,
-                      weightLabel: nextWeightInNextAge,
-                      fullCat: nextAgeGroup.display_name + " - " + nextWeightInNextAge
+                      weightLabel: weightInNextAge,
+                      fullCat: nextAgeGroup.display_name + " - " + weightInNextAge
                     };
+
+                    const nextWeightInNextAge = getNextWeightClass(weightInNextAge, nextAgeGroup.id);
+                    if (nextWeightInNextAge && nextWeightInNextAge !== weightInNextAge) {
+                      result.sparring.bothUp = {
+                        ageGroup: nextAgeGroup.display_name,
+                        ageGroupId: nextAgeGroup.id,
+                        weightLabel: nextWeightInNextAge,
+                        fullCat: nextAgeGroup.display_name + " - " + nextWeightInNextAge
+                      };
+                    }
                   }
                 }
               }
@@ -772,22 +765,18 @@
 
                 const nextAgeGroup = getNextAgeGroup(ageGroup, "patterns");
                 if (nextAgeGroup) {
-                  const beltInNextAge = getPatternsBeltLabel(kupDanNum, nextAgeGroup.id);
-                  if (beltInNextAge) {
-                    result.patterns.ageUp = {
-                      ageGroup: nextAgeGroup.display_name,
-                      ageGroupId: nextAgeGroup.id,
-                      beltLabel: beltInNextAge,
-                      fullCat: nextAgeGroup.display_name + " - " + beltInNextAge
-                    };
-                  } else {
-                    // FALLBACK for patterns: if next age group lacks belt ranges, reuse current
-                    result.patterns.ageUp = {
-                      ageGroup: nextAgeGroup.display_name,
-                      ageGroupId: nextAgeGroup.id,
-                      beltLabel: beltLabel,
-                      fullCat: nextAgeGroup.display_name + " - " + beltLabel
-                    };
+                  // STRICT CHECK: Only proceed if the next age group actually has ranges configured
+                  const nextRanges = categoryConfig.patterns.kupRanges[nextAgeGroup.id];
+                  if (nextRanges && nextRanges.length > 0) {
+                    const beltInNextAge = getPatternsBeltLabel(kupDanNum, nextAgeGroup.id);
+                    if (beltInNextAge) {
+                      result.patterns.ageUp = {
+                        ageGroup: nextAgeGroup.display_name,
+                        ageGroupId: nextAgeGroup.id,
+                        beltLabel: beltInNextAge,
+                        fullCat: nextAgeGroup.display_name + " - " + beltInNextAge
+                      };
+                    }
                   }
                 }
               }
@@ -1053,7 +1042,7 @@
       }
 
       // ==========================================
-      // CREATE EXTRAS PANEL (Fixed Label Mapping)
+      // CREATE EXTRAS PANEL (Strictly Boundary-Synced)
       // ==========================================
       function createExtrasPanel(person, registration) {
         const panel = document.createElement("div");
@@ -1067,7 +1056,6 @@
 
         const isEntrySelected = (disc, lbl) => tempSelections[regId].some(e => e.discipline === disc && e.label === lbl);
 
-        // FIXED: Split displayLabel (for UI) and saveLabel (for database logic)
         const createRow = (displayLabel, saveLabel, catName, key, discipline, isChecked = false, isAvailable = true) => {
           const row = document.createElement("div");
           row.className = "extra-row" + (isAvailable ? "" : " unavailable");
@@ -1423,25 +1411,41 @@
                if (isSparringNo) entriesList = entriesList.filter(e => e.discipline !== "sparring");
                if (isPatternsNo) entriesList = entriesList.filter(e => e.discipline !== "patterns");
 
-               if (updateData.weight !== currentEditingPerson.data.weight || updateData.birthdate !== currentEditingPerson.data.birthdate) {
-                  const sparExtras = entriesList.filter(e => e.discipline === "sparring" && e.label !== "Main");
-                  entriesList = entriesList.filter(e => e.discipline !== "sparring");
-                  
-                  const isSparringYes = String(newPersonData.sparring).toLowerCase() === "yes" || newPersonData.sparring === true;
+               const isSparringYes = String(newPersonData.sparring).toLowerCase() === "yes" || newPersonData.sparring === true;
+               const isPatternsYes = String(newPersonData.patterns).toLowerCase() === "yes" || newPersonData.patterns === true;
+
+               // Check if core attributes changed that affect category calculation
+               const weightChanged = updateData.weight !== currentEditingPerson.data.weight;
+               const birthdateChanged = updateData.birthdate !== currentEditingPerson.data.birthdate;
+               const beltChanged = updateData.belt !== currentEditingPerson.data.belt;
+               const coreChanged = weightChanged || birthdateChanged || beltChanged;
+
+               if (coreChanged || isSparringYes || isPatternsYes) {
+                  // Rebuild the list from scratch based on new categories, preserving "extra" selections if they are still valid
+                  const oldExtras = entriesList.filter(e => e.label !== "Main");
+                  entriesList = []; // Clear and rebuild
+
                   if (isSparringYes && newCats.sparring.main) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparring.main.fullCat });
-                     sparExtras.forEach(ex => entriesList.push(ex));
+                     
+                     // Try to restore extras ONLY if they still exist in the newly computed valid categories
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Weight +1") && newCats.sparring.weightUp) {
+                        entriesList.push(newCats.sparring.weightUp);
+                     }
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Age +1") && newCats.sparring.ageUp) {
+                        entriesList.push(newCats.sparring.ageUp);
+                     }
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Both +1") && newCats.sparring.bothUp) {
+                        entriesList.push(newCats.sparring.bothUp);
+                     }
                   }
-               }
-               
-               if (updateData.belt !== currentEditingPerson.data.belt || updateData.birthdate !== currentEditingPerson.data.birthdate) {
-                  const patExtras = entriesList.filter(e => e.discipline === "patterns" && e.label !== "Main");
-                  entriesList = entriesList.filter(e => e.discipline !== "patterns");
-                  
-                  const isPatternsYes = String(newPersonData.patterns).toLowerCase() === "yes" || newPersonData.patterns === true;
+
                   if (isPatternsYes && newCats.patterns.main) {
                      entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patterns.main.fullCat });
-                     patExtras.forEach(ex => entriesList.push(ex));
+                     
+                     if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) {
+                        entriesList.push(newCats.patterns.ageUp);
+                     }
                   }
                }
 
