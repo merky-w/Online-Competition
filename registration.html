@@ -152,9 +152,7 @@
         display: flex; flex-direction: column; gap: 0.5rem;
       }
       
-      .col-left .person-card {
-        cursor: pointer;
-      }
+      .col-left .person-card { cursor: pointer; }
       .col-left .person-card:hover {
         transform: translateY(-3px); border-color: var(--accent-primary);
         box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -172,26 +170,16 @@
       .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
       .card-name { font-size: 1.1rem; font-weight: 700; padding-right: 35px; }
 
-      .card-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 8px;
-      }
+      .card-actions { display: flex; gap: 8px; margin-top: 8px; }
       .btn-edit-info {
-        flex: 1;
-        justify-content: center;
-        background: rgba(255,255,255,0.1); 
-        color: var(--text-main);
-        border: 1px solid rgba(255,255,255,0.1);
+        flex: 1; justify-content: center; background: rgba(255,255,255,0.1); 
+        color: var(--text-main); border: 1px solid rgba(255,255,255,0.1);
       }
       .btn-edit-info:hover { background: rgba(255,255,255,0.2); }
       
       .btn-categories {
-        flex: 1;
-        justify-content: center;
-        background: var(--accent-secondary); 
-        color: white;
-        border: 1px solid transparent;
+        flex: 1; justify-content: center; background: var(--accent-secondary); 
+        color: white; border: 1px solid transparent;
       }
       .btn-categories:hover { background: #059669; }
 
@@ -223,16 +211,11 @@
       .card-details { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
 
       .extra-options-panel {
-        display: none;
-        margin-top: 12px;
-        padding-top: 12px;
+        display: none; margin-top: 12px; padding-top: 12px;
         border-top: 1px dashed rgba(255,255,255,0.2);
-        flex-direction: column;
-        gap: 8px;
-        animation: slideDown 0.3s ease;
+        flex-direction: column; gap: 8px; animation: slideDown 0.3s ease;
       }
       .person-card.expanded .extra-options-panel { display: flex; }
-
       @keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
 
       .extra-row {
@@ -243,8 +226,7 @@
       }
       .extra-row:hover { border-color: rgba(59, 130, 246, 0.3); }
       .extra-row.unavailable {
-        opacity: 0.4;
-        pointer-events: none;
+        opacity: 0.4; pointer-events: none;
         background: rgba(239, 68, 68, 0.08);
         border-color: rgba(239, 68, 68, 0.2);
       }
@@ -254,16 +236,9 @@
       .extra-checkbox { width: 18px; height: 18px; accent-color: var(--accent-secondary); cursor: pointer; }
 
       .btn-save-panel {
-        margin-top: 12px;
-        width: 100%;
-        background-color: var(--accent-primary);
-        color: white;
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
+        margin-top: 12px; width: 100%; background-color: var(--accent-primary);
+        color: white; padding: 10px; border: none; border-radius: 8px;
+        font-weight: 600; cursor: pointer; transition: background 0.2s;
         display: flex; align-items: center; justify-content: center; gap: 8px;
       }
       .btn-save-panel:hover { background-color: #2563eb; }
@@ -366,14 +341,12 @@
             <span class="slider"></span>
           </label>
         </div>
-                
         <a href="register.html" class="btn btn-primary" id="addTeamLink">
           <i class="fas fa-user-plus"></i> Add Person
         </a>
       </div>
     </header>
 
-    <!-- AUTH SECTION -->
     <div id="authSection" class="auth-container">
       <h2 class="auth-title">Account Access</h2>
       <div class="form-group">
@@ -392,7 +365,6 @@
       <div id="authMessage" style="margin-top:1rem; text-align:center; font-size:0.9rem;"></div>
     </div>
 
-    <!-- MAIN CONTENT -->
     <main id="competitionSection" class="hidden">
       <h1>Select Participants</h1>
 
@@ -467,7 +439,6 @@
       <div class="spinner"></div>
     </div>
 
-    <!-- MODAL -->
     <div id="infoModal" class="modal-overlay">
       <div class="modal-box" id="infoModalBox">
         <div class="modal-header">
@@ -485,7 +456,6 @@
       </div>
     </div>
 
-    <!-- TOAST -->
     <div id="toast" class="toast"></div>
 
     <script>
@@ -505,31 +475,20 @@
       let tempSelections = {}; 
       let currentCategoryCounts = {};
 
-      // ============================================================
-      // DYNAMIC CATEGORY CONFIG (loaded from admin's settings)
-      // ============================================================
       let categoryConfig = {
         patterns: { ageGroups: [], kupRanges: {} },
         sparring: { ageGroups: [], weightBoundaries: {} }
       };
 
       const KUP_DAN_LEVELS = {
-        "10th kup": 10, "10 kup": 10, "10kup": 10,
-        "9th kup": 9, "9 kup": 9, "9kup": 9,
-        "8th kup": 8, "8 kup": 8, "8kup": 8,
-        "7th kup": 7, "7 kup": 7, "7kup": 7,
-        "6th kup": 6, "6 kup": 6, "6kup": 6,
-        "5th kup": 5, "5 kup": 5, "5kup": 5,
-        "4th kup": 4, "4 kup": 4, "4kup": 4,
-        "3rd kup": 3, "3 kup": 3, "3kup": 3,
-        "2nd kup": 2, "2 kup": 2, "2kup": 2,
-        "1st kup": 1, "1 kup": 1, "1kup": 1,
-        "1st dan": 0, "1 dan": 0, "1dan": 0,
-        "2nd dan": -1, "2 dan": -1, "2dan": -1,
-        "3rd dan": -2, "3 dan": -2, "3dan": -2,
-        "4th dan": -3, "4 dan": -3, "4dan": -3,
-        "5th dan": -4, "5 dan": -4, "5dan": -4,
-        "6th dan": -5, "6 dan": -5, "6dan": -5
+        "10th kup": 10, "10 kup": 10, "10kup": 10, "9th kup": 9, "9 kup": 9, "9kup": 9,
+        "8th kup": 8, "8 kup": 8, "8kup": 8, "7th kup": 7, "7 kup": 7, "7kup": 7,
+        "6th kup": 6, "6 kup": 6, "6kup": 6, "5th kup": 5, "5 kup": 5, "5kup": 5,
+        "4th kup": 4, "4 kup": 4, "4kup": 4, "3rd kup": 3, "3 kup": 3, "3kup": 3,
+        "2nd kup": 2, "2 kup": 2, "2kup": 2, "1st kup": 1, "1 kup": 1, "1kup": 1,
+        "1st dan": 0, "1 dan": 0, "1dan": 0, "2nd dan": -1, "2 dan": -1, "2dan": -1,
+        "3rd dan": -2, "3 dan": -2, "3dan": -2, "4th dan": -3, "4 dan": -3, "4dan": -3,
+        "5th dan": -4, "5 dan": -4, "5dan": -4, "6th dan": -5, "6 dan": -5, "6dan": -5
       };
 
       function kupDanNameToNumber(name) {
@@ -543,6 +502,14 @@
           if (normalized.includes('dan') && num >= 1 && num <= 6) return -(num - 1);
         }
         return null;
+      }
+
+      function normalizeGender(g) {
+        if (!g) return "male";
+        const v = g.toString().trim().toLowerCase();
+        if (v === "female" || v === "f" || v === "w") return "female";
+        if (v === "male" || v === "m") return "male";
+        return "male";
       }
 
       async function loadCategoryConfig() {
@@ -591,8 +558,9 @@
         }
       }
 
-      function getAgeGroupForAge(age, discipline) {
-        const groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active !== false);
+      function getAgeGroupForAge(age, discipline, gender) {
+        const normGender = normalizeGender(gender);
+        const groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active && normalizeGender(g.gender) === normGender);
         for (const g of groups) {
           const min = Number(g.min_age);
           const max = g.max_age === null || g.max_age === undefined ? null : Number(g.max_age);
@@ -601,8 +569,13 @@
         return null;
       }
 
-      function getNextAgeGroup(currentAgeGroup, discipline) {
-        const groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active !== false);
+      // CRITICAL FIX: Strictly filter by gender to ensure Male only steps up to Male, Female to Female
+      function getNextAgeGroup(currentAgeGroup, discipline, gender) {
+        const normGender = normalizeGender(gender);
+        const groups = (categoryConfig[discipline]?.ageGroups || [])
+          .filter(g => g.is_active !== false && normalizeGender(g.gender) === normGender)
+          .sort((a, b) => a.order_priority - b.order_priority);
+        
         const idx = groups.findIndex(g => g.id === currentAgeGroup.id);
         if (idx !== -1 && idx < groups.length - 1) return groups[idx + 1];
         return null;
@@ -676,14 +649,15 @@
         return age;
       }
 
-      // STRICTLY BOUNDARY-SYNCED CATEGORY COMPUTATION
       function computePersonCategories(personObj) {
         const age = calcAge(personObj.birthdate);
-        const gChar = (personObj.gender || "").trim().toUpperCase().startsWith("M") ? "M" : "F";
+        // Explicitly resolve to "male" or "female" string for strict matching
+        const genderStr = (personObj.gender || "").trim().toUpperCase().startsWith("M") ? "male" : "female";
+        const genderLabel = genderStr === "male" ? "Male" : "Female";
         
         const result = {
           age,
-          genderChar: gChar,
+          genderChar: genderStr === "male" ? "M" : "F",
           sparring: { main: null, ageUp: null, weightUp: null, bothUp: null },
           patterns: { main: null, ageUp: null }
         };
@@ -694,7 +668,7 @@
 
         // ============ SPARRING ============
         if (isSparring && weightNum > 0) {
-          const ageGroup = getAgeGroupForAge(age, "sparring");
+          const ageGroup = getAgeGroupForAge(age, "sparring", genderStr);
           if (ageGroup) {
             const weightLabel = getSparringWeightLabel(weightNum, ageGroup.id);
             if (weightLabel) {
@@ -702,24 +676,22 @@
                 ageGroup: ageGroup.display_name,
                 ageGroupId: ageGroup.id,
                 weightLabel: weightLabel,
-                fullCat: ageGroup.display_name + " - " + weightLabel
+                fullCat: ageGroup.display_name + " - " + weightLabel + " (" + genderLabel + ")"
               };
 
-              // 1. Weight +1: Must be a valid NEXT weight class in the SAME age group
               const nextWeight = getNextWeightClass(weightLabel, ageGroup.id);
               if (nextWeight && nextWeight !== weightLabel) {
                 result.sparring.weightUp = {
                   ageGroup: ageGroup.display_name,
                   ageGroupId: ageGroup.id,
                   weightLabel: nextWeight,
-                  fullCat: ageGroup.display_name + " - " + nextWeight
+                  fullCat: ageGroup.display_name + " - " + nextWeight + " (" + genderLabel + ")"
                 };
               }
 
-              // 2. Age +1 and Both +1: Must have a valid NEXT age group WITH configured boundaries
-              const nextAgeGroup = getNextAgeGroup(ageGroup, "sparring");
+              // CRITICAL FIX: Pass genderStr to ensure we only look at the SAME gender's next age group
+              const nextAgeGroup = getNextAgeGroup(ageGroup, "sparring", genderStr);
               if (nextAgeGroup) {
-                // STRICT CHECK: Only proceed if the next age group actually has boundaries configured
                 const nextBoundaries = categoryConfig.sparring.weightBoundaries[nextAgeGroup.id];
                 if (nextBoundaries && nextBoundaries.length > 0) {
                   const weightInNextAge = getSparringWeightLabel(weightNum, nextAgeGroup.id);
@@ -729,7 +701,7 @@
                       ageGroup: nextAgeGroup.display_name,
                       ageGroupId: nextAgeGroup.id,
                       weightLabel: weightInNextAge,
-                      fullCat: nextAgeGroup.display_name + " - " + weightInNextAge
+                      fullCat: nextAgeGroup.display_name + " - " + weightInNextAge + " (" + genderLabel + ")"
                     };
 
                     const nextWeightInNextAge = getNextWeightClass(weightInNextAge, nextAgeGroup.id);
@@ -738,7 +710,7 @@
                         ageGroup: nextAgeGroup.display_name,
                         ageGroupId: nextAgeGroup.id,
                         weightLabel: nextWeightInNextAge,
-                        fullCat: nextAgeGroup.display_name + " - " + nextWeightInNextAge
+                        fullCat: nextAgeGroup.display_name + " - " + nextWeightInNextAge + " (" + genderLabel + ")"
                       };
                     }
                   }
@@ -752,7 +724,7 @@
         if (isPatterns) {
           const kupDanNum = kupDanNameToNumber(personObj.belt);
           if (kupDanNum !== null) {
-            const ageGroup = getAgeGroupForAge(age, "patterns");
+            const ageGroup = getAgeGroupForAge(age, "patterns", genderStr);
             if (ageGroup) {
               const beltLabel = getPatternsBeltLabel(kupDanNum, ageGroup.id);
               if (beltLabel) {
@@ -760,12 +732,12 @@
                   ageGroup: ageGroup.display_name,
                   ageGroupId: ageGroup.id,
                   beltLabel: beltLabel,
-                  fullCat: ageGroup.display_name + " - " + beltLabel
+                  fullCat: ageGroup.display_name + " - " + beltLabel + " (" + genderLabel + ")"
                 };
 
-                const nextAgeGroup = getNextAgeGroup(ageGroup, "patterns");
+                // CRITICAL FIX: Pass genderStr to ensure we only look at the SAME gender's next age group
+                const nextAgeGroup = getNextAgeGroup(ageGroup, "patterns", genderStr);
                 if (nextAgeGroup) {
-                  // STRICT CHECK: Only proceed if the next age group actually has ranges configured
                   const nextRanges = categoryConfig.patterns.kupRanges[nextAgeGroup.id];
                   if (nextRanges && nextRanges.length > 0) {
                     const beltInNextAge = getPatternsBeltLabel(kupDanNum, nextAgeGroup.id);
@@ -774,7 +746,7 @@
                         ageGroup: nextAgeGroup.display_name,
                         ageGroupId: nextAgeGroup.id,
                         beltLabel: beltInNextAge,
-                        fullCat: nextAgeGroup.display_name + " - " + beltInNextAge
+                        fullCat: nextAgeGroup.display_name + " - " + beltInNextAge + " (" + genderLabel + ")"
                       };
                     }
                   }
@@ -787,9 +759,6 @@
         return result;
       }
 
-      // ==========================================
-      // AUTH
-      // ==========================================
       async function checkSession() {
         const { data: { session } } = await supaClient.auth.getSession();
         handleAuthChange(session);
@@ -840,9 +809,6 @@
         setTimeout(() => t.classList.remove('show'), 3000);
       }
 
-      // ==========================================
-      // DATA LOADING & RENDERING
-      // ==========================================
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
         tempSelections = {}; 
@@ -1014,9 +980,6 @@
         });
       }
 
-      // ==========================================
-      // REMOVE SINGLE CATEGORY
-      // ==========================================
       async function removeSingleCategory(regId, entryToRemove) {
         if (!confirm(`Remove "${entryToRemove.full_cat}"?`)) return;
         
@@ -1041,9 +1004,6 @@
         if (newSession) loadAllData(newSession.user.id);
       }
 
-      // ==========================================
-      // CREATE EXTRAS PANEL (Strictly Boundary-Synced)
-      // ==========================================
       function createExtrasPanel(person, registration) {
         const panel = document.createElement("div");
         panel.className = "extra-options-panel";
@@ -1105,41 +1065,23 @@
           return row;
         };
 
-        // ============ SPARRING OPTIONS ============
         if (cats.sparring.main) {
-          panel.appendChild(createRow(
-            "Sparring: Main", "Main", cats.sparring.main.fullCat, "spar_main", "sparring", isEntrySelected("sparring", "Main"), true
-          ));
-
+          panel.appendChild(createRow("Sparring: Main", "Main", cats.sparring.main.fullCat, "spar_main", "sparring", isEntrySelected("sparring", "Main"), true));
           if (cats.sparring.weightUp) {
-            panel.appendChild(createRow(
-              "Sparring: Weight +1", "Weight +1", cats.sparring.weightUp.fullCat, "spar_weight_up", "sparring", isEntrySelected("sparring", "Weight +1"), true
-            ));
+            panel.appendChild(createRow("Sparring: Weight +1", "Weight +1", cats.sparring.weightUp.fullCat, "spar_weight_up", "sparring", isEntrySelected("sparring", "Weight +1"), true));
           }
-
           if (cats.sparring.ageUp) {
-            panel.appendChild(createRow(
-              "Sparring: Age +1", "Age +1", cats.sparring.ageUp.fullCat, "spar_age_up", "sparring", isEntrySelected("sparring", "Age +1"), true
-            ));
-
+            panel.appendChild(createRow("Sparring: Age +1", "Age +1", cats.sparring.ageUp.fullCat, "spar_age_up", "sparring", isEntrySelected("sparring", "Age +1"), true));
             if (cats.sparring.bothUp) {
-              panel.appendChild(createRow(
-                "Sparring: Both +1", "Both +1", cats.sparring.bothUp.fullCat, "spar_both_up", "sparring", isEntrySelected("sparring", "Both +1"), true
-              ));
+              panel.appendChild(createRow("Sparring: Both +1", "Both +1", cats.sparring.bothUp.fullCat, "spar_both_up", "sparring", isEntrySelected("sparring", "Both +1"), true));
             }
           }
         }
 
-        // ============ PATTERNS OPTIONS ============
         if (cats.patterns.main) {
-          panel.appendChild(createRow(
-            "Patterns: Main", "Main", cats.patterns.main.fullCat, "pat_main", "patterns", isEntrySelected("patterns", "Main"), true
-          ));
-
+          panel.appendChild(createRow("Patterns: Main", "Main", cats.patterns.main.fullCat, "pat_main", "patterns", isEntrySelected("patterns", "Main"), true));
           if (cats.patterns.ageUp) {
-            panel.appendChild(createRow(
-              "Patterns: Age +1", "Age +1", cats.patterns.ageUp.fullCat, "pat_age_up", "patterns", isEntrySelected("patterns", "Age +1"), true
-            ));
+            panel.appendChild(createRow("Patterns: Age +1", "Age +1", cats.patterns.ageUp.fullCat, "pat_age_up", "patterns", isEntrySelected("patterns", "Age +1"), true));
           }
         }
 
@@ -1198,11 +1140,9 @@
       function toggleCategorySelection(regId, personObj, discipline, label, catName, isChecked) {
          let list = tempSelections[regId];
          list = list.filter(e => !(e.discipline === discipline && e.label === label));
-
          if (isChecked) {
            list.push({ discipline, label, full_cat: catName });
          }
-         
          tempSelections[regId] = list;
          updateCategoryTagsDisplay(regId, list);
       }
@@ -1214,18 +1154,14 @@
         if (!catDiv) return;
 
         catDiv.innerHTML = "";
-
         list.forEach(entry => {
            const tagDiv = document.createElement("div");
            tagDiv.className = "cat-tag";
-           
            const leftDiv = document.createElement("div");
            leftDiv.className = "cat-tag-left";
-           
            const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
            const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
            const count = currentCategoryCounts[entry.full_cat] || 0;
-           
            leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat} <span style="opacity:0.7; font-size:0.75rem;">(${count})</span>`;
            
            const removeBtn = document.createElement("button");
@@ -1235,7 +1171,6 @@
              e.stopPropagation();
              await removeSingleCategory(regId, entry);
            });
-           
            tagDiv.appendChild(leftDiv);
            tagDiv.appendChild(removeBtn);
            catDiv.appendChild(tagDiv);
@@ -1250,12 +1185,8 @@
         const entriesList = [];
         
         if (type === 'comp') {
-           if (cats.sparring.main) {
-              entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
-           }
-           if (cats.patterns.main) {
-              entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
-           }
+           if (cats.sparring.main) entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
+           if (cats.patterns.main) entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
         }
 
         const payload = {
@@ -1404,7 +1335,6 @@
 
            if (regData) {
                let entriesList = regData.entry_data?.entries_list || [];
-
                const isSparringNo = String(updateData.sparring).toLowerCase() === "no";
                const isPatternsNo = String(updateData.patterns).toLowerCase() === "no";
 
@@ -1413,45 +1343,26 @@
 
                const isSparringYes = String(newPersonData.sparring).toLowerCase() === "yes" || newPersonData.sparring === true;
                const isPatternsYes = String(newPersonData.patterns).toLowerCase() === "yes" || newPersonData.patterns === true;
-
-               // Check if core attributes changed that affect category calculation
-               const weightChanged = updateData.weight !== currentEditingPerson.data.weight;
-               const birthdateChanged = updateData.birthdate !== currentEditingPerson.data.birthdate;
-               const beltChanged = updateData.belt !== currentEditingPerson.data.belt;
-               const coreChanged = weightChanged || birthdateChanged || beltChanged;
+               const coreChanged = updateData.weight !== currentEditingPerson.data.weight || updateData.birthdate !== currentEditingPerson.data.birthdate || updateData.belt !== currentEditingPerson.data.belt;
 
                if (coreChanged || isSparringYes || isPatternsYes) {
-                  // Rebuild the list from scratch based on new categories, preserving "extra" selections if they are still valid
                   const oldExtras = entriesList.filter(e => e.label !== "Main");
-                  entriesList = []; // Clear and rebuild
+                  entriesList = []; 
 
                   if (isSparringYes && newCats.sparring.main) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparring.main.fullCat });
-                     
-                     // Try to restore extras ONLY if they still exist in the newly computed valid categories
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Weight +1") && newCats.sparring.weightUp) {
-                        entriesList.push(newCats.sparring.weightUp);
-                     }
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Age +1") && newCats.sparring.ageUp) {
-                        entriesList.push(newCats.sparring.ageUp);
-                     }
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Both +1") && newCats.sparring.bothUp) {
-                        entriesList.push(newCats.sparring.bothUp);
-                     }
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Weight +1") && newCats.sparring.weightUp) entriesList.push(newCats.sparring.weightUp);
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Age +1") && newCats.sparring.ageUp) entriesList.push(newCats.sparring.ageUp);
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Both +1") && newCats.sparring.bothUp) entriesList.push(newCats.sparring.bothUp);
                   }
 
                   if (isPatternsYes && newCats.patterns.main) {
                      entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patterns.main.fullCat });
-                     
-                     if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) {
-                        entriesList.push(newCats.patterns.ageUp);
-                     }
+                     if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) entriesList.push(newCats.patterns.ageUp);
                   }
                }
 
-               await supaClient.from("final_registrations").update({
-                  entry_data: { entries_list: entriesList }
-               }).eq("id", regData.id);
+               await supaClient.from("final_registrations").update({ entry_data: { entries_list: entriesList } }).eq("id", regData.id);
            }
         }
 
