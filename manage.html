@@ -19,6 +19,7 @@
 --rank-headref: #8b5cf6; --rank-referee: #10b981; --rank-computer: #06b6d4; --rank-unassigned: #94a3b8;
 --cat-age: #1a3a6c; --cat-weight: #c2185b; --cat-active: #28a745; --cat-inactive: #94a3b8;
 --gender-male: #1565c0; --gender-female: #c2185b; --gender-all: #6a1b9a;
+--round-accent: #ff6f00; --round-bg: #fff3e0; --round-border: #ffcc80;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
@@ -409,21 +410,249 @@ input:checked + .slider-toggle:before { transform: translateX(18px); }
 .inline-input { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; width: 70px; font-family: inherit; }
 .inline-input:focus { border-color: var(--primary); outline: none; }
 .inline-input-wide { width: 140px; }
-.autosave-indicator { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #1565c0; color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; z-index: 1001; opacity: 0; transition: opacity 0.3s; pointer-events: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(21, 101, 192, 0.4); }
-.autosave-indicator.visible { opacity: 1; }
-.autosave-indicator.success { background: var(--success); }
-.autosave-indicator.error { background: var(--danger); }
-.autosave-indicator .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@media print {
-@page { size: A4; margin: 10mm; }
-body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; }
-* { box-sizing: border-box; }
-.nav, .filters-card, .controls, .subtitle, .debug-box, .bracket-controls-bar, .bracket-header-actions, .search-box, .floating-undo-btn, .floating-search, .selection-banner, .drag-handle, .delete-btn, .clear-winner, .clear-placement, .judges-toolbar, .autosave-indicator { display: none !important; }
-.container { max-width: none; width: 100%; margin: 0; padding: 0; }
-.a4-page { margin: 0; box-shadow: none; page-break-after: always; display: flex; flex-direction: column; }
-.p-name:empty::before { color: #999; border-bottom: 1px solid #000; content: ""; display: block; height: 1em; }
-.player-row.selected, .player-row.swap-target { background: transparent !important; border: none !important; box-shadow: none !important; }
+
+/* ===== NEW: Round Configuration Styles ===== */
+.round-config-card {
+  background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
+  border: 2px solid var(--round-border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-top: 14px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.round-config-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 5px; height: 100%;
+  background: linear-gradient(180deg, var(--round-accent) 0%, #ff8f00 100%);
+}
+.round-config-card:hover {
+  box-shadow: 0 4px 12px rgba(255, 111, 0, 0.15);
+  border-color: var(--round-accent);
+}
+.round-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.round-config-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--round-accent);
+  font-size: 0.95rem;
+}
+.round-config-title i {
+  font-size: 1.1rem;
+}
+.round-config-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: white;
+  border: 1px solid var(--round-border);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--round-accent);
+}
+.round-config-preview .preview-divider {
+  color: var(--gray);
+  font-weight: 400;
+}
+.round-config-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.round-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.round-config-field label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 0;
+}
+.round-config-field label i {
+  color: var(--round-accent);
+}
+.round-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 8px;
+  transition: var(--transition);
+}
+.round-input-wrap:focus-within {
+  border-color: var(--round-accent);
+  box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.15);
+}
+.round-input-wrap .input-icon {
+  color: var(--round-accent);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.round-input-wrap input {
+  border: none;
+  outline: none;
+  padding: 6px 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--dark);
+  background: transparent;
+  width: 100%;
+  text-align: center;
+  font-family: inherit;
+}
+.round-input-wrap input::-webkit-outer-spin-button,
+.round-input-wrap input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.round-input-wrap input[type=number] {
+  -moz-appearance: textfield;
+}
+.round-input-wrap .unit-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray);
+  text-transform: uppercase;
+  flex-shrink: 0;
+  min-width: 28px;
+}
+.round-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.round-stepper button {
+  background: var(--light-gray);
+  border: none;
+  width: 22px;
+  height: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: var(--gray);
+  transition: var(--transition);
+  padding: 0;
+  line-height: 1;
+}
+.round-stepper button:hover {
+  background: var(--round-accent);
+  color: white;
+}
+.round-total-display {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, rgba(255, 111, 0, 0.08) 0%, rgba(255, 143, 0, 0.08) 100%);
+  border: 1px dashed var(--round-border);
+  border-radius: 10px;
+  margin-top: 4px;
+}
+.round-total-display .total-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.round-total-display .total-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--round-accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.round-total-display .total-value i {
+  font-size: 0.95rem;
+}
+.round-visual {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  flex-wrap: wrap;
+}
+.round-visual-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.round-visual-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--round-accent) 0%, #ff8f00 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(255, 111, 0, 0.3);
+  transition: var(--transition);
+}
+.round-visual-circle:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(255, 111, 0, 0.5);
+}
+.round-visual-time {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--gray);
+  white-space: nowrap;
+}
+.round-visual-arrow {
+  color: var(--round-border);
+  font-size: 0.7rem;
+}
+.round-config-saved-indicator {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 0.7rem;
+  color: var(--success);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.round-config-saved-indicator.visible {
+  opacity: 1;
 }
 @media (max-width: 768px) {
 .parallel-container { grid-template-columns: 1fr; border-bottom: none; }
@@ -441,6 +670,7 @@ body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exa
 .rank-btn { width: 100%; justify-content: center; }
 .age-group-list { grid-template-columns: 1fr; }
 .cat-gender-tabs { flex-direction: column; }
+.round-config-body { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -554,6 +784,18 @@ const DEFAULT_KUP_RANGES = [
 { min_kup: 0, max_kup: -5, display_name: "1st-6th Dan" }
 ];
 const DEFAULT_WEIGHT_BOUNDS = [30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80];
+
+// ===== NEW: Default round configurations for sparring age groups =====
+const DEFAULT_ROUND_CONFIGS = {
+  "Kids":        { rounds_count: 2, round_minutes: 1, round_seconds: 0 },
+  "Youth":       { rounds_count: 2, round_minutes: 1, round_seconds: 30 },
+  "Older Youth": { rounds_count: 2, round_minutes: 1, round_seconds: 30 },
+  "Juniors":     { rounds_count: 3, round_minutes: 2, round_seconds: 0 },
+  "Cadets":      { rounds_count: 3, round_minutes: 2, round_seconds: 0 },
+  "Seniors":     { rounds_count: 3, round_minutes: 2, round_seconds: 0 },
+  "Masters":     { rounds_count: 3, round_minutes: 2, round_seconds: 0 }
+};
+
 function kupDanNameToNumber(name) {
 if (!name) return null;
 const normalized = name.toString().trim().toLowerCase();
@@ -606,7 +848,7 @@ let judgeRanksMap = {};
 let rankSelectionMode = null;
 let categoryConfig = {
 patterns: { ageGroups: [], kupRanges: {} },
-sparring: { ageGroups: [], weightBoundaries: {} }
+sparring: { ageGroups: [], weightBoundaries: {}, roundConfigs: {} }
 };
 let currentCatDiscipline = "patterns";
 let currentCatGender = "male";
@@ -690,6 +932,7 @@ categoryConfig.patterns.ageGroups = [];
 categoryConfig.sparring.ageGroups = [];
 categoryConfig.patterns.kupRanges = {};
 categoryConfig.sparring.weightBoundaries = {};
+categoryConfig.sparring.roundConfigs = {};
 return;
 }
 if (!ageGroups || ageGroups.length === 0) {
@@ -726,12 +969,38 @@ categoryConfig.sparring.weightBoundaries[b.age_group_id].push(b.boundary_kg);
 });
 }
 }
+
+// ===== NEW: Load round configurations for sparring age groups =====
+categoryConfig.sparring.roundConfigs = {};
+if (sIds.length > 0) {
+const { data: rConfigs, error: rErr } = await sb
+.from("sparring_round_configs").select("*").in("age_group_id", sIds);
+if (!rErr && rConfigs) {
+rConfigs.forEach(rc => {
+categoryConfig.sparring.roundConfigs[rc.age_group_id] = {
+rounds_count: rc.rounds_count,
+round_minutes: rc.round_minutes,
+round_seconds: rc.round_seconds
+};
+});
+}
+// Fill defaults for any missing age groups
+sIds.forEach(id => {
+if (!categoryConfig.sparring.roundConfigs[id]) {
+const group = sparringGroups.find(g => g.id === id);
+const name = group ? group.display_name : null;
+const def = (name && DEFAULT_ROUND_CONFIGS[name]) ? DEFAULT_ROUND_CONFIGS[name] : { rounds_count: 3, round_minutes: 2, round_seconds: 0 };
+categoryConfig.sparring.roundConfigs[id] = { ...def };
+}
+});
+}
 } catch (err) {
 console.error("loadCategoryConfig error:", err);
 categoryConfig.patterns.ageGroups = [];
 categoryConfig.sparring.ageGroups = [];
 categoryConfig.patterns.kupRanges = {};
 categoryConfig.sparring.weightBoundaries = {};
+categoryConfig.sparring.roundConfigs = {};
 }
 }
 async function seedDefaultCategories() {
@@ -747,6 +1016,15 @@ if (!error && inserted) {
 if (disc === "sparring") {
 const boundsToInsert = DEFAULT_WEIGHT_BOUNDS.map(kg => ({ age_group_id: inserted.id, boundary_kg: kg }));
 await sb.from("weight_boundaries").insert(boundsToInsert);
+
+// ===== NEW: Insert default round config =====
+const defRounds = DEFAULT_ROUND_CONFIGS[g.display_name] || { rounds_count: 3, round_minutes: 2, round_seconds: 0 };
+await sb.from("sparring_round_configs").insert([{
+age_group_id: inserted.id,
+rounds_count: defRounds.rounds_count,
+round_minutes: defRounds.round_minutes,
+round_seconds: defRounds.round_seconds
+}]);
 } else {
 const rangesToInsert = DEFAULT_KUP_RANGES.map((r, idx) => ({
 age_group_id: inserted.id, min_kup: r.min_kup, max_kup: r.max_kup,
@@ -1035,7 +1313,6 @@ if (groupMinIdx !== -1) {
 groups[groupMinIdx].min_age = currentAge;
 updated = true;
 }
-// Enforce strict non-overlapping and valid ranges globally
 for (let i = 0; i < groups.length; i++) {
 if (groups[i].max_age !== null && groups[i].min_age > groups[i].max_age) {
 groups[i].min_age = groups[i].max_age;
@@ -1100,7 +1377,10 @@ if (!confirm('Delete age group "' + g.display_name + '"?')) return;
 if (!g.id.startsWith("tmp_")) await sb.from("age_groups").delete().eq("id", g.id);
 categoryConfig[disc].ageGroups = categoryConfig[disc].ageGroups.filter(x => x.id !== groupId);
 if (disc === "patterns") delete categoryConfig.patterns.kupRanges[groupId];
-else delete categoryConfig.sparring.weightBoundaries[groupId];
+else {
+delete categoryConfig.sparring.weightBoundaries[groupId];
+delete categoryConfig.sparring.roundConfigs[groupId];
+}
 reorderAndRenumber(disc, normalizeGender(g.gender));
 renderCatEditorBody();
 showToast('Deleted "' + g.display_name + '"', "success");
@@ -1123,6 +1403,7 @@ display_name: r.display_name, is_active: true, order_priority: idx + 1
 }));
 } else {
 categoryConfig.sparring.weightBoundaries[newGroupId] = [...DEFAULT_WEIGHT_BOUNDS];
+categoryConfig.sparring.roundConfigs[newGroupId] = { rounds_count: 3, round_minutes: 2, round_seconds: 0 };
 }
 reorderAndRenumber(disc, gender);
 renderCatEditorBody();
@@ -1365,6 +1646,12 @@ const boundaries = (categoryConfig.sparring.weightBoundaries[g.id] || []).slice(
 const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
 const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
 const chips = buildWeightCategoryChips(boundaries);
+const roundCfg = categoryConfig.sparring.roundConfigs[g.id] || { rounds_count: 3, round_minutes: 2, round_seconds: 0 };
+const roundVisualHtml = buildRoundVisual(roundCfg);
+const totalSeconds = roundCfg.round_minutes * 60 + roundCfg.round_seconds;
+const totalMatchTime = totalSeconds * roundCfg.rounds_count;
+const totalMin = Math.floor(totalMatchTime / 60);
+const totalSec = totalMatchTime % 60;
 return '<div class="weight-slider-card ' + (g.is_active ? 'active' : 'inactive') + '">' +
 '<div class="weight-slider-header"><div class="weight-slider-title">' +
 '<span class="age-badge" style="background:' + color + '">' + escapeHtml(g.display_name) + '</span>' +
@@ -1378,10 +1665,183 @@ return '<div class="weight-slider-card ' + (g.is_active ? 'active' : 'inactive')
 '<div class="weight-slider-track-wrap" id="weightTrackWrap_' + g.id + '">' +
 '<div class="weight-slider-track" id="weightTrack_' + g.id + '" onclick="handleWeightTrackClick(event, \'' + g.id + '\')"></div>' +
 '<div class="weight-scale" id="weightScale_' + g.id + '"></div>' +
-'</div><div class="weight-categories-display">' + chips + '</div></div>';
+'</div><div class="weight-categories-display">' + chips + '</div>' +
+
+// ===== NEW: Round Configuration Card =====
+buildRoundConfigCard(g.id, g.display_name, roundCfg) +
+
+'</div>';
 }).join("");
 groups.forEach(g => renderWeightMarkers(g));
 }
+
+// ===== NEW: Build round configuration card HTML =====
+function buildRoundConfigCard(ageGroupId, groupName, cfg) {
+const rounds = cfg.rounds_count;
+const mins = cfg.round_minutes;
+const secs = cfg.round_seconds;
+const totalSecsPerRound = mins * 60 + secs;
+const totalMatchSecs = totalSecsPerRound * rounds;
+const totalMin = Math.floor(totalMatchSecs / 60);
+const totalSec = totalMatchSecs % 60;
+const safeGroupId = escapeAttr(ageGroupId);
+const timeDisplay = secs > 0 ? (mins + ':' + String(secs).padStart(2, '0')) : (mins + ':00');
+return '<div class="round-config-card" id="roundCard_' + safeGroupId + '">' +
+'<div class="round-config-saved-indicator" id="roundSaved_' + safeGroupId + '"><i class="fas fa-check-circle"></i> Saved</div>' +
+'<div class="round-config-header">' +
+'<div class="round-config-title"><i class="fas fa-stopwatch"></i> Round Configuration</div>' +
+'<div class="round-config-preview">' +
+'<span><strong>' + rounds + '</strong> round' + (rounds !== 1 ? 's' : '') + '</span>' +
+'<span class="preview-divider">×</span>' +
+'<span><strong>' + timeDisplay + '</strong> min/round</span>' +
+'<span class="preview-divider">=</span>' +
+'<span><strong>' + totalMin + ':' + String(totalSec).padStart(2, '0') + '</strong> total</span>' +
+'</div></div>' +
+'<div class="round-config-body">' +
+'<div class="round-config-field">' +
+'<label><i class="fas fa-redo"></i> Number of Rounds</label>' +
+'<div class="round-input-wrap">' +
+'<i class="fas fa-layer-group input-icon"></i>' +
+'<input type="number" id="roundsCount_' + safeGroupId + '" value="' + rounds + '" min="1" max="15" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
+'<span class="unit-label">rounds</span>' +
+'<div class="round-stepper">' +
+'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'rounds\', 1)"><i class="fas fa-caret-up"></i></button>' +
+'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'rounds\', -1)"><i class="fas fa-caret-down"></i></button>' +
+'</div></div></div>' +
+'<div class="round-config-field">' +
+'<label><i class="fas fa-clock"></i> Round Duration</label>' +
+'<div style="display:flex;gap:6px;">' +
+'<div class="round-input-wrap" style="flex:1;">' +
+'<i class="fas fa-hourglass-half input-icon"></i>' +
+'<input type="number" id="roundMinutes_' + safeGroupId + '" value="' + mins + '" min="0" max="30" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
+'<span class="unit-label">min</span>' +
+'<div class="round-stepper">' +
+'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'minutes\', 1)"><i class="fas fa-caret-up"></i></button>' +
+'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'minutes\', -1)"><i class="fas fa-caret-down"></i></button>' +
+'</div></div>' +
+'<div class="round-input-wrap" style="flex:1;">' +
+'<i class="fas fa-stopwatch input-icon"></i>' +
+'<input type="number" id="roundSeconds_' + safeGroupId + '" value="' + secs + '" min="0" max="59" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
+'<span class="unit-label">sec</span>' +
+'<div class="round-stepper">' +
+'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'seconds\', 5)"><i class="fas fa-caret-up"></i></button>' +
+'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'seconds\', -5)"><i class="fas fa-caret-down"></i></button>' +
+'</div></div></div></div>' +
+'<div class="round-total-display">' +
+'<span class="total-label"><i class="fas fa-hourglass-end"></i> Total Match Time:</span>' +
+'<span class="total-value"><i class="fas fa-stopwatch"></i> ' + totalMin + ':' + String(totalSec).padStart(2, '0') + ' min</span>' +
+'</div>' +
+'<div class="round-visual">' + roundVisualHtml + '</div>' +
+'</div></div>';
+}
+
+// ===== NEW: Build visual round dots =====
+function buildRoundVisual(cfg) {
+const rounds = Math.min(cfg.rounds_count, 15);
+const mins = cfg.round_minutes;
+const secs = cfg.round_seconds;
+const timeStr = secs > 0 ? (mins + ':' + String(secs).padStart(2, '0')) : (mins + ':00');
+let html = '';
+for (let i = 0; i < rounds; i++) {
+if (i > 0) html += '<i class="fas fa-chevron-right round-visual-arrow"></i>';
+html += '<div class="round-visual-dot">' +
+'<div class="round-visual-circle">R' + (i + 1) + '</div>' +
+'<div class="round-visual-time">' + timeStr + '</div>' +
+'</div>';
+}
+return html;
+}
+
+// ===== NEW: Step round value via +/- buttons =====
+function stepRoundValue(groupId, field, delta) {
+const inputId = field === 'rounds' ? 'roundsCount_' + groupId : (field === 'minutes' ? 'roundMinutes_' + groupId : 'roundSeconds_' + groupId);
+const input = document.getElementById(inputId);
+if (!input) return;
+let val = parseInt(input.value) || 0;
+val += delta;
+const min = field === 'rounds' ? 1 : 0;
+const max = field === 'rounds' ? 15 : (field === 'minutes' ? 30 : 59);
+val = Math.max(min, Math.min(max, val));
+input.value = val;
+updateRoundConfig(groupId);
+}
+
+// ===== NEW: Update round config on input change =====
+function updateRoundConfig(groupId) {
+const roundsEl = document.getElementById('roundsCount_' + groupId);
+const minsEl = document.getElementById('roundMinutes_' + groupId);
+const secsEl = document.getElementById('roundSeconds_' + groupId);
+if (!roundsEl || !minsEl || !secsEl) return;
+
+let rounds = parseInt(roundsEl.value) || 3;
+let mins = parseInt(minsEl.value) || 0;
+let secs = parseInt(secsEl.value) || 0;
+
+rounds = Math.max(1, Math.min(15, rounds));
+mins = Math.max(0, Math.min(30, mins));
+secs = Math.max(0, Math.min(59, secs));
+
+// Handle seconds overflow
+if (secs >= 60) {
+mins += Math.floor(secs / 60);
+secs = secs % 60;
+}
+
+roundsEl.value = rounds;
+minsEl.value = mins;
+secsEl.value = secs;
+
+if (!categoryConfig.sparring.roundConfigs[groupId]) {
+categoryConfig.sparring.roundConfigs[groupId] = { rounds_count: 3, round_minutes: 2, round_seconds: 0 };
+}
+categoryConfig.sparring.roundConfigs[groupId] = {
+rounds_count: rounds,
+round_minutes: mins,
+round_seconds: secs
+};
+
+// Update preview and visual without full re-render
+updateRoundPreview(groupId, rounds, mins, secs);
+showRoundSavedIndicator(groupId);
+scheduleAutoSave('Updated round config for age group');
+}
+
+// ===== NEW: Update preview inline without full re-render =====
+function updateRoundPreview(groupId, rounds, mins, secs) {
+const card = document.getElementById('roundCard_' + groupId);
+if (!card) return;
+const preview = card.querySelector('.round-config-preview');
+const totalDisplay = card.querySelector('.round-total-display .total-value');
+const visual = card.querySelector('.round-visual');
+if (!preview || !totalDisplay || !visual) return;
+
+const timeStr = secs > 0 ? (mins + ':' + String(secs).padStart(2, '0')) : (mins + ':00');
+const totalSecsPerRound = mins * 60 + secs;
+const totalMatchSecs = totalSecsPerRound * rounds;
+const totalMin = Math.floor(totalMatchSecs / 60);
+const totalSec = totalMatchSecs % 60;
+
+preview.innerHTML = '<span><strong>' + rounds + '</strong> round' + (rounds !== 1 ? 's' : '') + '</span>' +
+'<span class="preview-divider">×</span>' +
+'<span><strong>' + timeStr + '</strong> min/round</span>' +
+'<span class="preview-divider">=</span>' +
+'<span><strong>' + totalMin + ':' + String(totalSec).padStart(2, '0') + '</strong> total</span>';
+
+totalDisplay.innerHTML = '<i class="fas fa-stopwatch"></i> ' + totalMin + ':' + String(totalSec).padStart(2, '0') + ' min';
+visual.innerHTML = buildRoundVisual({ rounds_count: rounds, round_minutes: mins, round_seconds: secs });
+}
+
+// ===== NEW: Show saved indicator briefly =====
+function showRoundSavedIndicator(groupId) {
+const indicator = document.getElementById('roundSaved_' + groupId);
+if (!indicator) return;
+indicator.classList.add('visible');
+clearTimeout(indicator._hideTimer);
+indicator._hideTimer = setTimeout(() => {
+indicator.classList.remove('visible');
+}, 1500);
+}
+
 function buildWeightCategoryChips(boundaries) {
 if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
 const chips = [];
@@ -1530,10 +1990,17 @@ const tmpRanges = categoryConfig.patterns.kupRanges[oldId];
 delete categoryConfig.patterns.kupRanges[oldId];
 tmpRanges.forEach(r => r.age_group_id = inserted.id);
 categoryConfig.patterns.kupRanges[inserted.id] = tmpRanges;
-} else if (disc === "sparring" && categoryConfig.sparring.weightBoundaries[oldId]) {
+} else if (disc === "sparring") {
+if (categoryConfig.sparring.weightBoundaries[oldId]) {
 const tmpBounds = categoryConfig.sparring.weightBoundaries[oldId];
 delete categoryConfig.sparring.weightBoundaries[oldId];
 categoryConfig.sparring.weightBoundaries[inserted.id] = tmpBounds;
+}
+if (categoryConfig.sparring.roundConfigs[oldId]) {
+const tmpRounds = categoryConfig.sparring.roundConfigs[oldId];
+delete categoryConfig.sparring.roundConfigs[oldId];
+categoryConfig.sparring.roundConfigs[inserted.id] = tmpRounds;
+}
 }
 } else {
 const { error } = await sb.from("age_groups").update({
@@ -1548,7 +2015,8 @@ if (r.errors > 0) errors += r.errors;
 else successCount++;
 } else {
 const r = await saveSparringBoundariesForGroup(g.id);
-if (r.errors > 0) errors += r.errors;
+const r2 = await saveSparringRoundConfigForGroup(g.id);
+if (r.errors > 0 || r2.errors > 0) errors += (r.errors + r2.errors);
 else successCount++;
 }
 }
@@ -1617,10 +2085,46 @@ if (error) { console.error("Insert boundary error:", error); errors++; }
 }
 return { errors };
 }
+
+// ===== NEW: Save round configuration for a sparring age group =====
+async function saveSparringRoundConfigForGroup(ageGroupId) {
+let errors = 0;
+const cfg = categoryConfig.sparring.roundConfigs[ageGroupId];
+if (!cfg) return { errors: 0 };
+
+const { data: existing, error: fetchErr } = await sb.from("sparring_round_configs").select("*").eq("age_group_id", ageGroupId);
+if (fetchErr) {
+console.error("Fetch round config error:", fetchErr);
+// Table might not exist yet — try to continue
+return { errors: 1 };
+}
+
+if (existing && existing.length > 0) {
+// Update existing record
+const { error } = await sb.from("sparring_round_configs").update({
+rounds_count: cfg.rounds_count,
+round_minutes: cfg.round_minutes,
+round_seconds: cfg.round_seconds
+}).eq("age_group_id", ageGroupId);
+if (error) { console.error("Update round config error:", error); errors++; }
+} else {
+// Insert new record
+const { error } = await sb.from("sparring_round_configs").insert([{
+age_group_id: ageGroupId,
+rounds_count: cfg.rounds_count,
+round_minutes: cfg.round_minutes,
+round_seconds: cfg.round_seconds
+}]);
+if (error) { console.error("Insert round config error:", error); errors++; }
+}
+return { errors };
+}
+
 async function resetToDefaults() {
 if (!confirm("Reset ALL categories to defaults? This will DELETE all current age groups and divisions for both genders.")) return;
 await sb.from("weight_boundaries").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 await sb.from("patterns_kup_ranges").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+await sb.from("sparring_round_configs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 await sb.from("age_groups").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 await seedDefaultCategories();
 await loadCategoryConfig();
@@ -1721,7 +2225,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -2327,7 +2831,7 @@ html += '<div class="a4-page" id="page-' + categoryIndex + '" data-category="' +
 '<div class="bracket-header"><span style="font-size:12px;text-transform:uppercase;color:#666">' + type + '</span>' +
 '<h2>' + escapeHtml(key) + '</h2>' +
 '<span style="font-size:14px;color:var(--secondary);font-weight:bold">' + list.length + ' Competitors ' +
-'<span class="bracket-size-indicator">' + effectiveSize + ' slots' + (isOverridden ? ' ⚙️' : '') + '</span></span>' +
+'<span class="bracket-size-indicator">' + effectiveSize + ' slots' + (isOverridden ? ' ⚙️' : '') + '</span></span></div>' +
 '<div style="text-align:right;margin-top:5px">' +
 '<button class="btn btn-warning btn-sm" onclick="shuffleSingleCategory(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-random"></i> Shuffle</button>' +
 '<button class="btn btn-success btn-sm" onclick="saveCategoryOrder(\'' + safeKey + '\', \'' + type + '\')"><i class="fas fa-list-ol"></i> Save This Category</button>' +
@@ -2699,6 +3203,7 @@ html += '<div class="category-card"><div class="category-header">Data Summary</d
 '<p><strong>Category Config (sparring age groups):</strong> ' + categoryConfig.sparring.ageGroups.length + '</p>' +
 '<p><strong>Patterns kup ranges defined:</strong> ' + Object.values(categoryConfig.patterns.kupRanges || {}).reduce((s, arr) => s + arr.length, 0) + '</p>' +
 '<p><strong>Sparring weight boundaries defined:</strong> ' + Object.values(categoryConfig.sparring.weightBoundaries || {}).reduce((s, arr) => s + arr.length, 0) + '</p>' +
+'<p><strong>Sparring round configs defined:</strong> ' + Object.values(categoryConfig.sparring.roundConfigs || {}).length + '</p>' +
 '</div></div>';
 if (lastDebugInfo.errors.length > 0) {
 html += '<div class="category-card"><div class="category-header" style="background:var(--danger);">Errors</div><div style="padding:20px;">' + lastDebugInfo.errors.map(e => '<div style="color:var(--danger);margin:5px 0;">• ' + e + '</div>').join("") + '</div></div>';
@@ -2845,7 +3350,9 @@ weightDivisions.forEach(w => { wDrop.innerHTML += '<option value="' + w + '">' +
 if (ageGroup) {
 const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).length;
 const genderLabel = normalizeGender(ageGroup.gender) === "male" ? "Male" : "Female";
-info.innerHTML = '<i class="fas fa-weight-hanging"></i> <strong>' + escapeHtml(ageGroup.display_name) + ' (' + genderLabel + '):</strong> ' + bounds + ' weight division' + (bounds !== 1 ? 's' : '') + ' configured (ages ' + ageGroup.min_age + (ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age) + ')';
+const roundCfg = categoryConfig.sparring.roundConfigs[ageGroup.id] || { rounds_count: 3, round_minutes: 2, round_seconds: 0 };
+const roundTimeStr = roundCfg.round_seconds > 0 ? (roundCfg.round_minutes + ':' + String(roundCfg.round_seconds).padStart(2, '0')) : (roundCfg.round_minutes + ':00');
+info.innerHTML = '<i class="fas fa-weight-hanging"></i> <strong>' + escapeHtml(ageGroup.display_name) + ' (' + genderLabel + '):</strong> ' + bounds + ' weight division' + (bounds !== 1 ? 's' : '') + ' configured (ages ' + ageGroup.min_age + (ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age) + ') — <strong style="color:var(--round-accent)"><i class="fas fa-stopwatch"></i> ' + roundCfg.rounds_count + ' rounds × ' + roundTimeStr + ' min</strong>';
 } else {
 info.innerHTML = '<i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.';
 }
