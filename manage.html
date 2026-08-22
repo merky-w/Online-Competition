@@ -1649,7 +1649,8 @@ function stepRoundValue(groupId, field, delta) {
     
     const input = document.getElementById(inputId);
     if (!input) return;
-    let val = parseInt(input.value) || 0;
+    let val = parseInt(input.value);
+    if (isNaN(val)) val = 0;
     val += delta;
     
     let min = 0, max = 59;
@@ -1670,11 +1671,17 @@ function updateRoundConfig(groupId) {
     const pSecsEl = document.getElementById('pauseSeconds_' + groupId);
     if (!roundsEl || !minsEl || !secsEl || !pMinsEl || !pSecsEl) return;
     
-    let rounds = parseInt(roundsEl.value) || 3;
-    let mins = parseInt(minsEl.value) || 0;
-    let secs = parseInt(secsEl.value) || 0;
-    let pMins = parseInt(pMinsEl.value) || 1;
-    let pSecs = parseInt(pSecsEl.value) || 0;
+    // FIX: Use isNaN() instead of || to allow 0 as a valid value
+    let rounds = parseInt(roundsEl.value);
+    if (isNaN(rounds)) rounds = 3;
+    let mins = parseInt(minsEl.value);
+    if (isNaN(mins)) mins = 0;
+    let secs = parseInt(secsEl.value);
+    if (isNaN(secs)) secs = 0;
+    let pMins = parseInt(pMinsEl.value);
+    if (isNaN(pMins)) pMins = 1;
+    let pSecs = parseInt(pSecsEl.value);
+    if (isNaN(pSecs)) pSecs = 0;
     
     rounds = Math.max(1, Math.min(15, rounds));
     mins = Math.max(0, Math.min(30, mins));
@@ -2120,7 +2127,7 @@ function handleWinnerZoneClick(e) {
     const clearBtn = e.target.closest(".clear-winner, .clear-placement");
     if (clearBtn) {
         e.stopPropagation();
-        const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
+        const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
         if (!zone) return;
         const page = zone.closest(".a4-page");
         if (!page) return;
