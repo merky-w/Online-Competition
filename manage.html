@@ -678,6 +678,9 @@ const DEFAULT_ROUND_CONFIGS = {
 "Seniors":     { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 },
 "Masters":     { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 }
 };
+// ===== KNOWN AGE GROUP NAME KEYWORDS (for parsing from original category) =====
+const AGE_GROUP_KEYWORDS = ["kids", "youth", "older youth", "juniors", "junior", "cadets", "cadet", "seniors", "senior", "masters", "master", "veterans", "veteran"];
+
 function kupDanNameToNumber(name) {
 if (!name) return null;
 const normalized = name.toString().trim().toLowerCase();
@@ -737,6 +740,120 @@ let currentCatGender = "male";
 let autoSaveTimer = null;
 let isAutoSaving = false;
 let pendingSave = false;
+
+// =====================================================================
+// ===== FIX #1: Parse age group name from original category string =====
+// =====================================================================
+// E.g. "Juniors - 8th-7th Kup" → "Juniors"
+// E.g. "Seniors - 60-65kg" → "Seniors"
+function parseAgeGroupFromOriginalCategory(fullCat) {
+  if (!fullCat) return null;
+  const lower = fullCat.toLowerCase();
+  // Try to find a known keyword at the start
+  for (const kw of AGE_GROUP_KEYWORDS) {
+    if (lower.startsWith(kw)) {
+      // Return the matched keyword (title-cased)
+      return kw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+  }
+  // Fallback: take everything before the first " - "
+  const parts = fullCat.split(' - ');
+  if (parts.length >= 2) {
+    const candidate = parts[0].trim();
+    if (candidate.length > 0 && candidate.length < 30) return candidate;
+  }
+  return null;
+}
+
+// =====================================================================
+// ===== FIX #2: Find the CLOSEST age group when exact match fails =====
+// =====================================================================
+function findClosestAgeGroup(age, groups) {
+  if (!groups || groups.length === 0) return null;
+  const sorted = [...groups].sort((a, b) => a.min_age - b.min_age);
+  // If age is below the first group → use first group
+  if (age < sorted[0].min_age) return sorted[0];
+  // If age is above the last group → use last group
+  const last = sorted[sorted.length - 1];
+  if (last.max_age === null) return last;
+  if (age > last.max_age) return last;
+  // Otherwise find the group whose range contains age, or closest one
+  let best = sorted[0];
+  let bestDist = Infinity;
+  for (const g of sorted) {
+    const maxA = g.max_age === null ? 999 : g.max_age;
+    let dist;
+    if (age >= g.min_age && age <= maxA) { dist = 0; }
+    else { dist = Math.min(Math.abs(age - g.min_age), Math.abs(age - maxA)); }
+    if (dist < bestDist) { bestDist = dist; best = g; }
+  }
+  return best;
+}
+
+// =====================================================================
+// ===== FIX #3: Get a fallback age group (never returns null) =========
+// =====================================================================
+function getFallbackAgeGroup(discipline, gender) {
+  const normGender = normalizeGender(gender);
+  const allGroups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active);
+  if (allGroups.length === 0) return null;
+  // Prefer same gender
+  const sameGender = allGroups.filter(g => normalizeGender(g.gender) === normGender);
+  const pool = sameGender.length > 0 ? sameGender : allGroups;
+  // Prefer "Seniors" as default
+  const seniors = pool.find(g => /senior/i.test(g.display_name));
+  if (seniors) return seniors;
+  // Otherwise pick the middle group
+  return pool[Math.floor(pool.length / 2)];
+}
+
+// =====================================================================
+// ===== FIX #4: getAgeGroupForAge — NEVER returns null ================
+// =====================================================================
+function getAgeGroupForAge(age, discipline, gender) {
+  const normGender = normalizeGender(gender);
+  const allGroups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active);
+  if (allGroups.length === 0) return null;
+
+  // 1. Try exact gender match
+  let groups = allGroups.filter(g => normalizeGender(g.gender) === normGender);
+  for (const g of groups) {
+    if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g;
+  }
+  // 2. Try any gender
+  for (const g of allGroups) {
+    if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g;
+  }
+  // 3. Find closest age group (clamp)
+  const closest = findClosestAgeGroup(age, allGroups);
+  if (closest) return closest;
+  // 4. Ultimate fallback
+  return getFallbackAgeGroup(discipline, gender);
+}
+
+// =====================================================================
+// ===== FIX #5: Match age group by name (when DOB is missing) =========
+// =====================================================================
+function findAgeGroupByName(name, discipline, gender) {
+  if (!name) return null;
+  const normGender = normalizeGender(gender);
+  const allGroups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active);
+  const lower = name.toLowerCase().trim();
+  // Exact match first (same gender)
+  let match = allGroups.find(g => normalizeGender(g.gender) === normGender && g.display_name.toLowerCase() === lower);
+  if (match) return match;
+  // Exact match any gender
+  match = allGroups.find(g => g.display_name.toLowerCase() === lower);
+  if (match) return match;
+  // Partial match (same gender)
+  match = allGroups.find(g => normalizeGender(g.gender) === normGender && lower.includes(g.display_name.toLowerCase()));
+  if (match) return match;
+  // Partial match any gender
+  match = allGroups.find(g => lower.includes(g.display_name.toLowerCase()));
+  if (match) return match;
+  return null;
+}
+
 async function resolveDuplicates() {
 const seen = new Map();
 const toDelete = [];
@@ -922,22 +1039,6 @@ await sb.from("patterns_kup_ranges").insert(rangesToInsert);
 }
 }
 }
-// ===== FIXED: getAgeGroupForAge now has fallback logic =====
-function getAgeGroupForAge(age, discipline, gender) {
-const normGender = normalizeGender(gender);
-// First try: exact gender match
-let groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active && normalizeGender(g.gender) === normGender);
-for (const g of groups) {
-if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g;
-}
-// Fallback: if no gender-specific match, try ANY active group (ignoring gender)
-// This handles cases where only "male" groups exist but competitor is "female"
-groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active);
-for (const g of groups) {
-if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g;
-}
-return null;
-}
 function getPatternsCategoryLabel(kupDanNum, ageGroupId) {
 const ranges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).filter(r => r.is_active !== false);
 if (ranges.length === 0) return "Open";
@@ -971,63 +1072,112 @@ if (m < 0 || (m === 0 && tour.getDate() < birth.getDate())) age--;
 return age;
 } catch { return null; }
 }
+
+// =====================================================================
+// ===== FIX #6: recomputeCompetitorCategories — NEVER "No Group" ======
+// =====================================================================
 function recomputeCompetitorCategories() {
 let noAgeCount = 0;
-let noGroupCount = 0;
+let parsedFromCatCount = 0;
+let closestMatchCount = 0;
+let fallbackCount = 0;
+
 competitors.forEach(c => {
-const age = computeAge(c.dob || c.date_of_birth);
 const discipline = c._discipline;
 const gender = getCompetitorGender(c);
+const age = computeAge(c.dob || c.date_of_birth);
+
+let ageGroup = null;
+let ageSource = "unknown"; // track how we got the age group
+
 if (age !== null) {
-const ageGroup = getAgeGroupForAge(age, discipline, gender);
+  // We have a real age — use the fixed getAgeGroupForAge (never returns null if groups exist)
+  ageGroup = getAgeGroupForAge(age, discipline, gender);
+  ageSource = "computed_age";
+  // Check if it was a closest-match (age outside all ranges)
+  if (ageGroup) {
+    const maxA = ageGroup.max_age === null ? 9999 : ageGroup.max_age;
+    if (age < ageGroup.min_age || age > maxA) {
+      closestMatchCount++;
+    }
+  }
+} else {
+  // No DOB / no tournament date → try to parse age group from original category name
+  noAgeCount++;
+  const parsedName = parseAgeGroupFromOriginalCategory(c._full_cat);
+  if (parsedName) {
+    ageGroup = findAgeGroupByName(parsedName, discipline, gender);
+    if (ageGroup) {
+      ageSource = "parsed_from_category";
+      parsedFromCatCount++;
+    }
+  }
+}
+
+// If still no age group → use fallback (Seniors or middle group)
+if (!ageGroup) {
+  ageGroup = getFallbackAgeGroup(discipline, gender);
+  ageSource = "fallback";
+  fallbackCount++;
+}
+
+// === Now assign category based on the age group ===
 if (ageGroup) {
-c._actual_age_group = ageGroup.display_name.toUpperCase().replace(/\s+/g, "_");
-c._age_group_id = ageGroup.id;
-c._age_group_name = ageGroup.display_name;
-c._computed_age = age;
-c._computed_gender = gender;
-if (discipline === "sparring") {
-const weightKg = parseFloat(c.weight_kg);
-if (!isNaN(weightKg) && weightKg > 0) {
-const wCat = getSparringCategoryLabel(weightKg, ageGroup.id);
-c._actual_sub_cat = wCat;
-c._full_cat = ageGroup.display_name + " - " + wCat;
-} else { c._actual_sub_cat = "Open"; c._full_cat = ageGroup.display_name + " - Open"; }
-} else if (discipline === "patterns") {
-const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
-const kupDanNum = kupDanNameToNumber(origBeltName);
-if (kupDanNum !== null) {
-const bCat = getPatternsCategoryLabel(kupDanNum, ageGroup.id);
-c._actual_sub_cat = bCat;
-c._full_cat = ageGroup.display_name + " - " + bCat;
+  c._actual_age_group = ageGroup.display_name.toUpperCase().replace(/\s+/g, "_");
+  c._age_group_id = ageGroup.id;
+  c._age_group_name = ageGroup.display_name;
+  c._computed_age = age;
+  c._computed_gender = gender;
+  c._age_source = ageSource;
+
+  if (discipline === "sparring") {
+    const weightKg = parseFloat(c.weight_kg);
+    if (!isNaN(weightKg) && weightKg > 0) {
+      const wCat = getSparringCategoryLabel(weightKg, ageGroup.id);
+      c._actual_sub_cat = wCat;
+      c._full_cat = ageGroup.display_name + " - " + wCat;
+    } else {
+      c._actual_sub_cat = "Open";
+      c._full_cat = ageGroup.display_name + " - Open";
+    }
+  } else if (discipline === "patterns") {
+    const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
+    const kupDanNum = kupDanNameToNumber(origBeltName);
+    if (kupDanNum !== null) {
+      const bCat = getPatternsCategoryLabel(kupDanNum, ageGroup.id);
+      c._actual_sub_cat = bCat;
+      c._full_cat = ageGroup.display_name + " - " + bCat;
+    } else {
+      c._actual_sub_cat = origBeltName || "Open";
+      c._full_cat = ageGroup.display_name + " - " + (origBeltName || "Open");
+    }
+  }
 } else {
-c._actual_sub_cat = origBeltName || "Open";
-c._full_cat = ageGroup.display_name + " - " + (origBeltName || "Open");
-}
-}
-} else {
-noGroupCount++;
-c._actual_age_group = "OTHER"; c._age_group_id = null; c._age_group_name = "No Group"; c._computed_age = age;
-c._computed_gender = gender;
-if (discipline === "sparring") { c._actual_sub_cat = "Open"; c._full_cat = "No Group - Open"; }
-else if (discipline === "patterns") {
-const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
-c._actual_sub_cat = origBeltName || "Open"; c._full_cat = "No Group - " + (origBeltName || "Open");
-}
-}
-} else {
-noAgeCount++;
-c._actual_age_group = "OTHER"; c._age_group_id = null; c._age_group_name = "No Group"; c._computed_age = null;
-c._computed_gender = gender;
-if (discipline === "sparring") { c._actual_sub_cat = "Open"; c._full_cat = "No Group - Open"; }
-else if (discipline === "patterns") {
-const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
-c._actual_sub_cat = origBeltName || "Open"; c._full_cat = "No Group - " + (origBeltName || "Open");
-}
+  // Absolute last resort — should basically never happen
+  c._actual_age_group = "OPEN";
+  c._age_group_id = null;
+  c._age_group_name = "Open";
+  c._computed_age = age;
+  c._computed_gender = gender;
+  c._age_source = "absolute_fallback";
+  if (discipline === "sparring") {
+    const weightKg = parseFloat(c.weight_kg);
+    c._actual_sub_cat = (!isNaN(weightKg) && weightKg > 0) ? weightKg + "kg" : "Open";
+    c._full_cat = "Open - " + c._actual_sub_cat;
+  } else {
+    const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
+    c._actual_sub_cat = origBeltName || "Open";
+    c._full_cat = "Open - " + (origBeltName || "Open");
+  }
 }
 });
-if (noAgeCount > 0 || noGroupCount > 0) {
-console.warn(`Category recomputation: ${noAgeCount} competitors without age (missing DOB or tournament date), ${noGroupCount} competitors with no matching age group`);
+
+if (noAgeCount > 0 || parsedFromCatCount > 0 || closestMatchCount > 0 || fallbackCount > 0) {
+  console.log(`Category recomputation summary:`);
+  console.log(`  - ${noAgeCount} competitors without DOB`);
+  console.log(`  - ${parsedFromCatCount} categorized by parsing original category name`);
+  console.log(`  - ${closestMatchCount} categorized using closest age group (age outside defined ranges)`);
+  console.log(`  - ${fallbackCount} categorized using fallback default group`);
 }
 }
 async function showCategories() {
@@ -2123,7 +2273,7 @@ if (value && value.trim()) { zone.textContent = value.trim(); zone.dataset.value
 else { zone.textContent = zone.dataset.placeholder || "—"; zone.dataset.value = ""; zone.classList.remove("has-value"); zone.classList.add("empty-zone"); }
 }
 function initWinnerDropZones() {
-document.querySelectorAll(".winner-drop-zone, .placement_drop-zone").forEach(zone => {
+document.querySelectorAll(".winner-drop-zone, .placement-drop-zone").forEach(zone => {
 zone.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "copy"; zone.classList.add("drop-hover"); });
 zone.addEventListener("dragleave", (e) => { zone.classList.remove("drop-hover"); });
 zone.addEventListener("drop", handleWinnerDrop);
@@ -3146,7 +3296,7 @@ if (numA !== null && numB !== null) return numB - numA;
 return a.localeCompare(b);
 }).map(b => '<option value="' + escapeAttr(b) + '">' + escapeHtml(b) + '</option>').join("");
 document.getElementById("content").innerHTML = '<div class="filters-card"><div class="filters">' +
-'<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '<option value="OTHER">Other/Uncategorized</option></select></div>' +
+'<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '</select></div>' +
 '<div class="filter-group"><label>Gender</label><select id="pGen" onchange="runPatternFilter()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
 '<div class="filter-group"><label>Kup/Dan Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Ranks</option>' + kupDanOptions + '</select></div>' +
 '<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generatePatternBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>' +
@@ -3166,7 +3316,7 @@ if (c._discipline !== "patterns") return false;
 const cGender = getCompetitorGender(c);
 const mGen = gen === "ALL" || cGender === normalizeGender(gen === "MALE" ? "male" : gen === "FEMALE" ? "female" : "ALL");
 if (!mGen) return false;
-if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
 if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
 return true;
 });
@@ -3191,7 +3341,7 @@ if (c._discipline !== "patterns") return false;
 const cGender = getCompetitorGender(c);
 const mGen = gen === "ALL" || cGender === normalizeGender(gen === "MALE" ? "male" : gen === "FEMALE" ? "female" : "ALL");
 if (!mGen) return false;
-if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
 if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
 return true;
 });
@@ -3210,7 +3360,7 @@ const dupCount = await fetchData();
 const ageGroups = categoryConfig.sparring.ageGroups.filter(g => g.is_active);
 const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ') <' + normalizeGender(g.gender) + '></option>').join("");
 document.getElementById("content").innerHTML = '<div class="filters-card"><div class="filters">' +
-'<div class="filter-group"><label>Age Category</label><select id="sAge" onchange="updateWeightDropdown()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '<option value="OTHER">Other/Uncategorized</option></select></div>' +
+'<div class="filter-group"><label>Age Category</label><select id="sAge" onchange="updateWeightDropdown()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '</select></div>' +
 '<div class="filter-group"><label>Gender</label><select id="sGen" onchange="updateWeightDropdown()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
 '<div class="filter-group"><label>Weight Class</label><select id="sWeight" onchange="runSparringFilter()"><option value="ALL">All</option></select></div>' +
 '<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generateSparringBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>' +
@@ -3242,7 +3392,7 @@ weightDivisions.push("+" + bounds[bounds.length-1] + "kg");
 } else {
 const relevantComps = competitors.filter((c) => {
 if (c._discipline !== "sparring") return false;
-if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
 const cGender = getCompetitorGender(c);
 return normGen === null || cGender === normGen;
 });
@@ -3273,7 +3423,7 @@ const age = document.getElementById("sAge").value, gen = document.getElementById
 const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
 const filtered = competitors.filter((c) => {
 if (c._discipline !== "sparring") return false;
-if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
 const cGender = getCompetitorGender(c);
 if (normGen !== null && cGender !== normGen) return false;
 const cWeight = c._actual_sub_cat || "";
@@ -3299,7 +3449,7 @@ const age = document.getElementById("sAge").value, gen = document.getElementById
 const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
 const filtered = competitors.filter((c) => {
 if (c._discipline !== "sparring") return false;
-if (age !== "ALL" && c._age_group_name !== age && !(age === "OTHER" && c._actual_age_group === "OTHER")) return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
 const cGender = getCompetitorGender(c);
 if (normGen !== null && cGender !== normGen) return false;
 const cWeight = c._actual_sub_cat || "";
