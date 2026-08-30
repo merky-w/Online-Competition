@@ -20,6 +20,8 @@
 --cat-age: #1a3a6c; --cat-weight: #c2185b; --cat-active: #28a745; --cat-inactive: #94a3b8;
 --gender-male: #1565c0; --gender-female: #c2185b; --gender-all: #6a1b9a;
 --round-accent: #ff6f00; --round-bg: #fff3e0; --round-border: #ffcc80;
+--tournament-not-started: #28a745;
+--tournament-started: #dc3545;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
@@ -51,6 +53,82 @@ h1 { font-size: 2rem; color: var(--primary); margin-bottom: 5px; font-weight: 70
 .btn-categories { background: linear-gradient(135deg, #e65100 0%, #bf360c 100%); color: white; box-shadow: 0 2px 8px rgba(230, 81, 0, 0.3); }
 .btn-categories:hover { background: linear-gradient(135deg, #bf360c 0%, #8f2a0a 100%); transform: translateY(-1px); }
 .btn-active { background: var(--secondary); color: #fff; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+
+/* ===== TOURNAMENT START BUTTON ===== */
+.btn-tournament-start {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  color: white;
+  box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+  position: relative;
+  overflow: hidden;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.btn-tournament-start:hover {
+  background: linear-gradient(135deg, #218838 0%, #186b2b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.55);
+}
+.btn-tournament-start.is-started {
+  background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+  box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4);
+  animation: pulseStarted 2s ease-in-out infinite;
+}
+.btn-tournament-start.is-started:hover {
+  background: linear-gradient(135deg, #c82333 0%, #8b1523 100%);
+  box-shadow: 0 5px 15px rgba(220, 53, 69, 0.55);
+}
+.btn-tournament-start .status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(255,255,255,0.8);
+  animation: blink 1.5s ease-in-out infinite;
+}
+.btn-tournament-start.is-started .status-dot {
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255,255,255,0.9);
+}
+.btn-tournament-start.loading {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes pulseStarted {
+  0%, 100% { box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4); }
+  50% { box-shadow: 0 3px 18px rgba(220, 53, 69, 0.7); }
+}
+.tournament-status-banner {
+  display: none;
+  background: linear-gradient(90deg, #dc3545 0%, #a71d2a 100%);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+.tournament-status-banner.visible { display: flex; }
+.tournament-status-banner .banner-icon { font-size: 1.3rem; animation: blink 1.5s ease-in-out infinite; }
+.tournament-status-banner .banner-time {
+  background: rgba(255,255,255,0.2);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .filters-card { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; border-left: 5px solid var(--secondary); }
 .filters { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
 .filter-group { flex: 1; min-width: 150px; }
@@ -68,112 +146,44 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .col-list:nth-child(2) .row-item { background-color: #fafafa; }
 .col-list:nth-child(2) .row-item:hover { background-color: #f0f0f0; }
 .duplicate-warning-banner {
-    background: linear-gradient(90deg, #ffebee 0%, #ffcdd2 100%);
-    color: #c62828;
-    border: 3px solid #c62828;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(198, 40, 40, 0.25);
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
+background: linear-gradient(90deg, #ffebee 0%, #ffcdd2 100%);
+color: #c62828;
+border: 3px solid #c62828;
+border-radius: 10px;
+padding: 16px 20px;
+margin-bottom: 20px;
+box-shadow: 0 4px 12px rgba(198, 40, 40, 0.25);
+display: flex;
+align-items: flex-start;
+gap: 14px;
 }
-.duplicate-warning-banner i.warning-icon {
-    font-size: 1.8rem;
-    color: #c62828;
-    flex-shrink: 0;
-    margin-top: 2px;
-}
+.duplicate-warning-banner i.warning-icon { font-size: 1.8rem; color: #c62828; flex-shrink: 0; margin-top: 2px; }
 .duplicate-warning-banner .warning-content { flex: 1; }
-.duplicate-warning-banner .warning-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.duplicate-warning-banner .warning-subtitle {
-    font-size: 0.85rem;
-    color: #b71c1c;
-    margin-bottom: 8px;
-}
-.duplicate-warning-banner ul {
-    margin: 0;
-    padding-left: 20px;
-    list-style: disc;
-}
-.duplicate-warning-banner li {
-    margin: 4px 0;
-    font-size: 0.9rem;
-    color: #b71c1c;
-}
+.duplicate-warning-banner .warning-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.duplicate-warning-banner .warning-subtitle { font-size: 0.85rem; color: #b71c1c; margin-bottom: 8px; }
+.duplicate-warning-banner ul { margin: 0; padding-left: 20px; list-style: disc; }
+.duplicate-warning-banner li { margin: 4px 0; font-size: 0.9rem; color: #b71c1c; }
 .duplicate-warning-banner li strong { color: #880e4f; }
-/* ===== FIXED A4 PAGE - Bracket now fills the page properly ===== */
 .a4-page {
-    background: white;
-    width: 210mm;
-    margin: 20px auto;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    padding: 10mm 12mm;
-    display: flex;
-    flex-direction: column;
-    page-break-after: always;
-    position: relative;
-    overflow: visible;
+background: white;
+width: 210mm;
+margin: 20px auto;
+box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+padding: 10mm 12mm;
+display: flex;
+flex-direction: column;
+page-break-after: always;
+position: relative;
+overflow: visible;
 }
-.a4-page:last-of-type {
-    page-break-after: auto;
-}
-.bracket-header {
-    text-align: center;
-    border-bottom: 2px solid var(--secondary);
-    padding-bottom: 6px;
-    margin-bottom: 6px;
-    flex-shrink: 0;
-}
+.a4-page:last-of-type { page-break-after: auto; }
+.bracket-header { text-align: center; border-bottom: 2px solid var(--secondary); padding-bottom: 6px; margin-bottom: 6px; flex-shrink: 0; }
 .bracket-header h2 { color: var(--primary); margin: 0; text-transform: uppercase; font-size: 1.1rem; }
-.bracket-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    flex: 1;
-}
-.bracket-table th {
-    background-color: var(--light-gray);
-    color: var(--primary);
-    padding: 6px 4px;
-    font-size: 0.8rem;
-    border: 1px solid var(--border);
-    text-align: center;
-    width: 1%;
-}
-.bracket-table td {
-    border: 1px solid var(--border);
-    padding: 0;
-    vertical-align: middle;
-}
-.match-cell {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: stretch;
-    padding: 3px;
-    min-height: 40px;
-}
-.match-box {
-    background: #fff;
-    border: 1px solid #ccc;
-    border-left: 3px solid var(--primary);
-    padding: 4px 6px;
-    font-size: 0.78rem;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
-}
+.bracket-table { width: 100%; border-collapse: collapse; table-layout: fixed; flex: 1; }
+.bracket-table th { background-color: var(--light-gray); color: var(--primary); padding: 6px 4px; font-size: 0.8rem; border: 1px solid var(--border); text-align: center; width: 1%; }
+.bracket-table td { border: 1px solid var(--border); padding: 0; vertical-align: middle; }
+.match-cell { display: flex; flex-direction: column; justify-content: center; align-items: stretch; padding: 3px; min-height: 40px; }
+.match-box { background: #fff; border: 1px solid #ccc; border-left: 3px solid var(--primary); padding: 4px 6px; font-size: 0.78rem; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
 .match-box.bye { background: #f9f9f9; border-left: 3px solid #ccc; color: #999; font-style: italic; }
 .match-box.empty { background: #fcfcfc; border-left: 3px dashed #bbb; border: 1px dashed #ddd; }
 .match-box.drop-hover { background: #c8e6c9 !important; border: 2px dashed var(--success) !important; box-shadow: 0 0 10px rgba(40, 167, 69, 0.4); }
@@ -181,19 +191,7 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .p-name:empty:focus::before { content: ""; }
 .p-name { min-width: 60px; min-height: 1.1em; display: inline-block; outline: none; cursor: text; }
 .p-name:focus { background-color: #fffbe6; border-radius: 2px; }
-.player-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1px;
-    padding: 2px 3px;
-    border-radius: 3px;
-    transition: background 0.15s, border 0.15s;
-    gap: 3px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    position: relative;
-}
+.player-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; padding: 2px 3px; border-radius: 3px; transition: background 0.15s, border 0.15s; gap: 3px; cursor: pointer; border: 2px solid transparent; position: relative; }
 .player-row .player-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .p-name { font-weight: 600; font-size: 0.75rem; }
 .p-team { font-size: 0.65rem; color: #666; }
@@ -650,23 +648,22 @@ border-top-color: var(--primary); border-radius: 50%;
 animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-/* ===== PRINT STYLES - Fix blank pages issue ===== */
 @media print {
-    body { padding: 0; background: white; }
-    .nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn,
-    .toast, .selection-banner, .autosave-indicator, .bracket-header-actions,
-    .drag-handle, .delete-btn, header { display: none !important; }
-    .container > .nav + .filters-card { display: none !important; }
-    .a4-page {
-        margin: 0 !important;
-        box-shadow: none !important;
-        page-break-after: always;
-        width: 100%;
-        padding: 5mm;
-    }
-    .a4-page:last-of-type { page-break-after: auto; }
-    .container { max-width: 100%; padding: 0; }
-    #content { margin: 0; padding: 0; }
+body { padding: 0; background: white; }
+.nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn,
+.toast, .selection-banner, .autosave-indicator, .bracket-header-actions,
+.drag-handle, .delete-btn, header, .tournament-status-banner { display: none !important; }
+.container > .nav + .filters-card { display: none !important; }
+.a4-page {
+margin: 0 !important;
+box-shadow: none !important;
+page-break-after: always;
+width: 100%;
+padding: 5mm;
+}
+.a4-page:last-of-type { page-break-after: auto; }
+.container { max-width: 100%; padding: 0; }
+#content { margin: 0; padding: 0; }
 }
 @media (max-width: 768px) {
 .parallel-container { grid-template-columns: 1fr; border-bottom: none; }
@@ -726,6 +723,10 @@ animation: spin 0.8s linear infinite;
 </header>
 <nav class="nav">
 <a href="index.html" class="btn btn-secondary" style="text-decoration: none"><i class="fas fa-arrow-left"></i> Back to Main</a>
+<button id="btnTournamentStart" class="btn btn-tournament-start" onclick="toggleTournamentStart()" title="Start/Stop the tournament">
+<span class="status-dot"></span>
+<span id="tournamentStartLabel">Start Tournament</span>
+</button>
 <button id="btnPatterns" class="btn btn-primary" onclick="showPatterns()"><i class="fas fa-chess-board"></i> Patterns (Tul)</button>
 <button id="btnSparring" class="btn btn-secondary" onclick="showSparring()"><i class="fas fa-fist-raised"></i> Sparring (Matsogi)</button>
 <button id="btnCategories" class="btn btn-categories" onclick="showCategories()"><i class="fas fa-sliders-h"></i> Categories</button>
@@ -736,6 +737,11 @@ animation: spin 0.8s linear infinite;
 <button id="btnCoaches" class="btn btn-secondary" onclick="showCoaches()"><i class="fas fa-chalkboard-teacher"></i> Coaches</button>
 <button id="btnDebug" class="btn btn-warning" onclick="showDebugInfo()" title="Show debug info"><i class="fas fa-bug"></i> Debug</button>
 </nav>
+<div class="tournament-status-banner" id="tournamentStatusBanner">
+<span class="banner-icon"><i class="fas fa-flag-checkered"></i></span>
+<span>TOURNAMENT IS LIVE</span>
+<span class="banner-time" id="tournamentStartedTime">—</span>
+</div>
 <div class="filters-card">
 <div class="filters">
 <div class="filter-group">
@@ -867,8 +873,12 @@ let currentCatGender = "male";
 let autoSaveTimer = null;
 let isAutoSaving = false;
 let pendingSave = false;
-// Store detected duplicates (not deleted) - shown in red at top of category
 let detectedDuplicates = [];
+
+// ===== TOURNAMENT START STATE =====
+let tournamentIsStarted = false;
+let tournamentStartedAt = null;
+let tournamentStatusId = null;
 
 function parseAgeGroupFromOriginalCategory(fullCat) {
 if (!fullCat) return null;
@@ -943,36 +953,29 @@ match = allGroups.find(g => lower.includes(g.display_name.toLowerCase()));
 if (match) return match;
 return null;
 }
-
-// =====================================================================
-// ===== FIXED: Detect duplicates WITHOUT deleting from database =======
-// ===== Just returns the duplicates array for display in red ==========
-// =====================================================================
 async function resolveDuplicates() {
-    const seen = new Map();
-    const duplicates = [];
-    for (let i = 0; i < competitors.length; i++) {
-        const c = competitors[i];
-        const name = (c.name || '').trim().toLowerCase();
-        const team = (c.team || '').trim().toLowerCase();
-        const disc = c._discipline;
-        const key = `${name}|${team}|${disc}`;
-        if (seen.has(key)) {
-            // Collect duplicate info but DO NOT delete from database
-            duplicates.push({
-                name: c.name,
-                team: c.team,
-                discipline: disc,
-                fullCat: c._full_cat,
-                regId: c._reg_id
-            });
-        } else {
-            seen.set(key, c);
-        }
-    }
-    return duplicates;
+const seen = new Map();
+const duplicates = [];
+for (let i = 0; i < competitors.length; i++) {
+const c = competitors[i];
+const name = (c.name || '').trim().toLowerCase();
+const team = (c.team || '').trim().toLowerCase();
+const disc = c._discipline;
+const key = `${name}|${team}|${disc}`;
+if (seen.has(key)) {
+duplicates.push({
+name: c.name,
+team: c.team,
+discipline: disc,
+fullCat: c._full_cat,
+regId: c._reg_id
+});
+} else {
+seen.set(key, c);
 }
-
+}
+return duplicates;
+}
 function showAutosaveIndicator(text, type) {
 const el = document.getElementById("autosaveIndicator");
 const txt = document.getElementById("autosaveText");
@@ -1011,6 +1014,141 @@ showAutosaveIndicator("✗ Save failed: " + err.message, "error");
 isAutoSaving = false;
 }
 }
+
+// =====================================================================
+// ===== TOURNAMENT START/STOP FUNCTIONS ===============================
+// =====================================================================
+async function loadTournamentStatus() {
+try {
+const { data, error } = await sb
+.from("tournament_status")
+.select("*")
+.order("id", { ascending: true })
+.limit(1);
+if (error) {
+console.warn("Could not load tournament_status:", error.message);
+lastDebugInfo.errors.push("TOURNAMENT_STATUS LOAD ERROR: " + error.message);
+tournamentIsStarted = false;
+tournamentStartedAt = null;
+tournamentStatusId = null;
+updateTournamentStartUI();
+return;
+}
+if (data && data.length > 0) {
+const row = data[0];
+tournamentIsStarted = !!row.is_started;
+tournamentStartedAt = row.started_at || null;
+tournamentStatusId = row.id;
+} else {
+const { data: inserted, error: insertErr } = await sb
+.from("tournament_status")
+.insert([{ is_started: false, started_at: null }])
+.select()
+.single();
+if (!insertErr && inserted) {
+tournamentIsStarted = false;
+tournamentStartedAt = null;
+tournamentStatusId = inserted.id;
+} else {
+tournamentIsStarted = false;
+tournamentStartedAt = null;
+tournamentStatusId = null;
+}
+}
+updateTournamentStartUI();
+} catch (err) {
+console.error("loadTournamentStatus error:", err);
+lastDebugInfo.errors.push("TOURNAMENT_STATUS ERROR: " + err.message);
+tournamentIsStarted = false;
+tournamentStartedAt = null;
+tournamentStatusId = null;
+updateTournamentStartUI();
+}
+}
+
+async function toggleTournamentStart() {
+const btn = document.getElementById("btnTournamentStart");
+if (!btn) return;
+if (btn.classList.contains("loading")) return;
+btn.classList.add("loading");
+
+const newState = !tournamentIsStarted;
+const confirmMsg = newState
+  ? "Are you sure you want to START the tournament? This will mark the tournament as LIVE."
+  : "Are you sure you want to STOP the tournament? This will mark it as NOT started.";
+
+if (!confirm(confirmMsg)) {
+  btn.classList.remove("loading");
+  return;
+}
+
+try {
+  if (tournamentStatusId) {
+    const payload = {
+      is_started: newState,
+      started_at: newState ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await sb
+      .from("tournament_status")
+      .update(payload)
+      .eq("id", tournamentStatusId);
+    if (error) throw error;
+  } else {
+    const { data: inserted, error } = await sb
+      .from("tournament_status")
+      .insert([{
+        is_started: newState,
+        started_at: newState ? new Date().toISOString() : null
+      }])
+      .select()
+      .single();
+    if (error) throw error;
+    if (inserted) tournamentStatusId = inserted.id;
+  }
+
+  tournamentIsStarted = newState;
+  tournamentStartedAt = newState ? new Date().toISOString() : null;
+  updateTournamentStartUI();
+  showToast(newState ? "🏁 Tournament STARTED!" : "⏸ Tournament STOPPED", newState ? "success" : "error");
+} catch (err) {
+  console.error("toggleTournamentStart error:", err);
+  showToast("Failed to toggle: " + (err.message || err), "error");
+} finally {
+  btn.classList.remove("loading");
+}
+}
+
+function updateTournamentStartUI() {
+  const btn = document.getElementById("btnTournamentStart");
+  const label = document.getElementById("tournamentStartLabel");
+  const banner = document.getElementById("tournamentStatusBanner");
+  const bannerTime = document.getElementById("tournamentStartedTime");
+  if (!btn || !label) return;
+
+  if (tournamentIsStarted) {
+    btn.classList.add("is-started");
+    label.innerHTML = '<i class="fas fa-stop-circle"></i> Stop Tournament';
+    btn.title = "Tournament is LIVE — click to stop";
+    if (banner) banner.classList.add("visible");
+    if (bannerTime && tournamentStartedAt) {
+      try {
+        const d = new Date(tournamentStartedAt);
+        bannerTime.textContent = "Started: " + d.toLocaleString();
+      } catch (e) {
+        bannerTime.textContent = "";
+      }
+    } else if (bannerTime) {
+      bannerTime.textContent = "";
+    }
+  } else {
+    btn.classList.remove("is-started");
+    label.innerHTML = '<i class="fas fa-play-circle"></i> Start Tournament';
+    btn.title = "Click to start the tournament";
+    if (banner) banner.classList.remove("visible");
+  }
+}
+
 async function loadCategoryConfig() {
 try {
 const { data: ageGroups, error: ageErr } = await sb
@@ -1245,73 +1383,63 @@ c._full_cat = "Open - " + (origBeltName || "Open");
 }
 });
 }
-
-// =====================================================================
-// ===== Helper: Render duplicate warning banner at top of page ========
-// =====================================================================
 function renderDuplicateWarningBanner(duplicates, discipline) {
-    if (!duplicates || duplicates.length === 0) return "";
-    const filtered = duplicates.filter(d => d.discipline === discipline);
-    if (filtered.length === 0) return "";
-    const byCategory = {};
-    filtered.forEach(d => {
-        const cat = d.fullCat || "Unknown category";
-        if (!byCategory[cat]) byCategory[cat] = [];
-        byCategory[cat].push(d);
-    });
-    let listHtml = "";
-    for (const cat in byCategory) {
-        const items = byCategory[cat];
-        listHtml += '<li><strong>' + escapeHtml(items[0].name) + '</strong> — Team: <em>' + escapeHtml(items[0].team || 'N/A') + '</em> — Category: <em>' + escapeHtml(cat) + '</em> (' + items.length + ' duplicate' + (items.length > 1 ? 's' : '') + ')</li>';
-    }
-    return '<div class="duplicate-warning-banner">' +
-        '<i class="fas fa-exclamation-triangle warning-icon"></i>' +
-        '<div class="warning-content">' +
-        '<div class="warning-title"><span>⚠️ DUPLICATE REGISTRATIONS DETECTED (' + filtered.length + ')</span></div>' +
-        '<div class="warning-subtitle">The following competitors appear multiple times. <strong>They have NOT been deleted from the database</strong> — please handle them manually.</div>' +
-        '<ul>' + listHtml + '</ul>' +
-        '</div></div>';
+if (!duplicates || duplicates.length === 0) return "";
+const filtered = duplicates.filter(d => d.discipline === discipline);
+if (filtered.length === 0) return "";
+const byCategory = {};
+filtered.forEach(d => {
+const cat = d.fullCat || "Unknown category";
+if (!byCategory[cat]) byCategory[cat] = [];
+byCategory[cat].push(d);
+});
+let listHtml = "";
+for (const cat in byCategory) {
+const items = byCategory[cat];
+listHtml += '<li><strong>' + escapeHtml(items[0].name) + '</strong> — Team: <em>' + escapeHtml(items[0].team || 'N/A') + '</em> — Category: <em>' + escapeHtml(cat) + '</em> (' + items.length + ' duplicate' + (items.length > 1 ? 's' : '') + ')</li>';
 }
-
-// =====================================================================
-// ===== Helper: Render duplicates inline at top of a specific category
-// ===== Displayed in RED as requested
-// =====================================================================
+return '<div class="duplicate-warning-banner">' +
+'<i class="fas fa-exclamation-triangle warning-icon"></i>' +
+'<div class="warning-content">' +
+'<div class="warning-title"><span>⚠️ DUPLICATE REGISTRATIONS DETECTED (' + filtered.length + ')</span></div>' +
+'<div class="warning-subtitle">The following competitors appear multiple times. <strong>They have NOT been deleted from the database</strong> — please handle them manually.</div>' +
+'<ul>' + listHtml + '</ul>' +
+'</div></div>';
+}
 function renderDuplicatesInCategory(categoryKey, duplicates, discipline) {
-    if (!duplicates || duplicates.length === 0) return "";
-    const catDups = duplicates.filter(d => d.discipline === discipline && d.fullCat === categoryKey);
-    if (catDups.length === 0) return "";
-    const uniqueDups = [];
-    const seen = new Set();
-    catDups.forEach(d => {
-        const key = (d.name || '').toLowerCase() + '|' + (d.team || '').toLowerCase();
-        if (!seen.has(key)) {
-            seen.add(key);
-            uniqueDups.push(d);
-        }
-    });
-    let rowsHtml = "";
-    uniqueDups.forEach(d => {
-        rowsHtml += '<div class="row-item duplicate-row"><i class="fas fa-exclamation-circle" style="margin-right:6px;"></i> ' + escapeHtml(d.name) + ' (DUPLICATE)</div>';
-    });
-    const teamRowsHtml = uniqueDups.map(() => '<div class="row-item duplicate-row"><i class="fas fa-exclamation-circle" style="margin-right:6px;"></i> DUPLICATE</div>').join("");
-    return '<div class="category-card" style="border-top-color:#c62828;">' +
-        '<div class="category-header duplicate-header">' +
-        '<span><i class="fas fa-exclamation-triangle"></i> DUPLICATES in: ' + escapeHtml(categoryKey) + '</span>' +
-        '<span style="background:#ff5252;padding:2px 10px;border-radius:12px;font-size:0.85rem;">' + uniqueDups.length + ' duplicate' + (uniqueDups.length > 1 ? 's' : '') + '</span>' +
-        '</div>' +
-        '<div class="parallel-container">' +
-        '<div class="col-list">' +
-        '<div class="col-header" style="background:#ffcdd2;color:#b71c1c;"><i class="fas fa-user"></i> Duplicate Names</div>' +
-        rowsHtml +
-        '</div>' +
-        '<div class="col-list">' +
-        '<div class="col-header" style="background:#ffcdd2;color:#b71c1c;"><i class="fas fa-users"></i> Status</div>' +
-        teamRowsHtml +
-        '</div>' +
-        '</div></div>';
+if (!duplicates || duplicates.length === 0) return "";
+const catDups = duplicates.filter(d => d.discipline === discipline && d.fullCat === categoryKey);
+if (catDups.length === 0) return "";
+const uniqueDups = [];
+const seen = new Set();
+catDups.forEach(d => {
+const key = (d.name || '').toLowerCase() + '|' + (d.team || '').toLowerCase();
+if (!seen.has(key)) {
+seen.add(key);
+uniqueDups.push(d);
 }
-
+});
+let rowsHtml = "";
+uniqueDups.forEach(d => {
+rowsHtml += '<div class="row-item duplicate-row"><i class="fas fa-exclamation-circle" style="margin-right:6px;"></i> ' + escapeHtml(d.name) + ' (DUPLICATE)</div>';
+});
+const teamRowsHtml = uniqueDups.map(() => '<div class="row-item duplicate-row"><i class="fas fa-exclamation-circle" style="margin-right:6px;"></i> DUPLICATE</div>').join("");
+return '<div class="category-card" style="border-top-color:#c62828;">' +
+'<div class="category-header duplicate-header">' +
+'<span><i class="fas fa-exclamation-triangle"></i> DUPLICATES in: ' + escapeHtml(categoryKey) + '</span>' +
+'<span style="background:#ff5252;padding:2px 10px;border-radius:12px;font-size:0.85rem;">' + uniqueDups.length + ' duplicate' + (uniqueDups.length > 1 ? 's' : '') + '</span>' +
+'</div>' +
+'<div class="parallel-container">' +
+'<div class="col-list">' +
+'<div class="col-header" style="background:#ffcdd2;color:#b71c1c;"><i class="fas fa-user"></i> Duplicate Names</div>' +
+rowsHtml +
+'</div>' +
+'<div class="col-list">' +
+'<div class="col-header" style="background:#ffcdd2;color:#b71c1c;"><i class="fas fa-users"></i> Status</div>' +
+teamRowsHtml +
+'</div>' +
+'</div></div>';
+}
 async function showCategories() {
 setActiveBtn("btnCategories");
 await loadCategoryConfig();
@@ -2983,10 +3111,6 @@ deduped[key] = unique;
 }
 return deduped;
 }
-// =====================================================================
-// ===== FIXED: renderBracketView - Bracket now fills the page properly
-// ===== No more blank pages before the bracket
-// =====================================================================
 async function renderBracketView(groups, type) {
 currentGroups = groups; currentBracketType = type;
 undoStack = []; updateUndoButton(); clearSelection();
@@ -3019,8 +3143,6 @@ const p1 = winnerData.placement_1 || "";
 const p2 = winnerData.placement_2 || "";
 const p3a = winnerData.placement_3a || "";
 const p3b = winnerData.placement_3b || "";
-// FIXED: Removed min-height:297mm and --row-count CSS variable
-// The bracket now uses natural flow - no blank pages before it
 html += '<div class="a4-page" id="page-' + categoryIndex + '" data-category="' + key + '" data-type="' + type + '">' +
 '<div class="bracket-header"><span style="font-size:12px;text-transform:uppercase;color:#666">' + type + '</span>' +
 '<h2>' + escapeHtml(key) + '</h2>' +
@@ -3303,10 +3425,6 @@ else if (id === "btnCategories") active.classList.add("btn-categories", "btn-act
 else active.classList.add("btn-primary", "btn-active");
 }
 }
-
-// =====================================================================
-// ===== FIXED: fetchData returns duplicates array (not deleted) =======
-// =====================================================================
 async function fetchData() {
 try {
 lastDebugInfo = { registrations: [], competitors: [], judges: [], coaches: [], errors: [] };
@@ -3368,7 +3486,6 @@ gender: personGender
 });
 });
 recomputeCompetitorCategories();
-// FIXED: Detect duplicates but do NOT delete from database
 const duplicates = await resolveDuplicates();
 detectedDuplicates = duplicates || [];
 judgeDetails.forEach((person) => {
@@ -3405,6 +3522,7 @@ html += '<div class="category-card"><div class="category-header">Data Summary</d
 '<p><strong>Sparring weight boundaries defined:</strong> ' + Object.values(categoryConfig.sparring.weightBoundaries || {}).reduce((s, arr) => s + arr.length, 0) + '</p>' +
 '<p><strong>Sparring round configs defined:</strong> ' + Object.values(categoryConfig.sparring.roundConfigs || {}).length + '</p>' +
 '<p><strong>Duplicates detected (NOT deleted):</strong> ' + detectedDuplicates.length + '</p>' +
+'<p><strong>Tournament Started:</strong> ' + (tournamentIsStarted ? 'YES 🏁' : 'No') + '</p>' +
 '</div></div>';
 if (detectedDuplicates.length > 0) {
 html += '<div class="category-card"><div class="category-header" style="background:#c62828;">Detected Duplicates (NOT deleted)</div><div style="padding:20px;">' +
@@ -3427,10 +3545,6 @@ const activeBtn = document.querySelector(".nav .btn.btn-active");
 if (activeBtn && activeBtn.id === "btnPatterns") runPatternFilter();
 if (activeBtn && activeBtn.id === "btnSparring") runSparringFilter();
 }
-
-// =====================================================================
-// ===== FIXED: showPatterns - duplicates shown in RED at top ==========
-// =====================================================================
 async function showPatterns() {
 setActiveBtn("btnPatterns");
 const duplicates = await fetchData();
@@ -3449,7 +3563,7 @@ return a.localeCompare(b);
 let contentHtml = '';
 const patternsDups = (duplicates || []).filter(d => d.discipline === "patterns");
 if (patternsDups.length > 0) {
-    contentHtml += renderDuplicateWarningBanner(duplicates, "patterns");
+contentHtml += renderDuplicateWarningBanner(duplicates, "patterns");
 }
 contentHtml += '<div class="filters-card"><div class="filters">' +
 '<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '</select></div>' +
@@ -3482,13 +3596,12 @@ const t = document.getElementById("listTarget");
 t.innerHTML = "";
 if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
 else {
-    for (const k in groups) {
-        const catKey = k.replace(/ - (male|female)$/, "");
-        // FIXED: Show duplicates in RED at top of each category
-        const dupHtml = renderDuplicatesInCategory(catKey, detectedDuplicates, "patterns");
-        if (dupHtml) t.innerHTML += dupHtml;
-        t.innerHTML += createParallelCard("Pattern: " + k, groups[k]);
-    }
+for (const k in groups) {
+const catKey = k.replace(/ - (male|female)$/, "");
+const dupHtml = renderDuplicatesInCategory(catKey, detectedDuplicates, "patterns");
+if (dupHtml) t.innerHTML += dupHtml;
+t.innerHTML += createParallelCard("Pattern: " + k, groups[k]);
+}
 }
 renderTeamSummary(filtered, "Patterns");
 }
@@ -3513,10 +3626,6 @@ groups[k].push(c);
 });
 await renderBracketView(groups, "Patterns");
 }
-
-// =====================================================================
-// ===== FIXED: showSparring - duplicates shown in RED at top ==========
-// =====================================================================
 async function showSparring() {
 setActiveBtn("btnSparring");
 const duplicates = await fetchData();
@@ -3525,7 +3634,7 @@ const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_n
 let contentHtml = '';
 const sparringDups = (duplicates || []).filter(d => d.discipline === "sparring");
 if (sparringDups.length > 0) {
-    contentHtml += renderDuplicateWarningBanner(duplicates, "sparring");
+contentHtml += renderDuplicateWarningBanner(duplicates, "sparring");
 }
 contentHtml += '<div class="filters-card"><div class="filters">' +
 '<div class="filter-group"><label>Age Category</label><select id="sAge" onchange="updateWeightDropdown()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '</select></div>' +
@@ -3604,13 +3713,12 @@ const t = document.getElementById("listTarget");
 t.innerHTML = "";
 if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
 else {
-    for (const k in groups) {
-        const catKey = k.replace(/ - (male|female)$/, "");
-        // FIXED: Show duplicates in RED at top of each category
-        const dupHtml = renderDuplicatesInCategory(catKey, detectedDuplicates, "sparring");
-        if (dupHtml) t.innerHTML += dupHtml;
-        t.innerHTML += createParallelCard("Sparring: " + k, groups[k]);
-    }
+for (const k in groups) {
+const catKey = k.replace(/ - (male|female)$/, "");
+const dupHtml = renderDuplicatesInCategory(catKey, detectedDuplicates, "sparring");
+if (dupHtml) t.innerHTML += dupHtml;
+t.innerHTML += createParallelCard("Sparring: " + k, groups[k]);
+}
 }
 renderTeamSummary(filtered, "Sparring");
 }
@@ -4033,6 +4141,10 @@ link.click();
 document.body.removeChild(link);
 showToast("Financial report exported", "success");
 }
+
+// =====================================================================
+// ===== INITIALIZATION ================================================
+// =====================================================================
 document.addEventListener("keydown", (e) => {
 if (e.key === "Escape") clearSelection();
 if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -4044,10 +4156,16 @@ e.preventDefault();
 performUndo();
 }
 });
+
 const today = new Date();
 document.getElementById("tournamentDate").valueAsDate = today;
 tournamentDate = today.toISOString().split("T")[0];
-showPatterns();
+
+// Load tournament status FIRST, then show patterns
+(async () => {
+  await loadTournamentStatus();
+  showPatterns();
+})();
 </script>
 </body>
 </html>
