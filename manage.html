@@ -53,82 +53,79 @@ h1 { font-size: 2rem; color: var(--primary); margin-bottom: 5px; font-weight: 70
 .btn-categories { background: linear-gradient(135deg, #e65100 0%, #bf360c 100%); color: white; box-shadow: 0 2px 8px rgba(230, 81, 0, 0.3); }
 .btn-categories:hover { background: linear-gradient(135deg, #bf360c 0%, #8f2a0a 100%); transform: translateY(-1px); }
 .btn-active { background: var(--secondary); color: #fff; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
-
-/* ===== TOURNAMENT START BUTTON ===== */
 .btn-tournament-start {
-  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-  color: white;
-  box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
-  position: relative;
-  overflow: hidden;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+color: white;
+box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+position: relative;
+overflow: hidden;
+font-weight: 700;
+letter-spacing: 0.3px;
 }
 .btn-tournament-start:hover {
-  background: linear-gradient(135deg, #218838 0%, #186b2b 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.55);
+background: linear-gradient(135deg, #218838 0%, #186b2b 100%);
+transform: translateY(-2px);
+box-shadow: 0 5px 15px rgba(40, 167, 69, 0.55);
 }
 .btn-tournament-start.is-started {
-  background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
-  box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4);
-  animation: pulseStarted 2s ease-in-out infinite;
+background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4);
+animation: pulseStarted 2s ease-in-out infinite;
 }
 .btn-tournament-start.is-started:hover {
-  background: linear-gradient(135deg, #c82333 0%, #8b1523 100%);
-  box-shadow: 0 5px 15px rgba(220, 53, 69, 0.55);
+background: linear-gradient(135deg, #c82333 0%, #8b1523 100%);
+box-shadow: 0 5px 15px rgba(220, 53, 69, 0.55);
 }
 .btn-tournament-start .status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #fff;
-  display: inline-block;
-  box-shadow: 0 0 8px rgba(255,255,255,0.8);
-  animation: blink 1.5s ease-in-out infinite;
+width: 10px;
+height: 10px;
+border-radius: 50%;
+background: #fff;
+display: inline-block;
+box-shadow: 0 0 8px rgba(255,255,255,0.8);
+animation: blink 1.5s ease-in-out infinite;
 }
 .btn-tournament-start.is-started .status-dot {
-  background: #fff;
-  box-shadow: 0 0 10px rgba(255,255,255,0.9);
+background: #fff;
+box-shadow: 0 0 10px rgba(255,255,255,0.9);
 }
 .btn-tournament-start.loading {
-  opacity: 0.7;
-  cursor: wait;
-  pointer-events: none;
+opacity: 0.7;
+cursor: wait;
+pointer-events: none;
 }
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+0%, 100% { opacity: 1; }
+50% { opacity: 0.4; }
 }
 @keyframes pulseStarted {
-  0%, 100% { box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4); }
-  50% { box-shadow: 0 3px 18px rgba(220, 53, 69, 0.7); }
+0%, 100% { box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4); }
+50% { box-shadow: 0 3px 18px rgba(220, 53, 69, 0.7); }
 }
 .tournament-status-banner {
-  display: none;
-  background: linear-gradient(90deg, #dc3545 0%, #a71d2a 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  font-weight: 700;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 0.95rem;
+display: none;
+background: linear-gradient(90deg, #dc3545 0%, #a71d2a 100%);
+color: white;
+padding: 10px 20px;
+border-radius: 10px;
+margin-bottom: 20px;
+font-weight: 700;
+text-align: center;
+box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+align-items: center;
+justify-content: center;
+gap: 10px;
+font-size: 0.95rem;
 }
 .tournament-status-banner.visible { display: flex; }
 .tournament-status-banner .banner-icon { font-size: 1.3rem; animation: blink 1.5s ease-in-out infinite; }
 .tournament-status-banner .banner-time {
-  background: rgba(255,255,255,0.2);
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
+background: rgba(255,255,255,0.2);
+padding: 3px 10px;
+border-radius: 12px;
+font-size: 0.8rem;
+font-weight: 600;
 }
-
 .filters-card { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; border-left: 5px solid var(--secondary); }
 .filters { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
 .filter-group { flex: 1; min-width: 150px; }
@@ -732,6 +729,7 @@ padding: 5mm;
 <button id="btnCategories" class="btn btn-categories" onclick="showCategories()"><i class="fas fa-sliders-h"></i> Categories</button>
 <button id="btnTeamOverview" class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-users-cog"></i> Team Overview</button>
 <button id="btnPriceOverview" class="btn btn-profit" onclick="showPriceOverview()"><i class="fas fa-coins"></i> Price / Profit</button>
+<button id="btnRingSchedule" class="btn btn-info" onclick="showRingSchedule()"><i class="fas fa-ring"></i> Ring Schedule</button>
 <button id="btnDeleted" class="btn btn-secondary" onclick="showDeleted()"><i class="fas fa-trash-alt"></i> Deleted</button>
 <button id="btnJudges" class="btn btn-secondary" onclick="showJudges()"><i class="fas fa-gavel"></i> Judges</button>
 <button id="btnCoaches" class="btn btn-secondary" onclick="showCoaches()"><i class="fas fa-chalkboard-teacher"></i> Coaches</button>
@@ -874,12 +872,9 @@ let autoSaveTimer = null;
 let isAutoSaving = false;
 let pendingSave = false;
 let detectedDuplicates = [];
-
-// ===== TOURNAMENT START STATE =====
 let tournamentIsStarted = false;
 let tournamentStartedAt = null;
 let tournamentStatusId = null;
-
 function parseAgeGroupFromOriginalCategory(fullCat) {
 if (!fullCat) return null;
 const lower = fullCat.toLowerCase();
@@ -1014,10 +1009,6 @@ showAutosaveIndicator("✗ Save failed: " + err.message, "error");
 isAutoSaving = false;
 }
 }
-
-// =====================================================================
-// ===== TOURNAMENT START/STOP FUNCTIONS ===============================
-// =====================================================================
 async function loadTournamentStatus() {
 try {
 const { data, error } = await sb
@@ -1065,90 +1056,282 @@ tournamentStatusId = null;
 updateTournamentStartUI();
 }
 }
-
 async function toggleTournamentStart() {
 const btn = document.getElementById("btnTournamentStart");
-if (!btn) return;
-if (btn.classList.contains("loading")) return;
+if (!btn || btn.classList.contains("loading")) return;
 btn.classList.add("loading");
-
 const newState = !tournamentIsStarted;
 const confirmMsg = newState
-  ? "Are you sure you want to START the tournament? This will mark the tournament as LIVE."
-  : "Are you sure you want to STOP the tournament? This will mark it as NOT started.";
-
-if (!confirm(confirmMsg)) {
-  btn.classList.remove("loading");
-  return;
-}
-
+? "⚠️ START the tournament?\n\n• All user logins/logouts will be LOCKED\n• Ring schedule will be calculated\n• Category counts will be updated"
+: "Stop the tournament? This will unlock user access and clear ring schedule.";
+if (!confirm(confirmMsg)) { btn.classList.remove("loading"); return; }
 try {
-  if (tournamentStatusId) {
-    const payload = {
-      is_started: newState,
-      started_at: newState ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString()
-    };
-    const { error } = await sb
-      .from("tournament_status")
-      .update(payload)
-      .eq("id", tournamentStatusId);
-    if (error) throw error;
-  } else {
-    const { data: inserted, error } = await sb
-      .from("tournament_status")
-      .insert([{
-        is_started: newState,
-        started_at: newState ? new Date().toISOString() : null
-      }])
-      .select()
-      .single();
-    if (error) throw error;
-    if (inserted) tournamentStatusId = inserted.id;
-  }
-
-  tournamentIsStarted = newState;
-  tournamentStartedAt = newState ? new Date().toISOString() : null;
-  updateTournamentStartUI();
-  showToast(newState ? "🏁 Tournament STARTED!" : "⏸ Tournament STOPPED", newState ? "success" : "error");
+const payload = {
+is_started: newState,
+started_at: newState ? new Date().toISOString() : null,
+updated_at: new Date().toISOString()
+};
+if (tournamentStatusId) {
+const { error } = await sb.from("tournament_status").update(payload).eq("id", tournamentStatusId);
+if (error) throw error;
+} else {
+const { data: inserted, error } = await sb.from("tournament_status").insert([payload]).select().single();
+if (error) throw error;
+if (inserted) tournamentStatusId = inserted.id;
+}
+tournamentIsStarted = newState;
+tournamentStartedAt = newState ? new Date().toISOString() : null;
+if (newState) {
+showToast("🔄 Calculating fights, time & ring schedule...", "saving");
+const stats = await calculateAndSaveTournamentStats();
+updateTournamentStartUI();
+showToast(
+`🏁 Tournament STARTED!\n• ${stats.totalFights} total fights\n• ${Math.ceil(stats.totalTimeSeconds/60)} min total sparring time\n• Balanced across ${stats.numRings} ring(s)`,
+"success"
+);
+} else {
+await sb.from("ring_assignments").delete().neq("id", 0);
+await sb.from("category_counts").delete().in("category_name", ["total_fights", "total_time_minutes"]);
+updateTournamentStartUI();
+showToast("⏸ Tournament STOPPED — user access unlocked", "error");
+}
 } catch (err) {
-  console.error("toggleTournamentStart error:", err);
-  showToast("Failed to toggle: " + (err.message || err), "error");
+console.error("toggleTournamentStart error:", err);
+showToast("Failed: " + (err.message || err), "error");
 } finally {
-  btn.classList.remove("loading");
+btn.classList.remove("loading");
 }
 }
-
 function updateTournamentStartUI() {
-  const btn = document.getElementById("btnTournamentStart");
-  const label = document.getElementById("tournamentStartLabel");
-  const banner = document.getElementById("tournamentStatusBanner");
-  const bannerTime = document.getElementById("tournamentStartedTime");
-  if (!btn || !label) return;
-
-  if (tournamentIsStarted) {
-    btn.classList.add("is-started");
-    label.innerHTML = '<i class="fas fa-stop-circle"></i> Stop Tournament';
-    btn.title = "Tournament is LIVE — click to stop";
-    if (banner) banner.classList.add("visible");
-    if (bannerTime && tournamentStartedAt) {
-      try {
-        const d = new Date(tournamentStartedAt);
-        bannerTime.textContent = "Started: " + d.toLocaleString();
-      } catch (e) {
-        bannerTime.textContent = "";
-      }
-    } else if (bannerTime) {
-      bannerTime.textContent = "";
-    }
-  } else {
-    btn.classList.remove("is-started");
-    label.innerHTML = '<i class="fas fa-play-circle"></i> Start Tournament';
-    btn.title = "Click to start the tournament";
-    if (banner) banner.classList.remove("visible");
-  }
+const btn = document.getElementById("btnTournamentStart");
+const label = document.getElementById("tournamentStartLabel");
+const banner = document.getElementById("tournamentStatusBanner");
+const bannerTime = document.getElementById("tournamentStartedTime");
+if (!btn || !label) return;
+if (tournamentIsStarted) {
+btn.classList.add("is-started");
+label.innerHTML = '<i class="fas fa-stop-circle"></i> Stop Tournament';
+btn.title = "Tournament is LIVE — click to stop";
+if (banner) banner.classList.add("visible");
+if (bannerTime && tournamentStartedAt) {
+try {
+const d = new Date(tournamentStartedAt);
+bannerTime.textContent = "Started: " + d.toLocaleString();
+} catch (e) {
+bannerTime.textContent = "";
 }
-
+} else if (bannerTime) {
+bannerTime.textContent = "";
+}
+} else {
+btn.classList.remove("is-started");
+label.innerHTML = '<i class="fas fa-play-circle"></i> Start Tournament';
+btn.title = "Click to start the tournament";
+if (banner) banner.classList.remove("visible");
+}
+}
+async function calculateAndSaveTournamentStats() {
+await fetchData();
+const sparringCats = {};
+competitors.forEach(c => {
+if (c._discipline !== "sparring") return;
+const key = c._full_cat || "Unknown";
+if (!sparringCats[key]) {
+sparringCats[key] = { name: key, count: 0, ageGroupId: c._age_group_id };
+}
+sparringCats[key].count++;
+});
+const categoryStats = [];
+let sparringFights = 0;
+let totalTimeSeconds = 0;
+for (const key in sparringCats) {
+const cat = sparringCats[key];
+if (cat.count < 2) continue;
+const bracketSize = getBracketSize(cat.count);
+const matches = bracketSize - 1;
+const cfg = categoryConfig.sparring.roundConfigs[cat.ageGroupId] ||
+{ rounds_count: 3, round_minutes: 2, round_seconds: 0,
+pause_minutes: 1, pause_seconds: 0 };
+const roundSec  = cfg.round_minutes * 60 + cfg.round_seconds;
+const pauseSec  = cfg.pause_minutes * 60 + cfg.pause_seconds;
+const timePerMatch = cfg.rounds_count * roundSec +
+Math.max(0, cfg.rounds_count - 1) * pauseSec;
+const catTime = matches * timePerMatch;
+categoryStats.push({
+name: key, matches, timeSeconds: catTime, ageGroupId: cat.ageGroupId
+});
+sparringFights += matches;
+totalTimeSeconds += catTime;
+}
+let patternsFights = 0;
+const patternsCats = {};
+competitors.forEach(c => {
+if (c._discipline !== "patterns") return;
+const key = c._full_cat || "Unknown";
+if (!patternsCats[key]) patternsCats[key] = 0;
+patternsCats[key]++;
+});
+for (const key in patternsCats) {
+if (patternsCats[key] < 2) continue;
+patternsFights += getBracketSize(patternsCats[key]) - 1;
+}
+const totalFights = sparringFights + patternsFights;
+const { data: ringsData } = await sb.from("rings").select("id,ring_name");
+const numRings = Math.max(1, (ringsData || []).length);
+const ringAssignments = balanceRingsLPT(categoryStats, numRings);
+await sb.from("ring_assignments").delete().neq("id", 0);
+const insertRows = [];
+ringAssignments.forEach(ring => {
+ring.categories.forEach(cat => {
+insertRows.push({
+ring_number: ring.ringNumber,
+category_name: cat.name,
+discipline: "sparring",
+num_matches: cat.matches,
+time_seconds: cat.timeSeconds
+});
+});
+});
+if (insertRows.length > 0) await sb.from("ring_assignments").insert(insertRows);
+await sb.from("category_counts").delete().in("category_name",
+["total_fights", "total_time_minutes"]);
+await sb.from("category_counts").insert([
+{ category_name: "total_fights",       competitor_count: totalFights },
+{ category_name: "total_time_minutes", competitor_count: Math.ceil(totalTimeSeconds / 60) }
+]);
+return { totalFights, totalTimeSeconds, numRings, ringAssignments };
+}
+function balanceRingsLPT(categories, numRings) {
+const sorted = [...categories].sort((a, b) => b.timeSeconds - a.timeSeconds);
+const rings = [];
+for (let i = 0; i < numRings; i++) {
+rings.push({ ringNumber: i + 1, categories: [], totalTime: 0, totalMatches: 0 });
+}
+for (const cat of sorted) {
+let minIdx = 0;
+for (let i = 1; i < rings.length; i++) {
+if (rings[i].totalTime < rings[minIdx].totalTime) minIdx = i;
+}
+rings[minIdx].categories.push(cat);
+rings[minIdx].totalTime    += cat.timeSeconds;
+rings[minIdx].totalMatches += cat.matches;
+}
+return rings;
+}
+function formatDuration(sec) {
+const h = Math.floor(sec / 3600);
+const m = Math.floor((sec % 3600) / 60);
+const s = sec % 60;
+if (h > 0) return `${h}h ${m}m ${s}s`;
+if (m > 0) return `${m}m ${s}s`;
+return `${s}s`;
+}
+async function showRingSchedule() {
+setActiveBtn("btnRingSchedule");
+const content = document.getElementById("content");
+content.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading"></div> Loading ring schedule...</div>';
+const { data: assignments } = await sb.from("ring_assignments")
+.select("*").order("ring_number", { ascending: true }).order("time_seconds", { ascending: false });
+const { data: countsData } = await sb.from("category_counts")
+.select("category_name,competitor_count")
+.in("category_name", ["total_fights", "total_time_minutes"]);
+const { data: ringsData } = await sb.from("rings").select("id,ring_name");
+const totalFights = (countsData || []).find(r => r.category_name === "total_fights")?.competitor_count || 0;
+const totalMinutes = (countsData || []).find(r => r.category_name === "total_time_minutes")?.competitor_count || 0;
+const byRing = {};
+(assignments || []).forEach(a => {
+if (!byRing[a.ring_number]) byRing[a.ring_number] = { categories: [], totalTime: 0, totalMatches: 0 };
+byRing[a.ring_number].categories.push(a);
+byRing[a.ring_number].totalTime += a.time_seconds;
+byRing[a.ring_number].totalMatches += a.num_matches;
+});
+const ringNumbers = Object.keys(byRing).map(Number).sort((a,b) => a-b);
+const maxTime = Math.max(1, ...ringNumbers.map(r => byRing[r].totalTime));
+let html = `
+<div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+<h2 style="color:var(--primary);margin:0;"><i class="fas fa-ring"></i> Ring Schedule</h2>
+<button class="btn btn-warning btn-sm" onclick="recalculateRingSchedule()">
+<i class="fas fa-sync"></i> Recalculate Now
+</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:25px;">
+<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--primary);">
+<div style="font-size:2rem;font-weight:700;color:var(--primary);">${ringNumbers.length}</div>
+<div style="color:var(--gray);font-size:0.9rem;">Active Rings</div>
+</div>
+<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);">
+<div style="font-size:2rem;font-weight:700;color:var(--secondary);">${totalFights}</div>
+<div style="color:var(--gray);font-size:0.9rem;">Total Fights</div>
+</div>
+<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #e65100;">
+<div style="font-size:2rem;font-weight:700;color:#e65100;">${totalMinutes} min</div>
+<div style="color:var(--gray);font-size:0.9rem;">Total Sparring Time</div>
+</div>
+<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #6a1b9a;">
+<div style="font-size:2rem;font-weight:700;color:#6a1b9a;">${formatDuration(maxTime)}</div>
+<div style="color:var(--gray);font-size:0.9rem;">Longest Ring</div>
+</div>
+</div>`;
+if (ringNumbers.length === 0) {
+html += `<div style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);">
+<i class="fas fa-info-circle" style="font-size:3rem;color:var(--gray);margin-bottom:15px;"></i>
+<h3 style="color:var(--primary);">No ring schedule yet</h3>
+<p style="color:var(--gray);">Press <strong>"Start Tournament"</strong> to calculate and balance the ring schedule automatically.</p>
+</div>`;
+} else {
+ringNumbers.forEach(ringNum => {
+const ring = byRing[ringNum];
+const ringName = (ringsData || []).find(r => r.id === ringNum)?.ring_name || `Ring ${ringNum}`;
+const pct = (ring.totalTime / maxTime) * 100;
+const balance = pct >= 90 ? "✅ Well balanced" : pct >= 70 ? "⚠️ Slight imbalance" : "❌ Imbalanced";
+html += `
+<div style="background:white;border-radius:12px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;border-left:5px solid var(--primary);">
+<div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+<div>
+<h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-ring"></i> ${escapeHtml(ringName)}</h3>
+<div style="font-size:0.85rem;opacity:0.9;margin-top:4px;">
+${ring.categories.length} categories • ${ring.totalMatches} fights • <strong>${formatDuration(ring.totalTime)}</strong>
+</div>
+</div>
+<div style="background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-weight:700;">
+${balance}
+</div>
+</div>
+<div style="padding:15px 20px;">
+<div style="background:#f0f0f0;height:10px;border-radius:5px;overflow:hidden;margin-bottom:15px;">
+<div style="background:linear-gradient(90deg,var(--success),var(--secondary));height:100%;width:${pct}%;transition:width 0.5s;"></div>
+</div>
+<table style="width:100%;border-collapse:collapse;">
+<thead>
+<tr style="background:var(--light-gray);">
+<th style="padding:8px;text-align:left;font-size:0.85rem;">Category</th>
+<th style="padding:8px;text-align:center;font-size:0.85rem;width:100px;">Fights</th>
+<th style="padding:8px;text-align:center;font-size:0.85rem;width:120px;">Duration</th>
+</tr>
+</thead>
+<tbody>`;
+ring.categories.forEach(cat => {
+html += `
+<tr style="border-bottom:1px solid var(--border);">
+<td style="padding:10px;font-weight:600;">${escapeHtml(cat.category_name)}</td>
+<td style="padding:10px;text-align:center;">
+<span style="background:var(--secondary);color:white;padding:2px 10px;border-radius:12px;font-weight:700;">${cat.num_matches}</span>
+</td>
+<td style="padding:10px;text-align:center;font-weight:700;color:var(--primary);">${formatDuration(cat.time_seconds)}</td>
+</tr>`;
+});
+html += `</tbody></table></div></div>`;
+});
+}
+content.innerHTML = html;
+}
+async function recalculateRingSchedule() {
+if (!confirm("Recalculate ring schedule now? This will overwrite current assignments.")) return;
+showToast("🔄 Recalculating...", "saving");
+const stats = await calculateAndSaveTournamentStats();
+showToast(`✅ Done! ${stats.totalFights} fights across ${stats.numRings} ring(s)`, "success");
+showRingSchedule();
+}
 async function loadCategoryConfig() {
 try {
 const { data: ageGroups, error: ageErr } = await sb
@@ -3257,7 +3440,7 @@ dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
@@ -4141,10 +4324,6 @@ link.click();
 document.body.removeChild(link);
 showToast("Financial report exported", "success");
 }
-
-// =====================================================================
-// ===== INITIALIZATION ================================================
-// =====================================================================
 document.addEventListener("keydown", (e) => {
 if (e.key === "Escape") clearSelection();
 if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -4156,15 +4335,12 @@ e.preventDefault();
 performUndo();
 }
 });
-
 const today = new Date();
 document.getElementById("tournamentDate").valueAsDate = today;
 tournamentDate = today.toISOString().split("T")[0];
-
-// Load tournament status FIRST, then show patterns
 (async () => {
-  await loadTournamentStatus();
-  showPatterns();
+await loadTournamentStatus();
+showPatterns();
 })();
 </script>
 </body>
