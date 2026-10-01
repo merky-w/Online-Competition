@@ -875,7 +875,6 @@ let detectedDuplicates = [];
 let tournamentIsStarted = false;
 let tournamentStartedAt = null;
 let tournamentStatusId = null;
-
 function parseAgeGroupFromOriginalCategory(fullCat) {
 if (!fullCat) return null;
 const lower = fullCat.toLowerCase();
@@ -1131,12 +1130,11 @@ btn.title = "Click to start the tournament";
 if (banner) banner.classList.remove("visible");
 }
 }
-
 // =====================================================================
 // ===== FIXED: CALCULATE & SAVE TOURNAMENT STATS (ALL CATEGORIES) =====
 // =====================================================================
 async function calculateAndSaveTournamentStats() {
-await fetchData(); // Ensure competitors are loaded and categorized
+await fetchData();
 
 // 1. Group ALL competitors by discipline and full category
 const allCats = {};
@@ -1164,10 +1162,10 @@ let totalTimeSeconds = 0;
 // 2. Calculate matches and time for each category
 for (const uniqueKey in allCats) {
 const cat = allCats[uniqueKey];
-if (cat.count < 2) continue; // Need at least 2 competitors for a match
+if (cat.count < 2) continue;
 
-const bracketSize = getBracketSize(cat.count);
-const matches = bracketSize - 1;
+// FIX: In a single-elimination tournament, the number of matches is ALWAYS (number of competitors - 1)
+const matches = cat.count - 1;
 totalFights += matches;
 
 let timePerMatch = 0;
@@ -1509,39 +1507,50 @@ return age;
 } catch { return null; }
 }
 function recomputeCompetitorCategories() {
+let noAgeCount = 0;
+let parsedFromCatCount = 0;
+let closestMatchCount = 0;
+let fallbackCount = 0;
 competitors.forEach(c => {
 const discipline = c._discipline;
 const gender = getCompetitorGender(c);
-// Check dob, date_of_birth, AND birthdate
 const age = computeAge(c.dob || c.date_of_birth || c.birthdate);
 let ageGroup = null;
-
+let ageSource = "unknown";
 if (age !== null) {
 ageGroup = getAgeGroupForAge(age, discipline, gender);
-} 
-
-if (!ageGroup) {
-// Fallback: try to parse from the original category string
+ageSource = "computed_age";
+if (ageGroup) {
+const maxA = ageGroup.max_age === null ? 9999 : ageGroup.max_age;
+if (age < ageGroup.min_age || age > maxA) {
+closestMatchCount++;
+}
+}
+} else {
+noAgeCount++;
 const parsedName = parseAgeGroupFromOriginalCategory(c._full_cat);
 if (parsedName) {
 ageGroup = findAgeGroupByName(parsedName, discipline, gender);
+if (ageGroup) {
+ageSource = "parsed_from_category";
+parsedFromCatCount++;
 }
 }
-
+}
 if (!ageGroup) {
-// Absolute fallback
 ageGroup = getFallbackAgeGroup(discipline, gender);
+ageSource = "fallback";
+fallbackCount++;
 }
-
 if (ageGroup) {
 c._actual_age_group = ageGroup.display_name.toUpperCase().replace(/\s+/g, "_");
 c._age_group_id = ageGroup.id;
 c._age_group_name = ageGroup.display_name;
 c._computed_age = age;
 c._computed_gender = gender;
-
+c._age_source = ageSource;
 if (discipline === "sparring") {
-const weightKg = parseFloat(c.weight_kg || c.weight);
+const weightKg = parseFloat(c.weight_kg);
 if (!isNaN(weightKg) && weightKg > 0) {
 const wCat = getSparringCategoryLabel(weightKg, ageGroup.id);
 c._actual_sub_cat = wCat;
@@ -1561,6 +1570,22 @@ c._full_cat = ageGroup.display_name + " - " + bCat;
 c._actual_sub_cat = origBeltName || "Open";
 c._full_cat = ageGroup.display_name + " - " + (origBeltName || "Open");
 }
+}
+} else {
+c._actual_age_group = "OPEN";
+c._age_group_id = null;
+c._age_group_name = "Open";
+c._computed_age = age;
+c._computed_gender = gender;
+c._age_source = "absolute_fallback";
+if (discipline === "sparring") {
+const weightKg = parseFloat(c.weight_kg);
+c._actual_sub_cat = (!isNaN(weightKg) && weightKg > 0) ? weightKg + "kg" : "Open";
+c._full_cat = "Open - " + c._actual_sub_cat;
+} else {
+const origBeltName = c._original_sub_cat || c._actual_sub_cat || "";
+c._actual_sub_cat = origBeltName || "Open";
+c._full_cat = "Open - " + (origBeltName || "Open");
 }
 }
 });
