@@ -645,6 +645,81 @@ border-top-color: var(--primary); border-radius: 50%;
 animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.modal-overlay {
+position: fixed;
+top: 0; left: 0;
+width: 100%; height: 100%;
+background: rgba(0, 0, 0, 0.7);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 2000;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.3s ease;
+backdrop-filter: blur(4px);
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal-box {
+background: white;
+padding: 2rem;
+border-radius: 16px;
+width: 90%;
+max-width: 500px;
+box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+transform: scale(0.9);
+transition: transform 0.3s ease;
+}
+.modal-overlay.active .modal-box { transform: scale(1); }
+.modal-title {
+font-size: 1.5rem;
+font-weight: 800;
+color: var(--primary);
+margin-bottom: 1rem;
+text-align: center;
+}
+.discipline-option {
+background: var(--light-gray);
+border: 2px solid var(--border);
+border-radius: 12px;
+padding: 1.5rem;
+margin-bottom: 1rem;
+cursor: pointer;
+transition: all 0.2s ease;
+text-align: center;
+}
+.discipline-option:hover {
+border-color: var(--primary);
+background: #e7f3ff;
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(26, 58, 108, 0.15);
+}
+.discipline-option.selected {
+border-color: var(--success);
+background: #e8f5e9;
+}
+.discipline-option i {
+font-size: 2rem;
+margin-bottom: 0.5rem;
+display: block;
+}
+.discipline-option h3 {
+font-size: 1.2rem;
+margin-bottom: 0.5rem;
+color: var(--dark);
+}
+.discipline-option p {
+font-size: 0.9rem;
+color: var(--gray);
+}
+.modal-actions {
+display: flex;
+gap: 1rem;
+margin-top: 1.5rem;
+}
+.modal-actions button {
+flex: 1;
+}
 @media print {
 body { padding: 0; background: white; }
 .nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn,
@@ -750,6 +825,34 @@ padding: 5mm;
 </div>
 <div id="content"></div>
 </div>
+
+<!-- DISCIPLINE SELECTION MODAL -->
+<div class="modal-overlay" id="disciplineModal">
+<div class="modal-box">
+<h2 class="modal-title">🏆 Select Tournament Discipline</h2>
+<p style="text-align: center; color: var(--gray); margin-bottom: 1.5rem;">Choose which categories to include in the ring schedule:</p>
+<div class="discipline-option" data-discipline="sparring" onclick="selectDiscipline('sparring')">
+<i class="fas fa-fist-raised" style="color: var(--price-sparring);"></i>
+<h3>Sparring Only</h3>
+<p>Only sparring categories will be assigned to rings</p>
+</div>
+<div class="discipline-option" data-discipline="patterns" onclick="selectDiscipline('patterns')">
+<i class="fas fa-chess-board" style="color: var(--price-patterns);"></i>
+<h3>Patterns Only</h3>
+<p>Only patterns categories will be assigned to rings</p>
+</div>
+<div class="discipline-option" data-discipline="both" onclick="selectDiscipline('both')">
+<i class="fas fa-layer-group" style="color: var(--price-total);"></i>
+<h3>Both Disciplines</h3>
+<p>Both sparring and patterns categories will be assigned to rings</p>
+</div>
+<div class="modal-actions">
+<button class="btn btn-secondary" onclick="closeDisciplineModal()">Cancel</button>
+<button class="btn btn-success" id="btnConfirmDiscipline" onclick="confirmDiscipline()" disabled>Start Tournament</button>
+</div>
+</div>
+</div>
+
 <script>
 const KUP_DAN_LEVELS = {
 "10th kup": 10, "10 kup": 10, "10kup": 10,
@@ -875,6 +978,7 @@ let detectedDuplicates = [];
 let tournamentIsStarted = false;
 let tournamentStartedAt = null;
 let tournamentStatusId = null;
+let selectedDiscipline = null;
 function parseAgeGroupFromOriginalCategory(fullCat) {
 if (!fullCat) return null;
 const lower = fullCat.toLowerCase();
@@ -1056,14 +1160,67 @@ tournamentStatusId = null;
 updateTournamentStartUI();
 }
 }
+function selectDiscipline(disc) {
+selectedDiscipline = disc;
+document.querySelectorAll('.discipline-option').forEach(opt => {
+opt.classList.remove('selected');
+});
+document.querySelector(`[data-discipline="${disc}"]`).classList.add('selected');
+document.getElementById('btnConfirmDiscipline').disabled = false;
+}
+function closeDisciplineModal() {
+document.getElementById('disciplineModal').classList.remove('active');
+selectedDiscipline = null;
+document.querySelectorAll('.discipline-option').forEach(opt => {
+opt.classList.remove('selected');
+});
+document.getElementById('btnConfirmDiscipline').disabled = true;
+}
+async function confirmDiscipline() {
+if (!selectedDiscipline) return;
+const btn = document.getElementById("btnTournamentStart");
+closeDisciplineModal();
+btn.classList.add("loading");
+try {
+const payload = {
+is_started: true,
+started_at: new Date().toISOString(),
+updated_at: new Date().toISOString()
+};
+if (tournamentStatusId) {
+const { error } = await sb.from("tournament_status").update(payload).eq("id", tournamentStatusId);
+if (error) throw error;
+} else {
+const { data: inserted, error } = await sb.from("tournament_status").insert([payload]).select().single();
+if (error) throw error;
+if (inserted) tournamentStatusId = inserted.id;
+}
+tournamentIsStarted = true;
+tournamentStartedAt = new Date().toISOString();
+showToast("🔄 Calculating fights, time & ring schedule...", "saving");
+const stats = await calculateAndSaveTournamentStats(selectedDiscipline);
+updateTournamentStartUI();
+showToast(
+"🏁 Tournament STARTED!\n• " + stats.totalFights + " total fights\n• " + Math.ceil(stats.totalTimeSeconds/60) + " min total time\n• Balanced across " + stats.numRings + " ring(s)",
+"success"
+);
+} catch (err) {
+console.error("confirmDiscipline error:", err);
+showToast("Failed: " + (err.message || err), "error");
+} finally {
+btn.classList.remove("loading");
+}
+}
 async function toggleTournamentStart() {
 const btn = document.getElementById("btnTournamentStart");
 if (!btn || btn.classList.contains("loading")) return;
-btn.classList.add("loading");
 const newState = !tournamentIsStarted;
-const confirmMsg = newState
-? "⚠️ START the tournament?\n\n• All user logins/logouts will be LOCKED\n• Ring schedule will be calculated\n• Category counts will be updated"
-: "Stop the tournament? This will unlock user access and clear ring schedule.";
+if (newState) {
+document.getElementById('disciplineModal').classList.add('active');
+return;
+}
+btn.classList.add("loading");
+const confirmMsg = "Stop the tournament? This will unlock user access and clear ring schedule.";
 if (!confirm(confirmMsg)) { btn.classList.remove("loading"); return; }
 try {
 const payload = {
@@ -1081,20 +1238,10 @@ if (inserted) tournamentStatusId = inserted.id;
 }
 tournamentIsStarted = newState;
 tournamentStartedAt = newState ? new Date().toISOString() : null;
-if (newState) {
-showToast("🔄 Calculating fights, time & ring schedule...", "saving");
-const stats = await calculateAndSaveTournamentStats();
-updateTournamentStartUI();
-showToast(
-"🏁 Tournament STARTED!\n• " + stats.totalFights + " total fights\n• " + Math.ceil(stats.totalTimeSeconds/60) + " min total time\n• Balanced across " + stats.numRings + " ring(s)",
-"success"
-);
-} else {
 try { await sb.from("ring_assignments").delete().neq("id", 0); } catch(e) {}
 try { await sb.from("category_counts").delete().in("category_name", ["total_fights", "total_time_minutes"]); } catch(e) {}
 updateTournamentStartUI();
 showToast("⏸ Tournament STOPPED — user access unlocked", "error");
-}
 } catch (err) {
 console.error("toggleTournamentStart error:", err);
 showToast("Failed: " + (err.message || err), "error");
@@ -1130,71 +1277,58 @@ btn.title = "Click to start the tournament";
 if (banner) banner.classList.remove("visible");
 }
 }
-// =====================================================================
-// ===== FIXED: CALCULATE & SAVE TOURNAMENT STATS (ALL CATEGORIES) =====
-// =====================================================================
-async function calculateAndSaveTournamentStats() {
+async function calculateAndSaveTournamentStats(disciplineFilter = 'both') {
 await fetchData();
-
-// 1. Group ALL competitors by discipline and full category
 const allCats = {};
 competitors.forEach(c => {
 const disc = c._discipline || "sparring";
 const gender = c._computed_gender || getCompetitorGender(c) || "male";
+if (disciplineFilter === 'sparring' && disc !== 'sparring') return;
+if (disciplineFilter === 'patterns' && disc !== 'patterns') return;
 const key = (c._full_cat || "Unknown") + " (" + gender + ")";
 const uniqueKey = disc + "|||" + key;
-
 if (!allCats[uniqueKey]) {
 allCats[uniqueKey] = { 
 name: key, 
 discipline: disc, 
 count: 0, 
-ageGroupId: c._age_group_id 
+ageGroupId: c._age_group_id,
+competitors: []
 };
 }
 allCats[uniqueKey].count++;
+allCats[uniqueKey].competitors.push(c);
 });
-
 const categoryStats = [];
 let totalFights = 0;
 let totalTimeSeconds = 0;
-
-// 2. Calculate matches and time for each category
 for (const uniqueKey in allCats) {
 const cat = allCats[uniqueKey];
 if (cat.count < 2) continue;
-
-// FIX: In a single-elimination tournament, the number of matches is ALWAYS (number of competitors - 1)
 const matches = cat.count - 1;
 totalFights += matches;
-
 let timePerMatch = 0;
 if (cat.discipline === "sparring") {
 const cfg = (cat.ageGroupId && categoryConfig.sparring.roundConfigs[cat.ageGroupId]) 
 ? categoryConfig.sparring.roundConfigs[cat.ageGroupId]
 : { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 };
-
 const roundSec = cfg.round_minutes * 60 + cfg.round_seconds;
 const pauseSec = cfg.pause_minutes * 60 + cfg.pause_seconds;
 timePerMatch = cfg.rounds_count * roundSec + Math.max(0, cfg.rounds_count - 1) * pauseSec;
 } else if (cat.discipline === "patterns") {
-// Default pattern match time: 2 minutes (120s)
 timePerMatch = 120; 
 }
-
 const catTime = matches * timePerMatch;
 totalTimeSeconds += catTime;
-
 categoryStats.push({
 name: cat.name,
 discipline: cat.discipline,
 matches: matches,
 timeSeconds: catTime,
-count: cat.count
+count: cat.count,
+competitorNames: cat.competitors.map(c => c.name).join(', ')
 });
 }
-
-// 3. Get number of rings
 let numRings = 1;
 try {
 const { data: settingsData } = await sb.from("site_settings").select("rings_number").eq("id", 1).single();
@@ -1202,18 +1336,13 @@ if (settingsData && settingsData.rings_number && settingsData.rings_number > 0) 
 numRings = settingsData.rings_number;
 }
 } catch(e) {}
-
 try {
 const { data: ringsData } = await sb.from("rings").select("id,ring_name");
 const ringsTableCount = (ringsData || []).length;
 if (ringsTableCount > numRings) numRings = ringsTableCount;
 } catch(e) {}
 numRings = Math.max(1, numRings);
-
-// 4. Balance categories across rings (LPT algorithm)
 const ringAssignments = balanceRingsLPT(categoryStats, numRings);
-
-// 5. Save ring_assignments
 try { await sb.from("ring_assignments").delete().neq("id", 0); } catch(e) {}
 const insertRows = [];
 ringAssignments.forEach(ring => {
@@ -1230,8 +1359,6 @@ time_seconds: cat.timeSeconds
 if (insertRows.length > 0) {
 try { await sb.from("ring_assignments").insert(insertRows); } catch(e) { console.error("Failed to insert ring_assignments:", e); }
 }
-
-// 6. Update category_counts with the 2 new rows
 try { await sb.from("category_counts").delete().in("category_name", ["total_fights", "total_time_minutes"]); } catch(e) {}
 try {
 await sb.from("category_counts").insert([
@@ -1239,31 +1366,25 @@ await sb.from("category_counts").insert([
 { category_name: "total_time_minutes", competitor_count: Math.ceil(totalTimeSeconds / 60) }
 ]);
 } catch(e) { console.error("Failed to insert category_counts:", e); }
-
 return { totalFights, totalTimeSeconds, numRings, ringAssignments, categoryCount: categoryStats.length };
 }
-
 function balanceRingsLPT(categories, numRings) {
-// Sort categories by time descending (Longest Processing Time first)
 const sorted = [...categories].sort((a, b) => b.timeSeconds - a.timeSeconds);
 const rings = [];
 for (let i = 0; i < numRings; i++) {
 rings.push({ ringNumber: i + 1, categories: [], totalTime: 0, totalMatches: 0 });
 }
 for (const cat of sorted) {
-// Find the ring with the minimum current total time
 let minIdx = 0;
 for (let i = 1; i < rings.length; i++) {
 if (rings[i].totalTime < rings[minIdx].totalTime) minIdx = i;
 }
-// Assign category to that ring
 rings[minIdx].categories.push(cat);
 rings[minIdx].totalTime += cat.timeSeconds;
 rings[minIdx].totalMatches += cat.matches;
 }
 return rings;
 }
-
 function formatDuration(sec) {
 const h = Math.floor(sec / 3600);
 const m = Math.floor((sec % 3600) / 60);
@@ -1272,22 +1393,18 @@ if (h > 0) return h + "h " + m + "m " + s + "s";
 if (m > 0) return m + "m " + s + "s";
 return s + "s";
 }
-
 async function showRingSchedule() {
 setActiveBtn("btnRingSchedule");
 const content = document.getElementById("content");
 content.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner" style="width:40px;height:40px;border-width:4px;margin:0 auto 15px;"></div> Loading ring schedule...</div>';
-
 const { data: assignments } = await sb.from("ring_assignments")
 .select("*").order("ring_number", { ascending: true }).order("time_seconds", { ascending: false });
 const { data: countsData } = await sb.from("category_counts")
 .select("category_name,competitor_count")
 .in("category_name", ["total_fights", "total_time_minutes"]);
 const { data: ringsData } = await sb.from("rings").select("id,ring_name");
-
 const totalFights = (countsData || []).find(r => r.category_name === "total_fights")?.competitor_count || 0;
 const totalMinutes = (countsData || []).find(r => r.category_name === "total_time_minutes")?.competitor_count || 0;
-
 const byRing = {};
 (assignments || []).forEach(a => {
 if (!byRing[a.ring_number]) byRing[a.ring_number] = { categories: [], totalTime: 0, totalMatches: 0 };
@@ -1295,10 +1412,8 @@ byRing[a.ring_number].categories.push(a);
 byRing[a.ring_number].totalTime += a.time_seconds;
 byRing[a.ring_number].totalMatches += a.num_matches;
 });
-
 const ringNumbers = Object.keys(byRing).map(Number).sort((a,b) => a-b);
 const maxTime = Math.max(1, ...ringNumbers.map(r => byRing[r].totalTime));
-
 let html = '<div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
 '<h2 style="color:var(--primary);margin:0;"><i class="fas fa-ring"></i> Ring Schedule</h2>' +
 '<button class="btn btn-warning btn-sm" onclick="recalculateRingSchedule()"><i class="fas fa-sync"></i> Recalculate Now</button></div>' +
@@ -1307,7 +1422,6 @@ let html = '<div class="controls" style="display:flex;justify-content:space-betw
 '<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);"><div style="font-size:2rem;font-weight:700;color:var(--secondary);">' + totalFights + '</div><div style="color:var(--gray);font-size:0.9rem;">Total Fights</div></div>' +
 '<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #e65100;"><div style="font-size:2rem;font-weight:700;color:#e65100;">' + totalMinutes + ' min</div><div style="color:var(--gray);font-size:0.9rem;">Total Time</div></div>' +
 '<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #6a1b9a;"><div style="font-size:2rem;font-weight:700;color:#6a1b9a;">' + formatDuration(maxTime) + '</div><div style="color:var(--gray);font-size:0.9rem;">Longest Ring</div></div></div>';
-
 if (ringNumbers.length === 0) {
 html += '<div style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);">' +
 '<i class="fas fa-info-circle" style="font-size:3rem;color:var(--gray);margin-bottom:15px;"></i>' +
@@ -1331,31 +1445,47 @@ html += '<div style="background:white;border-radius:12px;box-shadow:var(--shadow
 '<th style="padding:8px;text-align:center;font-size:0.85rem;width:80px;">Players</th>' +
 '<th style="padding:8px;text-align:center;font-size:0.85rem;width:80px;">Fights</th>' +
 '<th style="padding:8px;text-align:center;font-size:0.85rem;width:120px;">Duration</th>' +
+'<th style="padding:8px;text-align:center;font-size:0.85rem;width:100px;">Action</th>' +
 '</tr></thead><tbody>';
 ring.categories.forEach(cat => {
+const discIcon = cat.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
+const discColor = cat.discipline === 'sparring' ? 'var(--price-sparring)' : 'var(--price-patterns)';
+const safeCatName = escapeAttr(cat.category_name);
+const safeDisc = cat.discipline;
 html += '<tr style="border-bottom:1px solid var(--border);">' +
-'<td style="padding:10px;font-weight:600;">' + escapeHtml(cat.category_name) + '</td>' +
+'<td style="padding:10px;font-weight:600;"><i class="fas ' + discIcon + '" style="color:' + discColor + ';margin-right:8px;"></i>' + escapeHtml(cat.category_name) + '</td>' +
 '<td style="padding:10px;text-align:center;"><span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-weight:700;font-size:0.8rem;">' + (cat.count || '?') + '</span></td>' +
 '<td style="padding:10px;text-align:center;"><span style="background:var(--secondary);color:white;padding:2px 10px;border-radius:12px;font-weight:700;">' + cat.num_matches + '</span></td>' +
-'<td style="padding:10px;text-align:center;font-weight:700;color:var(--primary);">' + formatDuration(cat.time_seconds) + '</td></tr>';
+'<td style="padding:10px;text-align:center;font-weight:700;color:var(--primary);">' + formatDuration(cat.time_seconds) + '</td>' +
+'<td style="padding:10px;text-align:center;"><button class="btn btn-info btn-xs" onclick="viewBracket(\'' + safeCatName + '\', \'' + safeDisc + '\')"><i class="fas fa-eye"></i> View</button></td></tr>';
 });
 html += '</tbody></table></div></div>';
 });
 }
 content.innerHTML = html;
 }
-
+async function viewBracket(categoryName, discipline) {
+const filtered = competitors.filter(c => {
+const gender = c._computed_gender || getCompetitorGender(c) || "male";
+const fullName = (c._full_cat || "Unknown") + " (" + gender + ")";
+return fullName === categoryName && c._discipline === discipline;
+});
+if (filtered.length === 0) {
+showToast("No competitors found for this category", "error");
+return;
+}
+const groups = {};
+groups[categoryName] = filtered;
+const typeLabel = discipline === 'sparring' ? 'Sparring' : 'Patterns';
+await renderBracketView(groups, typeLabel);
+}
 async function recalculateRingSchedule() {
 if (!confirm("Recalculate ring schedule now? This will overwrite current assignments.")) return;
 showToast("🔄 Recalculating...", "saving");
-const stats = await calculateAndSaveTournamentStats();
+const stats = await calculateAndSaveTournamentStats('both');
 showToast("✅ Done! " + stats.totalFights + " fights, " + stats.categoryCount + " categories across " + stats.numRings + " ring(s)", "success");
 showRingSchedule();
 }
-// =====================================================================
-// ===== END OF NEW RING SCHEDULE FUNCTIONS ============================
-// =====================================================================
-
 async function loadCategoryConfig() {
 try {
 const { data: ageGroups, error: ageErr } = await sb
@@ -2378,11 +2508,11 @@ indicator.classList.remove('visible');
 function buildWeightCategoryChips(boundaries) {
 if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
 const chips = [];
-chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + 'kg</span>');
+chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + "kg</span>");
 for (let i = 0; i < boundaries.length - 1; i++) {
-chips.push('<span class="weight-cat-chip">' + Math.ceil(boundaries[i]) + '-' + boundaries[i+1] + 'kg</span>');
+chips.push('<span class="weight-cat-chip">' + Math.ceil(boundaries[i]) + '-' + boundaries[i+1] + "kg</span>");
 }
-chips.push('<span class="weight-cat-chip last">+' + boundaries[boundaries.length-1] + 'kg</span>');
+chips.push('<span class="weight-cat-chip last">+' + boundaries[boundaries.length-1] + "kg</span>");
 return chips.join("");
 }
 function renderWeightMarkers(group) {
@@ -2748,7 +2878,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -2869,6 +2999,7 @@ return '<div class="autocomplete-item" draggable="true" ondragstart="dragAutocom
 }).join("");
 }
 dropdown.classList.add("visible");
+}
 }
 function clearAutocomplete() {
 const input = document.getElementById("autocompleteInput");
