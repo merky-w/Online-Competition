@@ -1360,7 +1360,7 @@ opt.classList.remove('selected');
 });
 document.getElementById('btnConfirmPhase').disabled = true;
 }
-async function updateWeightDropdown()PhaseModalStatuses() {
+async function updatePhaseModalStatuses() {
 try {
 const { data: statusData } = await sb.from("tournament_status")
 .select("patterns_completed, sparring_completed")
@@ -1481,7 +1481,7 @@ showToast("Failed: " + (err.message || err), "error");
 btn.classList.remove("loading");
 }
 }
-function updateWeightDropdown()TournamentStartUI() {
+function updateTournamentStartUI() {
 const btn = document.getElementById("btnTournamentStart");
 const label = document.getElementById("tournamentStartLabel");
 const banner = document.getElementById("tournamentStatusBanner");
@@ -1556,7 +1556,7 @@ showToast("Failed: " + (err.message || err), "error");
 btn.disabled = false;
 }
 }
-function updateWeightDropdown()PhaseStatusBar() {
+function updatePhaseStatusBar() {
 const bar = document.getElementById('phaseStatusBar');
 const pauseBtn = document.getElementById('btnPauseTournament');
 if (!tournamentIsStarted) {
@@ -3365,7 +3365,8 @@ for (const key in bracketWinnersCache) winnersSnapshot[key] = { ...bracketWinner
 undoStack.push({ description, bracketType: currentBracketType, snapshots, groupsSnapshot: JSON.parse(JSON.stringify(currentGroups)), overridesSnapshot: { ...bracketSizeOverrides }, winnersSnapshot, timestamp: new Date().toISOString() });
 updateUndoButton();
 }
-function updateWeightDropdown()UndoButton() {
+	
+function updateUndoButton() {
 const btn = document.getElementById("floatingUndoBtn");
 const badge = document.getElementById("undoCountBadge");
 const tooltip = document.getElementById("undoTooltip");
@@ -3403,7 +3404,8 @@ toast.textContent = message;
 toast.className = "toast show " + type;
 setTimeout(() => { toast.className = "toast"; }, 2500);
 }
-function updateWeightDropdown()Autocomplete(term) {
+	
+function updateAutocomplete(term) {
 const dropdown = document.getElementById("autocompleteDropdown");
 const clearBtn = document.getElementById("autocompleteClear");
 const lower = (term || "").trim().toLowerCase();
@@ -4308,7 +4310,7 @@ html += '<div class="category-card"><div class="category-header">Sample Registra
 document.getElementById("content").innerHTML = html;
 }
 async function runFullDebug() { await fetchData(); showDebugInfo(); }
-function updateWeightDropdown()AgeForFilters() {
+function updateAgeForFilters() {
 tournamentDate = document.getElementById("tournamentDate").value;
 recomputeCompetitorCategories();
 const activeBtn = document.querySelector(".nav .btn.btn-active");
@@ -4415,7 +4417,7 @@ contentHtml += '<div class="filters-card"><div class="filters">' +
 document.getElementById("content").innerHTML = contentHtml;
 updateWeightDropdown();
 }
-function updateWeightDropdown()WeightDropdown() {
+function updateWeightDropdown() {
 const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value;
 const wDrop = document.getElementById("sWeight");
 const info = document.getElementById("sparringInfo");
@@ -4665,7 +4667,7 @@ function selectRank(rank) {
 rankSelectionMode = (rankSelectionMode === rank) ? null : rank;
 updateRangsUI();
 }
-function updateWeightDropdown()RangsUI() {
+function updateRangsUI() {
 document.querySelectorAll(".rank-btn").forEach(btn => { btn.classList.toggle("selected", btn.dataset.rank === rankSelectionMode); });
 const hint = document.getElementById("rangsHint");
 if (!hint) return;
@@ -4714,7 +4716,8 @@ rankCell.innerHTML = '<span class="rank-badge ' + rankClass + '"><i class="fas '
 });
 updateRankLegend();
 }
-function updateWeightDropdown()RankLegend() {
+	
+function updateRankLegend(){
 const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0 };
 judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
 const legend = document.getElementById("rankLegend");
