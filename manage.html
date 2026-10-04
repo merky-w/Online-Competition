@@ -980,7 +980,6 @@ padding: 5mm;
 </div>
 <div id="content"></div>
 </div>
-
 <!-- PHASE SELECTION MODAL -->
 <div class="modal-overlay" id="phaseModal">
 <div class="modal-box">
@@ -1009,7 +1008,6 @@ padding: 5mm;
 </div>
 </div>
 </div>
-
 <script>
 const KUP_DAN_LEVELS = {
 "10th kup": 10, "10 kup": 10, "10kup": 10,
@@ -1916,6 +1914,71 @@ const stats = await calculateAndSaveTournamentStats('both');
 showToast("✅ Done! " + stats.totalFights + " fights, " + stats.categoryCount + " categories across " + stats.numRings + " ring(s)", "success");
 showRingSchedule();
 }
+async function viewBracket(categoryName, discipline) {
+const filtered = competitors.filter(c => {
+const gender = c._computed_gender || getCompetitorGender(c) || "male";
+const fullName = (c._full_cat || "Unknown") + " (" + gender + ")";
+return fullName === categoryName && c._discipline === discipline;
+});
+if (filtered.length === 0) {
+showToast("No competitors found for this category", "error");
+return;
+}
+const groups = {};
+groups[categoryName] = filtered;
+const typeLabel = discipline === 'sparring' ? 'Sparring' : 'Patterns';
+await renderBracketView(groups, typeLabel);
+}
+async function toggleRingStop(ringId, shouldStop) {
+try {
+if (shouldStop) {
+const { data: existing } = await sb.from("ring_status")
+.select("id")
+.eq("ring_id", ringId)
+.single();
+if (existing) {
+const { error } = await sb.from("ring_status")
+.update({
+is_stopped: true,
+stopped_at: new Date().toISOString(),
+updated_at: new Date().toISOString()
+})
+.eq("ring_id", ringId);
+if (error) throw error;
+} else {
+const { error } = await sb.from("ring_status")
+.insert([{
+ring_id: ringId,
+is_stopped: true,
+stopped_at: new Date().toISOString()
+}]);
+if (error) throw error;
+}
+showToast("🛑 Ring " + ringId + " STOPPED", "error");
+} else {
+const { error } = await sb.from("ring_status")
+.update({
+is_stopped: false,
+stopped_at: null,
+updated_at: new Date().toISOString()
+})
+.eq("ring_id", ringId);
+if (error) throw error;
+showToast("▶ Ring " + ringId + " RESUMED", "success");
+}
+showRingSchedule();
+} catch (err) {
+console.error("toggleRingStop error:", err);
+showToast("Failed: " + (err.message || err), "error");
+}
+}
+async function recalculateRingSchedule() {
+if (!confirm("Recalculate ring schedule now? This will overwrite current assignments.")) return;
+showToast("🔄 Recalculating...", "saving");
+const stats = await calculateAndSaveTournamentStats('both');
+showToast("✅ Done! " + stats.totalFights + " fights, " + stats.categoryCount + " categories across " + stats.numRings + " ring(s)", "success");
+showRingSchedule();
+}
 async function loadCategoryConfig() {
 try {
 const { data: ageGroups, error: ageErr } = await sb
@@ -2430,7 +2493,7 @@ return '<div class="age-group-item ' + (g.is_active ? 'active' : 'inactive') + '
 '</div></div>';
 }).join("");
 }
-function updateWeightDropdown()AgeGroupName(disc, groupId, newName) {
+function updateAgeGroupName(disc, groupId, newName) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (g) {
 g.display_name = newName.trim() || g.display_name;
@@ -2860,7 +2923,7 @@ val = Math.max(min, Math.min(max, val));
 input.value = val;
 updateRoundConfig(groupId);
 }
-function updateWeightDropdown()RoundConfig(groupId) {
+function updateRoundConfig(groupId) {
 const roundsEl = document.getElementById('roundsCount_' + groupId);
 const minsEl = document.getElementById('roundMinutes_' + groupId);
 const secsEl = document.getElementById('roundSeconds_' + groupId);
@@ -2903,7 +2966,7 @@ updateRoundPreview(groupId, rounds, mins, secs, pMins, pSecs);
 showRoundSavedIndicator(groupId);
 scheduleAutoSave('Updated round & pause config for age group');
 }
-function updateWeightDropdown()RoundPreview(groupId, rounds, mins, secs, pMins, pSecs) {
+function updateRoundPreview(groupId, rounds, mins, secs, pMins, pSecs) {
 const card = document.getElementById('roundCard_' + groupId);
 if (!card) return;
 const preview = card.querySelector('.round-config-preview');
@@ -3365,7 +3428,6 @@ for (const key in bracketWinnersCache) winnersSnapshot[key] = { ...bracketWinner
 undoStack.push({ description, bracketType: currentBracketType, snapshots, groupsSnapshot: JSON.parse(JSON.stringify(currentGroups)), overridesSnapshot: { ...bracketSizeOverrides }, winnersSnapshot, timestamp: new Date().toISOString() });
 updateUndoButton();
 }
-	
 function updateUndoButton() {
 const btn = document.getElementById("floatingUndoBtn");
 const badge = document.getElementById("undoCountBadge");
@@ -3404,7 +3466,6 @@ toast.textContent = message;
 toast.className = "toast show " + type;
 setTimeout(() => { toast.className = "toast"; }, 2500);
 }
-	
 function updateAutocomplete(term) {
 const dropdown = document.getElementById("autocompleteDropdown");
 const clearBtn = document.getElementById("autocompleteClear");
@@ -4027,7 +4088,7 @@ dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
@@ -4716,8 +4777,7 @@ rankCell.innerHTML = '<span class="rank-badge ' + rankClass + '"><i class="fas '
 });
 updateRankLegend();
 }
-	
-function updateRankLegend(){
+function updateRankLegend() {
 const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0 };
 judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
 const legend = document.getElementById("rankLegend");
