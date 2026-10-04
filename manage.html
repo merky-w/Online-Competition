@@ -2508,11 +2508,11 @@ indicator.classList.remove('visible');
 function buildWeightCategoryChips(boundaries) {
 if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
 const chips = [];
-chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + "kg</span>");
+chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + 'kg</span>');
 for (let i = 0; i < boundaries.length - 1; i++) {
-chips.push('<span class="weight-cat-chip">' + Math.ceil(boundaries[i]) + '-' + boundaries[i+1] + "kg</span>");
+chips.push('<span class="weight-cat-chip">' + Math.ceil(boundaries[i]) + '-' + boundaries[i+1] + 'kg</span>');
 }
-chips.push('<span class="weight-cat-chip last">+' + boundaries[boundaries.length-1] + "kg</span>");
+chips.push('<span class="weight-cat-chip last">+' + boundaries[boundaries.length-1] + 'kg</span>');
 return chips.join("");
 }
 function renderWeightMarkers(group) {
@@ -2878,7 +2878,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -2999,7 +2999,6 @@ return '<div class="autocomplete-item" draggable="true" ondragstart="dragAutocom
 }).join("");
 }
 dropdown.classList.add("visible");
-}
 }
 function clearAutocomplete() {
 const input = document.getElementById("autocompleteInput");
@@ -3621,12 +3620,12 @@ dragHandleState.ghost.remove();
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 const state = dragHandleState;
 dragHandleState = null;
 if (!elemBelow) return;
-const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
+const winnerZone = elemBelow.closest(".winner-drop-zone, .placement_drop-zone");
 if (winnerZone) {
 const page = winnerZone.closest(".a4-page");
 if (page) {
