@@ -1360,7 +1360,7 @@ opt.classList.remove('selected');
 });
 document.getElementById('btnConfirmPhase').disabled = true;
 }
-async function updatePhaseModalStatuses() {
+async function updateWeightDropdown()PhaseModalStatuses() {
 try {
 const { data: statusData } = await sb.from("tournament_status")
 .select("patterns_completed, sparring_completed")
@@ -1481,7 +1481,7 @@ showToast("Failed: " + (err.message || err), "error");
 btn.classList.remove("loading");
 }
 }
-function updateTournamentStartUI() {
+function updateWeightDropdown()TournamentStartUI() {
 const btn = document.getElementById("btnTournamentStart");
 const label = document.getElementById("tournamentStartLabel");
 const banner = document.getElementById("tournamentStatusBanner");
@@ -1556,7 +1556,7 @@ showToast("Failed: " + (err.message || err), "error");
 btn.disabled = false;
 }
 }
-function updatePhaseStatusBar() {
+function updateWeightDropdown()PhaseStatusBar() {
 const bar = document.getElementById('phaseStatusBar');
 const pauseBtn = document.getElementById('btnPauseTournament');
 if (!tournamentIsStarted) {
@@ -2430,7 +2430,7 @@ return '<div class="age-group-item ' + (g.is_active ? 'active' : 'inactive') + '
 '</div></div>';
 }).join("");
 }
-function updateAgeGroupName(disc, groupId, newName) {
+function updateWeightDropdown()AgeGroupName(disc, groupId, newName) {
 const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
 if (g) {
 g.display_name = newName.trim() || g.display_name;
@@ -2860,7 +2860,7 @@ val = Math.max(min, Math.min(max, val));
 input.value = val;
 updateRoundConfig(groupId);
 }
-function updateRoundConfig(groupId) {
+function updateWeightDropdown()RoundConfig(groupId) {
 const roundsEl = document.getElementById('roundsCount_' + groupId);
 const minsEl = document.getElementById('roundMinutes_' + groupId);
 const secsEl = document.getElementById('roundSeconds_' + groupId);
@@ -2903,7 +2903,7 @@ updateRoundPreview(groupId, rounds, mins, secs, pMins, pSecs);
 showRoundSavedIndicator(groupId);
 scheduleAutoSave('Updated round & pause config for age group');
 }
-function updateRoundPreview(groupId, rounds, mins, secs, pMins, pSecs) {
+function updateWeightDropdown()RoundPreview(groupId, rounds, mins, secs, pMins, pSecs) {
 const card = document.getElementById('roundCard_' + groupId);
 if (!card) return;
 const preview = card.querySelector('.round-config-preview');
@@ -3365,7 +3365,7 @@ for (const key in bracketWinnersCache) winnersSnapshot[key] = { ...bracketWinner
 undoStack.push({ description, bracketType: currentBracketType, snapshots, groupsSnapshot: JSON.parse(JSON.stringify(currentGroups)), overridesSnapshot: { ...bracketSizeOverrides }, winnersSnapshot, timestamp: new Date().toISOString() });
 updateUndoButton();
 }
-function updateUndoButton() {
+function updateWeightDropdown()UndoButton() {
 const btn = document.getElementById("floatingUndoBtn");
 const badge = document.getElementById("undoCountBadge");
 const tooltip = document.getElementById("undoTooltip");
@@ -3403,7 +3403,7 @@ toast.textContent = message;
 toast.className = "toast show " + type;
 setTimeout(() => { toast.className = "toast"; }, 2500);
 }
-function updateAutocomplete(term) {
+function updateWeightDropdown()Autocomplete(term) {
 const dropdown = document.getElementById("autocompleteDropdown");
 const clearBtn = document.getElementById("autocompleteClear");
 const lower = (term || "").trim().toLowerCase();
@@ -4308,7 +4308,7 @@ html += '<div class="category-card"><div class="category-header">Sample Registra
 document.getElementById("content").innerHTML = html;
 }
 async function runFullDebug() { await fetchData(); showDebugInfo(); }
-function updateAgeForFilters() {
+function updateWeightDropdown()AgeForFilters() {
 tournamentDate = document.getElementById("tournamentDate").value;
 recomputeCompetitorCategories();
 const activeBtn = document.querySelector(".nav .btn.btn-active");
@@ -4415,7 +4415,7 @@ contentHtml += '<div class="filters-card"><div class="filters">' +
 document.getElementById("content").innerHTML = contentHtml;
 updateWeightDropdown();
 }
-function updateWeightDropdown() {
+function updateWeightDropdown()WeightDropdown() {
 const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value;
 const wDrop = document.getElementById("sWeight");
 const info = document.getElementById("sparringInfo");
@@ -4665,7 +4665,7 @@ function selectRank(rank) {
 rankSelectionMode = (rankSelectionMode === rank) ? null : rank;
 updateRangsUI();
 }
-function updateRangsUI() {
+function updateWeightDropdown()RangsUI() {
 document.querySelectorAll(".rank-btn").forEach(btn => { btn.classList.toggle("selected", btn.dataset.rank === rankSelectionMode); });
 const hint = document.getElementById("rangsHint");
 if (!hint) return;
@@ -4714,7 +4714,7 @@ rankCell.innerHTML = '<span class="rank-badge ' + rankClass + '"><i class="fas '
 });
 updateRankLegend();
 }
-function updateRankLegend() {
+function updateWeightDropdown()RankLegend() {
 const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0 };
 judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
 const legend = document.getElementById("rankLegend");
