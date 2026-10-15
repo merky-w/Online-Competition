@@ -5,133 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Taekwondo Scoring System</title>
 
-<!--
-============================================================================
-DATABASE SETUP (run ONCE in Supabase SQL Editor)
-============================================================================
-
--- Create ring_matches table for bracket integration
-create table if not exists public.ring_matches (
-  id uuid default gen_random_uuid() primary key,
-  ring_id int not null,
-  category_name text not null,
-  discipline text not null,
-  match_number int not null,
-  player1_name text,
-  player2_name text,
-  winner_name text,
-  status text default 'upcoming',
-  created_at timestamptz default now()
-);
-
-alter table public.ring_matches enable row level security;
-create policy "ring_matches_all" on public.ring_matches for all using (true) with check (true);
-
--- Add mode column to rings table
-alter table public.rings add column if not exists mode text default 'sparring';
-alter table public.rings add column if not exists current_match_id uuid;
-alter table public.rings add column if not exists player1_name text;
-alter table public.rings add column if not exists player2_name text;
-alter table public.rings add column if not exists next_player1_name text;
-alter table public.rings add column if not exists next_player2_name text;
-
--- Add winner column to matches table
-alter table public.matches add column if not exists winner text;
-
--- Realtime for ring_matches
-do $$ begin
-  alter publication supabase_realtime add table public.ring_matches;
-exception when duplicate_object then null; end $$;
-
--- RPC to get current ring match
-create or replace function public.get_current_ring_match(p_ring_id int)
-returns table (
-  id uuid,
-  category_name text,
-  discipline text,
-  match_number int,
-  player1_name text,
-  player2_name text,
-  winner_name text,
-  status text
-)
-language sql stable security definer as
-$$
-  select rm.id, rm.category_name, rm.discipline, rm.match_number, 
-         rm.player1_name, rm.player2_name, rm.winner_name, rm.status
-  from public.ring_matches rm
-  where rm.ring_id = p_ring_id and rm.status = 'upcoming'
-  order by rm.match_number asc
-  limit 1;
-$$;
-
--- RPC to advance to next match
-create or replace function public.advance_ring_match(p_ring_id int, p_winner text)
-returns void
-language plpgsql security definer as
-$$
-declare 
-  v_current_match uuid;
-  v_next_match record;
-begin
-  -- Get current match
-  select rm.id into v_current_match
-  from public.ring_matches rm
-  where rm.ring_id = p_ring_id and rm.status = 'upcoming'
-  order by rm.match_number asc
-  limit 1;
-  
-  -- Mark current as completed
-  if v_current_match is not null then
-    update public.ring_matches 
-    set status = 'completed', winner_name = p_winner
-    where id = v_current_match;
-  end if;
-  
-  -- Get next match
-  select * into v_next_match
-  from public.ring_matches rm
-  where rm.ring_id = p_ring_id and rm.status = 'upcoming'
-  order by rm.match_number asc
-  limit 1;
-  
-  -- Update ring with next match info
-  if v_next_match.id is not null then
-    update public.rings
-    set current_match_id = v_next_match.id,
-        player1_name = v_next_match.player1_name,
-        player2_name = v_next_match.player2_name
-    where id = p_ring_id;
-  else
-    -- No more matches
-    update public.rings
-    set current_match_id = null,
-        player1_name = null,
-        player2_name = null
-    where id = p_ring_id;
-  end if;
-end $$;
-
--- RPC to get next match info
-create or replace function public.get_next_ring_match(p_ring_id int)
-returns table (
-  player1_name text,
-  player2_name text
-)
-language sql stable security definer as
-$$
-  select rm.player1_name, rm.player2_name
-  from public.ring_matches rm
-  where rm.ring_id = p_ring_id and rm.status = 'upcoming'
-  order by rm.match_number asc
-  limit 1;
-$$;
-
-grant execute on all functions in schema public to anon, authenticated, service_role;
-
-==============================================================================
--->
-
 <script>
   const originalWarn = console.warn;
   console.warn = function(...args) {
@@ -151,7 +24,7 @@ grant execute on all functions in schema public to anon, authenticated, service_
   .btn-score { transition: all 0.08s ease; }
   .btn-score:active { transform: scale(0.94); }
   .pulse { animation: pulse 0.4s ease; }
-  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.  12); } 100% { transform: scale(1); } }
   .scored-flash { animation: scoredFlash 0.6s ease; }
   @keyframes scoredFlash {
     0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.9); }
@@ -166,6 +39,55 @@ grant execute on all functions in schema public to anon, authenticated, service_
   .vote-caption { font-size: clamp(.7rem, 1.3vw, 1.15rem); letter-spacing: .28em; font-weight: 800; opacity: .8; }
   .side-blue { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
   .side-red  { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
+
+  /* Competitor name displays */
+  .competitor-name-display {
+    font-size: clamp(1.8rem, 4vw, 4rem);
+    font-weight: 900;
+    text-align: center;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .competitor-name-display.blue-name {
+    background: rgba(37, 99, 235, 0.25);
+    color: #93c5fd;
+    border: 3px solid #3b82f6;
+  }
+  .competitor-name-display.red-name {
+    background: rgba(220, 38, 38, 0.25);
+    color: #fca5a5;
+    border: 3px solid #dc2626;
+  }
+  .next-competitor-name {
+    font-size: clamp(1.2rem, 2.5vw, 2.5rem);
+    font-weight: 800;
+    text-align: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .next-competitor-name.blue-next {
+    background: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+    border: 2px dashed #3b82f6;
+  }
+  .next-competitor-name.red-next {
+    background: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+    border: 2px dashed #dc2626;
+  }
 
   .tv-stats { display: flex; gap: clamp(10px, 2vw, 42px); margin-top: clamp(10px, 3vh, 36px); }
   .tv-stat {
@@ -228,50 +150,60 @@ grant execute on all functions in schema public to anon, authenticated, service_
   .timer-warning { color: #f87171 !important; animation: timerBlink 0.8s infinite; }
   @keyframes timerBlink { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 
-  /* Competitor name display */
-  .competitor-name {
-    font-size: clamp(1.5rem, 3vw, 3rem);
-    font-weight: 900;
-    text-align: center;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .competitor-name.blue {
-    background: rgba(37, 99, 235, 0.2);
-    color: #60a5fa;
-    border: 2px solid #3b82f6;
-  }
-  .competitor-name.red {
-    background: rgba(220, 38, 38, 0.2);
-    color: #fca5a5;
-    border: 2px solid #dc2626;
-  }
-  .next-competitor {
-    font-size: clamp(1rem, 2vw, 1.5rem);
-    opacity: 0.7;
-    margin-top: 0.5rem;
-  }
+  /* Category badge */
   .category-badge {
     display: inline-block;
-    padding: 0.5rem 1rem;
+    padding: 0.3rem 0.8rem;
     border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
-  .category-badge.sparring {
-    background: rgba(220, 38, 38, 0.2);
-    color: #fca5a5;
-    border: 2px solid #dc2626;
+  .category-badge.sparring { background: rgba(220, 38, 38, 0.2); color: #fca5a5; border: 1px solid #dc2626; }
+  .category-badge.patterns { background: rgba(37, 99, 235, 0.2); color: #93c5fd; border: 1px solid #3b82f6; }
+
+  /* Patterns mode buttons */
+  .patterns-btn {
+    transition: all 0.15s ease;
+    font-weight: 900;
+    letter-spacing: 0.05em;
   }
-  .category-badge.patterns {
-    background: rgba(37, 99, 235, 0.2);
-    color: #60a5fa;
-    border: 2px solid #3b82f6;
+  .patterns-btn:active { transform: scale(0.96); }
+  .patterns-btn.blue-win { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
+  .patterns-btn.blue-win:hover { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
+  .patterns-btn.draw-btn { background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%); }
+  .patterns-btn.draw-btn:hover { background: linear-gradient(135deg, #374151 0%, #9ca3af 100%); }
+  .patterns-btn.red-win { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
+  .patterns-btn.red-win:hover { background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%); }
+
+  /* Laptop declare winner buttons */
+  .declare-winner-btn {
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.15s ease;
+    border: 3px solid transparent;
   }
+  .declare-winner-btn:active { transform: scale(0.97); }
+  .declare-winner-btn.blue-declare {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    color: white;
+  }
+  .declare-winner-btn.blue-declare:hover { border-color: #93c5fd; }
+  .declare-winner-btn.draw-declare {
+    background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
+    color: white;
+  }
+  .declare-winner-btn.draw-declare:hover { border-color: #d1d5db; }
+  .declare-winner-btn.red-declare {
+    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+    color: white;
+  }
+  .declare-winner-btn.red-declare:hover { border-color: #fca5a5; }
 </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
@@ -312,6 +244,7 @@ grant execute on all functions in schema public to anon, authenticated, service_
     <div class="flex items-center gap-2 min-w-0">
       <span class="text-xl">🥋</span>
       <span id="phone-ring-name" class="font-bold truncate"></span>
+      <span id="phone-mode-badge" class="category-badge sparring">SPARRING</span>
     </div>
     <div class="flex items-center gap-3 shrink-0">
       <span id="phone-judge-badge" class="bg-yellow-400 text-black font-black px-3 py-1 rounded-lg text-sm">JUDGE –</span>
@@ -343,7 +276,8 @@ grant execute on all functions in schema public to anon, authenticated, service_
     <span id="phone-timer-status" class="text-xs text-slate-400">Paused</span>
   </div>
 
-  <div class="grid grid-cols-2 gap-3 p-3 flex-1 min-h-0">
+  <!-- SPARRING CONTROLS (1-5 points) -->
+  <div id="sparring-controls" class="grid grid-cols-2 gap-3 p-3 flex-1 min-h-0">
     <div class="side-blue rounded-2xl p-3 flex flex-col min-h-0 glow-blue">
       <div class="text-center font-black tracking-widest text-sm mb-2 opacity-90">🔵 BLUE · CHUNG</div>
       <div class="flex-1 grid grid-rows-5 gap-2 min-h-0">
@@ -397,6 +331,19 @@ grant execute on all functions in schema public to anon, authenticated, service_
     </div>
   </div>
 
+  <!-- PATTERNS CONTROLS (Blue/Draw/Red) -->
+  <div id="patterns-controls" class="hidden flex-1 grid grid-rows-3 gap-3 p-3 min-h-0">
+    <button class="patterns-btn blue-win btn-score rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl" data-winner="blue">
+      🔵 BLUE WINS
+    </button>
+    <button class="patterns-btn draw-btn btn-score rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl" data-winner="draw">
+      🤝 DRAW
+    </button>
+    <button class="patterns-btn red-win btn-score rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl" data-winner="red">
+      🔴 RED WINS
+    </button>
+  </div>
+
   <div class="px-3 pb-3">
     <div id="phone-status" class="text-center text-xs text-slate-500">Tap a button to award points — your corner updates live</div>
   </div>
@@ -422,16 +369,16 @@ grant execute on all functions in schema public to anon, authenticated, service_
 
     <!-- CURRENT MATCH INFO -->
     <div id="laptop-match-info" class="bg-slate-800 rounded-2xl p-4 border-2 border-blue-500 mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-bold text-lg flex items-center gap-2">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div class="flex items-center gap-3">
           <span id="laptop-discipline-badge" class="category-badge sparring">SPARRING</span>
-          <span id="laptop-category-name" class="text-white">Category Name</span>
-        </h3>
+          <span id="laptop-category-name" class="text-white font-bold">Loading category...</span>
+        </div>
         <div class="text-sm text-slate-400">
-          Match #<span id="laptop-match-number">1</span>
+          Match #<span id="laptop-match-number">-</span>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-4 mb-3">
         <div class="bg-blue-900/30 rounded-xl p-4 border-2 border-blue-500">
           <div class="text-xs text-blue-400 font-bold mb-2">🔵 BLUE COMPETITOR</div>
           <div id="laptop-blue-name" class="text-2xl font-black text-white">---</div>
@@ -441,18 +388,17 @@ grant execute on all functions in schema public to anon, authenticated, service_
           <div id="laptop-red-name" class="text-2xl font-black text-white">---</div>
         </div>
       </div>
-      <div id="laptop-next-match" class="mt-3 text-center text-sm text-slate-400">
-        Next: <span id="laptop-next-blue" class="text-blue-300 font-semibold">---</span> vs <span id="laptop-next-red" class="text-red-300 font-semibold">---</span>
+      <div id="laptop-next-match" class="text-center text-sm text-slate-400 bg-black/30 rounded-lg p-2">
+        ⏭️ Next: <span id="laptop-next-blue" class="text-blue-300 font-semibold">---</span> vs <span id="laptop-next-red" class="text-red-300 font-semibold">---</span>
       </div>
     </div>
 
     <!-- Database setup banner -->
     <div class="bg-amber-950/60 border-2 border-amber-500/70 rounded-xl p-3 mb-4 text-sm text-amber-100">
       <div class="font-black mb-1">🛠 DATABASE SETUP — run the SQL once if phones can't connect, scores 400, or phones get kicked on their own</div>
-      <div class="text-xs opacity-90 mb-2">
-        Open this HTML file in a text editor, copy the big SQL block from the comment at the very top,
+      <div class="text-xs opacity-90">
+        Open this HTML file in a text editor, copy the SQL from manage.html or the setup guide,
         paste it into Supabase → SQL Editor → RUN → then RELOAD this page.
-        Safe to run again — it replaces older versions.
       </div>
     </div>
 
@@ -460,7 +406,7 @@ grant execute on all functions in schema public to anon, authenticated, service_
     <div id="laptop-db-warning" class="hidden bg-red-950 border-2 border-red-500 rounded-xl p-3 mb-4 text-sm text-red-100">
       <div class="font-black mb-1">⚠ DATABASE PROBLEM — scores/cards cannot be saved until this is fixed</div>
       <div id="laptop-db-warning-msg" class="mb-1 break-words"></div>
-      <div class="text-yellow-300 font-bold">👉 Run the SQL from the amber box above, then RELOAD this page.</div>
+      <div class="text-yellow-300 font-bold">👉 Run the SQL setup, then RELOAD this page.</div>
     </div>
 
     <!-- ROUND TIMER CONTROL PANEL -->
@@ -484,11 +430,6 @@ grant execute on all functions in schema public to anon, authenticated, service_
           <button id="btn-timer-start" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg font-bold">▶ Start Round</button>
           <button id="btn-timer-pause" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-2 rounded-lg font-bold hidden">⏸ Pause</button>
           <button id="btn-timer-reset" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg font-bold">⟲ Reset Round</button>
-          <div class="flex items-center gap-1 ml-2">
-            <input id="inp-round-time" type="number" min="1" max="10" value="2" class="w-14 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-center text-sm">
-            <span class="text-sm text-slate-400">min</span>
-            <button id="btn-set-time" class="bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded text-sm font-bold">Set</button>
-          </div>
         </div>
       </div>
       <div id="timer-round3-note" class="hidden text-xs text-yellow-300/90 mt-3 text-center bg-yellow-900/30 border border-yellow-500/40 rounded-lg py-2">
@@ -499,114 +440,127 @@ grant execute on all functions in schema public to anon, authenticated, service_
       </div>
     </div>
 
-    <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">
-      Judge corners · use B+ / B− / R+ / R− to add or deduct any judge's points
-    </div>
-    <div class="grid grid-cols-2 gap-3 mb-3">
-      <div id="judge-laptop-1" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-        <div>
-          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 1</div>
-          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1.5 mt-2">
-            <button data-act="judge-1-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-            <button data-act="judge-1-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-            <button data-act="judge-1-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-            <button data-act="judge-1-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-          </div>
-        </div>
-        <div class="judge-net text-5xl font-black">0</div>
-      </div>
-      <div id="judge-laptop-2" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-        <div>
-          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 2</div>
-          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1.5 mt-2">
-            <button data-act="judge-2-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-            <button data-act="judge-2-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-            <button data-act="judge-2-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-            <button data-act="judge-2-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-          </div>
-        </div>
-        <div class="judge-net text-5xl font-black">0</div>
+    <!-- PATTERNS MODE: Declare Winner Buttons -->
+    <div id="laptop-patterns-declare" class="hidden bg-slate-800 rounded-2xl p-4 border-2 border-yellow-500 mb-4">
+      <h3 class="font-bold text-lg mb-3 text-yellow-300 text-center">🏆 DECLARE PATTERNS WINNER</h3>
+      <div class="grid grid-cols-3 gap-3">
+        <button id="btn-declare-blue" class="declare-winner-btn blue-declare">🔵 Blue Wins</button>
+        <button id="btn-declare-draw" class="declare-winner-btn draw-declare">🤝 Draw</button>
+        <button id="btn-declare-red" class="declare-winner-btn red-declare">🔴 Red Wins</button>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="side-blue rounded-2xl p-6 glow-blue">
-        <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
-        <div id="l-blue-score" class="text-center text-8xl font-black tv-score">0</div>
-        <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR BLUE</div>
-        <div class="grid grid-cols-2 gap-3 mt-4">
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-            <div id="l-blue-gj" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="blue-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="blue-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+    <!-- SPARRING MODE: Judge corners -->
+    <div id="laptop-sparring-judges">
+      <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">
+        Judge corners · use B+ / B− / R+ / R− to add or deduct any judge's points
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div id="judge-laptop-1" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 1</div>
+            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+            <div class="flex gap-1.5 mt-2">
+              <button data-act="judge-1-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+              <button data-act="judge-1-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+              <button data-act="judge-1-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+              <button data-act="judge-1-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
             </div>
           </div>
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
-            <div id="l-blue-yc" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="blue-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="blue-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+          <div class="judge-net text-5xl font-black">0</div>
+        </div>
+        <div id="judge-laptop-2" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 2</div>
+            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+            <div class="flex gap-1.5 mt-2">
+              <button data-act="judge-2-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+              <button data-act="judge-2-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+              <button data-act="judge-2-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+              <button data-act="judge-2-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
+            </div>
+          </div>
+          <div class="judge-net text-5xl font-black">0</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="side-blue rounded-2xl p-6 glow-blue">
+          <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
+          <div id="l-blue-score" class="text-center text-8xl font-black tv-score">0</div>
+          <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR BLUE</div>
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <div class="bg-black/30 rounded-xl p-3 text-center">
+              <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
+              <div id="l-blue-gj" class="text-4xl font-black">0</div>
+              <div class="flex gap-1 mt-2 justify-center">
+                <button data-act="blue-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
+                <button data-act="blue-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+              </div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-3 text-center">
+              <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
+              <div id="l-blue-yc" class="text-4xl font-black">0</div>
+              <div class="flex gap-1 mt-2 justify-center">
+                <button data-act="blue-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
+                <button data-act="blue-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-red rounded-2xl p-6 glow-red">
+          <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">RED · HONG</div>
+          <div id="l-red-score" class="text-center text-8xl font-black tv-score">0</div>
+          <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR RED</div>
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <div class="bg-black/30 rounded-xl p-3 text-center">
+              <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
+              <div id="l-red-gj" class="text-4xl font-black">0</div>
+              <div class="flex gap-1 mt-2 justify-center">
+                <button data-act="red-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
+                <button data-act="red-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+              </div>
+            </div>
+            <div class="bg-black/30 rounded-xl p-3 text-center">
+              <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
+              <div id="l-red-yc" class="text-4xl font-black">0</div>
+              <div class="flex gap-1 mt-2 justify-center">
+                <button data-act="red-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
+                <button data-act="red-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="side-red rounded-2xl p-6 glow-red">
-        <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">RED · HONG</div>
-        <div id="l-red-score" class="text-center text-8xl font-black tv-score">0</div>
-        <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR RED</div>
-        <div class="grid grid-cols-2 gap-3 mt-4">
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-            <div id="l-red-gj" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="red-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="red-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+      <div class="grid grid-cols-2 gap-3 mt-3 mb-4">
+        <div id="judge-laptop-3" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 3</div>
+            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+            <div class="flex gap-1.5 mt-2">
+              <button data-act="judge-3-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+              <button data-act="judge-3-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+              <button data-act="judge-3-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+              <button data-act="judge-3-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
             </div>
           </div>
-          <div class="bg-black/30 rounded-xl p-3 text-center">
-            <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
-            <div id="l-red-yc" class="text-4xl font-black">0</div>
-            <div class="flex gap-1 mt-2 justify-center">
-              <button data-act="red-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-              <button data-act="red-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
+          <div class="judge-net text-5xl font-black">0</div>
+        </div>
+        <div id="judge-laptop-4" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 4</div>
+            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
+            <div class="flex gap-1.5 mt-2">
+              <button data-act="judge-4-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
+              <button data-act="judge-4-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
+              <button data-act="judge-4-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
+              <button data-act="judge-4-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
             </div>
           </div>
+          <div class="judge-net text-5xl font-black">0</div>
         </div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3 mt-3 mb-4">
-      <div id="judge-laptop-3" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-        <div>
-          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 3</div>
-          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1.5 mt-2">
-            <button data-act="judge-3-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-            <button data-act="judge-3-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-            <button data-act="judge-3-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-            <button data-act="judge-3-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-          </div>
-        </div>
-        <div class="judge-net text-5xl font-black">0</div>
-      </div>
-      <div id="judge-laptop-4" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-        <div>
-          <div class="text-xs font-black tracking-widest opacity-90">JUDGE 4</div>
-          <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-          <div class="flex gap-1.5 mt-2">
-            <button data-act="judge-4-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-            <button data-act="judge-4-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-            <button data-act="judge-4-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-            <button data-act="judge-4-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-          </div>
-        </div>
-        <div class="judge-net text-5xl font-black">0</div>
       </div>
     </div>
 
@@ -635,13 +589,13 @@ grant execute on all functions in schema public to anon, authenticated, service_
 
 <!-- VIEW: TV DISPLAY -->
 <div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden flex flex-col">
-  <!-- TOP HALF: CURRENT MATCH -->
+  <!-- TOP HALF: Current Competitors -->
   <div class="flex-1 grid grid-cols-2 relative">
-    <!-- BLUE SIDE -->
+    <!-- TOP LEFT: Current Blue -->
     <div class="side-blue flex flex-col p-6">
       <div class="text-center mb-2">
-        <div id="tv-blue-name" class="competitor-name blue">BLUE</div>
-        <div class="text-xl font-black tracking-widest opacity-80">🔵 CHUNG</div>
+        <div id="tv-blue-name" class="competitor-name-display blue-name">BLUE</div>
+        <div class="text-xl font-black tracking-widest opacity-80 mt-2">🔵 CHUNG</div>
       </div>
       <div class="flex-1 flex flex-col items-center justify-center">
         <div id="tv-blue-score" class="tv-score big-number text-white">0</div>
@@ -659,11 +613,11 @@ grant execute on all functions in schema public to anon, authenticated, service_
       </div>
     </div>
 
-    <!-- RED SIDE -->
+    <!-- TOP RIGHT: Current Red -->
     <div class="side-red flex flex-col p-6">
       <div class="text-center mb-2">
-        <div id="tv-red-name" class="competitor-name red">RED</div>
-        <div class="text-xl font-black tracking-widest opacity-80">🔴 HONG</div>
+        <div id="tv-red-name" class="competitor-name-display red-name">RED</div>
+        <div class="text-xl font-black tracking-widest opacity-80 mt-2">🔴 HONG</div>
       </div>
       <div class="flex-1 flex flex-col items-center justify-center">
         <div id="tv-red-score" class="tv-score big-number text-white">0</div>
@@ -683,24 +637,21 @@ grant execute on all functions in schema public to anon, authenticated, service_
     
     <!-- CENTER TIMER -->
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/85 border-4 border-yellow-400 rounded-2xl px-10 py-4 text-center z-10">
+      <div id="tv-category-badge" class="category-badge sparring mb-2">SPARRING</div>
       <div class="text-xl font-black tracking-widest text-yellow-300">ROUND <span id="tv-timer-round">1</span></div>
       <div id="tv-timer-time" class="text-7xl font-black timer-display mt-1">2:00</div>
     </div>
   </div>
 
-  <!-- BOTTOM THIRD: NEXT MATCH -->
+  <!-- BOTTOM THIRD: NEXT UP -->
   <div class="h-1/4 bg-slate-900 border-t-4 border-yellow-400 grid grid-cols-2 relative">
     <div class="flex flex-col items-center justify-center p-4 border-r-2 border-yellow-400/30">
-      <div class="text-sm font-bold text-blue-300 mb-2">🔵 NEXT BLUE</div>
-      <div id="tv-next-blue" class="text-3xl font-black text-blue-400">---</div>
+      <div class="text-sm font-bold text-blue-300 mb-2">⏭️ NEXT BLUE</div>
+      <div id="tv-next-blue" class="next-competitor-name blue-next w-full">---</div>
     </div>
     <div class="flex flex-col items-center justify-center p-4">
-      <div class="text-sm font-bold text-red-300 mb-2">🔴 NEXT RED</div>
-      <div id="tv-next-red" class="text-3xl font-black text-red-400">---</div>
-    </div>
-    <!-- Category info overlay -->
-    <div class="absolute top-2 left-1/2 -translate-x-1/2">
-      <div id="tv-category-badge" class="category-badge sparring">SPARRING</div>
+      <div class="text-sm font-bold text-red-300 mb-2">⏭️ NEXT RED</div>
+      <div id="tv-next-red" class="next-competitor-name red-next w-full">---</div>
     </div>
   </div>
 
@@ -823,7 +774,7 @@ function broadcastTimerState() {
   if (timerChannel && state.role === 'laptop') {
     try {
       timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState });
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
   }
 }
 
@@ -917,19 +868,6 @@ function renderTimer() {
     }
   }
 
-  const inpTime = document.getElementById('inp-round-time');
-  const btnSetTime = document.getElementById('btn-set-time');
-  if (inpTime && btnSetTime) {
-    const canChange = !timerState.finished &&
-                      timerState.round === 1 &&
-                      timerState.elapsed === 0 &&
-                      !timerState.startTime;
-    inpTime.disabled = !canChange;
-    btnSetTime.disabled = !canChange;
-    inpTime.classList.toggle('opacity-50', !canChange);
-    btnSetTime.classList.toggle('opacity-50', !canChange);
-  }
-
   const r3note = document.getElementById('timer-round3-note');
   if (r3note) r3note.classList.toggle('hidden', timerState.round !== 3);
 
@@ -944,8 +882,8 @@ function renderTimer() {
       } else {
         tvText.textContent = timerState.winner.toUpperCase() + ' WINS!';
         const winnerName = timerState.winner === 'blue' 
-          ? (state.ring?.player1_name || 'BLUE')
-          : (state.ring?.player2_name || 'RED');
+          ? (state.ring?.blue_name || 'BLUE')
+          : (state.ring?.red_name || 'RED');
         if (tvWinnerName) tvWinnerName.textContent = winnerName;
       }
       tvOverlay.classList.remove('hidden');
@@ -1022,23 +960,6 @@ function resetRound() {
   stopTimerTick();
 }
 
-function setRoundTime(minutes) {
-  if (state.role !== 'laptop') return;
-  minutes = Math.max(1, Math.min(10, Math.round(minutes || 2)));
-  const canChange = !timerState.finished &&
-                    timerState.round === 1 &&
-                    timerState.elapsed === 0 &&
-                    !timerState.startTime;
-  if (!canChange) {
-    alert("You can only change the round time at the start of Round 1. Reset the match first.");
-    return;
-  }
-  timerState.roundTime = minutes * 60;
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-}
-
 async function endRound() {
   if (timerState.finished) return;
 
@@ -1048,6 +969,15 @@ async function endRound() {
 
   await fetchMatchNow();
 
+  const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+
+  // Patterns mode: auto-finish after round 1
+  if (mode === 'patterns') {
+    finishMatch();
+    return;
+  }
+
+  // Sparring mode: normal round progression
   if (timerState.round === 1) {
     timerState.round = 2;
     timerState.elapsed = 0;
@@ -1071,6 +1001,21 @@ async function endRound() {
 }
 
 function finishMatch() {
+  const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+  
+  if (mode === 'patterns') {
+    // Patterns: winner already declared by judges
+    timerState.finished = true;
+    timerState.paused = true;
+    saveTimerState();
+    broadcastTimerState();
+    renderTimer();
+    stopTimerTick();
+    if (state.role === 'laptop') showWinnerConfirmStep1();
+    return;
+  }
+
+  // Sparring: determine winner by judge votes
   const votes = judgeVoteCounts();
   timerState.finished = true;
   timerState.paused = true;
@@ -1106,8 +1051,8 @@ function showWinnerConfirmStep1() {
   } else {
     title.textContent = timerState.winner.toUpperCase() + ' WINS!';
     winnerName = timerState.winner === 'blue' 
-      ? (state.ring?.player1_name || 'BLUE')
-      : (state.ring?.player2_name || 'RED');
+      ? (state.ring?.blue_name || 'BLUE')
+      : (state.ring?.red_name || 'RED');
   }
   
   if (winnerNameEl) winnerNameEl.textContent = winnerName;
@@ -1129,12 +1074,12 @@ async function confirmAndAdvance() {
   document.getElementById('modal-winner').classList.add('hidden');
   
   const winnerName = timerState.winner === 'blue' 
-    ? (state.ring?.player1_name || 'BLUE')
+    ? (state.ring?.blue_name || 'BLUE')
     : timerState.winner === 'red'
-    ? (state.ring?.player2_name || 'RED')
+    ? (state.ring?.red_name || 'RED')
     : 'DRAW';
 
-  // Save winner to database and advance to next match
+  // Call RPC to advance to next match
   const { error } = await sb.rpc('advance_ring_match', {
     p_ring_id: state.ring.id,
     p_winner: winnerName
@@ -1163,13 +1108,21 @@ async function confirmAndAdvance() {
   const tvOverlay = document.getElementById('tv-winner-overlay');
   if (tvOverlay) tvOverlay.classList.add('hidden');
 
-  // Refresh ring data to get next match
+  // Refresh ring data to get next match info
   await refreshRingData();
+  
+  // Auto-set timer from new match config
+  if (state.ring?.round_time_seconds) {
+    timerState.roundTime = state.ring.round_time_seconds;
+    saveTimerState();
+    broadcastTimerState();
+  }
   
   // Reset match scores
   await resetMatchScores();
   
   renderTimer();
+  updateCompetitorDisplay();
 }
 
 function showWinnerDenied() {
@@ -1214,7 +1167,6 @@ async function resetMatchScores() {
     blue_yellow_cards: 0, red_yellow_cards: 0,
     judge_blue: [0,0,0,0],
     judge_red:  [0,0,0,0],
-    winner: null,
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
 
@@ -1245,99 +1197,29 @@ async function refreshRingData() {
   sessionStorage.setItem('tkd_ring', JSON.stringify(data));
 
   updateCompetitorDisplay();
+  applyModeUI();
 }
 
 async function loadCurrentMatch() {
   if (!state.ring) return;
 
-  const { data, error } = await sb.rpc('get_current_ring_match', {
+  // Initialize ring with first match if needed
+  const { error: initErr } = await sb.rpc('init_ring_match', {
     p_ring_id: state.ring.id
   });
-
-  if (error) {
-    console.error('Failed to load current match:', error);
-    return;
-  }
-
-  if (data && data.length > 0) {
-    state.currentMatch = data[0];
-    
-    // Update ring with current match info
-    const { error: updateError } = await sb
-      .from('rings')
-      .update({
-        current_match_id: state.currentMatch.id,
-        player1_name: state.currentMatch.player1_name,
-        player2_name: state.currentMatch.player2_name,
-        mode: state.currentMatch.discipline
-      })
-      .eq('id', state.ring.id);
-
-    if (updateError) {
-      console.error('Failed to update ring:', updateError);
-    }
-
-    await refreshRingData();
-  } else {
-    // No more matches
-    state.currentMatch = null;
-    await sb
-      .from('rings')
-      .update({
-        current_match_id: null,
-        player1_name: null,
-        player2_name: null
-      })
-      .eq('id', state.ring.id);
-    
-    await refreshRingData();
-  }
-
-  await loadNextMatch();
-}
-
-async function loadNextMatch() {
-  if (!state.ring) return;
-
-  const { data, error } = await sb.rpc('get_next_ring_match', {
-    p_ring_id: state.ring.id
-  });
-
-  if (error) {
-    console.error('Failed to load next match:', error);
-    return;
-  }
-
-  if (data && data.length > 0) {
-    const nextMatch = data[0];
-    await sb
-      .from('rings')
-      .update({
-        next_player1_name: nextMatch.player1_name,
-        next_player2_name: nextMatch.player2_name
-      })
-      .eq('id', state.ring.id);
-  } else {
-    await sb
-      .from('rings')
-      .update({
-        next_player1_name: null,
-        next_player2_name: null
-      })
-      .eq('id', state.ring.id);
-  }
+  if (initErr) console.warn('init_ring_match:', initErr.message);
 
   await refreshRingData();
 }
 
 function updateCompetitorDisplay() {
-  const blueName = state.ring?.player1_name || '---';
-  const redName = state.ring?.player2_name || '---';
-  const nextBlueName = state.ring?.next_player1_name || '---';
-  const nextRedName = state.ring?.next_player2_name || '---';
-  const discipline = state.ring?.mode || 'sparring';
-  const categoryName = state.currentMatch?.category_name || 'No Match';
-  const matchNumber = state.currentMatch?.match_number || 0;
+  const blueName = state.ring?.blue_name || '---';
+  const redName = state.ring?.red_name || '---';
+  const nextBlueName = state.ring?.next_blue_name || '---';
+  const nextRedName = state.ring?.next_red_name || '---';
+  const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+  const categoryName = state.ring?.category_name || 'No Match';
+  const matchNumber = state.ring?.match_number || 0;
 
   // Laptop display
   const laptopBlue = document.getElementById('laptop-blue-name');
@@ -1378,9 +1260,35 @@ function updateCompetitorDisplay() {
   // Phone display
   const phoneBlue = document.getElementById('phone-blue-name');
   const phoneRed = document.getElementById('phone-red-name');
+  const phoneMode = document.getElementById('phone-mode-badge');
 
   if (phoneBlue) phoneBlue.textContent = blueName;
   if (phoneRed) phoneRed.textContent = redName;
+  if (phoneMode) {
+    phoneMode.textContent = discipline.toUpperCase();
+    phoneMode.className = `category-badge ${discipline}`;
+  }
+}
+
+function applyModeUI() {
+  const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+  
+  const sparringControls = document.getElementById('sparring-controls');
+  const patternsControls = document.getElementById('patterns-controls');
+  const sparringJudges = document.getElementById('laptop-sparring-judges');
+  const patternsDeclare = document.getElementById('laptop-patterns-declare');
+
+  if (mode === 'patterns') {
+    if (sparringControls) sparringControls.classList.add('hidden');
+    if (patternsControls) patternsControls.classList.remove('hidden');
+    if (sparringJudges) sparringJudges.classList.add('hidden');
+    if (patternsDeclare) patternsDeclare.classList.remove('hidden');
+  } else {
+    if (sparringControls) sparringControls.classList.remove('hidden');
+    if (patternsControls) patternsControls.classList.add('hidden');
+    if (sparringJudges) sparringJudges.classList.remove('hidden');
+    if (patternsDeclare) patternsDeclare.classList.add('hidden');
+  }
 }
 
 /* ===================================================================== */
@@ -1739,6 +1647,13 @@ async function enterPhone() {
   state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
 
   loadTimerState();
+  
+  // Auto-set timer from ring config
+  if (state.ring?.round_time_seconds) {
+    timerState.roundTime = state.ring.round_time_seconds;
+    saveTimerState();
+  }
+  
   subscribeTimer();
   renderTimer();
   startTimerTick();
@@ -1747,6 +1662,7 @@ async function enterPhone() {
   subscribeRing();
   
   updateCompetitorDisplay();
+  applyModeUI();
   
   showView("phone");
   setPhoneStatus("Connected as Judge " + slot + " — tap to score", false);
@@ -1779,7 +1695,7 @@ async function phoneHeartbeatTick() {
           leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
         }
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
   } finally {
     state.heartbeatBusy = false;
   }
@@ -1848,6 +1764,7 @@ async function phoneScoreFallback(side, points) {
   return !uErr;
 }
 
+// SPARRING: point buttons
 document.querySelectorAll(".judge-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
     if (timerState.finished) {
@@ -1904,6 +1821,30 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
   });
 });
 
+// PATTERNS: winner declaration buttons
+document.querySelectorAll(".patterns-tap").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    if (timerState.finished) {
+      setPhoneStatus("✗ Match is finished", true);
+      return;
+    }
+    const winner = btn.dataset.winner;
+    if (navigator.vibrate) navigator.vibrate(50);
+    
+    btn.classList.add("scored-flash");
+    setPhoneStatus("✓ Winner declared: " + winner.toUpperCase(), false);
+    
+    // Set timer state to finished with this winner
+    timerState.finished = true;
+    timerState.paused = true;
+    timerState.winner = winner;
+    saveTimerState();
+    broadcastTimerState();
+    renderTimer();
+    stopTimerTick();
+  });
+});
+
 /* ===================================================================== */
 /* LAPTOP                                                                 */
 /* ===================================================================== */
@@ -1919,6 +1860,13 @@ async function enterLaptop() {
   await loadCurrentMatch();
 
   loadTimerState();
+  
+  // Auto-set timer from ring config
+  if (state.ring?.round_time_seconds) {
+    timerState.roundTime = state.ring.round_time_seconds;
+    saveTimerState();
+  }
+  
   const inpTime = document.getElementById('inp-round-time');
   if (inpTime) inpTime.value = Math.round(timerState.roundTime / 60);
 
@@ -1935,6 +1883,7 @@ async function enterLaptop() {
   renderVoteScores();
   
   updateCompetitorDisplay();
+  applyModeUI();
   
   showView("laptop");
 }
@@ -1961,25 +1910,41 @@ document.getElementById("btn-logout").addEventListener("click", () => {
 document.getElementById('btn-timer-start').addEventListener('click', startTimer);
 document.getElementById('btn-timer-pause').addEventListener('click', pauseTimer);
 document.getElementById('btn-timer-reset').addEventListener('click', resetRound);
-document.getElementById('btn-set-time').addEventListener('click', () => {
-  const mins = parseInt(document.getElementById('inp-round-time').value, 10);
-  setRoundTime(mins);
-});
-document.getElementById('inp-round-time').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const mins = parseInt(e.target.value, 10);
-    setRoundTime(mins);
-  }
-});
 document.getElementById('btn-winner-reset').addEventListener('click', resetMatch);
 
+// PATTERNS MODE: Declare winner buttons on laptop
+document.getElementById('btn-declare-blue').addEventListener('click', () => declarePatternsWinner('blue'));
+document.getElementById('btn-declare-red').addEventListener('click', () => declarePatternsWinner('red'));
+document.getElementById('btn-declare-draw').addEventListener('click', () => declarePatternsWinner('draw'));
+
+async function declarePatternsWinner(winner) {
+  if (timerState.finished) {
+    alert("Match is already finished. Reset first.");
+    return;
+  }
+  if (!confirm(`Declare ${winner.toUpperCase()} as the winner?`)) return;
+  
+  timerState.finished = true;
+  timerState.paused = true;
+  timerState.winner = winner;
+  saveTimerState();
+  broadcastTimerState();
+  renderTimer();
+  stopTimerTick();
+  
+  showWinnerConfirmStep1();
+}
+
+/* ---------------------------------------------------------------------
+ADD / DEDUCT ANY JUDGE'S POINTS (with finished-match guard)
+--------------------------------------------------------------------- */
 async function laptopAdjustJudge(slot, side, delta) {
   if (timerState.finished) {
     alert("Match is finished. Reset the match first.");
     return;
   }
 
-  const { error } = await sb.rpc("adjust_judge_score", {
+  1416  const { error } = await sb.rpc("adjust_judge_score", {
     p_ring_id: String(state.ring.id),
     p_slot: slot,
     p_side: side,
@@ -2022,6 +1987,8 @@ async function laptopAdjustCard(column, delta) {
     return;
   }
 
+ 
+/
   const { error } = await sb.rpc("adjust_card", {
     p_ring_id: String(state.ring.id),
     p_column: column,
@@ -2068,6 +2035,9 @@ document.querySelectorAll(".laptop-card-btn").forEach(btn => {
   });
 });
 
+/* ---------------------------------------------------------------------
+PARTY SIZE (3 or 4 referees)
+--------------------------------------------------------------------- */
 async function setMaxJudges(n) {
   state.ring.max_phones = n;
   sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
@@ -2142,6 +2112,13 @@ async function enterTV() {
   await ensureMatchRow(false);
 
   loadTimerState();
+  
+  // Auto-set timer from ring config
+  if (state.ring?.round_time_seconds) {
+    timerState.roundTime = state.ring.round_time_seconds;
+    saveTimerState();
+  }
+  
   subscribeTimer();
   renderTimer();
   startTimerTick();
@@ -2241,8 +2218,17 @@ function subscribeRing() {
         if (tvCode) tvCode.textContent = state.ring.tv_code || "—";
 
         updateCompetitorDisplay();
+        applyModeUI();
         applyMaxJudgesUI();
         renderVoteScores();
+
+        // Auto-update timer if round_time_seconds changed
+        if (state.ring.round_time_seconds && timerState.round === 1 && timerState.elapsed === 0 && !timerState.startTime) {
+          timerState.roundTime = state.ring.round_time_seconds;
+          saveTimerState();
+          broadcastTimerState();
+          renderTimer();
+        }
 
         if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
           leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
@@ -2282,6 +2268,7 @@ function handleMatchUpdate(payload) {
   }
   applyMaxJudgesUI();
 
+  // Backup: if laptop is running and timer has expired, end the round
   if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) {
     endRound();
   }
