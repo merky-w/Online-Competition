@@ -3,717 +3,1448 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Taekwondo Scoring System</title>
-
-<script>
-  const originalWarn = console.warn;
-  console.warn = function(...args) {
-    if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-    originalWarn.apply(console, args);
-  };
-</script>
-
+<title>TKD iScore - 9th Vojvodina Open ITF</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { -webkit-tap-highlight-color: transparent; user-select: none; }
-  input, textarea { user-select: text; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overscroll-behavior: none; }
-  button { touch-action: manipulation; }
-  button:disabled { opacity: .6; cursor: wait; }
-  .btn-score { transition: all 0.08s ease; }
-  .btn-score:active { transform: scale(0.94); }
-  .pulse { animation: pulse 0.4s ease; }
-  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.  12); } 100% { transform: scale(1); } }
-  .scored-flash { animation: scoredFlash 0.6s ease; }
-  @keyframes scoredFlash {
-    0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.9); }
-    100% { box-shadow: 0 0 0 18px rgba(74,222,128,0); }
-  }
-  .tv-score { font-variant-numeric: tabular-nums; text-shadow: 0 4px 24px rgba(0,0,0,0.25); }
-  .glow-blue { box-shadow: 0 0 40px rgba(37,99,235,0.35); }
-  .glow-red  { box-shadow: 0 0 40px rgba(220,38,38,0.35); }
-  .hidden-view { display: none !important; }
-  input:focus { outline: none; }
-  .big-number { font-size: clamp(7rem, 18vw, 18rem); line-height: 1; font-weight: 900; }
-  .vote-caption { font-size: clamp(.7rem, 1.3vw, 1.15rem); letter-spacing: .28em; font-weight: 800; opacity: .8; }
-  .side-blue { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
-  .side-red  { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
+* { -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
+input, textarea { user-select: text; }
+body { font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior: none; margin: 0; padding: 0; }
+button { touch-action: manipulation; cursor: pointer; }
+button:disabled { opacity: .6; cursor: not-allowed; }
 
-  /* Competitor name displays */
-  .competitor-name-display {
-    font-size: clamp(1.8rem, 4vw, 4rem);
-    font-weight: 900;
-    text-align: center;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-  .competitor-name-display.blue-name {
-    background: rgba(37, 99, 235, 0.25);
-    color: #93c5fd;
-    border: 3px solid #3b82f6;
-  }
-  .competitor-name-display.red-name {
-    background: rgba(220, 38, 38, 0.25);
-    color: #fca5a5;
-    border: 3px solid #dc2626;
-  }
-  .next-competitor-name {
-    font-size: clamp(1.2rem, 2.5vw, 2.5rem);
-    font-weight: 800;
-    text-align: center;
-    padding: 0.4rem 0.8rem;
-    border-radius: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.85;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .next-competitor-name.blue-next {
-    background: rgba(37, 99, 235, 0.15);
-    color: #60a5fa;
-    border: 2px dashed #3b82f6;
-  }
-  .next-competitor-name.red-next {
-    background: rgba(220, 38, 38, 0.15);
-    color: #f87171;
-    border: 2px dashed #dc2626;
-  }
+.hidden-view { display: none !important; }
 
-  .tv-stats { display: flex; gap: clamp(10px, 2vw, 42px); margin-top: clamp(10px, 3vh, 36px); }
-  .tv-stat {
-    background: rgba(0,0,0,.38);
-    border: 2px solid rgba(255,255,255,.25);
-    border-radius: 18px;
-    padding: clamp(6px, 1.1vw, 18px) clamp(14px, 2.2vw, 40px);
-    text-align: center;
-    min-width: clamp(86px, 10vw, 190px);
-  }
-  .tv-stat-label {
-    font-size: clamp(.55rem, 1.05vw, 1rem);
-    letter-spacing: .2em;
-    font-weight: 800;
-    opacity: .85;
-    display: flex; align-items: center; justify-content: center; gap: .45em;
-    white-space: nowrap;
-  }
-  .tv-stat-num {
-    font-size: clamp(1.9rem, 4.6vw, 5.6rem);
-    font-weight: 900;
-    line-height: 1.05;
-    font-variant-numeric: tabular-nums;
-  }
-  .card-chip {
-    display: inline-block;
-    width: .75em; height: 1.05em;
-    background: #facc15;
-    border-radius: .12em;
-    box-shadow: 0 0 10px rgba(250,204,21,.6);
-    flex: none;
-  }
+/* ===== TV DISPLAY STYLES (ETF Score style) ===== */
+.tv-container {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
-  .judge-box { transition: background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease; }
-  .judge-neutral { background:#1e293b; border-color:#475569; color:#94a3b8; }
-  .judge-blue    { background:linear-gradient(135deg,#1e3a8a,#2563eb); border-color:#93c5fd; color:#fff; box-shadow:0 0 26px rgba(37,99,235,.45); }
-  .judge-red     { background:linear-gradient(135deg,#7f1d1d,#dc2626); border-color:#fca5a5; color:#fff; box-shadow:0 0 26px rgba(220,38,38,.45); }
-  .judge-off     { opacity:.4; filter:grayscale(.5); }
-  .judge-net { font-variant-numeric: tabular-nums; }
-  .judge-tv-box {
-    width: clamp(96px, 11vw, 230px);
-    aspect-ratio: 1 / 1;
-    border-radius: 18px;
-    border: 3px solid;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: .3vw;
-    transition: background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease;
-  }
-  .judge-tv-box .judge-net { font-size: clamp(2rem, 4.8vw, 6rem); font-weight: 900; line-height: 1; }
-  .judge-tv-label { font-size: clamp(.55rem, 1vw, .95rem); font-weight: 800; letter-spacing: .16em; opacity: .85; }
-  .judge-tv-box .judge-detail {
-    font-size: clamp(.55rem, .95vw, .95rem);
-    font-weight: 700;
-    opacity: .85;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
+.tv-top-bar {
+  background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 100%);
+  padding: 8px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #444;
+  z-index: 10;
+}
 
-  .timer-display { font-variant-numeric: tabular-nums; }
-  .timer-warning { color: #f87171 !important; animation: timerBlink 0.8s infinite; }
-  @keyframes timerBlink { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+.tv-top-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: white;
+  font-size: 14px;
+}
 
-  /* Category badge */
-  .category-badge {
-    display: inline-block;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .category-badge.sparring { background: rgba(220, 38, 38, 0.2); color: #fca5a5; border: 1px solid #dc2626; }
-  .category-badge.patterns { background: rgba(37, 99, 235, 0.2); color: #93c5fd; border: 1px solid #3b82f6; }
+.tv-top-info .stage-badge {
+  background: #dc2626;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 13px;
+}
 
-  /* Patterns mode buttons */
-  .patterns-btn {
-    transition: all 0.15s ease;
-    font-weight: 900;
-    letter-spacing: 0.05em;
-  }
-  .patterns-btn:active { transform: scale(0.96); }
-  .patterns-btn.blue-win { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
-  .patterns-btn.blue-win:hover { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
-  .patterns-btn.draw-btn { background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%); }
-  .patterns-btn.draw-btn:hover { background: linear-gradient(135deg, #374151 0%, #9ca3af 100%); }
-  .patterns-btn.red-win { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
-  .patterns-btn.red-win:hover { background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%); }
+.tv-top-info .category-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fbbf24;
+  font-weight: 600;
+}
 
-  /* Laptop declare winner buttons */
-  .declare-winner-btn {
-    padding: 1rem;
-    border-radius: 12px;
-    font-weight: 900;
-    font-size: 1.2rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    transition: all 0.15s ease;
-    border: 3px solid transparent;
-  }
-  .declare-winner-btn:active { transform: scale(0.97); }
-  .declare-winner-btn.blue-declare {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    color: white;
-  }
-  .declare-winner-btn.blue-declare:hover { border-color: #93c5fd; }
-  .declare-winner-btn.draw-declare {
-    background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
-    color: white;
-  }
-  .declare-winner-btn.draw-declare:hover { border-color: #d1d5db; }
-  .declare-winner-btn.red-declare {
-    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
-    color: white;
-  }
-  .declare-winner-btn.red-declare:hover { border-color: #fca5a5; }
+.tv-main-area {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+}
+
+.tv-side {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: relative;
+}
+
+.tv-side.blue-side {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #1e40af 100%);
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+}
+
+.tv-side.red-side {
+  background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 50%, #991b1b 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 15% 100%);
+}
+
+.tv-competitor-name {
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  margin-bottom: 8px;
+  line-height: 1.1;
+}
+
+.tv-competitor-club {
+  font-size: clamp(1rem, 2vw, 1.8rem);
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.tv-big-score {
+  font-size: clamp(8rem, 20vw, 18rem);
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-score-corner {
+  position: absolute;
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.tv-score-corner.top-left { top: 20px; left: 30px; }
+.tv-score-corner.top-right { top: 20px; right: 30px; }
+.tv-score-corner.bottom-left { bottom: 20px; left: 30px; }
+.tv-score-corner.bottom-right { bottom: 20px; right: 30px; }
+
+/* Center timer area */
+.tv-center-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.85);
+  border: 3px solid #fbbf24;
+  border-radius: 20px;
+  padding: 20px 40px;
+  text-align: center;
+  z-index: 20;
+  min-width: 300px;
+}
+
+.tv-round-info {
+  color: #fbbf24;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.tv-timer-display {
+  color: white;
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.tv-timer-display.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
+
+.tv-referee-votes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 12px;
+}
+
+.tv-vote-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: white;
+}
+
+.tv-vote-w {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #ef4444;
+}
+
+.tv-penalties {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.tv-penalty-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tv-penalty-label { color: #fbbf24; }
+
+.tv-match-number {
+  color: #9ca3af;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+/* Bottom next match bar */
+.tv-bottom-bar {
+  background: linear-gradient(90deg, #1f2937 0%, #111827 100%);
+  border-top: 3px solid #fbbf24;
+  padding: 15px 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  z-index: 10;
+}
+
+.tv-next-match {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.tv-next-label {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tv-next-name {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.tv-next-name.blue-next { color: #60a5fa; }
+.tv-next-name.red-next { color: #f87171; }
+
+/* Winner overlay */
+.tv-winner-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.tv-winner-box {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border: 4px solid #fbbf24;
+  border-radius: 24px;
+  padding: 60px 80px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+.tv-winner-trophy { font-size: 6rem; margin-bottom: 20px; }
+.tv-winner-text {
+  font-size: 4rem;
+  font-weight: 900;
+  color: #fbbf24;
+  margin-bottom: 10px;
+}
+.tv-winner-name {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 20px;
+}
+.tv-winner-sub {
+  font-size: 1.5rem;
+  color: #9ca3af;
+  font-weight: 600;
+  letter-spacing: 3px;
+}
+
+@keyframes timerBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== LAPTOP VIEW STYLES (iScore style) ===== */
+.laptop-container {
+  background: #1e293b;
+  min-height: 100vh;
+  padding: 20px;
+  color: white;
+}
+
+.laptop-header {
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.laptop-header-left h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.laptop-header-left p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 5px 0 0 0;
+}
+
+.laptop-header-right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.laptop-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .laptop-main-grid { grid-template-columns: 1fr; }
+}
+
+/* Current match card */
+.current-match-card {
+  background: #0f172a;
+  border-radius: 16px;
+  padding: 25px;
+  border: 2px solid #334155;
+}
+
+.current-match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #334155;
+}
+
+.match-stage-badge {
+  background: #dc2626;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.match-number-badge {
+  background: #1e40af;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.competitors-display {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.competitor-box {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 3px solid;
+}
+
+.competitor-box.blue-box { border-color: #2563eb; }
+.competitor-box.red-box { border-color: #dc2626; }
+
+.competitor-box .comp-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.competitor-box.blue-box .comp-name { color: #60a5fa; }
+.competitor-box.red-box .comp-name { color: #f87171; }
+
+.competitor-box .comp-club {
+  color: #94a3b8;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.vs-divider {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #fbbf24;
+}
+
+/* Timer section */
+.timer-section {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.timer-display-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.timer-round-badge {
+  background: #334155;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.timer-time {
+  font-size: 3rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: white;
+}
+
+.timer-time.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
+
+.timer-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.timer-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  border: none;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.timer-btn.start { background: #10b981; color: white; }
+.timer-btn.start:hover { background: #059669; }
+.timer-btn.pause { background: #f59e0b; color: white; }
+.timer-btn.pause:hover { background: #d97706; }
+.timer-btn.reset { background: #ef4444; color: white; }
+.timer-btn.reset:hover { background: #dc2626; }
+
+/* Score boxes */
+.score-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.score-box {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid;
+}
+
+.score-box.blue-score { border-color: #2563eb; }
+.score-box.red-score { border-color: #dc2626; }
+
+.score-box .score-label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.score-box .score-value {
+  font-size: 4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-box.blue-score .score-value { color: #60a5fa; }
+.score-box.red-score .score-value { color: #f87171; }
+
+.score-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.score-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 900;
+  transition: all 0.15s;
+}
+
+.score-btn:active { transform: scale(0.95); }
+.score-btn.plus { background: #10b981; color: white; }
+.score-btn.plus:hover { background: #059669; }
+.score-btn.minus { background: #ef4444; color: white; }
+.score-btn.minus:hover { background: #dc2626; }
+
+/* Judge boxes */
+.judges-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.judge-box {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  border: 2px solid #334155;
+  transition: all 0.3s;
+}
+
+.judge-box.leading-blue {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+}
+
+.judge-box.leading-red {
+  border-color: #dc2626;
+  background: linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%);
+}
+
+.judge-box .judge-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.judge-box .judge-score {
+  font-size: 2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.judge-box .judge-detail {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 5px;
+}
+
+/* Penalties section */
+.penalties-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.penalty-box {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.penalty-box .penalty-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.penalty-box .penalty-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.penalty-box .penalty-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.penalty-box .penalty-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.penalty-btn {
+  width: 35px;
+  height: 35px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 900;
+  background: #334155;
+  color: white;
+  transition: all 0.15s;
+}
+
+.penalty-btn:active { transform: scale(0.95); }
+.penalty-btn.plus { background: #10b981; }
+.penalty-btn.minus { background: #ef4444; }
+
+/* Match list sidebar */
+.match-list-sidebar {
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #334155;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+
+.match-list-sidebar h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.match-list-item {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-left: 4px solid #334155;
+  transition: all 0.2s;
+}
+
+.match-list-item.active {
+  border-left-color: #10b981;
+  background: #064e3b;
+}
+
+.match-list-item.completed {
+  border-left-color: #6b7280;
+  opacity: 0.6;
+}
+
+.match-list-item .ml-number {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.match-list-item .ml-names {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.match-list-item .ml-category {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.match-list-item .ml-winner {
+  font-size: 0.8rem;
+  color: #10b981;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* Winner modal */
+.winner-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.winner-modal-box {
+  background: #1e293b;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  border: 3px solid #fbbf24;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.winner-modal-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.winner-modal-name {
+  font-size: 1.5rem;
+  text-align: center;
+  color: #fbbf24;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+.winner-modal-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.winner-modal-btn {
+  flex: 1;
+  padding: 15px;
+  border-radius: 12px;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 800;
+  transition: all 0.2s;
+}
+
+.winner-modal-btn.confirm { background: #10b981; color: white; }
+.winner-modal-btn.confirm:hover { background: #059669; }
+.winner-modal-btn.deny { background: #ef4444; color: white; }
+.winner-modal-btn.deny:hover { background: #dc2626; }
+
+/* Phone view styles */
+.phone-container {
+  background: #0f172a;
+  min-height: 100vh;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-header {
+  background: #1e293b;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #334155;
+}
+
+.phone-competitors-bar {
+  background: #000;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #334155;
+}
+
+.phone-competitor {
+  flex: 1;
+  text-align: center;
+}
+
+.phone-competitor .pc-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.phone-competitor.blue .pc-label { color: #60a5fa; }
+.phone-competitor.red .pc-label { color: #f87171; }
+
+.phone-competitor .pc-name {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: white;
+}
+
+.phone-vs {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #fbbf24;
+  padding: 0 15px;
+}
+
+.phone-timer-bar {
+  background: #000;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #334155;
+  font-size: 0.9rem;
+}
+
+.phone-timer-bar .pt-round { font-weight: 700; }
+.phone-timer-bar .pt-time {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.phone-timer-bar .pt-status { color: #94a3b8; font-size: 0.8rem; }
+
+.phone-scoring-area {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+}
+
+.phone-side {
+  border-radius: 16px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-side.blue-side {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.phone-side.red-side {
+  background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+}
+
+.phone-side-title {
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.phone-buttons {
+  flex: 1;
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.phone-btn {
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  color: white;
+}
+
+.phone-btn:active {
+  transform: scale(0.95);
+  background: rgba(255,255,255,0.25);
+}
+
+.phone-btn .pb-value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.phone-btn .pb-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0.8;
+  margin-top: 3px;
+}
+
+.phone-status-bar {
+  padding: 12px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  background: #1e293b;
+  border-top: 2px solid #334155;
+}
+
+/* Landing page */
+.landing-container {
+  min-height: 100vh;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.landing-box {
+  background: #1e293b;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 450px;
+  width: 100%;
+  border: 2px solid #334155;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.landing-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.landing-title .lt-icon { font-size: 4rem; margin-bottom: 10px; }
+.landing-title h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 0 0 10px 0;
+  color: white;
+}
+.landing-title p {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.landing-input {
+  width: 100%;
+  padding: 15px;
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  color: white;
+  font-size: 1.5rem;
+  text-align: center;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+  font-family: monospace;
+}
+
+.landing-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.landing-btn {
+  width: 100%;
+  padding: 18px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  transition: all 0.2s;
+}
+
+.landing-btn:hover { background: #1d4ed8; }
+.landing-btn:active { transform: scale(0.98); }
+
+.landing-error {
+  color: #ef4444;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 0.9rem;
+  min-height: 20px;
+}
+
+.landing-hints {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #1e293b;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s;
+  pointer-events: none;
+  border-left: 4px solid #10b981;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.error { border-left-color: #ef4444; }
+.toast.warning { border-left-color: #f59e0b; }
+
+/* Pulse animation */
+.pulse { animation: pulse 0.4s ease; }
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.scored-flash { animation: scoredFlash 0.6s ease; }
+@keyframes scoredFlash {
+  0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.9); }
+  100% { box-shadow: 0 0 0 20px rgba(16,185,129,0); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
 </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen">
+<body class="bg-slate-900">
 
-<!-- VIEW: LANDING -->
-<div id="view-landing" class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-md bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700">
-    <div class="text-center mb-8">
-      <div class="text-5xl mb-3">🥋</div>
-      <h1 class="text-3xl font-black mb-2">TKD Scoring</h1>
-      <p class="text-slate-400 text-sm">Enter the ring password or TV code</p>
+<!-- ===== LANDING VIEW ===== -->
+<div id="view-landing" class="landing-container">
+  <div class="landing-box">
+    <div class="landing-title">
+      <div class="lt-icon"></div>
+      <h1>TKD iScore</h1>
+      <p>9th Vojvodina Open ITF</p>
     </div>
-
-    <div class="mb-4">
-      <label class="block text-sm font-semibold text-slate-300 mb-2">Ring Password / TV Code</label>
-      <input id="inp-password" type="password" inputmode="numeric" maxlength="10" autocomplete="off"
-        class="w-full bg-slate-900 border-2 border-slate-600 rounded-xl px-4 py-4 text-2xl text-center tracking-widest focus:border-blue-500"
-        placeholder="••••" />
-    </div>
-
-    <button id="btn-enter" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl py-4 font-bold text-lg transition">
-      Enter Ring
-    </button>
-
-    <div id="landing-error" class="mt-4 text-center text-red-400 text-sm hidden"></div>
-
-    <div class="mt-8 pt-6 border-t border-slate-700 text-center text-xs text-slate-500 space-y-1">
-      <p>Laptop password → Control panel (shows the TV code)</p>
-      <p>Phone password → Judge device (auto corner)</p>
-      <p>TV code → opens the big screen display</p>
+    <input id="inp-password" type="password" inputmode="numeric" maxlength="10" autocomplete="off"
+      class="landing-input" placeholder="••••" />
+    <button id="btn-enter" class="landing-btn">Enter Ring</button>
+    <div id="landing-error" class="landing-error"></div>
+    <div class="landing-hints">
+      <div>💻 Laptop password → Control panel</div>
+      <div>📱 Phone password → Judge device</div>
+      <div>📺 TV code → Big screen display</div>
     </div>
   </div>
 </div>
 
-<!-- VIEW: PHONE (judge device) -->
-<div id="view-phone" class="hidden-view min-h-screen flex flex-col bg-slate-900">
-  <div class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
-    <div class="flex items-center gap-2 min-w-0">
-      <span class="text-xl">🥋</span>
-      <span id="phone-ring-name" class="font-bold truncate"></span>
-      <span id="phone-mode-badge" class="category-badge sparring">SPARRING</span>
+<!-- ===== PHONE VIEW ===== -->
+<div id="view-phone" class="hidden-view phone-container">
+  <div class="phone-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:1.5rem;">🥋</span>
+      <span id="phone-ring-name" style="font-weight:800;"></span>
+      <span id="phone-mode-badge" class="match-stage-badge" style="font-size:0.7rem;padding:3px 8px;">SPARRING</span>
     </div>
-    <div class="flex items-center gap-3 shrink-0">
-      <span id="phone-judge-badge" class="bg-yellow-400 text-black font-black px-3 py-1 rounded-lg text-sm">JUDGE –</span>
-      <span class="text-xs text-slate-400 inline-flex items-center gap-1">
-        <span class="w-2 h-2 rounded-full bg-green-500"></span>Live
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="phone-judge-badge" style="background:#fbbf24;color:black;font-weight:900;padding:5px 12px;border-radius:8px;font-size:0.85rem;">JUDGE –</span>
+      <span style="color:#10b981;font-size:0.8rem;display:flex;align-items:center;gap:5px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite;"></span>
+        Live
       </span>
     </div>
   </div>
 
-  <!-- PHONE COMPETITOR NAMES -->
-  <div id="phone-competitors" class="bg-black/60 px-4 py-3 border-b border-slate-700">
-    <div class="flex justify-between items-center">
-      <div class="text-center flex-1">
-        <div class="text-xs text-blue-400 font-bold mb-1">🔵 BLUE</div>
-        <div id="phone-blue-name" class="text-lg font-black text-white truncate">---</div>
-      </div>
-      <div class="text-2xl font-black text-yellow-400 mx-4">VS</div>
-      <div class="text-center flex-1">
-        <div class="text-xs text-red-400 font-bold mb-1">🔴 RED</div>
-        <div id="phone-red-name" class="text-lg font-black text-white truncate">---</div>
-      </div>
+  <div class="phone-competitors-bar">
+    <div class="phone-competitor blue">
+      <div class="pc-label">🔵 BLUE</div>
+      <div id="phone-blue-name" class="pc-name">---</div>
+    </div>
+    <div class="phone-vs">VS</div>
+    <div class="phone-competitor red">
+      <div class="pc-label"> RED</div>
+      <div id="phone-red-name" class="pc-name">---</div>
     </div>
   </div>
 
-  <!-- PHONE TIMER BAR -->
-  <div class="bg-black/60 px-4 py-2 flex items-center justify-between text-sm border-b border-slate-700">
-    <span class="font-bold">Round <span id="phone-timer-round">1</span></span>
-    <span id="phone-timer-time" class="font-black text-xl timer-display">2:00</span>
-    <span id="phone-timer-status" class="text-xs text-slate-400">Paused</span>
+  <div class="phone-timer-bar">
+    <span class="pt-round">Round <span id="phone-timer-round">1</span></span>
+    <span id="phone-timer-time" class="pt-time">2:00</span>
+    <span id="phone-timer-status" class="pt-status">Paused</span>
   </div>
 
-  <!-- SPARRING CONTROLS (1-5 points) -->
-  <div id="sparring-controls" class="grid grid-cols-2 gap-3 p-3 flex-1 min-h-0">
-    <div class="side-blue rounded-2xl p-3 flex flex-col min-h-0 glow-blue">
-      <div class="text-center font-black tracking-widest text-sm mb-2 opacity-90">🔵 BLUE · CHUNG</div>
-      <div class="flex-1 grid grid-rows-5 gap-2 min-h-0">
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="1">
-          <span class="text-4xl sm:text-5xl font-black leading-none">1</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINT</span>
+  <div id="sparring-controls" class="phone-scoring-area">
+    <div class="phone-side blue-side">
+      <div class="phone-side-title">🔵 BLUE · CHUNG</div>
+      <div class="phone-buttons">
+        <button class="phone-btn judge-tap" data-side="blue" data-val="1">
+          <span class="pb-value">1</span><span class="pb-label">POINT</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="2">
-          <span class="text-4xl sm:text-5xl font-black leading-none">2</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="2">
+          <span class="pb-value">2</span><span class="pb-label">POINTS</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="3">
-          <span class="text-4xl sm:text-5xl font-black leading-none">3</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="3">
+          <span class="pb-value">3</span><span class="pb-label">POINTS</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="4">
-          <span class="text-4xl sm:text-5xl font-black leading-none">4</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="4">
+          <span class="pb-value">4</span><span class="pb-label">POINTS</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="blue" data-val="5">
-          <span class="text-4xl sm:text-5xl font-black leading-none">5</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="5">
+          <span class="pb-value">5</span><span class="pb-label">POINTS</span>
         </button>
       </div>
     </div>
-
-    <div class="side-red rounded-2xl p-3 flex flex-col min-h-0 glow-red">
-      <div class="text-center font-black tracking-widest text-sm mb-2 opacity-90">🔴 RED · HONG</div>
-      <div class="flex-1 grid grid-rows-5 gap-2 min-h-0">
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="1">
-          <span class="text-4xl sm:text-5xl font-black leading-none">1</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINT</span>
+    <div class="phone-side red-side">
+      <div class="phone-side-title"> RED · HONG</div>
+      <div class="phone-buttons">
+        <button class="phone-btn judge-tap" data-side="red" data-val="1">
+          <span class="pb-value">1</span><span class="pb-label">POINT</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="2">
-          <span class="text-4xl sm:text-5xl font-black leading-none">2</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="red" data-val="2">
+          <span class="pb-value">2</span><span class="pb-label">POINTS</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="3">
-          <span class="text-4xl sm:text-5xl font-black leading-none">3</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="red" data-val="3">
+          <span class="pb-value">3</span><span class="pb-label">POINTS</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="4">
-          <span class="text-4xl sm:text-5xl font-black leading-none">4</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="red" data-val="4">
+          <span class="pb-value">4</span><span class="pb-label">POINTS</span>
         </button>
-        <button class="judge-tap btn-score rounded-xl bg-white/15 hover:bg-white/25 border-2 border-white/20 flex flex-col items-center justify-center" data-side="red" data-val="5">
-          <span class="text-4xl sm:text-5xl font-black leading-none">5</span>
-          <span class="text-[10px] font-bold tracking-widest opacity-80 mt-1">POINTS</span>
+        <button class="phone-btn judge-tap" data-side="red" data-val="5">
+          <span class="pb-value">5</span><span class="pb-label">POINTS</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- PATTERNS CONTROLS (Blue/Draw/Red) -->
-  <div id="patterns-controls" class="hidden flex-1 grid grid-rows-3 gap-3 p-3 min-h-0">
-    <button class="patterns-btn blue-win btn-score rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl" data-winner="blue">
-      🔵 BLUE WINS
-    </button>
-    <button class="patterns-btn draw-btn btn-score rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl" data-winner="draw">
-      🤝 DRAW
-    </button>
-    <button class="patterns-btn red-win btn-score rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl" data-winner="red">
-      🔴 RED WINS
-    </button>
+  <div id="patterns-controls" class="hidden-view phone-scoring-area" style="grid-template-rows:repeat(3,1fr);">
+    <button class="phone-btn patterns-tap" data-winner="blue" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);font-size:1.5rem;">🔵 BLUE WINS</button>
+    <button class="phone-btn patterns-tap" data-winner="draw" style="background:linear-gradient(135deg,#4b5563,#6b7280);font-size:1.5rem;"> DRAW</button>
+    <button class="phone-btn patterns-tap" data-winner="red" style="background:linear-gradient(135deg,#7f1d1d,#dc2626);font-size:1.5rem;">🔴 RED WINS</button>
   </div>
 
-  <div class="px-3 pb-3">
-    <div id="phone-status" class="text-center text-xs text-slate-500">Tap a button to award points — your corner updates live</div>
+  <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
+</div>
+
+<!-- ===== LAPTOP VIEW ===== -->
+<div id="view-laptop" class="hidden-view laptop-container">
+  <div class="laptop-header">
+    <div class="laptop-header-left">
+      <h1 id="laptop-ring-name">Ring 1</h1>
+      <p>Control Panel · <span id="laptop-ring-id" style="font-family:monospace;"></span> · TV: <span id="laptop-tv-code" style="color:#fbbf24;font-weight:700;">—</span></p>
+    </div>
+    <div class="laptop-header-right">
+      <button id="btn-open-tv" class="timer-btn" style="background:#334155;">📺 Open TV</button>
+      <button id="btn-reset-match" class="timer-btn reset">⟲ Reset Match</button>
+      <button id="btn-logout" class="timer-btn" style="background:#475569;">Logout</button>
+    </div>
+  </div>
+
+  <div class="laptop-main-grid">
+    <div class="laptop-main-content">
+      <!-- Current Match Card -->
+      <div class="current-match-card">
+        <div class="current-match-header">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span id="laptop-match-stage" class="match-stage-badge">Preliminary</span>
+            <span id="laptop-category-name" style="font-weight:700;font-size:1.1rem;">Loading...</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span id="laptop-discipline-badge" class="match-stage-badge" style="background:#1e40af;">SPARRING</span>
+            <span class="match-number-badge">Match #<span id="laptop-match-number">-</span></span>
+          </div>
+        </div>
+
+        <div class="competitors-display">
+          <div class="competitor-box blue-box">
+            <div class="comp-name" id="laptop-blue-name">---</div>
+            <div class="comp-club" id="laptop-blue-club">---</div>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="competitor-box red-box">
+            <div class="comp-name" id="laptop-red-name">---</div>
+            <div class="comp-club" id="laptop-red-club">---</div>
+          </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-section">
+          <div class="timer-display-row">
+            <span class="timer-round-badge">Round <span id="l-timer-round">1</span></span>
+            <span id="l-timer-time" class="timer-time">2:00</span>
+            <span id="l-timer-status" style="color:#94a3b8;font-weight:600;">Paused</span>
+          </div>
+          <div class="timer-controls">
+            <button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
+            <button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
+            <button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
+          </div>
+          <div id="timer-round3-note" class="hidden-view" style="background:#854d0e;color:#fbbf24;padding:10px;border-radius:8px;margin-top:10px;text-align:center;font-weight:700;">
+            ⚡ Round 3 activated (tie-breaker)
+          </div>
+        </div>
+
+        <!-- Scores -->
+        <div class="score-section">
+          <div class="score-box blue-score">
+            <div class="score-label">🔵 Blue Score</div>
+            <div id="l-blue-score" class="score-value">0</div>
+            <div class="score-controls">
+              <button class="score-btn plus" data-act="blue-score-plus">+</button>
+              <button class="score-btn minus" data-act="blue-score-minus">−</button>
+            </div>
+          </div>
+          <div class="score-box red-score">
+            <div class="score-label">🔴 Red Score</div>
+            <div id="l-red-score" class="score-value">0</div>
+            <div class="score-controls">
+              <button class="score-btn plus" data-act="red-score-plus">+</button>
+              <button class="score-btn minus" data-act="red-score-minus">−</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Judges -->
+        <div class="judges-section">
+          <div id="judge-laptop-1" class="judge-box">
+            <div class="judge-label">Judge 1</div>
+            <div class="judge-score">0</div>
+            <div class="judge-detail">B 0 · R 0</div>
+          </div>
+          <div id="judge-laptop-2" class="judge-box">
+            <div class="judge-label">Judge 2</div>
+            <div class="judge-score">0</div>
+            <div class="judge-detail">B 0 · R 0</div>
+          </div>
+          <div id="judge-laptop-3" class="judge-box">
+            <div class="judge-label">Judge 3</div>
+            <div class="judge-score">0</div>
+            <div class="judge-detail">B 0 · R 0</div>
+          </div>
+          <div id="judge-laptop-4" class="judge-box">
+            <div class="judge-label">Judge 4</div>
+            <div class="judge-score">0</div>
+            <div class="judge-detail">B 0 · R 0</div>
+          </div>
+        </div>
+
+        <!-- Penalties -->
+        <div class="penalties-section">
+          <div class="penalty-box">
+            <div class="penalty-info">
+              <span class="penalty-label">🔵 Blue Gam-Jeom</span>
+              <span id="l-blue-gj" class="penalty-value" style="color:#60a5fa;">0</span>
+            </div>
+            <div class="penalty-controls">
+              <button class="penalty-btn plus" data-act="blue-gj-plus">+</button>
+              <button class="penalty-btn minus" data-act="blue-gj-minus">−</button>
+            </div>
+          </div>
+          <div class="penalty-box">
+            <div class="penalty-info">
+              <span class="penalty-label">🔴 Red Gam-Jeom</span>
+              <span id="l-red-gj" class="penalty-value" style="color:#f87171;">0</span>
+            </div>
+            <div class="penalty-controls">
+              <button class="penalty-btn plus" data-act="red-gj-plus">+</button>
+              <button class="penalty-btn minus" data-act="red-gj-minus">−</button>
+            </div>
+          </div>
+          <div class="penalty-box">
+            <div class="penalty-info">
+              <span class="penalty-label">🔵 Blue Yellow Card</span>
+              <span id="l-blue-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+            </div>
+            <div class="penalty-controls">
+              <button class="penalty-btn plus" data-act="blue-yc-plus">+</button>
+              <button class="penalty-btn minus" data-act="blue-yc-minus">−</button>
+            </div>
+          </div>
+          <div class="penalty-box">
+            <div class="penalty-info">
+              <span class="penalty-label">🔴 Red Yellow Card</span>
+              <span id="l-red-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+            </div>
+            <div class="penalty-controls">
+              <button class="penalty-btn plus" data-act="red-yc-plus">+</button>
+              <button class="penalty-btn minus" data-act="red-yc-minus">−</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Declare Winner (for patterns or manual override) -->
+        <div id="laptop-declare-winner" class="hidden-view" style="background:#1e293b;border-radius:12px;padding:20px;margin-top:20px;border:2px solid #fbbf24;">
+          <h3 style="margin:0 0 15px 0;color:#fbbf24;font-size:1.1rem;">🏆 Declare Winner</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+            <button class="timer-btn" style="background:#2563eb;" onclick="declareWinner('blue')">🔵 Blue Wins</button>
+            <button class="timer-btn" style="background:#6b7280;" onclick="declareWinner('draw')">🤝 Draw</button>
+            <button class="timer-btn" style="background:#dc2626;" onclick="declareWinner('red')">🔴 Red Wins</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match List Sidebar -->
+    <div class="match-list-sidebar">
+      <h3>📋 Match Queue</h3>
+      <div id="match-list-container">
+        <div style="color:#64748b;text-align:center;padding:20px;">Loading matches...</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- VIEW: LAPTOP (control panel) -->
-<div id="view-laptop" class="hidden-view min-h-screen bg-slate-900 p-4">
-  <div class="max-w-6xl mx-auto">
-    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+<!-- ===== TV VIEW ===== -->
+<div id="view-tv" class="hidden-view tv-container">
+  <div class="tv-top-bar">
+    <div class="tv-top-info">
+      <span id="tv-ring-name" style="font-weight:800;font-size:1.1rem;">Ring 1</span>
+      <span id="tv-match-stage" class="stage-badge">Preliminary</span>
+    </div>
+    <div class="tv-top-info">
+      <span id="tv-category-name" class="category-info">Category</span>
+      <span style="color:#94a3b8;">|</span>
+      <span id="tv-match-number-display" style="color:#94a3b8;font-weight:600;">Match #1</span>
+    </div>
+    <div class="tv-top-info">
+      <span id="tv-discipline-badge" class="stage-badge" style="background:#1e40af;">SPARRING</span>
+    </div>
+  </div>
+
+  <div class="tv-main-area">
+    <!-- Blue Side -->
+    <div class="tv-side blue-side">
+      <div class="tv-score-corner top-left" id="tv-blue-corner-score">0</div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding-left:40px;">
+        <div class="tv-competitor-name" id="tv-blue-name">BLUE</div>
+        <div class="tv-competitor-club" id="tv-blue-club">---</div>
+      </div>
+      <div class="tv-score-corner bottom-left" id="tv-blue-bottom-score">0</div>
+    </div>
+
+    <!-- Red Side -->
+    <div class="tv-side red-side">
+      <div class="tv-score-corner top-right" id="tv-red-corner-score">0</div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding-right:40px;">
+        <div class="tv-competitor-name" id="tv-red-name">RED</div>
+        <div class="tv-competitor-club" id="tv-red-club">---</div>
+      </div>
+      <div class="tv-score-corner bottom-right" id="tv-red-bottom-score">0</div>
+    </div>
+
+    <!-- Center Timer Overlay -->
+    <div class="tv-center-overlay">
+      <div class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
+      <div id="tv-timer-time" class="tv-timer-display">2:00</div>
+      <div class="tv-referee-votes">
+        <span id="tv-blue-votes" class="tv-vote-number">0</span>
+        <span class="tv-vote-w">W</span>
+        <span id="tv-red-votes" class="tv-vote-number">0</span>
+      </div>
+      <div class="tv-penalties">
+        <div class="tv-penalty-item">
+          <span id="tv-blue-gj" style="color:#ef4444;">0</span>
+          <span class="tv-penalty-label">GJ</span>
+        </div>
+        <div class="tv-penalty-item">
+          <span id="tv-blue-yc" style="color:#fbbf24;">0</span>
+          <span class="tv-penalty-label">YC</span>
+        </div>
+        <span style="color:#64748b;">|</span>
+        <div class="tv-penalty-item">
+          <span id="tv-red-yc" style="color:#fbbf24;">0</span>
+          <span class="tv-penalty-label">YC</span>
+        </div>
+        <div class="tv-penalty-item">
+          <span id="tv-red-gj" style="color:#ef4444;">0</span>
+          <span class="tv-penalty-label">GJ</span>
+        </div>
+      </div>
+      <div class="tv-match-number">#<span id="tv-match-num">1</span></div>
+    </div>
+  </div>
+
+  <!-- Bottom Next Match Bar -->
+  <div class="tv-bottom-bar">
+    <div class="tv-next-match">
       <div>
-        <h1 id="laptop-ring-name" class="text-2xl font-black"></h1>
-        <p class="text-slate-400 text-sm">
-          Control panel · <span id="laptop-ring-id" class="font-mono"></span> ·
-          TV code: <span id="laptop-tv-code" class="font-mono font-bold text-yellow-300">—</span>
-        </p>
-      </div>
-      <div class="flex gap-2">
-        <button id="btn-open-tv" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold">📺 Open TV</button>
-        <button id="btn-reset-match" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold">⟲ Reset</button>
-        <button id="btn-logout" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold">Logout</button>
+        <div class="tv-next-label">⏭️ Next Blue</div>
+        <div id="tv-next-blue" class="tv-next-name blue-next">---</div>
       </div>
     </div>
-
-    <!-- CURRENT MATCH INFO -->
-    <div id="laptop-match-info" class="bg-slate-800 rounded-2xl p-4 border-2 border-blue-500 mb-4">
-      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <div class="flex items-center gap-3">
-          <span id="laptop-discipline-badge" class="category-badge sparring">SPARRING</span>
-          <span id="laptop-category-name" class="text-white font-bold">Loading category...</span>
-        </div>
-        <div class="text-sm text-slate-400">
-          Match #<span id="laptop-match-number">-</span>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-4 mb-3">
-        <div class="bg-blue-900/30 rounded-xl p-4 border-2 border-blue-500">
-          <div class="text-xs text-blue-400 font-bold mb-2">🔵 BLUE COMPETITOR</div>
-          <div id="laptop-blue-name" class="text-2xl font-black text-white">---</div>
-        </div>
-        <div class="bg-red-900/30 rounded-xl p-4 border-2 border-red-500">
-          <div class="text-xs text-red-400 font-bold mb-2">🔴 RED COMPETITOR</div>
-          <div id="laptop-red-name" class="text-2xl font-black text-white">---</div>
-        </div>
-      </div>
-      <div id="laptop-next-match" class="text-center text-sm text-slate-400 bg-black/30 rounded-lg p-2">
-        ⏭️ Next: <span id="laptop-next-blue" class="text-blue-300 font-semibold">---</span> vs <span id="laptop-next-red" class="text-red-300 font-semibold">---</span>
+    <div class="tv-next-match" style="justify-content:flex-end;text-align:right;">
+      <div>
+        <div class="tv-next-label">Next Red ️</div>
+        <div id="tv-next-red" class="tv-next-name red-next">---</div>
       </div>
     </div>
+  </div>
 
-    <!-- Database setup banner -->
-    <div class="bg-amber-950/60 border-2 border-amber-500/70 rounded-xl p-3 mb-4 text-sm text-amber-100">
-      <div class="font-black mb-1">🛠 DATABASE SETUP — run the SQL once if phones can't connect, scores 400, or phones get kicked on their own</div>
-      <div class="text-xs opacity-90">
-        Open this HTML file in a text editor, copy the SQL from manage.html or the setup guide,
-        paste it into Supabase → SQL Editor → RUN → then RELOAD this page.
-      </div>
+  <!-- Winner Overlay -->
+  <div id="tv-winner-overlay" class="hidden-view tv-winner-overlay">
+    <div class="tv-winner-box">
+      <div class="tv-winner-trophy"></div>
+      <div id="tv-winner-text" class="tv-winner-text">BLUE WINS!</div>
+      <div id="tv-winner-name" class="tv-winner-name">Competitor Name</div>
+      <div class="tv-winner-sub">MATCH COMPLETE</div>
     </div>
+  </div>
 
-    <!-- Database problem banner -->
-    <div id="laptop-db-warning" class="hidden bg-red-950 border-2 border-red-500 rounded-xl p-3 mb-4 text-sm text-red-100">
-      <div class="font-black mb-1">⚠ DATABASE PROBLEM — scores/cards cannot be saved until this is fixed</div>
-      <div id="laptop-db-warning-msg" class="mb-1 break-words"></div>
-      <div class="text-yellow-300 font-bold">👉 Run the SQL setup, then RELOAD this page.</div>
+  <!-- Judge Boxes (corners) -->
+  <div id="judge-tv-1" class="judge-box" style="position:absolute;top:80px;left:20px;width:100px;height:100px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1e293b;border:2px solid #334155;">
+    <div style="font-size:0.7rem;color:#94a3b8;font-weight:700;">J1</div>
+    <div class="judge-score" style="font-size:1.5rem;">0</div>
+  </div>
+  <div id="judge-tv-2" class="judge-box" style="position:absolute;top:80px;right:20px;width:100px;height:100px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1e293b;border:2px solid #334155;">
+    <div style="font-size:0.7rem;color:#94a3b8;font-weight:700;">J2</div>
+    <div class="judge-score" style="font-size:1.5rem;">0</div>
+  </div>
+  <div id="judge-tv-3" class="judge-box" style="position:absolute;bottom:100px;left:20px;width:100px;height:100px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1e293b;border:2px solid #334155;">
+    <div style="font-size:0.7rem;color:#94a3b8;font-weight:700;">J3</div>
+    <div class="judge-score" style="font-size:1.5rem;">0</div>
+  </div>
+  <div id="judge-tv-4" class="judge-box" style="position:absolute;bottom:100px;right:20px;width:100px;height:100px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1e293b;border:2px solid #334155;">
+    <div style="font-size:0.7rem;color:#94a3b8;font-weight:700;">J4</div>
+    <div class="judge-score" style="font-size:1.5rem;">0</div>
+  </div>
+</div>
+
+<!-- ===== WINNER MODAL ===== -->
+<div id="modal-winner" class="hidden-view winner-modal">
+  <div class="winner-modal-box">
+    <h2 id="modal-winner-title" class="winner-modal-title">BLUE WINS!</h2>
+    <p id="modal-winner-name" class="winner-modal-name">Competitor Name</p>
+    <p id="modal-winner-question" style="text-align:center;color:#94a3b8;margin-bottom:25px;font-size:1.1rem;">Is this correct?</p>
+    <div id="winner-btn-container" class="winner-modal-buttons">
+      <button id="btn-winner-confirm" class="winner-modal-btn confirm">✓ Confirm & Next</button>
+      <button id="btn-winner-deny" class="winner-modal-btn deny">✗ Deny</button>
     </div>
-
-    <!-- ROUND TIMER CONTROL PANEL -->
-    <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 mb-4">
-      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <h3 class="font-bold flex items-center gap-2">
-          ⏱ Round Timer
-          <span id="l-timer-status" class="text-xs font-normal text-slate-300 bg-slate-700 px-2 py-0.5 rounded">Round 1 · Paused</span>
-        </h3>
-      </div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-        <div class="text-center bg-black/30 rounded-xl p-3">
-          <div class="text-xs opacity-70 mb-1">ROUND</div>
-          <div id="l-timer-round" class="text-4xl font-black">1</div>
-        </div>
-        <div class="text-center bg-black/30 rounded-xl p-3">
-          <div class="text-xs opacity-70 mb-1">TIME LEFT</div>
-          <div id="l-timer-time" class="text-4xl font-black timer-display">2:00</div>
-        </div>
-        <div class="col-span-2 flex flex-wrap gap-2 justify-center">
-          <button id="btn-timer-start" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg font-bold">▶ Start Round</button>
-          <button id="btn-timer-pause" class="bg-yellow-600 hover:bg-yellow-500 px-4 py-2 rounded-lg font-bold hidden">⏸ Pause</button>
-          <button id="btn-timer-reset" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg font-bold">⟲ Reset Round</button>
-        </div>
-      </div>
-      <div id="timer-round3-note" class="hidden text-xs text-yellow-300/90 mt-3 text-center bg-yellow-900/30 border border-yellow-500/40 rounded-lg py-2">
-        ⚡ Round 3 activated because both big numbers were 2 at the end of Round 2
-      </div>
-      <div class="text-[11px] text-slate-500 mt-3 text-center">
-        Round 3 only triggers when BOTH big numbers (referee counts) are exactly 2 at the end of Round 2.
-      </div>
-    </div>
-
-    <!-- PATTERNS MODE: Declare Winner Buttons -->
-    <div id="laptop-patterns-declare" class="hidden bg-slate-800 rounded-2xl p-4 border-2 border-yellow-500 mb-4">
-      <h3 class="font-bold text-lg mb-3 text-yellow-300 text-center">🏆 DECLARE PATTERNS WINNER</h3>
-      <div class="grid grid-cols-3 gap-3">
-        <button id="btn-declare-blue" class="declare-winner-btn blue-declare">🔵 Blue Wins</button>
-        <button id="btn-declare-draw" class="declare-winner-btn draw-declare">🤝 Draw</button>
-        <button id="btn-declare-red" class="declare-winner-btn red-declare">🔴 Red Wins</button>
-      </div>
-    </div>
-
-    <!-- SPARRING MODE: Judge corners -->
-    <div id="laptop-sparring-judges">
-      <div class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-2">
-        Judge corners · use B+ / B− / R+ / R− to add or deduct any judge's points
-      </div>
-      <div class="grid grid-cols-2 gap-3 mb-3">
-        <div id="judge-laptop-1" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 1</div>
-            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-            <div class="flex gap-1.5 mt-2">
-              <button data-act="judge-1-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-              <button data-act="judge-1-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-              <button data-act="judge-1-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-              <button data-act="judge-1-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-            </div>
-          </div>
-          <div class="judge-net text-5xl font-black">0</div>
-        </div>
-        <div id="judge-laptop-2" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 2</div>
-            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-            <div class="flex gap-1.5 mt-2">
-              <button data-act="judge-2-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-              <button data-act="judge-2-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-              <button data-act="judge-2-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-              <button data-act="judge-2-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-            </div>
-          </div>
-          <div class="judge-net text-5xl font-black">0</div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="side-blue rounded-2xl p-6 glow-blue">
-          <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">BLUE · CHUNG</div>
-          <div id="l-blue-score" class="text-center text-8xl font-black tv-score">0</div>
-          <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR BLUE</div>
-          <div class="grid grid-cols-2 gap-3 mt-4">
-            <div class="bg-black/30 rounded-xl p-3 text-center">
-              <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-              <div id="l-blue-gj" class="text-4xl font-black">0</div>
-              <div class="flex gap-1 mt-2 justify-center">
-                <button data-act="blue-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-                <button data-act="blue-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-              </div>
-            </div>
-            <div class="bg-black/30 rounded-xl p-3 text-center">
-              <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
-              <div id="l-blue-yc" class="text-4xl font-black">0</div>
-              <div class="flex gap-1 mt-2 justify-center">
-                <button data-act="blue-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-                <button data-act="blue-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="side-red rounded-2xl p-6 glow-red">
-          <div class="text-center mb-2 text-sm font-bold tracking-widest opacity-80">RED · HONG</div>
-          <div id="l-red-score" class="text-center text-8xl font-black tv-score">0</div>
-          <div class="text-center text-[11px] font-black tracking-[0.3em] opacity-75 mt-2">REFEREES FOR RED</div>
-          <div class="grid grid-cols-2 gap-3 mt-4">
-            <div class="bg-black/30 rounded-xl p-3 text-center">
-              <div class="text-xs opacity-70 mb-1">GAM-JEOM</div>
-              <div id="l-red-gj" class="text-4xl font-black">0</div>
-              <div class="flex gap-1 mt-2 justify-center">
-                <button data-act="red-gj-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-                <button data-act="red-gj-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-              </div>
-            </div>
-            <div class="bg-black/30 rounded-xl p-3 text-center">
-              <div class="text-xs opacity-70 mb-1">YELLOW CARD</div>
-              <div id="l-red-yc" class="text-4xl font-black">0</div>
-              <div class="flex gap-1 mt-2 justify-center">
-                <button data-act="red-yc-plus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">+</button>
-                <button data-act="red-yc-minus" class="laptop-card-btn bg-white/20 hover:bg-white/30 rounded px-2 py-1 text-sm font-bold">−</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mt-3 mb-4">
-        <div id="judge-laptop-3" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 3</div>
-            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-            <div class="flex gap-1.5 mt-2">
-              <button data-act="judge-3-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-              <button data-act="judge-3-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-              <button data-act="judge-3-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-              <button data-act="judge-3-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-            </div>
-          </div>
-          <div class="judge-net text-5xl font-black">0</div>
-        </div>
-        <div id="judge-laptop-4" class="judge-box judge-neutral border-2 rounded-2xl px-5 py-4 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-black tracking-widest opacity-90">JUDGE 4</div>
-            <div class="judge-detail text-[11px] font-mono opacity-70 mt-1">B 0 · R 0</div>
-            <div class="flex gap-1.5 mt-2">
-              <button data-act="judge-4-blue-plus" class="laptop-card-btn bg-blue-600 hover:bg-blue-500 rounded-md px-2.5 py-1.5 text-xs font-black">B+</button>
-              <button data-act="judge-4-blue-minus" class="laptop-card-btn bg-blue-900 hover:bg-blue-800 rounded-md px-2.5 py-1.5 text-xs font-black">B−</button>
-              <button data-act="judge-4-red-plus" class="laptop-card-btn bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1.5 text-xs font-black">R+</button>
-              <button data-act="judge-4-red-minus" class="laptop-card-btn bg-red-900 hover:bg-red-800 rounded-md px-2.5 py-1.5 text-xs font-black">R−</button>
-            </div>
-          </div>
-          <div class="judge-net text-5xl font-black">0</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
-      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <h3 class="font-bold">Connected Judge Phones</h3>
-        <div class="flex items-center gap-3">
-          <span class="text-xs text-slate-400 font-semibold">Party size:</span>
-          <div class="flex rounded-lg overflow-hidden border border-slate-600">
-            <button id="btn-max-3" class="px-4 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">3</button>
-            <button id="btn-max-4" class="px-4 py-1.5 text-sm font-bold bg-slate-700 hover:bg-slate-600">4</button>
-          </div>
-          <span id="laptop-phone-count" class="text-sm text-slate-400">0 / 4</span>
-        </div>
-      </div>
-      <div id="party-note" class="text-[11px] text-yellow-300/90 font-semibold mb-2">Party size 4 — corners 1 to 4 are open. Phones are only removed when YOU press Kick.</div>
-      <div id="laptop-phones-list" class="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 1 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 2 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 3 — empty</div>
-        <div class="bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700">Corner 4 — empty</div>
-      </div>
+    <div id="winner-deny-section" class="hidden-view" style="margin-top:20px;padding-top:20px;border-top:1px solid #334155;">
+      <p style="text-align:center;color:#ef4444;margin-bottom:15px;">Result denied. Reset to try again.</p>
+      <button id="btn-winner-reset" class="winner-modal-btn" style="background:#f59e0b;width:100%;">⟲ Reset Match</button>
     </div>
   </div>
 </div>
 
-<!-- VIEW: TV DISPLAY -->
-<div id="view-tv" class="hidden-view fixed inset-0 bg-black overflow-hidden flex flex-col">
-  <!-- TOP HALF: Current Competitors -->
-  <div class="flex-1 grid grid-cols-2 relative">
-    <!-- TOP LEFT: Current Blue -->
-    <div class="side-blue flex flex-col p-6">
-      <div class="text-center mb-2">
-        <div id="tv-blue-name" class="competitor-name-display blue-name">BLUE</div>
-        <div class="text-xl font-black tracking-widest opacity-80 mt-2">🔵 CHUNG</div>
-      </div>
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <div id="tv-blue-score" class="tv-score big-number text-white">0</div>
-        <div class="vote-caption mt-2">REFEREES FOR BLUE</div>
-        <div class="tv-stats">
-          <div class="tv-stat">
-            <div class="tv-stat-label">GAM-JEOM</div>
-            <div id="tv-blue-gj" class="tv-stat-num text-red-200">0</div>
-          </div>
-          <div class="tv-stat">
-            <div class="tv-stat-label"><span class="card-chip"></span>YELLOW CARD</div>
-            <div id="tv-blue-yc" class="tv-stat-num text-yellow-300">0</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TOP RIGHT: Current Red -->
-    <div class="side-red flex flex-col p-6">
-      <div class="text-center mb-2">
-        <div id="tv-red-name" class="competitor-name-display red-name">RED</div>
-        <div class="text-xl font-black tracking-widest opacity-80 mt-2">🔴 HONG</div>
-      </div>
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <div id="tv-red-score" class="tv-score big-number text-white">0</div>
-        <div class="vote-caption mt-2">REFEREES FOR RED</div>
-        <div class="tv-stats">
-          <div class="tv-stat">
-            <div class="tv-stat-label">GAM-JEOM</div>
-            <div id="tv-red-gj" class="tv-stat-num text-red-200">0</div>
-          </div>
-          <div class="tv-stat">
-            <div class="tv-stat-label"><span class="card-chip"></span>YELLOW CARD</div>
-            <div id="tv-red-yc" class="tv-stat-num text-yellow-300">0</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- CENTER TIMER -->
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/85 border-4 border-yellow-400 rounded-2xl px-10 py-4 text-center z-10">
-      <div id="tv-category-badge" class="category-badge sparring mb-2">SPARRING</div>
-      <div class="text-xl font-black tracking-widest text-yellow-300">ROUND <span id="tv-timer-round">1</span></div>
-      <div id="tv-timer-time" class="text-7xl font-black timer-display mt-1">2:00</div>
-    </div>
-  </div>
-
-  <!-- BOTTOM THIRD: NEXT UP -->
-  <div class="h-1/4 bg-slate-900 border-t-4 border-yellow-400 grid grid-cols-2 relative">
-    <div class="flex flex-col items-center justify-center p-4 border-r-2 border-yellow-400/30">
-      <div class="text-sm font-bold text-blue-300 mb-2">⏭️ NEXT BLUE</div>
-      <div id="tv-next-blue" class="next-competitor-name blue-next w-full">---</div>
-    </div>
-    <div class="flex flex-col items-center justify-center p-4">
-      <div class="text-sm font-bold text-red-300 mb-2">⏭️ NEXT RED</div>
-      <div id="tv-next-red" class="next-competitor-name red-next w-full">---</div>
-    </div>
-  </div>
-
-  <!-- WINNER OVERLAY -->
-  <div id="tv-winner-overlay" class="hidden absolute inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.92);">
-    <div class="bg-black/95 rounded-3xl border-4 border-yellow-400 p-12 text-center max-w-2xl mx-4 shadow-2xl">
-      <div class="text-8xl mb-4">🏆</div>
-      <div id="tv-winner-text" class="text-6xl font-black text-yellow-300 mb-2">BLUE WINS!</div>
-      <div id="tv-winner-name" class="text-4xl font-bold text-white mb-4">Competitor Name</div>
-      <div class="text-2xl text-slate-400 font-bold tracking-widest">MATCH COMPLETE</div>
-    </div>
-  </div>
-
-  <!-- JUDGE BOXES -->
-  <div id="judge-tv-1" class="judge-tv-box judge-neutral absolute top-6 left-6">
-    <div class="judge-tv-label">JUDGE 1</div>
-    <div class="judge-net">0</div>
-    <div class="judge-detail">B 0 · R 0</div>
-  </div>
-  <div id="judge-tv-2" class="judge-tv-box judge-neutral absolute top-6 right-6">
-    <div class="judge-tv-label">JUDGE 2</div>
-    <div class="judge-net">0</div>
-    <div class="judge-detail">B 0 · R 0</div>
-  </div>
-  <div id="judge-tv-3" class="judge-tv-box judge-neutral absolute bottom-6 left-6">
-    <div class="judge-tv-label">JUDGE 3</div>
-    <div class="judge-net">0</div>
-    <div class="judge-detail">B 0 · R 0</div>
-  </div>
-  <div id="judge-tv-4" class="judge-tv-box judge-neutral absolute bottom-6 right-6">
-    <div class="judge-tv-label">JUDGE 4</div>
-    <div class="judge-net">0</div>
-    <div class="judge-detail">B 0 · R 0</div>
-  </div>
-
-  <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-yellow-400 -translate-x-1/2"></div>
-  <div id="tv-ring-name" class="absolute top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-black px-4 py-1 rounded-b-xl text-sm"></div>
-</div>
-
-<!-- LAPTOP WINNER CONFIRMATION MODAL -->
-<div id="modal-winner" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.88);">
-  <div class="bg-slate-800 rounded-2xl p-8 max-w-lg w-full border-2 border-yellow-400 shadow-2xl">
-    <h2 id="modal-winner-title" class="text-4xl font-black text-center mb-2">BLUE WINS!</h2>
-    <p id="modal-winner-name" class="text-2xl text-center mb-4 text-yellow-300 font-bold">Competitor Name</p>
-    <p id="modal-winner-question" class="text-center text-lg mb-6 text-slate-300">Is this correct?</p>
-
-    <div id="winner-btn-container" class="flex gap-4 mb-4">
-      <button id="btn-winner-confirm" class="flex-1 bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-xl">✓ Confirm & Next</button>
-      <button id="btn-winner-deny" class="flex-1 bg-red-600 hover:bg-red-500 py-4 rounded-xl font-black text-xl">✗ Deny</button>
-    </div>
-
-    <div id="winner-deny-section" class="hidden mt-4 pt-4 border-t border-slate-700">
-      <p class="text-center text-lg mb-4 text-red-300">Result denied. Reset the match to try again.</p>
-      <button id="btn-winner-reset" class="w-full bg-orange-600 hover:bg-orange-500 py-3 rounded-xl font-black text-lg">⟲ Reset Match</button>
-    </div>
-  </div>
-</div>
+<!-- Toast -->
+<div id="toast" class="toast"></div>
 
 <script>
-const SUPABASE_URL  = "https://cziwnycosdxeuacslcza.supabase.co";
+const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const state = {
@@ -729,14 +1460,12 @@ const state = {
   heartbeatInterval: null,
   pollInterval: null,
   matchPollInterval: null,
+  matchListInterval: null,
   heartbeatBusy: false,
   loggingIn: false,
   dbBroken: false,
 };
 
-/* ===================================================================== */
-/* TIMER STATE                                                            */
-/* ===================================================================== */
 const TIMER_CHANNEL_PREFIX = "timer-";
 let timerState = {
   round: 1,
@@ -758,12 +1487,8 @@ function getTimerKey() {
 function loadTimerState() {
   try {
     const saved = localStorage.getItem(getTimerKey());
-    if (saved) {
-      timerState = Object.assign({}, timerState, JSON.parse(saved));
-    }
-  } catch (e) {
-    console.warn("Failed to load timer state:", e);
-  }
+    if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved));
+  } catch (e) { console.warn("Failed to load timer:", e); }
 }
 
 function saveTimerState() {
@@ -772,33 +1497,24 @@ function saveTimerState() {
 
 function broadcastTimerState() {
   if (timerChannel && state.role === 'laptop') {
-    try {
-      timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState });
-    } catch (e) {}
+    try { timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState }); } catch (e) {}
   }
 }
 
 function subscribeTimer() {
   if (timerChannel) sb.removeChannel(timerChannel);
   if (!state.ring) return;
-
   timerChannel = sb.channel(TIMER_CHANNEL_PREFIX + state.ring.id)
     .on('broadcast', { event: 'timer-update' }, (msg) => {
       const s = msg && msg.payload;
-      if (s) {
-        timerState = Object.assign({}, timerState, s);
-        saveTimerState();
-        renderTimer();
-      }
+      if (s) { timerState = Object.assign({}, timerState, s); saveTimerState(); renderTimer(); }
     })
     .on('broadcast', { event: 'timer-request' }, () => {
       if (state.role === 'laptop') broadcastTimerState();
     })
     .subscribe((status) => {
       if (status === 'SUBSCRIBED' && state.role !== 'laptop') {
-        try {
-          timerChannel.send({ type: 'broadcast', event: 'timer-request' });
-        } catch (e) {}
+        try { timerChannel.send({ type: 'broadcast', event: 'timer-request' }); } catch (e) {}
       }
     });
 }
@@ -807,9 +1523,7 @@ function getRemaining() {
   if (timerState.finished) return 0;
   const now = Date.now();
   let total = timerState.elapsed;
-  if (timerState.startTime) {
-    total += (now - timerState.startTime) / 1000;
-  }
+  if (timerState.startTime) total += (now - timerState.startTime) / 1000;
   return Math.max(0, timerState.roundTime - total);
 }
 
@@ -819,15 +1533,19 @@ function formatTime(seconds) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function formatTimeDecimal(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toFixed(1).padStart(4, '0')}`;
+}
+
 function renderTimer() {
   const remaining = getRemaining();
   const timeStr = formatTime(remaining);
+  const timeStrDecimal = formatTimeDecimal(remaining);
   const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished;
 
-  const setEl = (id, v) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = v;
-  };
+  const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
 
   setEl('l-timer-round', timerState.round);
   setEl('tv-timer-round', timerState.round);
@@ -836,17 +1554,15 @@ function renderTimer() {
   ['l-timer-time', 'tv-timer-time', 'phone-timer-time'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = timeStr;
-    el.classList.toggle('timer-warning', warn);
+    el.textContent = id === 'tv-timer-time' ? timeStrDecimal : timeStr;
+    el.classList.toggle('warning', warn);
   });
 
   const statusEl = document.getElementById('l-timer-status');
   const phoneStatusEl = document.getElementById('phone-timer-status');
   let status = '';
   if (timerState.finished) {
-    status = timerState.winner === 'draw'
-      ? 'Match Complete · DRAW'
-      : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
+    status = timerState.winner === 'draw' ? 'Match Complete · DRAW' : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
   } else if (timerState.paused) {
     status = `Round ${timerState.round} · Paused`;
   } else {
@@ -859,17 +1575,17 @@ function renderTimer() {
   const btnPause = document.getElementById('btn-timer-pause');
   if (btnStart && btnPause) {
     if (timerState.paused || timerState.finished) {
-      btnStart.classList.remove('hidden');
-      btnPause.classList.add('hidden');
+      btnStart.classList.remove('hidden-view');
+      btnPause.classList.add('hidden-view');
       btnStart.disabled = timerState.finished;
     } else {
-      btnStart.classList.add('hidden');
-      btnPause.classList.remove('hidden');
+      btnStart.classList.add('hidden-view');
+      btnPause.classList.remove('hidden-view');
     }
   }
 
   const r3note = document.getElementById('timer-round3-note');
-  if (r3note) r3note.classList.toggle('hidden', timerState.round !== 3);
+  if (r3note) r3note.classList.toggle('hidden-view', timerState.round !== 3);
 
   const tvOverlay = document.getElementById('tv-winner-overlay');
   const tvText = document.getElementById('tv-winner-text');
@@ -881,14 +1597,12 @@ function renderTimer() {
         if (tvWinnerName) tvWinnerName.textContent = '';
       } else {
         tvText.textContent = timerState.winner.toUpperCase() + ' WINS!';
-        const winnerName = timerState.winner === 'blue' 
-          ? (state.ring?.blue_name || 'BLUE')
-          : (state.ring?.red_name || 'RED');
+        const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
         if (tvWinnerName) tvWinnerName.textContent = winnerName;
       }
-      tvOverlay.classList.remove('hidden');
+      tvOverlay.classList.remove('hidden-view');
     } else {
-      tvOverlay.classList.add('hidden');
+      tvOverlay.classList.add('hidden-view');
     }
   }
 }
@@ -914,9 +1628,7 @@ function stopTimerTick() {
 function startBroadcastLoop() {
   if (broadcastInterval) clearInterval(broadcastInterval);
   broadcastInterval = setInterval(() => {
-    if (state.role === 'laptop' && !timerState.paused && !timerState.finished) {
-      broadcastTimerState();
-    }
+    if (state.role === 'laptop' && !timerState.paused && !timerState.finished) broadcastTimerState();
   }, 1000);
 }
 
@@ -938,9 +1650,7 @@ function startTimer() {
 function pauseTimer() {
   if (timerState.finished || timerState.paused || state.role !== 'laptop') return;
   const now = Date.now();
-  if (timerState.startTime) {
-    timerState.elapsed += (now - timerState.startTime) / 1000;
-  }
+  if (timerState.startTime) timerState.elapsed += (now - timerState.startTime) / 1000;
   timerState.startTime = null;
   timerState.paused = true;
   saveTimerState();
@@ -962,7 +1672,6 @@ function resetRound() {
 
 async function endRound() {
   if (timerState.finished) return;
-
   timerState.paused = true;
   timerState.startTime = null;
   timerState.elapsed = timerState.roundTime;
@@ -971,13 +1680,11 @@ async function endRound() {
 
   const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
 
-  // Patterns mode: auto-finish after round 1
   if (mode === 'patterns') {
     finishMatch();
     return;
   }
 
-  // Sparring mode: normal round progression
   if (timerState.round === 1) {
     timerState.round = 2;
     timerState.elapsed = 0;
@@ -1004,7 +1711,6 @@ function finishMatch() {
   const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
   
   if (mode === 'patterns') {
-    // Patterns: winner already declared by judges
     timerState.finished = true;
     timerState.paused = true;
     saveTimerState();
@@ -1015,34 +1721,29 @@ function finishMatch() {
     return;
   }
 
-  // Sparring: determine winner by judge votes
   const votes = judgeVoteCounts();
   timerState.finished = true;
   timerState.paused = true;
 
-  if (votes.blue > votes.red)       timerState.winner = 'blue';
-  else if (votes.red > votes.blue)  timerState.winner = 'red';
-  else                              timerState.winner = 'draw';
+  if (votes.blue > votes.red) timerState.winner = 'blue';
+  else if (votes.red > votes.blue) timerState.winner = 'red';
+  else timerState.winner = 'draw';
 
   saveTimerState();
   broadcastTimerState();
   renderTimer();
   stopTimerTick();
 
-  if (state.role === 'laptop') {
-    showWinnerConfirmStep1();
-  }
+  if (state.role === 'laptop') showWinnerConfirmStep1();
 }
 
-/* ----- WINNER CONFIRMATION FLOW ----- */
-
 function showWinnerConfirmStep1() {
-  const modal   = document.getElementById('modal-winner');
-  const title   = document.getElementById('modal-winner-title');
+  const modal = document.getElementById('modal-winner');
+  const title = document.getElementById('modal-winner-title');
   const winnerNameEl = document.getElementById('modal-winner-name');
-  const question= document.getElementById('modal-winner-question');
+  const question = document.getElementById('modal-winner-question');
   const btnContainer = document.getElementById('winner-btn-container');
-  const denySection  = document.getElementById('winner-deny-section');
+  const denySection = document.getElementById('winner-deny-section');
 
   let winnerName = '';
   if (timerState.winner === 'draw') {
@@ -1050,48 +1751,44 @@ function showWinnerConfirmStep1() {
     winnerName = 'No winner';
   } else {
     title.textContent = timerState.winner.toUpperCase() + ' WINS!';
-    winnerName = timerState.winner === 'blue' 
-      ? (state.ring?.blue_name || 'BLUE')
-      : (state.ring?.red_name || 'RED');
+    winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
   }
   
   if (winnerNameEl) winnerNameEl.textContent = winnerName;
   question.textContent = 'Is this correct?';
 
   btnContainer.innerHTML = `
-    <button id="btn-winner-confirm" class="flex-1 bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-xl">✓ Confirm & Next</button>
-    <button id="btn-winner-deny" class="flex-1 bg-red-600 hover:bg-red-500 py-4 rounded-xl font-black text-xl">✗ Deny</button>
+    <button id="btn-winner-confirm" class="winner-modal-btn confirm">✓ Confirm & Next</button>
+    <button id="btn-winner-deny" class="winner-modal-btn deny">✗ Deny</button>
   `;
 
   document.getElementById('btn-winner-confirm').addEventListener('click', confirmAndAdvance);
   document.getElementById('btn-winner-deny').addEventListener('click', showWinnerDenied);
 
-  denySection.classList.add('hidden');
-  modal.classList.remove('hidden');
+  denySection.classList.add('hidden-view');
+  modal.classList.remove('hidden-view');
 }
 
 async function confirmAndAdvance() {
-  document.getElementById('modal-winner').classList.add('hidden');
+  document.getElementById('modal-winner').classList.add('hidden-view');
   
-  const winnerName = timerState.winner === 'blue' 
-    ? (state.ring?.blue_name || 'BLUE')
-    : timerState.winner === 'red'
-    ? (state.ring?.red_name || 'RED')
+  const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE')
+    : timerState.winner === 'red' ? (state.ring?.red_name || 'RED')
     : 'DRAW';
+  const winnerSide = timerState.winner || 'draw';
 
-  // Call RPC to advance to next match
   const { error } = await sb.rpc('advance_ring_match', {
     p_ring_id: state.ring.id,
-    p_winner: winnerName
+    p_winner: winnerName,
+    p_winner_side: winnerSide
   });
 
   if (error) {
-    console.error('Failed to advance match:', error);
-    alert('Failed to advance to next match: ' + error.message);
+    console.error('Failed to advance:', error);
+    showToast('Failed to advance: ' + error.message, 'error');
     return;
   }
 
-  // Reset timer for next match
   timerState = {
     round: 1,
     roundTime: timerState.roundTime,
@@ -1104,39 +1801,29 @@ async function confirmAndAdvance() {
   saveTimerState();
   broadcastTimerState();
 
-  // Hide winner overlay
   const tvOverlay = document.getElementById('tv-winner-overlay');
-  if (tvOverlay) tvOverlay.classList.add('hidden');
+  if (tvOverlay) tvOverlay.classList.add('hidden-view');
 
-  // Refresh ring data to get next match info
   await refreshRingData();
-  
-  // Auto-set timer from new match config
-  if (state.ring?.round_time_seconds) {
-    timerState.roundTime = state.ring.round_time_seconds;
-    saveTimerState();
-    broadcastTimerState();
-  }
-  
-  // Reset match scores
+  await loadCurrentMatch();
   await resetMatchScores();
   
   renderTimer();
   updateCompetitorDisplay();
+  showToast('✓ Match advanced to next!', 'success');
 }
 
 function showWinnerDenied() {
-  const title   = document.getElementById('modal-winner-title');
-  const question= document.getElementById('modal-winner-question');
+  const title = document.getElementById('modal-winner-title');
+  const question = document.getElementById('modal-winner-question');
   title.textContent = 'RESULT DENIED';
   question.textContent = 'Please reset the match to try again.';
   document.getElementById('winner-btn-container').innerHTML = '';
-  document.getElementById('winner-deny-section').classList.remove('hidden');
+  document.getElementById('winner-deny-section').classList.remove('hidden-view');
 }
 
 async function resetMatch() {
   if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
-
   await resetMatchScores();
 
   timerState = {
@@ -1151,9 +1838,9 @@ async function resetMatch() {
   saveTimerState();
   broadcastTimerState();
 
-  document.getElementById('modal-winner').classList.add('hidden');
+  document.getElementById('modal-winner').classList.add('hidden-view');
   const tvOverlay = document.getElementById('tv-winner-overlay');
-  if (tvOverlay) tvOverlay.classList.add('hidden');
+  if (tvOverlay) tvOverlay.classList.add('hidden-view');
 
   stopTimerTick();
   renderTimer();
@@ -1166,152 +1853,214 @@ async function resetMatchScores() {
     blue_gam_jeom: 0, red_gam_jeom: 0,
     blue_yellow_cards: 0, red_yellow_cards: 0,
     judge_blue: [0,0,0,0],
-    judge_red:  [0,0,0,0],
+    judge_red: [0,0,0,0],
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
 
-  if (error) {
-    alert("Reset failed: " + error.message);
-  }
+  if (error) showToast("Reset failed: " + error.message, 'error');
 }
 
-/* ===================================================================== */
-/* RING DATA MANAGEMENT                                                   */
-/* ===================================================================== */
+async function declareWinner(side) {
+  if (timerState.finished) {
+    showToast("Match already finished. Reset first.", 'warning');
+    return;
+  }
+  if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
+  
+  timerState.finished = true;
+  timerState.paused = true;
+  timerState.winner = side;
+  saveTimerState();
+  broadcastTimerState();
+  renderTimer();
+  stopTimerTick();
+  
+  showWinnerConfirmStep1();
+}
 
 async function refreshRingData() {
   if (!state.ring) return;
-
-  const { data, error } = await sb
-    .from('rings')
-    .select('*')
-    .eq('id', state.ring.id)
-    .single();
-
-  if (error) {
-    console.error('Failed to refresh ring data:', error);
-    return;
-  }
-
+  const { data, error } = await sb.from('rings').select('*').eq('id', state.ring.id).single();
+  if (error) { console.error('Failed to refresh ring:', error); return; }
   state.ring = data;
   sessionStorage.setItem('tkd_ring', JSON.stringify(data));
-
   updateCompetitorDisplay();
-  applyModeUI();
 }
 
 async function loadCurrentMatch() {
   if (!state.ring) return;
 
-  // Initialize ring with first match if needed
-  const { error: initErr } = await sb.rpc('init_ring_match', {
-    p_ring_id: state.ring.id
-  });
-  if (initErr) console.warn('init_ring_match:', initErr.message);
+  const { data, error } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
 
+  if (error) { console.error('Failed to load match:', error); return; }
+
+  if (data && data.length > 0) {
+    state.currentMatch = data[0];
+    
+    const { error: updateErr } = await sb.from('rings').update({
+      current_match_id: state.currentMatch.id,
+      blue_name: state.currentMatch.player1_name,
+      red_name: state.currentMatch.player2_name,
+      blue_club: state.currentMatch.player1_club,
+      red_club: state.currentMatch.player2_club,
+      category_name: state.currentMatch.category_name,
+      discipline: state.currentMatch.discipline,
+      match_number: state.currentMatch.match_number,
+      match_stage: state.currentMatch.match_stage,
+      round_time_seconds: state.currentMatch.round_time_seconds,
+      current_round_num: 1,
+      gender: state.currentMatch.gender,
+      age_group: state.currentMatch.age_group,
+      weight_class: state.currentMatch.weight_class,
+      mode: state.currentMatch.discipline
+    }).eq('id', state.ring.id);
+
+    if (updateErr) console.error('Failed to update ring:', updateErr);
+
+    await refreshRingData();
+    
+    if (state.currentMatch.round_time_seconds) {
+      timerState.roundTime = state.currentMatch.round_time_seconds;
+      saveTimerState();
+    }
+  } else {
+    state.currentMatch = null;
+    await sb.from('rings').update({
+      current_match_id: null,
+      blue_name: null, red_name: null,
+      match_stage: 'No More Matches'
+    }).eq('id', state.ring.id);
+    await refreshRingData();
+  }
+
+  await loadNextMatch();
+  if (state.role === 'laptop') await loadMatchList();
+}
+
+async function loadNextMatch() {
+  if (!state.ring) return;
+  const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
+  if (error) return;
+  
+  if (data && data.length >= 2) {
+    const nextMatch = data[1];
+    await sb.from('rings').update({
+      next_blue_name: nextMatch.player1_name,
+      next_red_name: nextMatch.player2_name
+    }).eq('id', state.ring.id);
+  } else {
+    await sb.from('rings').update({
+      next_blue_name: null,
+      next_red_name: null
+    }).eq('id', state.ring.id);
+  }
   await refreshRingData();
 }
 
 function updateCompetitorDisplay() {
   const blueName = state.ring?.blue_name || '---';
   const redName = state.ring?.red_name || '---';
+  const blueClub = state.ring?.blue_club || '---';
+  const redClub = state.ring?.red_club || '---';
   const nextBlueName = state.ring?.next_blue_name || '---';
   const nextRedName = state.ring?.next_red_name || '---';
   const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
   const categoryName = state.ring?.category_name || 'No Match';
   const matchNumber = state.ring?.match_number || 0;
+  const matchStage = state.ring?.match_stage || 'Preliminary';
 
-  // Laptop display
-  const laptopBlue = document.getElementById('laptop-blue-name');
-  const laptopRed = document.getElementById('laptop-red-name');
-  const laptopNextBlue = document.getElementById('laptop-next-blue');
-  const laptopNextRed = document.getElementById('laptop-next-red');
-  const laptopDiscipline = document.getElementById('laptop-discipline-badge');
-  const laptopCategory = document.getElementById('laptop-category-name');
-  const laptopMatchNum = document.getElementById('laptop-match-number');
+  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-  if (laptopBlue) laptopBlue.textContent = blueName;
-  if (laptopRed) laptopRed.textContent = redName;
-  if (laptopNextBlue) laptopNextBlue.textContent = nextBlueName;
-  if (laptopNextRed) laptopNextRed.textContent = nextRedName;
-  if (laptopDiscipline) {
-    laptopDiscipline.textContent = discipline.toUpperCase();
-    laptopDiscipline.className = `category-badge ${discipline}`;
-  }
-  if (laptopCategory) laptopCategory.textContent = categoryName;
-  if (laptopMatchNum) laptopMatchNum.textContent = matchNumber;
+  setTxt('laptop-blue-name', blueName);
+  setTxt('laptop-red-name', redName);
+  setTxt('laptop-blue-club', blueClub);
+  setTxt('laptop-red-club', redClub);
+  setTxt('laptop-next-blue', nextBlueName);
+  setTxt('laptop-next-red', nextRedName);
+  setTxt('laptop-category-name', categoryName);
+  setTxt('laptop-match-number', matchNumber);
+  setTxt('laptop-match-stage', matchStage);
 
-  // TV display
-  const tvBlue = document.getElementById('tv-blue-name');
-  const tvRed = document.getElementById('tv-red-name');
-  const tvNextBlue = document.getElementById('tv-next-blue');
-  const tvNextRed = document.getElementById('tv-next-red');
-  const tvCategory = document.getElementById('tv-category-badge');
-
-  if (tvBlue) tvBlue.textContent = blueName;
-  if (tvRed) tvRed.textContent = redName;
-  if (tvNextBlue) tvNextBlue.textContent = nextBlueName;
-  if (tvNextRed) tvNextRed.textContent = nextRedName;
-  if (tvCategory) {
-    tvCategory.textContent = discipline.toUpperCase();
-    tvCategory.className = `category-badge ${discipline}`;
+  const laptopDisc = document.getElementById('laptop-discipline-badge');
+  if (laptopDisc) {
+    laptopDisc.textContent = discipline.toUpperCase();
+    laptopDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
   }
 
-  // Phone display
-  const phoneBlue = document.getElementById('phone-blue-name');
-  const phoneRed = document.getElementById('phone-red-name');
+  setTxt('tv-blue-name', blueName);
+  setTxt('tv-red-name', redName);
+  setTxt('tv-blue-club', blueClub);
+  setTxt('tv-red-club', redClub);
+  setTxt('tv-next-blue', nextBlueName);
+  setTxt('tv-next-red', nextRedName);
+  setTxt('tv-category-name', categoryName);
+  setTxt('tv-match-number-display', 'Match #' + matchNumber);
+  setTxt('tv-match-num', matchNumber);
+  setTxt('tv-match-stage', matchStage);
+
+  const tvDisc = document.getElementById('tv-discipline-badge');
+  if (tvDisc) {
+    tvDisc.textContent = discipline.toUpperCase();
+    tvDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
+  }
+
+  setTxt('phone-blue-name', blueName);
+  setTxt('phone-red-name', redName);
+  
   const phoneMode = document.getElementById('phone-mode-badge');
-
-  if (phoneBlue) phoneBlue.textContent = blueName;
-  if (phoneRed) phoneRed.textContent = redName;
   if (phoneMode) {
     phoneMode.textContent = discipline.toUpperCase();
-    phoneMode.className = `category-badge ${discipline}`;
+    phoneMode.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
   }
-}
 
-function applyModeUI() {
-  const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-  
   const sparringControls = document.getElementById('sparring-controls');
   const patternsControls = document.getElementById('patterns-controls');
-  const sparringJudges = document.getElementById('laptop-sparring-judges');
-  const patternsDeclare = document.getElementById('laptop-patterns-declare');
-
-  if (mode === 'patterns') {
-    if (sparringControls) sparringControls.classList.add('hidden');
-    if (patternsControls) patternsControls.classList.remove('hidden');
-    if (sparringJudges) sparringJudges.classList.add('hidden');
-    if (patternsDeclare) patternsDeclare.classList.remove('hidden');
+  const declareWinner = document.getElementById('laptop-declare-winner');
+  
+  if (discipline === 'patterns') {
+    if (sparringControls) sparringControls.classList.add('hidden-view');
+    if (patternsControls) patternsControls.classList.remove('hidden-view');
+    if (declareWinner) declareWinner.classList.remove('hidden-view');
   } else {
-    if (sparringControls) sparringControls.classList.remove('hidden');
-    if (patternsControls) patternsControls.classList.add('hidden');
-    if (sparringJudges) sparringJudges.classList.remove('hidden');
-    if (patternsDeclare) patternsDeclare.classList.add('hidden');
+    if (sparringControls) sparringControls.classList.remove('hidden-view');
+    if (patternsControls) patternsControls.classList.add('hidden-view');
+    if (declareWinner) declareWinner.classList.add('hidden-view');
   }
 }
 
-/* ===================================================================== */
-const SQL_HINT = "\n\nIf this keeps happening, run the SQL fix from the top of the HTML file in Supabase → SQL Editor.";
+async function loadMatchList() {
+  if (!state.ring || state.role !== 'laptop') return;
+  const container = document.getElementById('match-list-container');
+  if (!container) return;
 
-function makeSessionId() {
-  try {
-    if (window.crypto && typeof window.crypto.randomUUID === "function") {
-      return window.crypto.randomUUID();
-    }
-  } catch (e) {}
-  return "sess-" + Date.now().toString(36) + "-" +
-         Math.random().toString(36).slice(2, 10) +
-         Math.random().toString(36).slice(2, 10);
+  const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
+  if (error) { container.innerHTML = '<div style="color:#ef4444;">Error loading matches</div>'; return; }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No matches in queue</div>';
+    return;
+  }
+
+  let html = '';
+  data.forEach(m => {
+    const isActive = state.currentMatch && m.id === state.currentMatch.id;
+    const isCompleted = m.status === 'completed';
+    const cls = isActive ? 'active' : (isCompleted ? 'completed' : '');
+    html += `<div class="match-list-item ${cls}">
+      <div class="ml-number">#${m.match_number} · ${m.match_stage || 'Preliminary'}</div>
+      <div class="ml-names">${m.player1_name || 'TBD'} vs ${m.player2_name || 'TBD'}</div>
+      <div class="ml-category">${m.category_name || ''} ${m.gender ? '· ' + m.gender : ''} ${m.age_group ? '· ' + m.age_group : ''}</div>
+      ${isCompleted && m.winner_name ? `<div class="ml-winner">✓ Winner: ${m.winner_name}</div>` : ''}
+    </div>`;
+  });
+  container.innerHTML = html;
 }
 
-function phoneSessionKey() {
-  return "tkd_phone_session_" + (state.ring ? state.ring.id : "unknown");
-}
-
-function getMaxJudges() {
-  const m = state.ring ? parseInt(state.ring.max_phones, 10) : 4;
-  return (m === 3) ? 3 : 4;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => { t.className = 'toast'; }, 3500);
 }
 
 function showView(name) {
@@ -1330,7 +2079,6 @@ function parseHash() {
 
 async function route() {
   const { name, code } = parseHash();
-
   if (name === "tv") {
     if (code) {
       const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle();
@@ -1341,29 +2089,21 @@ async function route() {
         return;
       }
       showView("landing");
-      const errEl = document.getElementById("landing-error");
-      errEl.textContent = "Invalid TV code. Check the code shown on the laptop control panel.";
-      errEl.classList.remove("hidden");
+      document.getElementById("landing-error").textContent = "Invalid TV code.";
       return;
     }
     const cached = sessionStorage.getItem("tkd_ring");
     if (cached) {
-      try {
-        state.ring = JSON.parse(cached);
-        await enterTV();
-        return;
-      } catch(e){}
+      try { state.ring = JSON.parse(cached); await enterTV(); return; } catch(e){}
     }
     state.role = "tv-pending";
     showView("landing");
     return;
   }
-
   if (name === "") {
     if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
     if (state.role === "laptop") { showView("laptop"); return; }
   }
-
   showView("landing");
 }
 
@@ -1374,41 +2114,23 @@ document.getElementById("inp-password").addEventListener("keydown", e => {
 
 async function tryLogin() {
   if (state.loggingIn) return;
-
   const pwd = document.getElementById("inp-password").value.trim();
   const errEl = document.getElementById("landing-error");
   const btn = document.getElementById("btn-enter");
-  errEl.classList.add("hidden");
+  errEl.textContent = "";
 
-  if (!pwd) {
-    errEl.textContent = "Please enter a password or TV code.";
-    errEl.classList.remove("hidden");
-    return;
-  }
+  if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
 
   state.loggingIn = true;
-  state.dbBroken = false;
   btn.disabled = true;
   btn.textContent = "Entering…";
 
   try {
-    const { data, error } = await sb
-      .from("rings")
-      .select("*")
-      .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`)
-      .limit(1);
+    const { data, error } = await sb.from("rings").select("*")
+      .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`).limit(1);
 
-    if (error) {
-      errEl.textContent = "Database error: " + error.message;
-      errEl.classList.remove("hidden");
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      errEl.textContent = "No ring found for that password/code.";
-      errEl.classList.remove("hidden");
-      return;
-    }
+    if (error) { errEl.textContent = "Database error: " + error.message; return; }
+    if (!data || data.length === 0) { errEl.textContent = "No ring found for that password/code."; return; }
 
     const ring = data[0];
     state.ring = ring;
@@ -1419,17 +2141,9 @@ async function tryLogin() {
       await enterTV();
       return;
     }
-
-    if (pwd === ring.laptop_password) {
-      state.role = "laptop";
-      await enterLaptop();
-    } else if (pwd === ring.phone_password) {
-      state.role = "phone";
-      await enterPhone();
-    } else {
-      errEl.textContent = "Password accepted but no role matched. Check the ring configuration.";
-      errEl.classList.remove("hidden");
-    }
+    if (pwd === ring.laptop_password) { state.role = "laptop"; await enterLaptop(); }
+    else if (pwd === ring.phone_password) { state.role = "phone"; await enterPhone(); }
+    else { errEl.textContent = "Password accepted but no role matched."; }
   } finally {
     state.loggingIn = false;
     btn.disabled = false;
@@ -1437,81 +2151,32 @@ async function tryLogin() {
   }
 }
 
-/* ===================================================================== */
-/* MATCH ROW HELPERS                                                      */
-/* ===================================================================== */
-
-function showDbWarning(msg) {
-  const box = document.getElementById("laptop-db-warning");
-  const msgEl = document.getElementById("laptop-db-warning-msg");
-  if (!box || !msgEl) return;
-  msgEl.textContent = msg;
-  box.classList.remove("hidden");
-}
-
-function hideDbWarning() {
-  const box = document.getElementById("laptop-db-warning");
-  if (box) box.classList.add("hidden");
-}
-
 async function ensureMatchRow(showWarnings) {
   if (!state.ring || state.dbBroken) return;
   const rid = state.ring.id;
-
-  const { data: rows, error: selErr } = await sb
-    .from("matches").select("id").eq("ring_id", rid).limit(10);
-
-  if (selErr) {
-    console.warn("ensureMatchRow select error:", selErr.message);
-    state.dbBroken = true;
-    if (showWarnings) showDbWarning("The app cannot read the matches table (" + selErr.message + ").");
-    return;
-  }
-
+  const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(10);
+  if (selErr) { state.dbBroken = true; return; }
   if (!rows || rows.length === 0) {
     const { error: insErr } = await sb.from("matches").insert({ ring_id: rid });
-    if (insErr) {
-      console.warn("ensureMatchRow insert error:", insErr.message);
-      state.dbBroken = true;
-      if (showWarnings) showDbWarning("The app cannot write to the matches table (" + insErr.message + ").");
-      return;
-    }
+    if (insErr) { state.dbBroken = true; return; }
   } else if (rows.length > 1) {
     const dupIds = rows.slice(1).map(r => r.id);
-    const { error: delErr } = await sb.from("matches").delete().in("id", dupIds);
-    if (delErr) console.warn("dedupe matches error:", delErr.message);
+    await sb.from("matches").delete().in("id", dupIds);
   }
-
-  if (showWarnings) hideDbWarning();
 }
 
 async function readMatchRow() {
   if (!state.ring) return { row: null, error: null };
-  const { data, error } = await sb
-    .from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
+  const { data, error } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
   if (error) return { row: null, error };
   return { row: (data && data[0]) || null, error: null };
 }
 
 async function fetchMatchNow() {
   if (!state.ring || state.dbBroken) return;
-
   const { row, error } = await readMatchRow();
-
-  if (error) {
-    console.warn("Match read error:", error.message);
-    state.dbBroken = true;
-    if (state.role === "laptop") {
-      showDbWarning("The app cannot read the matches table (" + error.message + ").");
-    }
-    return;
-  }
-
-  if (!row) {
-    await ensureMatchRow(state.role === "laptop");
-    return;
-  }
-
+  if (error) { state.dbBroken = true; return; }
+  if (!row) { await ensureMatchRow(state.role === "laptop"); return; }
   handleMatchUpdate({ new: row });
 }
 
@@ -1521,22 +2186,16 @@ function startMatchPolling() {
   state.matchPollInterval = setInterval(fetchMatchNow, 2000);
 }
 
-/* ===================================================================== */
-/* THE BIG NUMBERS — REFEREE COUNTS ONLY (0,1,2,3,4)                      */
-/* ===================================================================== */
-
 function pad4(arr) {
   const out = [0,0,0,0];
-  if (Array.isArray(arr)) {
-    for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
-  }
+  if (Array.isArray(arr)) for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
   return out;
 }
 
 function judgeVoteCounts() {
   const jb = pad4(state.match ? state.match.judge_blue : null);
   const jr = pad4(state.match ? state.match.judge_red : null);
-  const max = getMaxJudges();
+  const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
   let blue = 0, red = 0;
   for (let i = 0; i < max; i++) {
     if (jb[i] > jr[i]) blue++;
@@ -1547,14 +2206,17 @@ function judgeVoteCounts() {
 
 function renderVoteScores() {
   const v = judgeVoteCounts();
-  const setEl = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  };
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   setEl("tv-blue-score", v.blue);
-  setEl("tv-red-score",  v.red);
+  setEl("tv-red-score", v.red);
+  setEl("tv-blue-votes", v.blue);
+  setEl("tv-red-votes", v.red);
+  setEl("tv-blue-corner-score", v.blue);
+  setEl("tv-red-corner-score", v.red);
+  setEl("tv-blue-bottom-score", v.blue);
+  setEl("tv-red-bottom-score", v.red);
   setEl("l-blue-score", v.blue);
-  setEl("l-red-score",  v.red);
+  setEl("l-red-score", v.red);
 }
 
 function setStat(id, v) {
@@ -1569,28 +2231,23 @@ function setStat(id, v) {
   }
 }
 
-/* ===================================================================== */
-/* PHONE                                                                  */
-/* ===================================================================== */
-
 async function enterPhone() {
-  const maxJ = getMaxJudges();
+  const maxJ = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
 
-  const prevSession = localStorage.getItem(phoneSessionKey());
+  const prevSession = localStorage.getItem("tkd_phone_session_" + (state.ring ? state.ring.id : "unknown"));
   if (prevSession) {
     try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
-    localStorage.removeItem(phoneSessionKey());
+    localStorage.removeItem("tkd_phone_session_" + (state.ring ? state.ring.id : "unknown"));
   }
 
   let active = [];
   try {
     const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
     if (!res.error) active = res.data || [];
-    else console.warn("get_active_phones error:", res.error.message);
-  } catch (e) { console.warn(e); }
+  } catch (e) {}
 
   if (active.length >= maxJ) {
-    alert("This ring is set to " + maxJ + " referees and all " + maxJ + " corners are already taken.");
+    alert("This ring is set to " + maxJ + " referees and all corners are taken.");
     state.role = null;
     location.hash = "";
     showView("landing");
@@ -1599,16 +2256,10 @@ async function enterPhone() {
 
   const taken = new Set(active.map(p => p.judge_slot).filter(v => v != null && v >= 1 && v <= maxJ));
   let slot = null;
-  const preferred = parseInt(localStorage.getItem("tkd_judge_slot_" + state.ring.id) || "", 10);
-  if (preferred >= 1 && preferred <= maxJ && !taken.has(preferred)) slot = preferred;
-  if (!slot) {
-    for (let i = 1; i <= maxJ; i++) {
-      if (!taken.has(i)) { slot = i; break; }
-    }
-  }
+  for (let i = 1; i <= maxJ; i++) { if (!taken.has(i)) { slot = i; break; } }
 
   if (!slot) {
-    alert("This ring is set to " + maxJ + " referees and all corners are already taken.");
+    alert("All corners are taken.");
     state.role = null;
     location.hash = "";
     showView("landing");
@@ -1616,19 +2267,14 @@ async function enterPhone() {
   }
 
   state.judgeSlot = slot;
-  localStorage.setItem("tkd_judge_slot_" + state.ring.id, String(slot));
-
-  const sessionId = makeSessionId();
+  const sessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
 
   const { error: regErr } = await sb.rpc("phone_register", {
-    p_id: sessionId,
-    p_ring_id: String(state.ring.id),
-    p_slot: slot
+    p_id: sessionId, p_ring_id: String(state.ring.id), p_slot: slot
   });
 
   if (regErr) {
-    alert("Could not register this judge phone: " + regErr.message + SQL_HINT);
-    state.judgeSlot = null;
+    alert("Could not register: " + regErr.message);
     state.role = null;
     location.hash = "";
     showView("landing");
@@ -1636,7 +2282,7 @@ async function enterPhone() {
   }
 
   state.phoneSessionId = sessionId;
-  localStorage.setItem(phoneSessionKey(), sessionId);
+  localStorage.setItem("tkd_phone_session_" + state.ring.id, sessionId);
 
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
@@ -1647,95 +2293,45 @@ async function enterPhone() {
   state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
 
   loadTimerState();
-  
-  // Auto-set timer from ring config
-  if (state.ring?.round_time_seconds) {
-    timerState.roundTime = state.ring.round_time_seconds;
-    saveTimerState();
-  }
-  
   subscribeTimer();
   renderTimer();
   startTimerTick();
 
   subscribeMatch();
   subscribeRing();
-  
   updateCompetitorDisplay();
-  applyModeUI();
-  
   showView("phone");
-  setPhoneStatus("Connected as Judge " + slot + " — tap to score", false);
+  setPhoneStatus("Connected as Judge " + slot, false);
 }
 
 async function phoneHeartbeatTick() {
   const sid = state.phoneSessionId;
   if (!sid || state.heartbeatBusy) return;
   state.heartbeatBusy = true;
-
   try {
     const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
     if (state.phoneSessionId !== sid) return;
-
     if (hbErr) {
-      console.warn("Heartbeat RPC error:", hbErr.message);
-      if (/not registered|not connected|not found|kicked|removed/i.test(hbErr.message || "")) {
-        leavePhone("You were kicked out by the operator.");
+      if (/not registered|not found|kicked|removed/i.test(hbErr.message || "")) {
+        leavePhone("You were kicked out.");
         return;
       }
     }
-
-    try {
-      const { data: ringRow } = await sb
-        .from("rings").select("max_phones").eq("id", state.ring.id).maybeSingle();
-      if (ringRow && state.phoneSessionId === sid) {
-        state.ring.max_phones = ringRow.max_phones;
-        sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
-        if (state.judgeSlot && state.judgeSlot > getMaxJudges()) {
-          leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
-        }
-      }
-    } catch (e) {}
-  } finally {
-    state.heartbeatBusy = false;
-  }
+  } finally { state.heartbeatBusy = false; }
 }
-
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && state.role === "phone" && state.phoneSessionId) {
-    sb.rpc("phone_heartbeat", { p_id: state.phoneSessionId }).then(({ error }) => {
-      if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) {
-        leavePhone("You were kicked out by the operator.");
-      }
-    }).catch(() => {});
-  }
-});
 
 async function leavePhone(msg) {
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-  state.heartbeatInterval = null;
-
   const sid = state.phoneSessionId;
-  const wasActive = !!sid || !!state.judgeSlot;
-
   state.phoneSessionId = null;
   state.judgeSlot = null;
   state.role = null;
-
   if (sid) {
     try { await sb.rpc("phone_unregister", { p_id: sid }); } catch (e) {}
-    try { localStorage.removeItem(phoneSessionKey()); } catch (e) {}
   }
-
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
   if (state.ringChannel) sb.removeChannel(state.ringChannel);
-  state.realtimeChannel = null;
-  state.ringChannel = null;
-
   stopTimerTick();
-
-  if (!wasActive) return;
-
   if (msg) alert(msg);
   location.hash = "";
   showView("landing");
@@ -1744,97 +2340,75 @@ async function leavePhone(msg) {
 function setPhoneStatus(msg, isError) {
   const el = document.getElementById("phone-status");
   el.textContent = msg;
-  el.className = "text-center text-xs " + (isError ? "text-red-400" : "text-slate-500");
+  el.style.color = isError ? "#ef4444" : "#94a3b8";
 }
 
 async function phoneScoreFallback(side, points) {
   const { row, error: rErr } = await readMatchRow();
   if (rErr || !row) return false;
-
   const jb = pad4(row.judge_blue);
   const jr = pad4(row.judge_red);
   if (side === "blue") jb[state.judgeSlot - 1] += points;
-  else                 jr[state.judgeSlot - 1] += points;
-
+  else jr[state.judgeSlot - 1] += points;
   const upd = { judge_blue: jb, judge_red: jr, updated_at: new Date().toISOString() };
   if (side === "blue") upd.blue_score = Math.max(0, Number(row.blue_score || 0) + points);
-  else                 upd.red_score  = Math.max(0, Number(row.red_score  || 0) + points);
-
+  else upd.red_score = Math.max(0, Number(row.red_score || 0) + points);
   const { error: uErr } = await sb.from("matches").update(upd).eq("ring_id", state.ring.id);
   return !uErr;
 }
 
-// SPARRING: point buttons
 document.querySelectorAll(".judge-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
-    if (timerState.finished) {
-      setPhoneStatus("✗ Match is finished — cannot score", true);
-      return;
-    }
-
+    if (timerState.finished) { setPhoneStatus(" Match finished", true); return; }
     const side = btn.dataset.side;
-    const val  = parseInt(btn.dataset.val, 10);
-
+    const val = parseInt(btn.dataset.val, 10);
     if (navigator.vibrate) navigator.vibrate(30);
     btn.classList.remove("pulse", "scored-flash");
     void btn.offsetWidth;
     btn.classList.add("pulse");
 
     if (!state.phoneSessionId || !state.judgeSlot || !state.ring) {
-      setPhoneStatus("✗ Not connected to the ring — log in again", true);
-      return;
+      setPhoneStatus("✗ Not connected", true); return;
     }
 
     setPhoneStatus("+" + val + " " + side.toUpperCase() + " — sending…", false);
 
     const { error } = await sb.rpc("judge_score", {
-      p_ring_id: String(state.ring.id),
-      p_slot:    state.judgeSlot,
-      p_side:    side,
-      p_points:  val,
-      p_session: state.phoneSessionId
+      p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
+      p_side: side, p_points: val, p_session: state.phoneSessionId
     });
 
     if (!error) {
       btn.classList.add("scored-flash");
-      setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
+      setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
       fetchMatchNow();
       return;
     }
 
-    console.error(error);
-
-    if (/not registered|not connected|not found|kicked|removed|log in again/i.test(error.message || "")) {
+    if (/not registered|not found|kicked|removed/i.test(error.message || "")) {
       setPhoneStatus("✗ " + error.message, true);
-      setTimeout(() => leavePhone("You were removed from the ring by the operator."), 800);
+      setTimeout(() => leavePhone("Removed from ring."), 800);
       return;
     }
 
     const ok = await phoneScoreFallback(side, val);
     if (ok) {
       btn.classList.add("scored-flash");
-      setPhoneStatus("✓ +" + val + " " + side.toUpperCase() + " awarded", false);
+      setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
       fetchMatchNow();
     } else {
-      setPhoneStatus("✗ " + error.message + " — tell the operator to run the SQL fix", true);
+      setPhoneStatus("✗ Error: " + error.message, true);
     }
   });
 });
 
-// PATTERNS: winner declaration buttons
 document.querySelectorAll(".patterns-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
-    if (timerState.finished) {
-      setPhoneStatus("✗ Match is finished", true);
-      return;
-    }
+    if (timerState.finished) { setPhoneStatus("✗ Match finished", true); return; }
     const winner = btn.dataset.winner;
     if (navigator.vibrate) navigator.vibrate(50);
-    
     btn.classList.add("scored-flash");
-    setPhoneStatus("✓ Winner declared: " + winner.toUpperCase(), false);
-    
-    // Set timer state to finished with this winner
+    setPhoneStatus("✓ Winner: " + winner.toUpperCase(), false);
     timerState.finished = true;
     timerState.paused = true;
     timerState.winner = winner;
@@ -1845,31 +2419,15 @@ document.querySelectorAll(".patterns-tap").forEach(btn => {
   });
 });
 
-/* ===================================================================== */
-/* LAPTOP                                                                 */
-/* ===================================================================== */
-
 async function enterLaptop() {
   document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
   document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
   document.getElementById("laptop-tv-code").textContent = state.ring.tv_code || "—";
 
   await ensureMatchRow(true);
-
-  // Load current match from bracket
   await loadCurrentMatch();
 
   loadTimerState();
-  
-  // Auto-set timer from ring config
-  if (state.ring?.round_time_seconds) {
-    timerState.roundTime = state.ring.round_time_seconds;
-    saveTimerState();
-  }
-  
-  const inpTime = document.getElementById('inp-round-time');
-  if (inpTime) inpTime.value = Math.round(timerState.roundTime / 60);
-
   subscribeTimer();
   renderTimer();
   startTimerTick();
@@ -1879,20 +2437,21 @@ async function enterLaptop() {
   subscribeRing();
   startPhoneListPolling();
   startMatchPolling();
-  applyMaxJudgesUI();
+  startMatchListPolling();
   renderVoteScores();
-  
   updateCompetitorDisplay();
-  applyModeUI();
-  
   showView("laptop");
+}
+
+function startMatchListPolling() {
+  if (state.matchListInterval) clearInterval(state.matchListInterval);
+  loadMatchList();
+  state.matchListInterval = setInterval(loadMatchList, 3000);
 }
 
 document.getElementById("btn-open-tv").addEventListener("click", () => {
   let tvUrl = location.origin + location.pathname + "#tv";
-  if (state.ring && state.ring.tv_code) {
-    tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code);
-  }
+  if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code);
   window.open(tvUrl, "_blank");
 });
 
@@ -1912,213 +2471,43 @@ document.getElementById('btn-timer-pause').addEventListener('click', pauseTimer)
 document.getElementById('btn-timer-reset').addEventListener('click', resetRound);
 document.getElementById('btn-winner-reset').addEventListener('click', resetMatch);
 
-// PATTERNS MODE: Declare winner buttons on laptop
-document.getElementById('btn-declare-blue').addEventListener('click', () => declarePatternsWinner('blue'));
-document.getElementById('btn-declare-red').addEventListener('click', () => declarePatternsWinner('red'));
-document.getElementById('btn-declare-draw').addEventListener('click', () => declarePatternsWinner('draw'));
-
-async function declarePatternsWinner(winner) {
-  if (timerState.finished) {
-    alert("Match is already finished. Reset first.");
-    return;
-  }
-  if (!confirm(`Declare ${winner.toUpperCase()} as the winner?`)) return;
-  
-  timerState.finished = true;
-  timerState.paused = true;
-  timerState.winner = winner;
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  stopTimerTick();
-  
-  showWinnerConfirmStep1();
-}
-
-/* ---------------------------------------------------------------------
-ADD / DEDUCT ANY JUDGE'S POINTS (with finished-match guard)
---------------------------------------------------------------------- */
-async function laptopAdjustJudge(slot, side, delta) {
-  if (timerState.finished) {
-    alert("Match is finished. Reset the match first.");
-    return;
-  }
-
-  1416  const { error } = await sb.rpc("adjust_judge_score", {
-    p_ring_id: String(state.ring.id),
-    p_slot: slot,
-    p_side: side,
-    p_delta: delta
-  });
-
-  if (!error) { fetchMatchNow(); return; }
-
-  console.warn("adjust_judge_score RPC failed, using direct fallback:", error.message);
-
-  const { row, error: rErr } = await readMatchRow();
-  if (rErr || !row) {
-    alert("Could not read the match row: " + (rErr ? rErr.message : "not found") + SQL_HINT);
-    return;
-  }
-
-  const jb = pad4(row.judge_blue);
-  const jr = pad4(row.judge_red);
-  const arr = (side === "blue") ? jb : jr;
-  const oldVal = arr[slot - 1];
-  const newVal = Math.max(0, oldVal + delta);
-  const applied = newVal - oldVal;
-  arr[slot - 1] = newVal;
-
-  const upd = { judge_blue: jb, judge_red: jr, updated_at: new Date().toISOString() };
-  if (side === "blue") upd.blue_score = Math.max(0, Number(row.blue_score || 0) + applied);
-  else                 upd.red_score  = Math.max(0, Number(row.red_score  || 0) + applied);
-
-  const { error: uErr } = await sb.from("matches").update(upd).eq("ring_id", state.ring.id);
-  if (uErr) alert("Could not adjust the judge: " + uErr.message + SQL_HINT);
-  fetchMatchNow();
-}
-
-const CARD_COLUMNS = ["blue_score","red_score","blue_gam_jeom","red_gam_jeom","blue_yellow_cards","red_yellow_cards"];
-
-async function laptopAdjustCard(column, delta) {
-  if (!CARD_COLUMNS.includes(column)) return;
-  if (timerState.finished) {
-    alert("Match is finished. Reset the match first.");
-    return;
-  }
-
- 
-/
-  const { error } = await sb.rpc("adjust_card", {
-    p_ring_id: String(state.ring.id),
-    p_column: column,
-    p_delta: delta
-  });
-
-  if (!error) { fetchMatchNow(); return; }
-
-  console.warn("adjust_card RPC failed, using direct fallback:", error.message);
-
-  const { row, error: rErr } = await readMatchRow();
-  if (rErr || !row) {
-    alert("Could not read the match row: " + (rErr ? rErr.message : "not found") + SQL_HINT);
-    return;
-  }
-
-  const newVal = Math.max(0, Number(row[column] || 0) + delta);
-  const { error: uErr } = await sb.from("matches").update({
-    [column]: newVal,
-    updated_at: new Date().toISOString()
-  }).eq("ring_id", state.ring.id);
-  if (uErr) alert("Could not adjust: " + uErr.message + SQL_HINT);
-  fetchMatchNow();
-}
-
-document.querySelectorAll(".laptop-card-btn").forEach(btn => {
+document.querySelectorAll(".laptop-card-btn, .score-btn, .penalty-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const act = btn.dataset.act;
+    if (!act) return;
+    
+    if (timerState.finished) { showToast("Match finished. Reset first.", 'warning'); return; }
 
-    if (act.startsWith("judge-")) {
-      const parts = act.split("-");
-      const slot = parseInt(parts[1], 10);
-      const side = parts[2];
-      const op = parts[3];
-      const delta = (op === "plus") ? 1 : -1;
-      await laptopAdjustJudge(slot, side, delta);
-      return;
+    let column = null;
+    let delta = 0;
+    
+    if (act.includes('blue-score-plus')) { column = 'blue_score'; delta = 1; }
+    else if (act.includes('blue-score-minus')) { column = 'blue_score'; delta = -1; }
+    else if (act.includes('red-score-plus')) { column = 'red_score'; delta = 1; }
+    else if (act.includes('red-score-minus')) { column = 'red_score'; delta = -1; }
+    else if (act.includes('blue-gj-plus')) { column = 'blue_gam_jeom'; delta = 1; }
+    else if (act.includes('blue-gj-minus')) { column = 'blue_gam_jeom'; delta = -1; }
+    else if (act.includes('red-gj-plus')) { column = 'red_gam_jeom'; delta = 1; }
+    else if (act.includes('red-gj-minus')) { column = 'red_gam_jeom'; delta = -1; }
+    else if (act.includes('blue-yc-plus')) { column = 'blue_yellow_cards'; delta = 1; }
+    else if (act.includes('blue-yc-minus')) { column = 'blue_yellow_cards'; delta = -1; }
+    else if (act.includes('red-yc-plus')) { column = 'red_yellow_cards'; delta = 1; }
+    else if (act.includes('red-yc-minus')) { column = 'red_yellow_cards'; delta = -1; }
+
+    if (column) {
+      const { error } = await sb.rpc("adjust_card", {
+        p_ring_id: String(state.ring.id), p_column: column, p_delta: delta
+      });
+      if (!error) fetchMatchNow();
     }
-
-    const [side, type, op] = act.split("-");
-    const delta = (op === "plus") ? 1 : -1;
-    const column = side + "_" + (type === "score" ? "score" : (type === "gj" ? "gam_jeom" : "yellow_cards"));
-    await laptopAdjustCard(column, delta);
   });
 });
-
-/* ---------------------------------------------------------------------
-PARTY SIZE (3 or 4 referees)
---------------------------------------------------------------------- */
-async function setMaxJudges(n) {
-  state.ring.max_phones = n;
-  sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
-
-  applyMaxJudgesUI();
-  renderVoteScores();
-  refreshPhoneList();
-
-  const { error } = await sb.from("rings").update({ max_phones: n }).eq("id", state.ring.id);
-  if (error) {
-    alert("Could not save referee count in the database: " + error.message + SQL_HINT);
-  }
-}
-document.getElementById("btn-max-3").addEventListener("click", () => setMaxJudges(3));
-document.getElementById("btn-max-4").addEventListener("click", () => setMaxJudges(4));
-
-async function refreshPhoneList() {
-  if (state.role !== "laptop") return;
-
-  const { data } = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
-  const maxJ = getMaxJudges();
-
-  const list  = document.getElementById("laptop-phones-list");
-  const count = document.getElementById("laptop-phone-count");
-  const bySlot = {};
-  (data || []).forEach(p => {
-    if (p.judge_slot >= 1 && p.judge_slot <= 4 && !bySlot[p.judge_slot]) bySlot[p.judge_slot] = p;
-  });
-  count.textContent = (data || []).length + " / " + maxJ;
-
-  list.innerHTML = "";
-  for (let i = 1; i <= 4; i++) {
-    const div = document.createElement("div");
-    if (bySlot[i]) {
-      const overParty = i > maxJ;
-      div.className = overParty
-        ? "bg-orange-900/40 border-2 border-orange-500 rounded-lg p-3 text-center text-sm"
-        : "bg-green-900/40 border-2 border-green-500 rounded-lg p-3 text-center text-sm";
-      div.innerHTML =
-        `<div class="font-bold">📱 Judge ${i}</div>` +
-        `<div class="text-xs mt-1 ${overParty ? "text-orange-300" : "text-green-300"}">${overParty ? "Corner closing…" : "Connected"}</div>` +
-        `<button data-kick="${bySlot[i].id}" class="mt-2 bg-red-600/80 hover:bg-red-600 rounded px-3 py-1 text-xs font-bold">Kick</button>`;
-    } else {
-      div.className = "bg-slate-900 rounded-lg p-3 text-center text-sm text-slate-500 border-2 border-dashed border-slate-700";
-      div.textContent = (i > maxJ) ? `Corner ${i} — off (party = ${maxJ})` : `Corner ${i} — empty`;
-    }
-    list.appendChild(div);
-  }
-}
-
-document.getElementById("laptop-phones-list").addEventListener("click", async e => {
-  const btn = e.target.closest("[data-kick]");
-  if (!btn) return;
-  if (!confirm("Kick this judge phone out of the ring?")) return;
-  const { error } = await sb.rpc("phone_unregister", { p_id: btn.dataset.kick });
-  if (error) alert("Kick failed: " + error.message + SQL_HINT);
-  await refreshPhoneList();
-});
-
-function startPhoneListPolling() {
-  if (state.pollInterval) clearInterval(state.pollInterval);
-  refreshPhoneList();
-  state.pollInterval = setInterval(refreshPhoneList, 3000);
-}
-
-/* ===================================================================== */
-/* TV                                                                     */
-/* ===================================================================== */
 
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
   await ensureMatchRow(false);
 
   loadTimerState();
-  
-  // Auto-set timer from ring config
-  if (state.ring?.round_time_seconds) {
-    timerState.roundTime = state.ring.round_time_seconds;
-    saveTimerState();
-  }
-  
   subscribeTimer();
   renderTimer();
   startTimerTick();
@@ -2126,115 +2515,45 @@ async function enterTV() {
   subscribeMatch();
   subscribeRing();
   startMatchPolling();
-  applyMaxJudgesUI();
   renderVoteScores();
-  
   updateCompetitorDisplay();
-  
   showView("tv");
   document.body.style.cursor = "none";
 }
 
-/* ===================================================================== */
-/* RENDERING + REALTIME                                                   */
-/* ===================================================================== */
-
 function renderJudgeBox(el, givenBlue, givenRed) {
   if (!el) return;
   const net = givenBlue - givenRed;
-  el.classList.remove("judge-neutral", "judge-blue", "judge-red");
-  el.classList.add(net > 0 ? "judge-blue" : net < 0 ? "judge-red" : "judge-neutral");
-  const netEl = el.querySelector(".judge-net");
+  el.classList.remove("leading-blue", "leading-red");
+  if (net > 0) el.classList.add("leading-blue");
+  else if (net < 0) el.classList.add("leading-red");
+  const netEl = el.querySelector(".judge-score");
   if (netEl) netEl.textContent = Math.abs(net);
   const detEl = el.querySelector(".judge-detail");
   if (detEl) detEl.textContent = "B " + givenBlue + " · R " + givenRed;
 }
 
-function applyMaxJudgesUI() {
-  const max = getMaxJudges();
-
-  const b3 = document.getElementById("btn-max-3");
-  const b4 = document.getElementById("btn-max-4");
-  if (b3 && b4) {
-    b3.className = "px-4 py-1.5 text-sm font-bold " + (max === 3 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
-    b4.className = "px-4 py-1.5 text-sm font-bold " + (max === 4 ? "bg-yellow-400 text-black" : "bg-slate-700 hover:bg-slate-600");
-  }
-
-  const note = document.getElementById("party-note");
-  if (note) {
-    note.textContent = (max === 3)
-      ? "Party size 3 — corner 4 is CLOSED. A 4th phone cannot join. Phones are only removed when YOU press Kick."
-      : "Party size 4 — corners 1 to 4 are open. Phones are only removed when YOU press Kick.";
-  }
-
-  for (let i = 1; i <= 4; i++) {
-    ["judge-laptop-", "judge-tv-"].forEach(pref => {
-      const el = document.getElementById(pref + i);
-      if (!el) return;
-      if (i > max) {
-        el.classList.add("judge-off");
-        el.classList.remove("judge-blue", "judge-red");
-        el.classList.add("judge-neutral");
-        const net = el.querySelector(".judge-net");
-        if (net) net.textContent = "–";
-        const det = el.querySelector(".judge-detail");
-        if (det) det.textContent = "corner off";
-      } else {
-        el.classList.remove("judge-off");
-      }
-    });
-  }
-}
-
 function subscribeMatch() {
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
-
-  state.realtimeChannel = sb
-    .channel("match-" + state.ring.id)
-    .on("postgres_changes",
-      { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` },
-      handleMatchUpdate
-    )
-    .subscribe((status) => {
-      if (status === "SUBSCRIBED") fetchMatchNow();
-    });
+  state.realtimeChannel = sb.channel("match-" + state.ring.id)
+    .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` }, handleMatchUpdate)
+    .subscribe((status) => { if (status === "SUBSCRIBED") fetchMatchNow(); });
 }
 
 function subscribeRing() {
   if (state.ringChannel) sb.removeChannel(state.ringChannel);
-
-  state.ringChannel = sb
-    .channel("ring-" + state.ring.id)
-    .on("postgres_changes",
-      { event: "UPDATE", schema: "public", table: "rings", filter: `id=eq.${state.ring.id}` },
-      payload => {
-        if (!payload.new) return;
-        state.ring = Object.assign({}, state.ring, payload.new);
-        sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
-
-        const tvName = document.getElementById("tv-ring-name");
-        if (tvName) tvName.textContent = state.ring.ring_name;
-        const tvCode = document.getElementById("laptop-tv-code");
-        if (tvCode) tvCode.textContent = state.ring.tv_code || "—";
-
-        updateCompetitorDisplay();
-        applyModeUI();
-        applyMaxJudgesUI();
-        renderVoteScores();
-
-        // Auto-update timer if round_time_seconds changed
-        if (state.ring.round_time_seconds && timerState.round === 1 && timerState.elapsed === 0 && !timerState.startTime) {
-          timerState.roundTime = state.ring.round_time_seconds;
-          saveTimerState();
-          broadcastTimerState();
-          renderTimer();
-        }
-
-        if (state.role === "phone" && state.judgeSlot && state.judgeSlot > getMaxJudges()) {
-          leavePhone("The ring now uses fewer referees — your corner was closed by the operator.");
-        }
-      }
-    )
+  state.ringChannel = sb.channel("ring-" + state.ring.id)
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rings", filter: `id=eq.${state.ring.id}` }, payload => {
+      if (!payload.new) return;
+      state.ring = Object.assign({}, state.ring, payload.new);
+      sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
+      const tvName = document.getElementById("tv-ring-name");
+      if (tvName) tvName.textContent = state.ring.ring_name;
+      const tvCode = document.getElementById("laptop-tv-code");
+      if (tvCode) tvCode.textContent = state.ring.tv_code || "—";
+      updateCompetitorDisplay();
+      renderVoteScores();
+    })
     .subscribe();
 }
 
@@ -2243,20 +2562,15 @@ function handleMatchUpdate(payload) {
   if (!m) return;
   state.match = m;
 
-  const set = (id, v) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = v;
-  };
-
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set("l-blue-gj", m.blue_gam_jeom);
-  set("l-red-gj",  m.red_gam_jeom);
+  set("l-red-gj", m.red_gam_jeom);
   set("l-blue-yc", m.blue_yellow_cards);
-  set("l-red-yc",  m.red_yellow_cards);
-
+  set("l-red-yc", m.red_yellow_cards);
   setStat("tv-blue-gj", m.blue_gam_jeom);
-  setStat("tv-red-gj",  m.red_gam_jeom);
+  setStat("tv-red-gj", m.red_gam_jeom);
   setStat("tv-blue-yc", m.blue_yellow_cards);
-  setStat("tv-red-yc",  m.red_yellow_cards);
+  setStat("tv-red-yc", m.red_yellow_cards);
 
   renderVoteScores();
 
@@ -2264,14 +2578,17 @@ function handleMatchUpdate(payload) {
   const jr = pad4(m.judge_red);
   for (let i = 0; i < 4; i++) {
     renderJudgeBox(document.getElementById("judge-laptop-" + (i + 1)), jb[i], jr[i]);
-    renderJudgeBox(document.getElementById("judge-tv-"     + (i + 1)), jb[i], jr[i]);
+    renderJudgeBox(document.getElementById("judge-tv-" + (i + 1)), jb[i], jr[i]);
   }
-  applyMaxJudgesUI();
 
-  // Backup: if laptop is running and timer has expired, end the round
   if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) {
     endRound();
   }
+}
+
+function startPhoneListPolling() {
+  if (state.pollInterval) clearInterval(state.pollInterval);
+  state.pollInterval = setInterval(() => {}, 3000);
 }
 
 function cleanup() {
@@ -2281,32 +2598,12 @@ function cleanup() {
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   if (state.pollInterval) clearInterval(state.pollInterval);
   if (state.matchPollInterval) clearInterval(state.matchPollInterval);
-
+  if (state.matchListInterval) clearInterval(state.matchListInterval);
   stopTimerTick();
   stopBroadcastLoop();
-
-  if (state.phoneSessionId) {
-    try {
-      fetch(SUPABASE_URL + "/rest/v1/rpc/phone_unregister", {
-        method: "POST",
-        keepalive: true,
-        headers: {
-          "apikey": SUPABASE_ANON,
-          "Authorization": "Bearer " + SUPABASE_ANON,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ p_id: state.phoneSessionId })
-      });
-    } catch(e) {}
-  }
-
   state.realtimeChannel = null;
   state.ringChannel = null;
   timerChannel = null;
-  state.heartbeatInterval = null;
-  state.pollInterval = null;
-  state.matchPollInterval = null;
-  state.phoneSessionId = null;
 }
 
 window.addEventListener("beforeunload", cleanup);
