@@ -430,6 +430,8 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .timer-btn {
@@ -540,11 +542,11 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   color: #94a3b8;
   font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .judge-box .judge-score {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -552,8 +554,27 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .judge-box .judge-detail {
   font-size: 0.75rem;
   color: #64748b;
-  margin-top: 5px;
+  margin-top: 4px;
 }
+
+.judge-adjust-controls {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.judge-adj-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: white;
+}
+.judge-adj-btn.plus { background: #10b981; }
+.judge-adj-btn.minus { background: #ef4444; }
 
 /* Penalties section */
 .penalties-section {
@@ -1175,12 +1196,21 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           <div class="timer-display-row">
             <span class="timer-round-badge">Round <span id="l-timer-round">1</span></span>
             <span id="l-timer-time" class="timer-time">2:00</span>
-            <span id="l-timer-status" style="color:#94a3b8;font-weight:600;">Paused</span>
+            <span id="l-timer-status" style="color:#94a3b8;font-weight:600;">Paused (Press SPACE)</span>
           </div>
           <div class="timer-controls">
-            <button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
-            <button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
-            <button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
+            <div style="display:flex;gap:10px;">
+              <button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
+              <button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
+              <button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <label style="font-size:0.85rem;color:#94a3b8;">Min:</label>
+              <input id="inp-timer-min" type="number" min="0" max="10" value="2" style="width:55px;padding:6px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:1rem;" />
+              <label style="font-size:0.85rem;color:#94a3b8;">Sec:</label>
+              <input id="inp-timer-sec" type="number" min="0" max="59" value="0" style="width:55px;padding:6px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:1rem;" />
+              <button id="btn-set-time" class="timer-btn" style="background:#3b82f6;padding:8px 14px;font-size:0.85rem;">Set Time</button>
+            </div>
           </div>
           <div id="timer-round3-note" class="hidden-view" style="background:#854d0e;color:#fbbf24;padding:10px;border-radius:8px;margin-top:10px;text-align:center;font-weight:700;">
             ⚡ Round 3 activated (tie-breaker)
@@ -1207,27 +1237,43 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Judges -->
+        <!-- Judges with add/deduct points -->
         <div class="judges-section">
           <div id="judge-laptop-1" class="judge-box">
             <div class="judge-label">Judge 1</div>
             <div class="judge-score">0</div>
             <div class="judge-detail">B 0 · R 0</div>
+            <div class="judge-adjust-controls">
+              <button class="judge-adj-btn plus" onclick="adjustJudgePoints(1, 1)">+</button>
+              <button class="judge-adj-btn minus" onclick="adjustJudgePoints(1, -1)">−</button>
+            </div>
           </div>
           <div id="judge-laptop-2" class="judge-box">
             <div class="judge-label">Judge 2</div>
             <div class="judge-score">0</div>
             <div class="judge-detail">B 0 · R 0</div>
+            <div class="judge-adjust-controls">
+              <button class="judge-adj-btn plus" onclick="adjustJudgePoints(2, 1)">+</button>
+              <button class="judge-adj-btn minus" onclick="adjustJudgePoints(2, -1)">−</button>
+            </div>
           </div>
           <div id="judge-laptop-3" class="judge-box">
             <div class="judge-label">Judge 3</div>
             <div class="judge-score">0</div>
             <div class="judge-detail">B 0 · R 0</div>
+            <div class="judge-adjust-controls">
+              <button class="judge-adj-btn plus" onclick="adjustJudgePoints(3, 1)">+</button>
+              <button class="judge-adj-btn minus" onclick="adjustJudgePoints(3, -1)">−</button>
+            </div>
           </div>
           <div id="judge-laptop-4" class="judge-box">
             <div class="judge-label">Judge 4</div>
             <div class="judge-score">0</div>
             <div class="judge-detail">B 0 · R 0</div>
+            <div class="judge-adjust-controls">
+              <button class="judge-adj-btn plus" onclick="adjustJudgePoints(4, 1)">+</button>
+              <button class="judge-adj-btn minus" onclick="adjustJudgePoints(4, -1)">−</button>
+            </div>
           </div>
         </div>
 
@@ -1554,9 +1600,9 @@ function renderTimer() {
   if (timerState.finished) {
     status = timerState.winner === 'draw' ? 'Match Complete · DRAW' : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
   } else if (timerState.paused) {
-    status = `Round ${timerState.round} · Paused`;
+    status = `Round ${timerState.round} · Paused (Press SPACE)`;
   } else {
-    status = `Round ${timerState.round} · Running`;
+    status = `Round ${timerState.round} · Running (Press SPACE to Pause)`;
   }
   if (statusEl) statusEl.textContent = status;
   if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.paused ? 'Paused' : 'Running');
@@ -1648,6 +1694,19 @@ function pauseTimer() {
   renderTimer();
 }
 
+// Spacebar Listener for Start/Pause
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && state.role === "laptop") {
+    if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    e.preventDefault();
+    if (timerState.paused) {
+      startTimer();
+    } else {
+      pauseTimer();
+    }
+  }
+});
+
 function resetRound() {
   if (state.role !== 'laptop') return;
   if (!confirm('Reset the current round timer?')) return;
@@ -1659,6 +1718,27 @@ function resetRound() {
   renderTimer();
   stopTimerTick();
 }
+
+// Set Custom Time Listener
+document.addEventListener("DOMContentLoaded", () => {
+  const setTimeBtn = document.getElementById("btn-set-time");
+  if (setTimeBtn) {
+    setTimeBtn.addEventListener("click", () => {
+      if (state.role !== 'laptop') return;
+      const mins = parseInt(document.getElementById("inp-timer-min").value) || 0;
+      const secs = parseInt(document.getElementById("inp-timer-sec").value) || 0;
+      const totalSecs = (mins * 60) + secs;
+      timerState.roundTime = totalSecs;
+      timerState.elapsed = 0;
+      timerState.startTime = null;
+      timerState.paused = true;
+      saveTimerState();
+      broadcastTimerState();
+      renderTimer();
+      showToast(`Timer set to ${mins}:${secs.toString().padStart(2, '0')}`, 'success');
+    });
+  }
+});
 
 async function endRound() {
   if (timerState.finished) return;
@@ -1929,22 +2009,22 @@ async function loadCurrentMatch() {
 
 async function loadNextMatch() {
   if (!state.ring) return;
-  const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
-  if (error) return;
-  
-  if (data && data.length >= 2) {
-    const nextMatch = data[1];
-    await sb.from('rings').update({
-      next_blue_name: nextMatch.player1_name,
-      next_red_name: nextMatch.player2_name
-    }).eq('id', state.ring.id);
-  } else {
-    await sb.from('rings').update({
-      next_blue_name: null,
-      next_red_name: null
-    }).eq('id', state.ring.id);
-  }
-  await refreshRingData();
+  try {
+    const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
+    if (error || !data || data.length < 2) {
+      const { data: tableData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(2);
+      if (tableData && tableData.length >= 2) {
+        const nextMatch = tableData[1];
+        await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
+      } else {
+        await sb.from('rings').update({ next_blue_name: null, next_red_name: null }).eq('id', state.ring.id);
+      }
+    } else {
+      const nextMatch = data[1];
+      await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
+    }
+    await refreshRingData();
+  } catch(e) {}
 }
 
 function updateCompetitorDisplay() {
@@ -2023,9 +2103,24 @@ async function loadMatchList() {
   const container = document.getElementById('match-list-container');
   if (!container) return;
 
-  const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
-  if (error) { container.innerHTML = '<div style="color:#ef4444;">Error loading matches</div>'; return; }
+  try {
+    const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
+    if (error) {
+      const { data: tableData, error: tableErr } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(30);
+      if (tableErr) {
+        container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">Queue unavailable</div>';
+        return;
+      }
+      renderMatchListItems(tableData, container);
+      return;
+    }
+    renderMatchListItems(data, container);
+  } catch (e) {
+    container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No match queue found</div>';
+  }
+}
 
+function renderMatchListItems(data, container) {
   if (!data || data.length === 0) {
     container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No matches in queue</div>';
     return;
@@ -2037,7 +2132,7 @@ async function loadMatchList() {
     const isCompleted = m.status === 'completed';
     const cls = isActive ? 'active' : (isCompleted ? 'completed' : '');
     html += `<div class="match-list-item ${cls}">
-      <div class="ml-number">#${m.match_number} · ${m.match_stage || 'Preliminary'}</div>
+      <div class="ml-number">#${m.match_number || '-'} · ${m.match_stage || 'Preliminary'}</div>
       <div class="ml-names">${m.player1_name || 'TBD'} vs ${m.player2_name || 'TBD'}</div>
       <div class="ml-category">${m.category_name || ''} ${m.gender ? '· ' + m.gender : ''} ${m.age_group ? '· ' + m.age_group : ''}</div>
       ${isCompleted && m.winner_name ? `<div class="ml-winner">✓ Winner: ${m.winner_name}</div>` : ''}
@@ -2218,6 +2313,29 @@ function setStat(id, v) {
     el.classList.remove("pulse");
     void el.offsetWidth;
     el.classList.add("pulse");
+  }
+}
+
+async function adjustJudgePoints(judgeNum, delta) {
+  if (state.role !== 'laptop' || !state.ring) return;
+  const { row, error } = await readMatchRow();
+  if (error || !row) return;
+
+  const jb = pad4(row.judge_blue);
+  const slotIdx = judgeNum - 1;
+  // Let laptop add/deduct points to judge's blue score representation or toggle balance
+  jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
+
+  const { error: updErr } = await sb.from("matches").update({
+    judge_blue: jb,
+    updated_at: new Date().toISOString()
+  }).eq("ring_id", state.ring.id);
+
+  if (!updErr) {
+    fetchMatchNow();
+    showToast(`Judge ${judgeNum} adjusted (${delta > 0 ? '+' + delta : delta})`, 'success');
+  } else {
+    showToast("Failed to adjust judge points", 'error');
   }
 }
 
