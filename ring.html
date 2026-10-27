@@ -641,6 +641,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   padding: 20px;
   margin-bottom: 20px;
   border: 2px solid #334155;
+  position: relative;
 }
 
 .ring-layout-box {
@@ -688,6 +689,32 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .ring-corner-btn.tr { top: -15px; right: -15px; }
 .ring-corner-btn.br { bottom: -15px; right: -15px; }
 .ring-corner-btn.bl { bottom: -15px; left: -15px; }
+
+/* Bottom-Right Admin Kick Button Box */
+.admin-kick-corner-box {
+  position: absolute;
+  bottom: 12px;
+  right: 15px;
+}
+
+.admin-kick-panel-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-kick-panel-btn:hover {
+  background: #ef4444;
+  color: white;
+}
 
 /* Match list sidebar */
 .match-list-sidebar {
@@ -895,13 +922,13 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 0.1s;
+  transition: all 0.05s;
   color: white;
 }
 
 .phone-btn:active {
-  transform: scale(0.95);
-  background: rgba(255,255,255,0.25);
+  transform: scale(0.94);
+  background: rgba(255,255,255,0.3);
 }
 
 .phone-btn .pb-value {
@@ -1043,16 +1070,16 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .toast.error { border-left-color: #ef4444; }
 .toast.warning { border-left-color: #f59e0b; }
 
-.pulse { animation: pulse 0.4s ease; }
+.pulse { animation: pulse 0.3s ease; }
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.08); }
   100% { transform: scale(1); }
 }
 
-.scored-flash { animation: scoredFlash 0.3s ease; }
+.scored-flash { animation: scoredFlash 0.25s ease; }
 @keyframes scoredFlash {
-  0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.9); }
+  0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); }
   100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); }
 }
 </style>
@@ -1073,7 +1100,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     <div id="landing-error" class="landing-error"></div>
     <div class="landing-hints">
       <div>💻 Laptop password → Control panel</div>
-      <div>📱 Phone password → Judge device</div>
+      <div>📱 Phone QR scan → Instant Judge device</div>
       <div>📺 TV code → Big screen display</div>
     </div>
   </div>
@@ -1167,10 +1194,10 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     </div>
   </div>
 
-  <!-- Ring Layout Corner Boxes for QR Codes with Connected State -->
+  <!-- Ring Layout Corner Boxes for QR Codes with Connected State & Bottom-Right Admin Kick -->
   <div class="settings-panel">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <h3 style="margin:0;font-size:1rem;color:#fbbf24;font-weight:800;">⚙️ Ring Corner QR Codes (Instant Auto-Login)</h3>
+      <h3 style="margin:0;font-size:1.0rem;color:#fbbf24;font-weight:800;">⚙️ Ring Corner QR Codes (Instant Auto-Login)</h3>
       <span style="font-size:0.8rem;color:#94a3b8;">Green = Connected | Gray = Empty</span>
     </div>
     <div class="ring-layout-box">
@@ -1191,6 +1218,10 @@ button:disabled { opacity: .6; cursor: not-allowed; }
         <span>Judge 4</span>
         <span id="qr-stat-4" style="font-size:0.6rem;opacity:0.8;">Empty</span>
       </button>
+    </div>
+    <!-- Bottom Right Admin Kick Button -->
+    <div class="admin-kick-corner-box">
+      <button class="admin-kick-panel-btn" onclick="openAdminKickModal()">⚠️ Kick Judge (Admin PIN)</button>
     </div>
   </div>
 
@@ -1434,15 +1465,26 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- ===== ADMIN KICK PIN MODAL ===== -->
-<div id="modal-admin-pin" class="hidden-view modal-overlay">
+<!-- ===== ADMIN KICK MODAL ===== -->
+<div id="modal-admin-kick" class="hidden-view modal-overlay">
   <div class="modal-box">
-    <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin PIN Required</h3>
-    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:15px;">Enter admin password to kick Judge <span id="kick-target-slot"></span></p>
-    <input id="inp-admin-pin" type="password" maxlength="10" placeholder="Enter PIN (admina)" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;text-align:center;font-size:1.2rem;margin-bottom:15px;" />
+    <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
+    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:15px;">Enter Admin PIN and select which judge slot to kick.</p>
+    <div style="margin-bottom:15px;">
+      <label style="display:block;color:#94a3b8;font-size:0.8rem;margin-bottom:5px;font-weight:700;">Judge Slot to Kick:</label>
+      <select id="sel-kick-slot" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;font-size:1rem;font-weight:700;">
+        <option value="1">Judge 1</option>
+        <option value="2">Judge 2</option>
+        <option value="3">Judge 3</option>
+        <option value="4">Judge 4</option>
+      </select>
+    </div>
+    <div style="margin-bottom:20px;">
+      <input id="inp-admin-pin" type="password" maxlength="10" placeholder="Admin PIN (admina)" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;text-align:center;font-size:1.2rem;" />
+    </div>
     <div style="display:flex;gap:10px;">
-      <button class="timer-btn" style="flex:1;background:#ef4444;" onclick="confirmKickJudge()">Kick Judge</button>
-      <button class="timer-btn" style="flex:1;background:#475569;" onclick="closeAdminPinModal()">Cancel</button>
+      <button class="timer-btn" style="flex:1;background:#ef4444;" onclick="confirmAdminKick()">Kick Judge</button>
+      <button class="timer-btn" style="flex:1;background:#475569;" onclick="closeAdminKickModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -1487,8 +1529,7 @@ const state = {
   activePhones: [],
   heartbeatBusy: false,
   loggingIn: false,
-  dbBroken: false,
-  pendingKickSlot: null
+  dbBroken: false
 };
 
 const TIMER_CHANNEL_PREFIX = "timer-";
@@ -2188,7 +2229,7 @@ async function fetchMatchNow() {
 function startMatchPolling() {
   if (state.matchPollInterval) clearInterval(state.matchPollInterval);
   fetchMatchNow();
-  state.matchPollInterval = setInterval(fetchMatchNow, 1000);
+  state.matchPollInterval = setInterval(fetchMatchNow, 800);
 }
 
 function pad4(arr) {
@@ -2312,9 +2353,6 @@ function renderLaptopJudges() {
           <button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'red', -1)">−</button>
         </div>
       </div>
-      <div>
-        <button class="judge-kick-btn" onclick="promptKickJudge(${i})">Kick</button>
-      </div>
     </div>`;
   }
   container.innerHTML = html;
@@ -2342,34 +2380,31 @@ async function adjustSpecificJudge(judgeNum, side, delta) {
   fetchMatchNow();
 }
 
-function promptKickJudge(slot) {
-  state.pendingKickSlot = slot;
-  document.getElementById("kick-target-slot").textContent = slot;
+function openAdminKickModal() {
   document.getElementById("inp-admin-pin").value = "";
-  document.getElementById("modal-admin-pin").classList.remove("hidden-view");
+  document.getElementById("modal-admin-kick").classList.remove("hidden-view");
 }
 
-function closeAdminPinModal() {
-  document.getElementById("modal-admin-pin").classList.add("hidden-view");
-  state.pendingKickSlot = null;
+function closeAdminKickModal() {
+  document.getElementById("modal-admin-kick").classList.add("hidden-view");
 }
 
-async function confirmKickJudge() {
+async function confirmAdminKick() {
   const pin = document.getElementById("inp-admin-pin").value.trim();
   if (pin !== "admina") {
     alert("Incorrect Admin PIN! (Hint: admina)");
     return;
   }
-  const slot = state.pendingKickSlot;
-  closeAdminPinModal();
+  const slotToKick = parseInt(document.getElementById("sel-kick-slot").value, 10);
+  closeAdminKickModal();
 
-  const targetPhone = state.activePhones.find(p => Number(p.judge_slot) === Number(slot));
+  const targetPhone = state.activePhones.find(p => Number(p.judge_slot) === slotToKick);
   if (targetPhone) {
     try {
       await sb.rpc("phone_unregister", { p_id: targetPhone.id });
     } catch (e) {}
   }
-  showToast(`Judge ${slot} kicked successfully`, 'success');
+  showToast(`Judge ${slotToKick} kicked successfully`, 'success');
   fetchActivePhones();
 }
 
@@ -2516,7 +2551,7 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
       setPhoneStatus("✗ Not connected", true); return;
     }
 
-    // Instant local feedback
+    // Instant local feedback flash
     btn.classList.add("scored-flash");
     setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
 
