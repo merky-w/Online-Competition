@@ -165,6 +165,27 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 
 .tv-penalty-label { color: #fbbf24; }
 
+/* TV Corner Judge Net Displays */
+.tv-judge-corner {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.85);
+  border: 2px solid #334155;
+  border-radius: 12px;
+  padding: 10px 18px;
+  text-align: center;
+  z-index: 25;
+  min-width: 90px;
+}
+.tv-judge-corner.tl { top: 80px; left: 30px; }
+.tv-judge-corner.tr { top: 80px; right: 30px; }
+.tv-judge-corner.bl { bottom: 80px; left: 30px; }
+.tv-judge-corner.br { bottom: 80px; right: 30px; }
+
+.tv-jc-label { font-size: 0.75rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
+.tv-jc-score { font-size: 1.8rem; font-weight: 900; color: white; font-variant-numeric: tabular-nums; }
+.tv-judge-corner.lead-blue { border-color: #2563eb; background: rgba(30,58,138,0.7); }
+.tv-judge-corner.lead-red { border-color: #dc2626; background: rgba(127,29,29,0.7); }
+
 .tv-bottom-bar {
   background: linear-gradient(90deg, #111827 0%, #030712 100%);
   border-top: 3px solid #fbbf24;
@@ -543,7 +564,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .judge-adj-btn.plus { background: #10b981; }
 .judge-adj-btn.minus { background: #ef4444; }
 
-/* Kick judge button (Bottom-right corner of judge box) */
 .judge-kick-btn {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
@@ -614,7 +634,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .penalty-btn.plus { background: #10b981; }
 .penalty-btn.minus { background: #ef4444; }
 
-/* Ring layout settings */
+/* Ring layout settings with precise corner box positioning */
 .settings-panel {
   background: #0f172a;
   border-radius: 12px;
@@ -626,9 +646,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .ring-layout-box {
   position: relative;
   width: 100%;
-  max-width: 320px;
-  height: 180px;
-  margin: 15px auto;
+  max-width: 340px;
+  height: 200px;
+  margin: 20px auto;
   background: #1e293b;
   border: 2px dashed #475569;
   border-radius: 12px;
@@ -645,24 +665,29 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   letter-spacing: 2px;
 }
 
-.ring-edge-btn {
+.ring-corner-btn {
   position: absolute;
   background: #334155;
   color: white;
   border: 2px solid #fbbf24;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-weight: 800;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
-.ring-edge-btn:hover { background: #2563eb; transform: scale(1.05); }
+.ring-corner-btn:hover { background: #2563eb; transform: scale(1.05); }
+.ring-corner-btn.connected { border-color: #10b981; background: #064e3b; }
 
-.ring-edge-btn.top { top: -15px; left: 50%; transform: translateX(-50%); }
-.ring-edge-btn.bottom { bottom: -15px; left: 50%; transform: translateX(-50%); }
-.ring-edge-btn.left { left: -15px; top: 50%; transform: translateY(-50%); }
-.ring-edge-btn.right { right: -15px; top: 50%; transform: translateY(-50%); }
+.ring-corner-btn.tl { top: -15px; left: -15px; }
+.ring-corner-btn.tr { top: -15px; right: -15px; }
+.ring-corner-btn.br { bottom: -15px; right: -15px; }
+.ring-corner-btn.bl { bottom: -15px; left: -15px; }
 
 /* Match list sidebar */
 .match-list-sidebar {
@@ -1025,10 +1050,10 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   100% { transform: scale(1); }
 }
 
-.scored-flash { animation: scoredFlash 0.6s ease; }
+.scored-flash { animation: scoredFlash 0.3s ease; }
 @keyframes scoredFlash {
   0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.9); }
-  100% { box-shadow: 0 0 0 20px rgba(16,185,129,0); }
+  100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); }
 }
 </style>
 </head>
@@ -1142,17 +1167,30 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     </div>
   </div>
 
+  <!-- Ring Layout Corner Boxes for QR Codes with Connected State -->
   <div class="settings-panel">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <h3 style="margin:0;font-size:1rem;color:#fbbf24;font-weight:800;">⚙️ Ring Layout & Judge QR Codes</h3>
-      <span style="font-size:0.8rem;color:#94a3b8;">Click any judge position below to show QR code (Instant auto-login)</span>
+      <h3 style="margin:0;font-size:1rem;color:#fbbf24;font-weight:800;">⚙️ Ring Corner QR Codes (Instant Auto-Login)</h3>
+      <span style="font-size:0.8rem;color:#94a3b8;">Green = Connected | Gray = Empty</span>
     </div>
     <div class="ring-layout-box">
       <div class="ring-center-label">Ring Center</div>
-      <button class="ring-edge-btn top" onclick="openJudgeQR(1)">Judge 1 (Top)</button>
-      <button class="ring-edge-btn right" onclick="openJudgeQR(2)">Judge 2 (Right)</button>
-      <button class="ring-edge-btn bottom" onclick="openJudgeQR(3)">Judge 3 (Bottom)</button>
-      <button id="btn-judge4-edge" class="ring-edge-btn left" onclick="openJudgeQR(4)">Judge 4 (Left)</button>
+      <button id="qr-btn-1" class="ring-corner-btn tl" onclick="openJudgeQR(1)">
+        <span>Judge 1</span>
+        <span id="qr-stat-1" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+      </button>
+      <button id="qr-btn-2" class="ring-corner-btn tr" onclick="openJudgeQR(2)">
+        <span>Judge 2</span>
+        <span id="qr-stat-2" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+      </button>
+      <button id="qr-btn-3" class="ring-corner-btn br" onclick="openJudgeQR(3)">
+        <span>Judge 3</span>
+        <span id="qr-stat-3" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+      </button>
+      <button id="qr-btn-4" class="ring-corner-btn bl" onclick="openJudgeQR(4)">
+        <span>Judge 4</span>
+        <span id="qr-stat-4" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+      </button>
     </div>
   </div>
 
@@ -1283,7 +1321,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- ===== TV VIEW ===== -->
+<!-- ===== TV VIEW WITH CORNER JUDGE NETS ===== -->
 <div id="view-tv" class="hidden-view tv-container">
   <div class="tv-top-bar">
     <div class="tv-top-info">
@@ -1301,6 +1339,27 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 
   <div class="tv-main-area">
+    <!-- Judge 1 Corner (Top-Left) -->
+    <div id="tv-corner-1" class="tv-judge-corner tl">
+      <div class="tv-jc-label">Judge 1</div>
+      <div id="tv-net-1" class="tv-jc-score">0</div>
+    </div>
+    <!-- Judge 2 Corner (Top-Right) -->
+    <div id="tv-corner-2" class="tv-judge-corner tr">
+      <div class="tv-jc-label">Judge 2</div>
+      <div id="tv-net-2" class="tv-jc-score">0</div>
+    </div>
+    <!-- Judge 3 Corner (Bottom-Right) -->
+    <div id="tv-corner-3" class="tv-judge-corner br">
+      <div class="tv-jc-label">Judge 3</div>
+      <div id="tv-net-3" class="tv-jc-score">0</div>
+    </div>
+    <!-- Judge 4 Corner (Bottom-Left) -->
+    <div id="tv-corner-4" class="tv-judge-corner bl">
+      <div class="tv-jc-label">Judge 4</div>
+      <div id="tv-net-4" class="tv-jc-score">0</div>
+    </div>
+
     <div class="tv-side blue-side">
       <div class="tv-competitor-name" id="tv-blue-name">BLUE</div>
       <div class="tv-competitor-club" id="tv-blue-club">---</div>
@@ -1832,11 +1891,12 @@ async function updateMaxPhones(val) {
   state.ring.max_phones = num;
   sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
   
-  const btn4 = document.getElementById("btn-judge4-edge");
-  if (btn4) btn4.style.display = num === 3 ? 'none' : 'block';
+  const btn4 = document.getElementById("qr-btn-4");
+  if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
 
   renderLaptopJudges();
   renderVoteScores();
+  updateRingLayoutCornerStats();
   showToast(`Ring set to ${num} judges`, 'success');
 }
 
@@ -2128,7 +2188,7 @@ async function fetchMatchNow() {
 function startMatchPolling() {
   if (state.matchPollInterval) clearInterval(state.matchPollInterval);
   fetchMatchNow();
-  state.matchPollInterval = setInterval(fetchMatchNow, 1500);
+  state.matchPollInterval = setInterval(fetchMatchNow, 1000);
 }
 
 function pad4(arr) {
@@ -2156,6 +2216,60 @@ function renderVoteScores() {
   setEl("tv-red-score", v.red);
   setEl("l-blue-score", v.blue);
   setEl("l-red-score", v.red);
+}
+
+function renderTVJudgeNets() {
+  const jb = pad4(state.match ? state.match.judge_blue : null);
+  const jr = pad4(state.match ? state.match.judge_red : null);
+  const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+
+  for (let i = 1; i <= 4; i++) {
+    const cornerEl = document.getElementById(`tv-corner-${i}`);
+    if (!cornerEl) continue;
+
+    if (i > max) {
+      cornerEl.classList.add('hidden-view');
+      continue;
+    } else {
+      cornerEl.classList.remove('hidden-view');
+    }
+
+    const givenBlue = jb[i-1];
+    const givenRed = jr[i-1];
+    const net = givenBlue - givenRed;
+    
+    document.getElementById(`tv-net-${i}`).textContent = Math.abs(net);
+    cornerEl.classList.remove('lead-blue', 'lead-red');
+    if (net > 0) cornerEl.classList.add('lead-blue');
+    else if (net < 0) cornerEl.classList.add('lead-red');
+  }
+}
+
+function renderRingLayoutCornerStats() {
+  const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
+  const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+
+  for (let i = 1; i <= 4; i++) {
+    const btn = document.getElementById(`qr-btn-${i}`);
+    const stat = document.getElementById(`qr-stat-${i}`);
+    if (!btn || !stat) continue;
+
+    if (i > max) {
+      btn.style.display = 'none';
+      continue;
+    } else {
+      btn.style.display = 'flex';
+    }
+
+    const isOnline = onlineSlots.has(i);
+    if (isOnline) {
+      btn.classList.add('connected');
+      stat.textContent = 'Connected';
+    } else {
+      btn.classList.remove('connected');
+      stat.textContent = 'Empty';
+    }
+  }
 }
 
 function renderLaptopJudges() {
@@ -2204,6 +2318,7 @@ function renderLaptopJudges() {
     </div>`;
   }
   container.innerHTML = html;
+  renderRingLayoutCornerStats();
 }
 
 async function adjustSpecificJudge(judgeNum, side, delta) {
@@ -2264,7 +2379,9 @@ async function fetchActivePhones() {
     const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
     if (!res.error) {
       state.activePhones = res.data || [];
-      if (state.role === 'laptop') renderLaptopJudges();
+      if (state.role === 'laptop') {
+        renderLaptopJudges();
+      }
     }
   } catch (e) {}
 }
@@ -2272,7 +2389,7 @@ async function fetchActivePhones() {
 function startPhoneListPolling() {
   if (state.pollInterval) clearInterval(state.pollInterval);
   fetchActivePhones();
-  state.pollInterval = setInterval(fetchActivePhones, 2000);
+  state.pollInterval = setInterval(fetchActivePhones, 1500);
 }
 
 function openJudgeQR(slot) {
@@ -2399,9 +2516,18 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
       setPhoneStatus("✗ Not connected", true); return;
     }
 
-    // Instantly local update for zero perceived latency
+    // Instant local feedback
     btn.classList.add("scored-flash");
     setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
+
+    // Optimistic local score update immediately so UI is instant
+    if (state.match) {
+      const jb = pad4(state.match.judge_blue);
+      const jr = pad4(state.match.judge_red);
+      if (side === 'blue') jb[state.judgeSlot - 1] += val;
+      else jr[state.judgeSlot - 1] += val;
+      renderVoteScores();
+    }
 
     sb.rpc("judge_score", {
       p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
@@ -2442,8 +2568,8 @@ async function enterLaptop() {
   const selMax = document.getElementById("sel-max-phones");
   if (selMax) selMax.value = String(maxP);
 
-  const btn4 = document.getElementById("btn-judge4-edge");
-  if (btn4) btn4.style.display = maxP === 3 ? 'none' : 'block';
+  const btn4 = document.getElementById("qr-btn-4");
+  if (btn4) btn4.style.display = maxP === 3 ? 'none' : 'flex';
 
   await ensureMatchRow();
   await loadCurrentMatch();
@@ -2527,6 +2653,7 @@ async function enterTV() {
   subscribeRing();
   startMatchPolling();
   renderVoteScores();
+  renderTVJudgeNets();
   updateCompetitorDisplay();
   showView("tv");
   document.body.style.cursor = "none";
@@ -2551,6 +2678,7 @@ function subscribeRing() {
       updateCompetitorDisplay();
       renderLaptopJudges();
       renderVoteScores();
+      renderTVJudgeNets();
     })
     .subscribe();
 }
@@ -2572,6 +2700,7 @@ function handleMatchUpdate(payload) {
 
   renderVoteScores();
   renderLaptopJudges();
+  renderTVJudgeNets();
 
   if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) {
     endRound();
