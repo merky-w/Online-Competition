@@ -113,7 +113,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   font-variant-numeric: tabular-nums;
 }
 
-/* Center timer overlay on TV */
 .tv-center-overlay {
   position: absolute;
   top: 50%;
@@ -166,7 +165,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 
 .tv-penalty-label { color: #fbbf24; }
 
-/* Bottom next match bar */
 .tv-bottom-bar {
   background: linear-gradient(90deg, #111827 0%, #030712 100%);
   border-top: 3px solid #fbbf24;
@@ -200,7 +198,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tv-next-name.blue-next { color: #60a5fa; }
 .tv-next-name.red-next { color: #f87171; }
 
-/* Winner overlay */
 .tv-winner-overlay {
   position: absolute;
   inset: 0;
@@ -546,6 +543,21 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .judge-adj-btn.plus { background: #10b981; }
 .judge-adj-btn.minus { background: #ef4444; }
 
+/* Kick judge button (Bottom-right corner of judge box) */
+.judge-kick-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid #ef4444;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.judge-kick-btn:hover { background: #ef4444; color: white; }
+
 /* Penalties section */
 .penalties-section {
   display: grid;
@@ -602,7 +614,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .penalty-btn.plus { background: #10b981; }
 .penalty-btn.minus { background: #ef4444; }
 
-/* Ring layout settings & QR Modal */
+/* Ring layout settings */
 .settings-panel {
   background: #0f172a;
   border-radius: 12px;
@@ -1130,11 +1142,10 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     </div>
   </div>
 
-  <!-- Settings / Ring Layout & QR Code Panel -->
   <div class="settings-panel">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <h3 style="margin:0;font-size:1rem;color:#fbbf24;font-weight:800;">⚙️ Ring Layout & Judge QR Codes</h3>
-      <span style="font-size:0.8rem;color:#94a3b8;">Click any judge position below to show QR code</span>
+      <span style="font-size:0.8rem;color:#94a3b8;">Click any judge position below to show QR code (Instant auto-login)</span>
     </div>
     <div class="ring-layout-box">
       <div class="ring-center-label">Ring Center</div>
@@ -1147,7 +1158,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 
   <div class="laptop-main-grid">
     <div class="laptop-main-content">
-      <!-- Current Match Card -->
       <div class="current-match-card">
         <div class="current-match-header">
           <div style="display:flex;gap:10px;align-items:center;">
@@ -1172,7 +1182,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Timer -->
         <div class="timer-section">
           <div class="timer-display-row">
             <span class="timer-round-badge">Round <span id="l-timer-round">1</span></span>
@@ -1198,7 +1207,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Scores -->
         <div class="score-section">
           <div class="score-box blue-score">
             <div class="score-label">🔵 Blue Majority Score</div>
@@ -1210,12 +1218,8 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Judges with Online/Offline Status & Full Blue/Red Adjustments -->
-        <div id="laptop-judges-container" class="judges-section">
-          <!-- Dynamically rendered judge boxes -->
-        </div>
+        <div id="laptop-judges-container" class="judges-section"></div>
 
-        <!-- Penalties -->
         <div class="penalties-section">
           <div class="penalty-box">
             <div class="penalty-info">
@@ -1259,7 +1263,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Declare Winner -->
         <div id="laptop-declare-winner" class="hidden-view" style="background:#1e293b;border-radius:12px;padding:20px;margin-top:20px;border:2px solid #fbbf24;">
           <h3 style="margin:0 0 15px 0;color:#fbbf24;font-size:1.1rem;">🏆 Declare Winner</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
@@ -1271,7 +1274,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
       </div>
     </div>
 
-    <!-- Match List Sidebar -->
     <div class="match-list-sidebar">
       <h3>📋 Match Queue</h3>
       <div id="match-list-container">
@@ -1365,7 +1367,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 <div id="modal-qr" class="hidden-view modal-overlay">
   <div class="modal-box">
     <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
-    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;">Scan with judge's phone to connect automatically</p>
+    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;">Scan with phone to instantly join as this judge</p>
     <div id="qrcode-container" style="background:white;padding:15px;border-radius:12px;display:inline-block;margin-bottom:20px;"></div>
     <div>
       <button class="timer-btn" style="background:#475569;width:100%;" onclick="closeQRModal()">Close</button>
@@ -1373,15 +1375,28 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
+<!-- ===== ADMIN KICK PIN MODAL ===== -->
+<div id="modal-admin-pin" class="hidden-view modal-overlay">
+  <div class="modal-box">
+    <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin PIN Required</h3>
+    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:15px;">Enter admin password to kick Judge <span id="kick-target-slot"></span></p>
+    <input id="inp-admin-pin" type="password" maxlength="10" placeholder="Enter PIN (admina)" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;text-align:center;font-size:1.2rem;margin-bottom:15px;" />
+    <div style="display:flex;gap:10px;">
+      <button class="timer-btn" style="flex:1;background:#ef4444;" onclick="confirmKickJudge()">Kick Judge</button>
+      <button class="timer-btn" style="flex:1;background:#475569;" onclick="closeAdminPinModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== WINNER MODAL ===== -->
 <div id="modal-winner" class="hidden-view modal-overlay">
   <div class="modal-box" style="max-width:600px;">
-    <h2 id="modal-winner-title" class="winner-modal-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
-    <p id="modal-winner-name" class="winner-modal-name" style="font-size:1.5rem;color:#fbbf24;font-weight:700;margin-bottom:25px;">Competitor Name</p>
+    <h2 id="modal-winner-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
+    <p id="modal-winner-name" style="font-size:1.5rem;color:#fbbf24;font-weight:700;margin-bottom:25px;">Competitor Name</p>
     <p id="modal-winner-question" style="text-align:center;color:#94a3b8;margin-bottom:25px;font-size:1.1rem;">Is this correct?</p>
     <div id="winner-btn-container" style="display:flex;gap:15px;">
-      <button id="btn-winner-confirm" class="winner-modal-btn confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
-      <button id="btn-winner-deny" class="winner-modal-btn deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
+      <button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
+      <button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
     </div>
     <div id="winner-deny-section" class="hidden-view" style="margin-top:20px;padding-top:20px;border-top:1px solid #334155;">
       <p style="text-align:center;color:#ef4444;margin-bottom:15px;">Result denied. Reset to try again.</p>
@@ -1390,7 +1405,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- Toast -->
 <div id="toast" class="toast"></div>
 
 <script>
@@ -1415,37 +1429,20 @@ const state = {
   heartbeatBusy: false,
   loggingIn: false,
   dbBroken: false,
+  pendingKickSlot: null
 };
 
 const TIMER_CHANNEL_PREFIX = "timer-";
-let timerState = {
-  round: 1,
-  roundTime: 120,
-  startTime: null,
-  elapsed: 0,
-  paused: true,
-  finished: false,
-  winner: null
-};
+let timerState = { round: 1, roundTime: 120, startTime: null, elapsed: 0, paused: true, finished: false, winner: null };
 let timerChannel = null;
 let timerTickInterval = null;
 let broadcastInterval = null;
 
-function getTimerKey() {
-  return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`;
-}
-
+function getTimerKey() { return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`; }
 function loadTimerState() {
-  try {
-    const saved = localStorage.getItem(getTimerKey());
-    if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved));
-  } catch (e) {}
+  try { const saved = localStorage.getItem(getTimerKey()); if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved)); } catch (e) {}
 }
-
-function saveTimerState() {
-  try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e) {}
-}
-
+function saveTimerState() { try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e) {} }
 function broadcastTimerState() {
   if (timerChannel && state.role === 'laptop') {
     try { timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState }); } catch (e) {}
@@ -1497,7 +1494,6 @@ function renderTimer() {
   const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished;
 
   const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-
   setEl('l-timer-round', timerState.round);
   setEl('tv-timer-round', timerState.round);
   setEl('phone-timer-round', timerState.round);
@@ -1570,19 +1566,16 @@ function startTimerTick() {
   if (timerTickInterval) clearInterval(timerTickInterval);
   timerTickInterval = setInterval(tickTimer, 100);
 }
-
 function stopTimerTick() {
   if (timerTickInterval) clearInterval(timerTickInterval);
   timerTickInterval = null;
 }
-
 function startBroadcastLoop() {
   if (broadcastInterval) clearInterval(broadcastInterval);
   broadcastInterval = setInterval(() => {
     if (state.role === 'laptop' && !timerState.paused && !timerState.finished) broadcastTimerState();
   }, 1000);
 }
-
 function stopBroadcastLoop() {
   if (broadcastInterval) clearInterval(broadcastInterval);
   broadcastInterval = null;
@@ -1732,45 +1725,30 @@ function showWinnerConfirmStep1() {
   question.textContent = 'Is this correct?';
 
   btnContainer.innerHTML = `
-    <button id="btn-winner-confirm" class="winner-modal-btn confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
-    <button id="btn-winner-deny" class="winner-modal-btn deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
+    <button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
+    <button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
   `;
 
   document.getElementById('btn-winner-confirm').addEventListener('click', confirmAndAdvance);
   document.getElementById('btn-winner-deny').addEventListener('click', showWinnerDenied);
-
   denySection.classList.add('hidden-view');
   modal.classList.remove('hidden-view');
 }
 
 async function confirmAndAdvance() {
   document.getElementById('modal-winner').classList.add('hidden-view');
-  
   const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE')
     : timerState.winner === 'red' ? (state.ring?.red_name || 'RED')
     : 'DRAW';
   const winnerSide = timerState.winner || 'draw';
 
   const { error } = await sb.rpc('advance_ring_match', {
-    p_ring_id: state.ring.id,
-    p_winner: winnerName,
-    p_winner_side: winnerSide
+    p_ring_id: state.ring.id, p_winner: winnerName, p_winner_side: winnerSide
   });
 
-  if (error) {
-    showToast('Failed to advance: ' + error.message, 'error');
-    return;
-  }
+  if (error) { showToast('Failed to advance: ' + error.message, 'error'); return; }
 
-  timerState = {
-    round: 1,
-    roundTime: timerState.roundTime,
-    startTime: null,
-    elapsed: 0,
-    paused: true,
-    finished: false,
-    winner: null
-  };
+  timerState = { round: 1, roundTime: timerState.roundTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null };
   saveTimerState();
   broadcastTimerState();
 
@@ -1799,15 +1777,7 @@ async function resetMatch() {
   if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
   await resetMatchScores();
 
-  timerState = {
-    round: 1,
-    roundTime: timerState.roundTime,
-    startTime: null,
-    elapsed: 0,
-    paused: true,
-    finished: false,
-    winner: null
-  };
+  timerState = { round: 1, roundTime: timerState.roundTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null };
   saveTimerState();
   broadcastTimerState();
 
@@ -1821,7 +1791,7 @@ async function resetMatch() {
 }
 
 async function resetMatchScores() {
-  const { error } = await sb.from("matches").update({
+  await sb.from("matches").update({
     blue_score: 0, red_score: 0,
     blue_gam_jeom: 0, red_gam_jeom: 0,
     blue_yellow_cards: 0, red_yellow_cards: 0,
@@ -1829,8 +1799,6 @@ async function resetMatchScores() {
     judge_red: [0,0,0,0],
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
-
-  if (error) showToast("Reset failed: " + error.message, 'error');
 }
 
 async function declareWinner(side) {
@@ -1849,18 +1817,18 @@ async function declareWinner(side) {
 
 async function refreshRingData() {
   if (!state.ring) return;
-  const { data, error } = await sb.from('rings').select('*').eq('id', state.ring.id).single();
-  if (error) return;
-  state.ring = data;
-  sessionStorage.setItem('tkd_ring', JSON.stringify(data));
-  updateCompetitorDisplay();
+  const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).single();
+  if (data) {
+    state.ring = data;
+    sessionStorage.setItem('tkd_ring', JSON.stringify(data));
+    updateCompetitorDisplay();
+  }
 }
 
 async function updateMaxPhones(val) {
   if (!state.ring || state.role !== 'laptop') return;
   const num = parseInt(val, 10);
-  const { error } = await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id);
-  if (error) { showToast("Failed to update referees: " + error.message, 'error'); return; }
+  await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id);
   state.ring.max_phones = num;
   sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
   
@@ -1874,9 +1842,7 @@ async function updateMaxPhones(val) {
 
 async function loadCurrentMatch() {
   if (!state.ring) return;
-  const { data, error } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
-  if (error) return;
-
+  const { data } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
   if (data && data.length > 0) {
     state.currentMatch = data[0];
     await sb.from('rings').update({
@@ -1914,18 +1880,12 @@ async function loadCurrentMatch() {
 async function loadNextMatch() {
   if (!state.ring) return;
   try {
-    const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
-    if (error || !data || data.length < 2) {
-      const { data: tableData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(2);
-      if (tableData && tableData.length >= 2) {
-        const nextMatch = tableData[1];
-        await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
-      }
-    } else {
+    const { data } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
+    if (data && data.length >= 2) {
       const nextMatch = data[1];
       await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
+      await refreshRingData();
     }
-    await refreshRingData();
   } catch(e) {}
 }
 
@@ -2005,12 +1965,7 @@ async function loadMatchList() {
   if (!container) return;
 
   try {
-    const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
-    if (error) {
-      const { data: tableData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(30);
-      renderMatchListItems(tableData, container);
-      return;
-    }
+    const { data } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
     renderMatchListItems(data, container);
   } catch (e) {
     container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No match queue found</div>';
@@ -2056,11 +2011,11 @@ function parseHash() {
   const qIndex = raw.indexOf("?");
   const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase();
   const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : "");
-  return { name: path, code: (params.get("code") || "").trim() };
+  return { name: path, code: (params.get("code") || "").trim(), slot: (params.get("slot") || "").trim() };
 }
 
 async function route() {
-  const { name, code } = parseHash();
+  const { name, code, slot } = parseHash();
   if (name === "tv") {
     if (code) {
       const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle();
@@ -2070,18 +2025,28 @@ async function route() {
         await enterTV();
         return;
       }
-      showView("landing");
-      document.getElementById("landing-error").textContent = "Invalid TV code.";
-      return;
     }
     const cached = sessionStorage.getItem("tkd_ring");
     if (cached) {
       try { state.ring = JSON.parse(cached); await enterTV(); return; } catch(e){}
     }
-    state.role = "tv-pending";
     showView("landing");
     return;
   }
+  
+  if (name === "phone" || slot) {
+    if (code) {
+      const { data } = await sb.from("rings").select("*").eq("phone_password", code).maybeSingle();
+      if (data) {
+        state.ring = data;
+        sessionStorage.setItem("tkd_ring", JSON.stringify(data));
+        state.role = "phone";
+        await autoEnterPhone(parseInt(slot, 10) || 1);
+        return;
+      }
+    }
+  }
+
   if (name === "") {
     if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
     if (state.role === "laptop") { showView("laptop"); return; }
@@ -2111,21 +2076,22 @@ async function tryLogin() {
     const { data, error } = await sb.from("rings").select("*")
       .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`).limit(1);
 
-    if (error) { errEl.textContent = "Database error: " + error.message; return; }
-    if (!data || data.length === 0) { errEl.textContent = "No ring found for that password/code."; return; }
+    if (error || !data || data.length === 0) { errEl.textContent = "Invalid password or TV code."; return; }
 
     const ring = data[0];
     state.ring = ring;
     sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
 
-    if (parseHash().name === "tv" || (ring.tv_code && pwd === ring.tv_code)) {
+    if (pwd === ring.tv_code) {
       state.role = "tv";
       await enterTV();
-      return;
+    } else if (pwd === ring.laptop_password) {
+      state.role = "laptop";
+      await enterLaptop();
+    } else if (pwd === ring.phone_password) {
+      state.role = "phone";
+      await enterPhone();
     }
-    if (pwd === ring.laptop_password) { state.role = "laptop"; await enterLaptop(); }
-    else if (pwd === ring.phone_password) { state.role = "phone"; await enterPhone(); }
-    else { errEl.textContent = "Password accepted but no role matched."; }
   } finally {
     state.loggingIn = false;
     btn.disabled = false;
@@ -2133,10 +2099,10 @@ async function tryLogin() {
   }
 }
 
-async function ensureMatchRow(showWarnings) {
+async function ensureMatchRow() {
   if (!state.ring || state.dbBroken) return;
   const rid = state.ring.id;
-  const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(10);
+  const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
   if (selErr) { state.dbBroken = true; return; }
   if (!rows || rows.length === 0) {
     await sb.from("matches").insert({ ring_id: rid });
@@ -2155,16 +2121,14 @@ async function readMatchRow() {
 
 async function fetchMatchNow() {
   if (!state.ring || state.dbBroken) return;
-  const { row, error } = await readMatchRow();
-  if (error) { state.dbBroken = true; return; }
-  if (!row) { await ensureMatchRow(state.role === "laptop"); return; }
-  handleMatchUpdate({ new: row });
+  const { row } = await readMatchRow();
+  if (row) handleMatchUpdate({ new: row });
 }
 
 function startMatchPolling() {
   if (state.matchPollInterval) clearInterval(state.matchPollInterval);
   fetchMatchNow();
-  state.matchPollInterval = setInterval(fetchMatchNow, 2000);
+  state.matchPollInterval = setInterval(fetchMatchNow, 1500);
 }
 
 function pad4(arr) {
@@ -2202,7 +2166,6 @@ function renderLaptopJudges() {
   
   const jb = pad4(state.match ? state.match.judge_blue : null);
   const jr = pad4(state.match ? state.match.judge_red : null);
-
   const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
 
   let html = '';
@@ -2235,6 +2198,9 @@ function renderLaptopJudges() {
           <button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'red', -1)">−</button>
         </div>
       </div>
+      <div>
+        <button class="judge-kick-btn" onclick="promptKickJudge(${i})">Kick</button>
+      </div>
     </div>`;
   }
   container.innerHTML = html;
@@ -2242,31 +2208,54 @@ function renderLaptopJudges() {
 
 async function adjustSpecificJudge(judgeNum, side, delta) {
   if (state.role !== 'laptop' || !state.ring) return;
-  const { row, error } = await readMatchRow();
-  if (error || !row) return;
+  const { row } = await readMatchRow();
+  if (!row) return;
 
   const jb = pad4(row.judge_blue);
   const jr = pad4(row.judge_red);
   const slotIdx = judgeNum - 1;
 
-  if (side === 'blue') {
-    jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
-  } else {
-    jr[slotIdx] = Math.max(0, jr[slotIdx] + delta);
-  }
+  if (side === 'blue') jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
+  else jr[slotIdx] = Math.max(0, jr[slotIdx] + delta);
 
-  const { error: updErr } = await sb.from("matches").update({
+  await sb.from("matches").update({
     judge_blue: jb,
     judge_red: jr,
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
 
-  if (!updErr) {
-    fetchMatchNow();
-    showToast(`Judge ${judgeNum} (${side.toUpperCase()}) adjusted (${delta > 0 ? '+' + delta : delta})`, 'success');
-  } else {
-    showToast("Failed to adjust judge points", 'error');
+  fetchMatchNow();
+}
+
+function promptKickJudge(slot) {
+  state.pendingKickSlot = slot;
+  document.getElementById("kick-target-slot").textContent = slot;
+  document.getElementById("inp-admin-pin").value = "";
+  document.getElementById("modal-admin-pin").classList.remove("hidden-view");
+}
+
+function closeAdminPinModal() {
+  document.getElementById("modal-admin-pin").classList.add("hidden-view");
+  state.pendingKickSlot = null;
+}
+
+async function confirmKickJudge() {
+  const pin = document.getElementById("inp-admin-pin").value.trim();
+  if (pin !== "admina") {
+    alert("Incorrect Admin PIN! (Hint: admina)");
+    return;
   }
+  const slot = state.pendingKickSlot;
+  closeAdminPinModal();
+
+  const targetPhone = state.activePhones.find(p => Number(p.judge_slot) === Number(slot));
+  if (targetPhone) {
+    try {
+      await sb.rpc("phone_unregister", { p_id: targetPhone.id });
+    } catch (e) {}
+  }
+  showToast(`Judge ${slot} kicked successfully`, 'success');
+  fetchActivePhones();
 }
 
 async function fetchActivePhones() {
@@ -2283,7 +2272,7 @@ async function fetchActivePhones() {
 function startPhoneListPolling() {
   if (state.pollInterval) clearInterval(state.pollInterval);
   fetchActivePhones();
-  state.pollInterval = setInterval(fetchActivePhones, 3000);
+  state.pollInterval = setInterval(fetchActivePhones, 2000);
 }
 
 function openJudgeQR(slot) {
@@ -2294,7 +2283,7 @@ function openJudgeQR(slot) {
   title.textContent = `Judge ${slot} Connection QR`;
 
   const password = state.ring.phone_password || "";
-  const targetUrl = `${location.origin}${location.pathname}#?code=${encodeURIComponent(password)}`;
+  const targetUrl = `${location.origin}${location.pathname}#phone?code=${encodeURIComponent(password)}&slot=${slot}`;
 
   new QRCode(container, {
     text: targetUrl,
@@ -2312,38 +2301,14 @@ function closeQRModal() {
   document.getElementById("modal-qr").classList.add("hidden-view");
 }
 
-async function enterPhone() {
+async function autoEnterPhone(slot) {
   const maxJ = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
-  const prevSession = localStorage.getItem("tkd_phone_session_" + (state.ring ? state.ring.id : "unknown"));
+  if (slot > maxJ) slot = maxJ;
+
+  const prevSession = localStorage.getItem("tkd_phone_session_" + state.ring.id);
   if (prevSession) {
     try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
-    localStorage.removeItem("tkd_phone_session_" + (state.ring ? state.ring.id : "unknown"));
-  }
-
-  let active = [];
-  try {
-    const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
-    if (!res.error) active = res.data || [];
-  } catch (e) {}
-
-  if (active.length >= maxJ) {
-    alert("This ring is set to " + maxJ + " referees and all corners are taken.");
-    state.role = null;
-    location.hash = "";
-    showView("landing");
-    return;
-  }
-
-  const taken = new Set(active.map(p => p.judge_slot).filter(v => v != null && v >= 1 && v <= maxJ));
-  let slot = null;
-  for (let i = 1; i <= maxJ; i++) { if (!taken.has(i)) { slot = i; break; } }
-
-  if (!slot) {
-    alert("All corners are taken.");
-    state.role = null;
-    location.hash = "";
-    showView("landing");
-    return;
+    localStorage.removeItem("tkd_phone_session_" + state.ring.id);
   }
 
   state.judgeSlot = slot;
@@ -2354,9 +2319,7 @@ async function enterPhone() {
   });
 
   if (regErr) {
-    alert("Could not register: " + regErr.message);
-    state.role = null;
-    location.hash = "";
+    alert("Could not register phone: " + regErr.message);
     showView("landing");
     return;
   }
@@ -2367,7 +2330,7 @@ async function enterPhone() {
   document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
   document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
 
-  await ensureMatchRow(false);
+  await ensureMatchRow();
 
   if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
   state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
@@ -2381,7 +2344,11 @@ async function enterPhone() {
   subscribeRing();
   updateCompetitorDisplay();
   showView("phone");
-  setPhoneStatus("Connected as Judge " + slot, false);
+  setPhoneStatus("Connected instantly as Judge " + slot, false);
+}
+
+async function enterPhone() {
+  await autoEnterPhone(1);
 }
 
 async function phoneHeartbeatTick() {
@@ -2392,7 +2359,7 @@ async function phoneHeartbeatTick() {
     const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
     if (state.phoneSessionId !== sid) return;
     if (hbErr && /not registered|not found|kicked|removed/i.test(hbErr.message || "")) {
-      leavePhone("You were kicked out.");
+      leavePhone("You were kicked by admin.");
     }
   } finally { state.heartbeatBusy = false; }
 }
@@ -2418,26 +2385,12 @@ function setPhoneStatus(msg, isError) {
   el.style.color = isError ? "#ef4444" : "#94a3b8";
 }
 
-async function phoneScoreFallback(side, points) {
-  const { row, error: rErr } = await readMatchRow();
-  if (rErr || !row) return false;
-  const jb = pad4(row.judge_blue);
-  const jr = pad4(row.judge_red);
-  if (side === "blue") jb[state.judgeSlot - 1] += points;
-  else jr[state.judgeSlot - 1] += points;
-  const upd = { judge_blue: jb, judge_red: jr, updated_at: new Date().toISOString() };
-  if (side === "blue") upd.blue_score = Math.max(0, Number(row.blue_score || 0) + points);
-  else upd.red_score = Math.max(0, Number(row.red_score || 0) + points);
-  const { error: uErr } = await sb.from("matches").update(upd).eq("ring_id", state.ring.id);
-  return !uErr;
-}
-
 document.querySelectorAll(".judge-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
     if (timerState.finished) { setPhoneStatus("Match finished", true); return; }
     const side = btn.dataset.side;
     const val = parseInt(btn.dataset.val, 10);
-    if (navigator.vibrate) navigator.vibrate(30);
+    if (navigator.vibrate) navigator.vibrate(20);
     btn.classList.remove("pulse", "scored-flash");
     void btn.offsetWidth;
     btn.classList.add("pulse");
@@ -2446,34 +2399,20 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
       setPhoneStatus("✗ Not connected", true); return;
     }
 
-    setPhoneStatus("+" + val + " " + side.toUpperCase() + " — sending…", false);
+    // Instantly local update for zero perceived latency
+    btn.classList.add("scored-flash");
+    setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
 
-    const { error } = await sb.rpc("judge_score", {
+    sb.rpc("judge_score", {
       p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
       p_side: side, p_points: val, p_session: state.phoneSessionId
+    }).then(({ error }) => {
+      if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) {
+        leavePhone("Kicked from ring.");
+      } else {
+        fetchMatchNow();
+      }
     });
-
-    if (!error) {
-      btn.classList.add("scored-flash");
-      setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
-      fetchMatchNow();
-      return;
-    }
-
-    if (/not registered|not found|kicked|removed/i.test(error.message || "")) {
-      setPhoneStatus("✗ " + error.message, true);
-      setTimeout(() => leavePhone("Removed from ring."), 800);
-      return;
-    }
-
-    const ok = await phoneScoreFallback(side, val);
-    if (ok) {
-      btn.classList.add("scored-flash");
-      setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
-      fetchMatchNow();
-    } else {
-      setPhoneStatus("✗ Error: " + error.message, true);
-    }
   });
 });
 
@@ -2481,7 +2420,7 @@ document.querySelectorAll(".patterns-tap").forEach(btn => {
   btn.addEventListener("click", async () => {
     if (timerState.finished) { setPhoneStatus("✗ Match finished", true); return; }
     const winner = btn.dataset.winner;
-    if (navigator.vibrate) navigator.vibrate(50);
+    if (navigator.vibrate) navigator.vibrate(30);
     btn.classList.add("scored-flash");
     setPhoneStatus("✓ Winner: " + winner.toUpperCase(), false);
     timerState.finished = true;
@@ -2506,7 +2445,7 @@ async function enterLaptop() {
   const btn4 = document.getElementById("btn-judge4-edge");
   if (btn4) btn4.style.display = maxP === 3 ? 'none' : 'block';
 
-  await ensureMatchRow(true);
+  await ensureMatchRow();
   await loadCurrentMatch();
 
   loadTimerState();
@@ -2539,7 +2478,6 @@ document.getElementById("btn-open-tv").addEventListener("click", () => {
 });
 
 document.getElementById("btn-reset-match").addEventListener("click", resetMatch);
-
 document.getElementById("btn-logout").addEventListener("click", () => {
   state.role = null;
   cleanup();
@@ -2572,15 +2510,15 @@ document.querySelectorAll(".penalty-btn").forEach(btn => {
     else if (act.includes('red-yc-minus')) { column = 'red_yellow_cards'; delta = -1; }
 
     if (column) {
-      const { error } = await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
-      if (!error) fetchMatchNow();
+      await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
+      fetchMatchNow();
     }
   });
 });
 
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
-  await ensureMatchRow(false);
+  await ensureMatchRow();
   loadTimerState();
   subscribeTimer();
   renderTimer();
@@ -2608,10 +2546,6 @@ function subscribeRing() {
       if (!payload.new) return;
       state.ring = Object.assign({}, state.ring, payload.new);
       sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
-      const tvName = document.getElementById("tv-ring-name");
-      if (tvName) tvName.textContent = state.ring.ring_name;
-      const tvCode = document.getElementById("laptop-tv-code");
-      if (tvCode) tvCode.textContent = state.ring.tv_code || "—";
       const selMax = document.getElementById("sel-max-phones");
       if (selMax) selMax.value = String(state.ring.max_phones || 4);
       updateCompetitorDisplay();
@@ -2631,10 +2565,10 @@ function handleMatchUpdate(payload) {
   set("l-red-gj", m.red_gam_jeom);
   set("l-blue-yc", m.blue_yellow_cards);
   set("l-red-yc", m.red_yellow_cards);
-  setStat("tv-blue-gj", m.blue_gam_jeom);
-  setStat("tv-red-gj", m.red_gam_jeom);
-  setStat("tv-blue-yc", m.blue_yellow_cards);
-  setStat("tv-red-yc", m.red_yellow_cards);
+  set("tv-blue-gj", m.blue_gam_jeom);
+  set("tv-red-gj", m.red_gam_jeom);
+  set("tv-blue-yc", m.blue_yellow_cards);
+  set("tv-red-yc", m.red_yellow_cards);
 
   renderVoteScores();
   renderLaptopJudges();
