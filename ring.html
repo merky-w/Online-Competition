@@ -6,6 +6,7 @@
 <title>TKD iScore - 9th Vojvodina Open ITF</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 * { -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
 input, textarea, select { user-select: text; }
@@ -15,7 +16,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 
 .hidden-view { display: none !important; }
 
-/* ===== TV DISPLAY STYLES (CLEAN & PROFESSIONAL) ===== */
+/* ===== TV DISPLAY STYLES ===== */
 .tv-container {
   width: 100vw;
   height: 100vh;
@@ -423,7 +424,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .timer-btn.reset { background: #ef4444; color: white; }
 .timer-btn.reset:hover { background: #dc2626; }
 
-/* Score boxes (No buttons as requested) */
+/* Score boxes */
 .score-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -495,31 +496,50 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   margin-bottom: 4px;
 }
 
+.judge-box .judge-status-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.judge-status-badge.online { background: #065f46; color: #34d399; }
+.judge-status-badge.offline { background: #7f1d1d; color: #fca5a5; }
+
 .judge-box .judge-score {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 
 .judge-box .judge-detail {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #94a3b8;
   margin-top: 4px;
+  font-weight: 600;
 }
 
-.judge-adjust-controls {
+.judge-row-controls {
   display: flex;
   justify-content: center;
-  gap: 4px;
+  gap: 10px;
   margin-top: 8px;
+  font-size: 0.75rem;
+}
+
+.judge-side-adj {
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .judge-adj-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   border: none;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 800;
   color: white;
 }
@@ -581,6 +601,56 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .penalty-btn:active { transform: scale(0.95); }
 .penalty-btn.plus { background: #10b981; }
 .penalty-btn.minus { background: #ef4444; }
+
+/* Ring layout settings & QR Modal */
+.settings-panel {
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 2px solid #334155;
+}
+
+.ring-layout-box {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 180px;
+  margin: 15px auto;
+  background: #1e293b;
+  border: 2px dashed #475569;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-center-label {
+  color: #64748b;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.ring-edge-btn {
+  position: absolute;
+  background: #334155;
+  color: white;
+  border: 2px solid #fbbf24;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ring-edge-btn:hover { background: #2563eb; transform: scale(1.05); }
+
+.ring-edge-btn.top { top: -15px; left: 50%; transform: translateX(-50%); }
+.ring-edge-btn.bottom { bottom: -15px; left: 50%; transform: translateX(-50%); }
+.ring-edge-btn.left { left: -15px; top: 50%; transform: translateY(-50%); }
+.ring-edge-btn.right { right: -15px; top: 50%; transform: translateY(-50%); }
 
 /* Match list sidebar */
 .match-list-sidebar {
@@ -647,8 +717,8 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   margin-top: 4px;
 }
 
-/* Winner modal */
-.winner-modal {
+/* Modals */
+.modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.88);
@@ -659,50 +729,16 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   padding: 20px;
 }
 
-.winner-modal-box {
+.modal-box {
   background: #1e293b;
   border-radius: 20px;
   padding: 40px;
-  max-width: 600px;
+  max-width: 450px;
   width: 100%;
   border: 3px solid #fbbf24;
+  text-align: center;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
-
-.winner-modal-title {
-  font-size: 2.5rem;
-  font-weight: 900;
-  text-align: center;
-  margin-bottom: 15px;
-}
-
-.winner-modal-name {
-  font-size: 1.5rem;
-  text-align: center;
-  color: #fbbf24;
-  font-weight: 700;
-  margin-bottom: 25px;
-}
-
-.winner-modal-buttons {
-  display: flex;
-  gap: 15px;
-}
-
-.winner-modal-btn {
-  flex: 1;
-  padding: 15px;
-  border-radius: 12px;
-  border: none;
-  font-size: 1.1rem;
-  font-weight: 800;
-  transition: all 0.2s;
-}
-
-.winner-modal-btn.confirm { background: #10b981; color: white; }
-.winner-modal-btn.confirm:hover { background: #059669; }
-.winner-modal-btn.deny { background: #ef4444; color: white; }
-.winner-modal-btn.deny:hover { background: #dc2626; }
 
 /* Phone view styles */
 .phone-container {
@@ -970,7 +1006,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .toast.error { border-left-color: #ef4444; }
 .toast.warning { border-left-color: #f59e0b; }
 
-/* Pulse animation */
 .pulse { animation: pulse 0.4s ease; }
 @keyframes pulse {
   0% { transform: scale(1); }
@@ -983,12 +1018,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.9); }
   100% { box-shadow: 0 0 0 20px rgba(16,185,129,0); }
 }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
 </style>
 </head>
 <body class="bg-slate-900">
@@ -1052,41 +1081,21 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     <div class="phone-side blue-side">
       <div class="phone-side-title">🔵 BLUE · CHUNG</div>
       <div class="phone-buttons">
-        <button class="phone-btn judge-tap" data-side="blue" data-val="1">
-          <span class="pb-value">1</span><span class="pb-label">POINT</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="2">
-          <span class="pb-value">2</span><span class="pb-label">POINTS</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="3">
-          <span class="pb-value">3</span><span class="pb-label">POINTS</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="4">
-          <span class="pb-value">4</span><span class="pb-label">POINTS</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="5">
-          <span class="pb-value">5</span><span class="pb-label">POINTS</span>
-        </button>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
+        <button class="phone-btn judge-tap" data-side="blue" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
       </div>
     </div>
     <div class="phone-side red-side">
       <div class="phone-side-title">🔴 RED · HONG</div>
       <div class="phone-buttons">
-        <button class="phone-btn judge-tap" data-side="red" data-val="1">
-          <span class="pb-value">1</span><span class="pb-label">POINT</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="2">
-          <span class="pb-value">2</span><span class="pb-label">POINTS</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="3">
-          <span class="pb-value">3</span><span class="pb-label">POINTS</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="4">
-          <span class="pb-value">4</span><span class="pb-label">POINTS</span>
-        </button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="5">
-          <span class="pb-value">5</span><span class="pb-label">POINTS</span>
-        </button>
+        <button class="phone-btn judge-tap" data-side="red" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
+        <button class="phone-btn judge-tap" data-side="red" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
+        <button class="phone-btn judge-tap" data-side="red" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
+        <button class="phone-btn judge-tap" data-side="red" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
+        <button class="phone-btn judge-tap" data-side="red" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
       </div>
     </div>
   </div>
@@ -1118,6 +1127,21 @@ button:disabled { opacity: .6; cursor: not-allowed; }
       <button id="btn-open-tv" class="timer-btn" style="background:#334155;">📺 Open TV</button>
       <button id="btn-reset-match" class="timer-btn reset">⟲ Reset Match</button>
       <button id="btn-logout" class="timer-btn" style="background:#475569;">Logout</button>
+    </div>
+  </div>
+
+  <!-- Settings / Ring Layout & QR Code Panel -->
+  <div class="settings-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h3 style="margin:0;font-size:1rem;color:#fbbf24;font-weight:800;">⚙️ Ring Layout & Judge QR Codes</h3>
+      <span style="font-size:0.8rem;color:#94a3b8;">Click any judge position below to show QR code</span>
+    </div>
+    <div class="ring-layout-box">
+      <div class="ring-center-label">Ring Center</div>
+      <button class="ring-edge-btn top" onclick="openJudgeQR(1)">Judge 1 (Top)</button>
+      <button class="ring-edge-btn right" onclick="openJudgeQR(2)">Judge 2 (Right)</button>
+      <button class="ring-edge-btn bottom" onclick="openJudgeQR(3)">Judge 3 (Bottom)</button>
+      <button id="btn-judge4-edge" class="ring-edge-btn left" onclick="openJudgeQR(4)">Judge 4 (Left)</button>
     </div>
   </div>
 
@@ -1174,7 +1198,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Scores (Clean big boxes, no buttons) -->
+        <!-- Scores -->
         <div class="score-section">
           <div class="score-box blue-score">
             <div class="score-label">🔵 Blue Majority Score</div>
@@ -1186,9 +1210,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Judges with add/deduct points -->
+        <!-- Judges with Online/Offline Status & Full Blue/Red Adjustments -->
         <div id="laptop-judges-container" class="judges-section">
-          <!-- Dynamically rendered 3 or 4 judge boxes -->
+          <!-- Dynamically rendered judge boxes -->
         </div>
 
         <!-- Penalties -->
@@ -1235,7 +1259,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Declare Winner (for patterns or manual override) -->
+        <!-- Declare Winner -->
         <div id="laptop-declare-winner" class="hidden-view" style="background:#1e293b;border-radius:12px;padding:20px;margin-top:20px;border:2px solid #fbbf24;">
           <h3 style="margin:0 0 15px 0;color:#fbbf24;font-size:1.1rem;">🏆 Declare Winner</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
@@ -1257,7 +1281,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- ===== TV VIEW (CLEAN & CONFUSION-FREE) ===== -->
+<!-- ===== TV VIEW ===== -->
 <div id="view-tv" class="hidden-view tv-container">
   <div class="tv-top-bar">
     <div class="tv-top-info">
@@ -1275,21 +1299,18 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 
   <div class="tv-main-area">
-    <!-- Blue Side -->
     <div class="tv-side blue-side">
       <div class="tv-competitor-name" id="tv-blue-name">BLUE</div>
       <div class="tv-competitor-club" id="tv-blue-club">---</div>
       <div class="tv-big-score" id="tv-blue-score">0</div>
     </div>
 
-    <!-- Red Side -->
     <div class="tv-side red-side" style="align-items: flex-end; text-align: right;">
       <div class="tv-competitor-name" id="tv-red-name">RED</div>
       <div class="tv-competitor-club" id="tv-red-club">---</div>
       <div class="tv-big-score" id="tv-red-score">0</div>
     </div>
 
-    <!-- Center Timer Overlay -->
     <div class="tv-center-overlay">
       <div class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
       <div id="tv-timer-time" class="tv-timer-display">2:00</div>
@@ -1315,7 +1336,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     </div>
   </div>
 
-  <!-- Bottom Next Match Bar -->
   <div class="tv-bottom-bar">
     <div class="tv-next-match">
       <div>
@@ -1331,7 +1351,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     </div>
   </div>
 
-  <!-- Winner Overlay -->
   <div id="tv-winner-overlay" class="hidden-view tv-winner-overlay">
     <div class="tv-winner-box">
       <div class="tv-winner-trophy">🏆</div>
@@ -1342,19 +1361,31 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
+<!-- ===== QR CODE MODAL ===== -->
+<div id="modal-qr" class="hidden-view modal-overlay">
+  <div class="modal-box">
+    <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
+    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;">Scan with judge's phone to connect automatically</p>
+    <div id="qrcode-container" style="background:white;padding:15px;border-radius:12px;display:inline-block;margin-bottom:20px;"></div>
+    <div>
+      <button class="timer-btn" style="background:#475569;width:100%;" onclick="closeQRModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== WINNER MODAL ===== -->
-<div id="modal-winner" class="hidden-view winner-modal">
-  <div class="winner-modal-box">
-    <h2 id="modal-winner-title" class="winner-modal-title">BLUE WINS!</h2>
-    <p id="modal-winner-name" class="winner-modal-name">Competitor Name</p>
+<div id="modal-winner" class="hidden-view modal-overlay">
+  <div class="modal-box" style="max-width:600px;">
+    <h2 id="modal-winner-title" class="winner-modal-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
+    <p id="modal-winner-name" class="winner-modal-name" style="font-size:1.5rem;color:#fbbf24;font-weight:700;margin-bottom:25px;">Competitor Name</p>
     <p id="modal-winner-question" style="text-align:center;color:#94a3b8;margin-bottom:25px;font-size:1.1rem;">Is this correct?</p>
-    <div id="winner-btn-container" class="winner-modal-buttons">
-      <button id="btn-winner-confirm" class="winner-modal-btn confirm">✓ Confirm & Next</button>
-      <button id="btn-winner-deny" class="winner-modal-btn deny">✗ Deny</button>
+    <div id="winner-btn-container" style="display:flex;gap:15px;">
+      <button id="btn-winner-confirm" class="winner-modal-btn confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
+      <button id="btn-winner-deny" class="winner-modal-btn deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
     </div>
     <div id="winner-deny-section" class="hidden-view" style="margin-top:20px;padding-top:20px;border-top:1px solid #334155;">
       <p style="text-align:center;color:#ef4444;margin-bottom:15px;">Result denied. Reset to try again.</p>
-      <button id="btn-winner-reset" class="winner-modal-btn" style="background:#f59e0b;width:100%;">⟲ Reset Match</button>
+      <button id="btn-winner-reset" class="timer-btn" style="background:#f59e0b;width:100%;">⟲ Reset Match</button>
     </div>
   </div>
 </div>
@@ -1376,11 +1407,11 @@ const state = {
   phoneSessionId: null,
   realtimeChannel: null,
   ringChannel: null,
-  matchChannel: null,
   heartbeatInterval: null,
   pollInterval: null,
   matchPollInterval: null,
   matchListInterval: null,
+  activePhones: [],
   heartbeatBusy: false,
   loggingIn: false,
   dbBroken: false,
@@ -1408,7 +1439,7 @@ function loadTimerState() {
   try {
     const saved = localStorage.getItem(getTimerKey());
     if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved));
-  } catch (e) { console.warn("Failed to load timer:", e); }
+  } catch (e) {}
 }
 
 function saveTimerState() {
@@ -1578,16 +1609,12 @@ function pauseTimer() {
   renderTimer();
 }
 
-// Spacebar Listener for Start/Pause
 window.addEventListener("keydown", (e) => {
   if (e.code === "Space" && state.role === "laptop") {
     if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
     e.preventDefault();
-    if (timerState.paused) {
-      startTimer();
-    } else {
-      pauseTimer();
-    }
+    if (timerState.paused) startTimer();
+    else pauseTimer();
   }
 });
 
@@ -1603,7 +1630,6 @@ function resetRound() {
   stopTimerTick();
 }
 
-// Set Custom Time Listener
 document.addEventListener("DOMContentLoaded", () => {
   const setTimeBtn = document.getElementById("btn-set-time");
   if (setTimeBtn) {
@@ -1631,13 +1657,8 @@ async function endRound() {
   timerState.elapsed = timerState.roundTime;
 
   await fetchMatchNow();
-
   const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-
-  if (mode === 'patterns') {
-    finishMatch();
-    return;
-  }
+  if (mode === 'patterns') { finishMatch(); return; }
 
   if (timerState.round === 1) {
     timerState.round = 2;
@@ -1663,7 +1684,6 @@ async function endRound() {
 
 function finishMatch() {
   const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-  
   if (mode === 'patterns') {
     timerState.finished = true;
     timerState.paused = true;
@@ -1712,8 +1732,8 @@ function showWinnerConfirmStep1() {
   question.textContent = 'Is this correct?';
 
   btnContainer.innerHTML = `
-    <button id="btn-winner-confirm" class="winner-modal-btn confirm">✓ Confirm & Next</button>
-    <button id="btn-winner-deny" class="winner-modal-btn deny">✗ Deny</button>
+    <button id="btn-winner-confirm" class="winner-modal-btn confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
+    <button id="btn-winner-deny" class="winner-modal-btn deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
   `;
 
   document.getElementById('btn-winner-confirm').addEventListener('click', confirmAndAdvance);
@@ -1738,7 +1758,6 @@ async function confirmAndAdvance() {
   });
 
   if (error) {
-    console.error('Failed to advance:', error);
     showToast('Failed to advance: ' + error.message, 'error');
     return;
   }
@@ -1815,10 +1834,7 @@ async function resetMatchScores() {
 }
 
 async function declareWinner(side) {
-  if (timerState.finished) {
-    showToast("Match already finished. Reset first.", 'warning');
-    return;
-  }
+  if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
   if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
   
   timerState.finished = true;
@@ -1828,14 +1844,13 @@ async function declareWinner(side) {
   broadcastTimerState();
   renderTimer();
   stopTimerTick();
-  
   showWinnerConfirmStep1();
 }
 
 async function refreshRingData() {
   if (!state.ring) return;
   const { data, error } = await sb.from('rings').select('*').eq('id', state.ring.id).single();
-  if (error) { console.error('Failed to refresh ring:', error); return; }
+  if (error) return;
   state.ring = data;
   sessionStorage.setItem('tkd_ring', JSON.stringify(data));
   updateCompetitorDisplay();
@@ -1845,12 +1860,13 @@ async function updateMaxPhones(val) {
   if (!state.ring || state.role !== 'laptop') return;
   const num = parseInt(val, 10);
   const { error } = await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id);
-  if (error) {
-    showToast("Failed to update referees: " + error.message, 'error');
-    return;
-  }
+  if (error) { showToast("Failed to update referees: " + error.message, 'error'); return; }
   state.ring.max_phones = num;
   sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
+  
+  const btn4 = document.getElementById("btn-judge4-edge");
+  if (btn4) btn4.style.display = num === 3 ? 'none' : 'block';
+
   renderLaptopJudges();
   renderVoteScores();
   showToast(`Ring set to ${num} judges`, 'success');
@@ -1858,15 +1874,12 @@ async function updateMaxPhones(val) {
 
 async function loadCurrentMatch() {
   if (!state.ring) return;
-
   const { data, error } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
-
-  if (error) { console.error('Failed to load match:', error); return; }
+  if (error) return;
 
   if (data && data.length > 0) {
     state.currentMatch = data[0];
-    
-    const { error: updateErr } = await sb.from('rings').update({
+    await sb.from('rings').update({
       current_match_id: state.currentMatch.id,
       blue_name: state.currentMatch.player1_name,
       red_name: state.currentMatch.player2_name,
@@ -1884,24 +1897,16 @@ async function loadCurrentMatch() {
       mode: state.currentMatch.discipline
     }).eq('id', state.ring.id);
 
-    if (updateErr) console.error('Failed to update ring:', updateErr);
-
     await refreshRingData();
-    
     if (state.currentMatch.round_time_seconds) {
       timerState.roundTime = state.currentMatch.round_time_seconds;
       saveTimerState();
     }
   } else {
     state.currentMatch = null;
-    await sb.from('rings').update({
-      current_match_id: null,
-      blue_name: null, red_name: null,
-      match_stage: 'No More Matches'
-    }).eq('id', state.ring.id);
+    await sb.from('rings').update({ current_match_id: null, blue_name: null, red_name: null, match_stage: 'No More Matches' }).eq('id', state.ring.id);
     await refreshRingData();
   }
-
   await loadNextMatch();
   if (state.role === 'laptop') await loadMatchList();
 }
@@ -1915,8 +1920,6 @@ async function loadNextMatch() {
       if (tableData && tableData.length >= 2) {
         const nextMatch = tableData[1];
         await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
-      } else {
-        await sb.from('rings').update({ next_blue_name: null, next_red_name: null }).eq('id', state.ring.id);
       }
     } else {
       const nextMatch = data[1];
@@ -2004,11 +2007,7 @@ async function loadMatchList() {
   try {
     const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
     if (error) {
-      const { data: tableData, error: tableErr } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(30);
-      if (tableErr) {
-        container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">Queue unavailable</div>';
-        return;
-      }
+      const { data: tableData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(30);
       renderMatchListItems(tableData, container);
       return;
     }
@@ -2140,8 +2139,7 @@ async function ensureMatchRow(showWarnings) {
   const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(10);
   if (selErr) { state.dbBroken = true; return; }
   if (!rows || rows.length === 0) {
-    const { error: insErr } = await sb.from("matches").insert({ ring_id: rid });
-    if (insErr) { state.dbBroken = true; return; }
+    await sb.from("matches").insert({ ring_id: rid });
   } else if (rows.length > 1) {
     const dupIds = rows.slice(1).map(r => r.id);
     await sb.from("matches").delete().in("id", dupIds);
@@ -2196,18 +2194,6 @@ function renderVoteScores() {
   setEl("l-red-score", v.red);
 }
 
-function setStat(id, v) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const s = String(v);
-  if (el.textContent !== s) {
-    el.textContent = s;
-    el.classList.remove("pulse");
-    void el.offsetWidth;
-    el.classList.add("pulse");
-  }
-}
-
 function renderLaptopJudges() {
   const container = document.getElementById("laptop-judges-container");
   if (!container) return;
@@ -2217,8 +2203,11 @@ function renderLaptopJudges() {
   const jb = pad4(state.match ? state.match.judge_blue : null);
   const jr = pad4(state.match ? state.match.judge_red : null);
 
+  const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
+
   let html = '';
   for (let i = 1; i <= max; i++) {
+    const isOnline = onlineSlots.has(i);
     const givenBlue = jb[i-1];
     const givenRed = jr[i-1];
     const net = givenBlue - givenRed;
@@ -2228,42 +2217,103 @@ function renderLaptopJudges() {
 
     html += `<div id="judge-laptop-${i}" class="judge-box ${cls}">
       <div class="judge-label">Judge ${i}</div>
-      <div class="judge-score">${Math.abs(net)}</div>
-      <div class="judge-detail">B ${givenBlue} · R ${givenRed}</div>
-      <div class="judge-adjust-controls">
-        <button class="judge-adj-btn plus" onclick="adjustJudgePoints(${i}, 1)">+</button>
-        <button class="judge-adj-btn minus" onclick="adjustJudgePoints(${i}, -1)">−</button>
+      <div>
+        <span class="judge-status-badge ${isOnline ? 'online' : 'offline'}">${isOnline ? 'Connected' : 'Empty'}</span>
+      </div>
+      <div class="judge-detail">Net: ${Math.abs(net)}</div>
+      <div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ${givenBlue} | R: ${givenRed}</div>
+      
+      <div class="judge-row-controls">
+        <div class="judge-side-adj">
+          <span style="color:#60a5fa;font-weight:700;">B</span>
+          <button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'blue', 1)">+</button>
+          <button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'blue', -1)">−</button>
+        </div>
+        <div class="judge-side-adj">
+          <span style="color:#f87171;font-weight:700;">R</span>
+          <button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'red', 1)">+</button>
+          <button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'red', -1)">−</button>
+        </div>
       </div>
     </div>`;
   }
   container.innerHTML = html;
 }
 
-async function adjustJudgePoints(judgeNum, delta) {
+async function adjustSpecificJudge(judgeNum, side, delta) {
   if (state.role !== 'laptop' || !state.ring) return;
   const { row, error } = await readMatchRow();
   if (error || !row) return;
 
   const jb = pad4(row.judge_blue);
+  const jr = pad4(row.judge_red);
   const slotIdx = judgeNum - 1;
-  jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
+
+  if (side === 'blue') {
+    jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
+  } else {
+    jr[slotIdx] = Math.max(0, jr[slotIdx] + delta);
+  }
 
   const { error: updErr } = await sb.from("matches").update({
     judge_blue: jb,
+    judge_red: jr,
     updated_at: new Date().toISOString()
   }).eq("ring_id", state.ring.id);
 
   if (!updErr) {
     fetchMatchNow();
-    showToast(`Judge ${judgeNum} adjusted (${delta > 0 ? '+' + delta : delta})`, 'success');
+    showToast(`Judge ${judgeNum} (${side.toUpperCase()}) adjusted (${delta > 0 ? '+' + delta : delta})`, 'success');
   } else {
     showToast("Failed to adjust judge points", 'error');
   }
 }
 
+async function fetchActivePhones() {
+  if (!state.ring) return;
+  try {
+    const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
+    if (!res.error) {
+      state.activePhones = res.data || [];
+      if (state.role === 'laptop') renderLaptopJudges();
+    }
+  } catch (e) {}
+}
+
+function startPhoneListPolling() {
+  if (state.pollInterval) clearInterval(state.pollInterval);
+  fetchActivePhones();
+  state.pollInterval = setInterval(fetchActivePhones, 3000);
+}
+
+function openJudgeQR(slot) {
+  const modal = document.getElementById("modal-qr");
+  const title = document.getElementById("modal-qr-title");
+  const container = document.getElementById("qrcode-container");
+  container.innerHTML = "";
+  title.textContent = `Judge ${slot} Connection QR`;
+
+  const password = state.ring.phone_password || "";
+  const targetUrl = `${location.origin}${location.pathname}#?code=${encodeURIComponent(password)}`;
+
+  new QRCode(container, {
+    text: targetUrl,
+    width: 200,
+    height: 200,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  modal.classList.remove("hidden-view");
+}
+
+function closeQRModal() {
+  document.getElementById("modal-qr").classList.add("hidden-view");
+}
+
 async function enterPhone() {
   const maxJ = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
-
   const prevSession = localStorage.getItem("tkd_phone_session_" + (state.ring ? state.ring.id : "unknown"));
   if (prevSession) {
     try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
@@ -2341,11 +2391,8 @@ async function phoneHeartbeatTick() {
   try {
     const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
     if (state.phoneSessionId !== sid) return;
-    if (hbErr) {
-      if (/not registered|not found|kicked|removed/i.test(hbErr.message || "")) {
-        leavePhone("You were kicked out.");
-        return;
-      }
+    if (hbErr && /not registered|not found|kicked|removed/i.test(hbErr.message || "")) {
+      leavePhone("You were kicked out.");
     }
   } finally { state.heartbeatBusy = false; }
 }
@@ -2356,9 +2403,7 @@ async function leavePhone(msg) {
   state.phoneSessionId = null;
   state.judgeSlot = null;
   state.role = null;
-  if (sid) {
-    try { await sb.rpc("phone_unregister", { p_id: sid }); } catch (e) {}
-  }
+  if (sid) { try { await sb.rpc("phone_unregister", { p_id: sid }); } catch (e) {} }
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
   if (state.ringChannel) sb.removeChannel(state.ringChannel);
   stopTimerTick();
@@ -2458,6 +2503,9 @@ async function enterLaptop() {
   const selMax = document.getElementById("sel-max-phones");
   if (selMax) selMax.value = String(maxP);
 
+  const btn4 = document.getElementById("btn-judge4-edge");
+  if (btn4) btn4.style.display = maxP === 3 ? 'none' : 'block';
+
   await ensureMatchRow(true);
   await loadCurrentMatch();
 
@@ -2510,12 +2558,10 @@ document.querySelectorAll(".penalty-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const act = btn.dataset.act;
     if (!act) return;
-    
     if (timerState.finished) { showToast("Match finished. Reset first.", 'warning'); return; }
 
     let column = null;
     let delta = 0;
-    
     if (act.includes('blue-gj-plus')) { column = 'blue_gam_jeom'; delta = 1; }
     else if (act.includes('blue-gj-minus')) { column = 'blue_gam_jeom'; delta = -1; }
     else if (act.includes('red-gj-plus')) { column = 'red_gam_jeom'; delta = 1; }
@@ -2526,9 +2572,7 @@ document.querySelectorAll(".penalty-btn").forEach(btn => {
     else if (act.includes('red-yc-minus')) { column = 'red_yellow_cards'; delta = -1; }
 
     if (column) {
-      const { error } = await sb.rpc("adjust_card", {
-        p_ring_id: String(state.ring.id), p_column: column, p_delta: delta
-      });
+      const { error } = await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
       if (!error) fetchMatchNow();
     }
   });
@@ -2537,12 +2581,10 @@ document.querySelectorAll(".penalty-btn").forEach(btn => {
 async function enterTV() {
   document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
   await ensureMatchRow(false);
-
   loadTimerState();
   subscribeTimer();
   renderTimer();
   startTimerTick();
-
   subscribeMatch();
   subscribeRing();
   startMatchPolling();
@@ -2600,11 +2642,6 @@ function handleMatchUpdate(payload) {
   if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) {
     endRound();
   }
-}
-
-function startPhoneListPolling() {
-  if (state.pollInterval) clearInterval(state.pollInterval);
-  state.pollInterval = setInterval(() => {}, 3000);
 }
 
 function cleanup() {
