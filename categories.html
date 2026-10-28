@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Categories - TKD iScore</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-wider text-red-500">TKD iSCORE</h1>
+                <p class="text-gray-400 text-sm">Tournament Category Management & Brackets</p>
+            </div>
+            <a href="index.html" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm font-semibold transition">Back to Dashboard</a>
+        </header>
+
+        <!-- Filters Section -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow mb-6 flex flex-wrap gap-4 items-center">
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Filter by Type</label>
+                <select id="filterType" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none">
+                    <option value="">All Types (Patterns/Sparring)</option>
+                    <option value="Patterns">Patterns</option>
+                    <option value="Sparring">Sparring</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Filter by Age Bracket</label>
+                <input type="text" id="filterAge" placeholder="e.g. Junior, Senior" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none">
+            </div>
+            <div class="flex items-end">
+                <button id="applyFilters" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm font-semibold transition">Filter Categories</button>
+            </div>
+        </div>
+
+        <!-- Categories List Grid -->
+        <div id="categoriesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamic Category Cards will load here -->
+            <div class="text-gray-500 col-span-full text-center py-12">Loading tournament categories...</div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://cziwnycosdxeuacslcza.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTEwMDAwMDB9...'; // Use your standard anon key
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchCategories() {
+            const grid = document.getElementById('categoriesGrid');
+            grid.innerHTML = '<div class="text-gray-400 col-span-full text-center py-12">Fetching category details...</div>';
+
+            try {
+                // Fetching categories or competitors grouped by divisions from Supabase
+                let query = supabaseClient.from('competitors').select('*');
+
+                const { data, error } = await query;
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    grid.innerHTML = '<div class="text-gray-500 col-span-full text-center py-12">No categories or registered competitors found.</div>';
+                    return;
+                }
+
+                // Group competitors by Category / Division
+                const categoriesMap = {};
+                data.forEach(comp => {
+                    const catName = comp.category || comp.division || 'Unassigned Category';
+                    if (!categoriesMap[catName]) {
+                        categoriesMap[catName] = [];
+                    }
+                    categoriesMap[catName].push(comp);
+                });
+
+                grid.innerHTML = '';
+
+                // Render Category Cards
+                for (const [categoryName, competitors] of Object.entries(categoriesMap)) {
+                    let card = document.createElement('div');
+                    card.className = 'bg-gray-800 border border-gray-700 rounded-lg p-5 shadow flex flex-col justify-between';
+                    
+                    let competitorsListHtml = competitors.map(c => 
+                        `<li class="text-sm text-gray-300 py-1 border-b border-gray-700/50 flex justify-between">
+                            <span>${c.name || c.full_name || 'Competitor'}</span>
+                            <span class="text-xs text-gray-500">${c.club || ''}</span>
+                        </li>`
+                    ).join('');
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-lg text-white">${categoryName}</h3>
+                                <span class="bg-red-900/60 text-red-300 text-xs px-2 py-1 rounded font-semibold">${competitors.length} Entered</span>
+                            </div>
+                            <ul class="max-h-40 overflow-y-auto mb-4 pr-1">
+                                ${competitorsListHtml}
+                            </ul>
+                        </div>
+                        <div class="pt-3 border-t border-gray-700 flex justify-between items-center">
+                            <span class="text-xs text-gray-400">Ready for brackets</span>
+                            <button onclick="openBracketView('${categoryName}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded transition">View Bracket</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+
+            } catch (err) {
+                console.error('Error loading categories:', err);
+                grid.innerHTML = `<div class="text-red-400 col-span-full text-center py-12">Error loading categories: ${err.message}</div>`;
+            }
+        }
+
+        function openBracketView(categoryName) {
+            alert(`Opening printable A4 bracket view for: ${categoryName}`);
+            // You can route this to a bracket generation layout view if needed
+        }
+
+        document.getElementById('applyFilters').addEventListener('click', fetchCategories);
+
+        // Load categories on start
+        fetchCategories();
+    </script>
+</body>
+</html>
