@@ -443,8 +443,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .timer-btn.pause:hover { background: #d97706; }
 .timer-btn.reset { background: #ef4444; color: white; }
 .timer-btn.reset:hover { background: #dc2626; }
-.timer-btn.break { background: #0284c7; color: white; }
-.timer-btn.break:hover { background: #0369a1; }
 
 /* Score boxes */
 .score-section {
@@ -1257,15 +1255,20 @@ button:disabled { opacity: .6; cursor: not-allowed; }
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
               <button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
-              <button id="btn-timer-break" class="timer-btn break">☕ Start Break</button>
               <button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <label style="font-size:0.85rem;color:#94a3b8;">Min:</label>
-              <input id="inp-timer-min" type="number" min="0" max="10" value="2" style="width:55px;padding:6px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:1rem;" />
-              <label style="font-size:0.85rem;color:#94a3b8;">Sec:</label>
-              <input id="inp-timer-sec" type="number" min="0" max="59" value="0" style="width:55px;padding:6px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:1rem;" />
-              <button id="btn-set-time" class="timer-btn" style="background:#3b82f6;padding:8px 14px;font-size:0.85rem;">Set Time</button>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <div style="display:flex;gap:4px;align-items:center;">
+                <span style="font-size:0.8rem;color:#94a3b8;">Round M:</span>
+                <input id="inp-timer-min" type="number" min="0" max="10" value="2" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+                <span style="font-size:0.8rem;color:#94a3b8;">S:</span>
+                <input id="inp-timer-sec" type="number" min="0" max="59" value="0" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+              </div>
+              <div style="display:flex;gap:4px;align-items:center;">
+                <span style="font-size:0.8rem;color:#38bdf8;">Break S:</span>
+                <input id="inp-break-sec" type="number" min="0" max="300" value="30" style="width:50px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+              </div>
+              <button id="btn-set-time" class="timer-btn" style="background:#3b82f6;padding:8px 12px;font-size:0.85rem;">Set Times</button>
             </div>
           </div>
           <div id="timer-round3-note" class="hidden-view" style="background:#854d0e;color:#fbbf24;padding:10px;border-radius:8px;margin-top:10px;text-align:center;font-weight:700;">
@@ -1530,7 +1533,7 @@ const state = {
 };
 
 const TIMER_CHANNEL_PREFIX = "timer-";
-let timerState = { round: 1, roundTime: 120, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
 let timerChannel = null;
 let timerTickInterval = null;
 let broadcastInterval = null;
@@ -1569,7 +1572,8 @@ function getRemaining() {
   const now = Date.now();
   let total = timerState.elapsed;
   if (timerState.startTime) total += (now - timerState.startTime) / 1000;
-  return Math.max(0, timerState.roundTime - total);
+  const limit = timerState.isBreak ? timerState.breakTime : timerState.roundTime;
+  return Math.max(0, limit - total);
 }
 
 function formatTime(seconds) {
@@ -1618,30 +1622,37 @@ function renderTimer() {
   if (timerState.finished) {
     status = timerState.winner === 'draw' ? 'Match Complete · DRAW' : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
   } else if (timerState.isBreak) {
-    status = timerState.paused ? '☕ Break · Paused' : '☕ Break in Progress';
+    status = timerState.paused ? '☕ Break · Paused (Press SPACE to Start Next Round)' : '☕ Break in Progress';
   } else if (timerState.paused) {
     status = `Round ${timerState.round} · Paused (Press SPACE)`;
   } else {
     status = `Round ${timerState.round} · Running (Press SPACE to Pause)`;
   }
   if (statusEl) statusEl.textContent = status;
-  if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.paused ? 'Paused' : 'Running');
+  if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.isBreak ? 'Break' : (timerState.paused ? 'Paused' : 'Running'));
 
   const btnStart = document.getElementById('btn-timer-start');
   const btnPause = document.getElementById('btn-timer-pause');
-  const btnBreak = document.getElementById('btn-timer-break');
   if (btnStart && btnPause) {
-    if (timerState.paused || timerState.finished) {
+    if (timerState.finished) {
       btnStart.classList.remove('hidden-view');
       btnPause.classList.add('hidden-view');
-      btnStart.disabled = timerState.finished;
+      btnStart.disabled = true;
+      btnStart.textContent = '▶ Start Round';
+    } else if (timerState.isBreak) {
+      btnStart.classList.remove('hidden-view');
+      btnPause.classList.add('hidden-view');
+      btnStart.disabled = false;
+      btnStart.textContent = '▶ Start Next Round Now';
+    } else if (timerState.paused) {
+      btnStart.classList.remove('hidden-view');
+      btnPause.classList.add('hidden-view');
+      btnStart.disabled = false;
+      btnStart.textContent = '▶ Start Round';
     } else {
       btnStart.classList.add('hidden-view');
       btnPause.classList.remove('hidden-view');
     }
-  }
-  if (btnBreak) {
-    btnBreak.textContent = timerState.isBreak ? '▶ Resume Match' : '☕ Start Break';
   }
 
   const r3note = document.getElementById('timer-round3-note');
@@ -1672,6 +1683,7 @@ function tickTimer() {
   renderTimer();
   if (state.role === 'laptop' && !timerState.paused && getRemaining() <= 0) {
     if (timerState.isBreak) {
+      // Break timer finished automatically
       timerState.isBreak = false;
       timerState.paused = true;
       timerState.elapsed = 0;
@@ -1680,7 +1692,7 @@ function tickTimer() {
       broadcastTimerState();
       renderTimer();
       stopTimerTick();
-      showToast('☕ Break ended. Ready for next round.', 'success');
+      showToast('☕ Break time finished! Press Start or Space for next round.', 'success');
     } else {
       endRound();
     }
@@ -1708,6 +1720,19 @@ function stopBroadcastLoop() {
 
 function startTimer() {
   if (timerState.finished || state.role !== 'laptop') return;
+  if (timerState.isBreak) {
+    // If currently on break, pressing start finishes break and immediately enters next round paused
+    timerState.isBreak = false;
+    timerState.paused = true;
+    timerState.elapsed = 0;
+    timerState.startTime = null;
+    saveTimerState();
+    broadcastTimerState();
+    renderTimer();
+    stopTimerTick();
+    showToast('Break skipped. Ready for round ' + timerState.round, 'success');
+    return;
+  }
   timerState.paused = false;
   timerState.startTime = Date.now();
   saveTimerState();
@@ -1725,34 +1750,6 @@ function pauseTimer() {
   saveTimerState();
   broadcastTimerState();
   renderTimer();
-}
-
-function toggleBreakTimer() {
-  if (state.role !== 'laptop' || timerState.finished) return;
-  if (!timerState.isBreak) {
-    // Start break mode (e.g. 60 seconds break)
-    timerState.isBreak = true;
-    timerState.roundTime = 60;
-    timerState.elapsed = 0;
-    timerState.startTime = Date.now();
-    timerState.paused = false;
-    saveTimerState();
-    broadcastTimerState();
-    renderTimer();
-    startTimerTick();
-    showToast('☕ Break timer started (60s)', 'success');
-  } else {
-    // Resume match mode
-    timerState.isBreak = false;
-    timerState.roundTime = state.currentMatch?.round_time_seconds || 120;
-    timerState.elapsed = 0;
-    timerState.startTime = null;
-    timerState.paused = true;
-    saveTimerState();
-    broadcastTimerState();
-    renderTimer();
-    showToast('Match timer restored', 'success');
-  }
 }
 
 window.addEventListener("keydown", (e) => {
@@ -1783,27 +1780,28 @@ document.addEventListener("DOMContentLoaded", () => {
       if (state.role !== 'laptop') return;
       const mins = parseInt(document.getElementById("inp-timer-min").value) || 0;
       const secs = parseInt(document.getElementById("inp-timer-sec").value) || 0;
+      const breakSecs = parseInt(document.getElementById("inp-break-sec").value) || 30;
       const totalSecs = (mins * 60) + secs;
       timerState.roundTime = totalSecs;
-      timerState.elapsed = 0;
-      timerState.startTime = null;
-      timerState.paused = true;
-      timerState.isBreak = false;
+      timerState.breakTime = breakSecs;
+      if (!timerState.isBreak) {
+        timerState.elapsed = 0;
+        timerState.startTime = null;
+        timerState.paused = true;
+      }
       saveTimerState();
       broadcastTimerState();
       renderTimer();
-      showToast(`Timer set to ${mins}:${secs.toString().padStart(2, '0')}`, 'success');
+      showToast(`Timer set: Round ${mins}:` + secs.toString().padStart(2, '0') + ` | Break ${breakSecs}s`, 'success');
     });
   }
-  const btnBreak = document.getElementById("btn-timer-break");
-  if (btnBreak) btnBreak.addEventListener("click", toggleBreakTimer);
 });
 
 async function endRound() {
   if (timerState.finished) return;
   timerState.paused = true;
   timerState.startTime = null;
-  timerState.elapsed = timerState.roundTime;
+  timerState.elapsed = 0;
 
   await fetchMatchNow();
   const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
@@ -1811,18 +1809,27 @@ async function endRound() {
 
   if (timerState.round === 1) {
     timerState.round = 2;
-    timerState.elapsed = 0;
+    // Automatically trigger break time after round 1
+    timerState.isBreak = true;
+    timerState.paused = false;
+    timerState.startTime = Date.now();
     saveTimerState();
     broadcastTimerState();
     renderTimer();
+    startTimerTick();
+    showToast('☕ Round 1 ended. Break time started!', 'success');
   } else if (timerState.round === 2) {
     const votes = judgeVoteCounts();
     if (votes.blue === votes.red) {
       timerState.round = 3;
-      timerState.elapsed = 0;
+      timerState.isBreak = true;
+      timerState.paused = false;
+      timerState.startTime = Date.now();
       saveTimerState();
       broadcastTimerState();
       renderTimer();
+      startTimerTick();
+      showToast('☕ Round 2 tied! Break started before Round 3 tie-breaker.', 'warning');
     } else {
       finishMatch();
     }
@@ -1836,6 +1843,7 @@ function finishMatch() {
   if (mode === 'patterns') {
     timerState.finished = true;
     timerState.paused = true;
+    timerState.isBreak = false;
     saveTimerState();
     broadcastTimerState();
     renderTimer();
@@ -1847,6 +1855,7 @@ function finishMatch() {
   const votes = judgeVoteCounts();
   timerState.finished = true;
   timerState.paused = true;
+  timerState.isBreak = false;
 
   if (votes.blue > votes.red) timerState.winner = 'blue';
   else if (votes.red > votes.blue) timerState.winner = 'red';
@@ -1904,7 +1913,7 @@ async function confirmAndAdvance() {
 
   if (error) { showToast('Failed to advance: ' + error.message, 'error'); return; }
 
-  timerState = { round: 1, roundTime: timerState.roundTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+  timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
   saveTimerState();
   broadcastTimerState();
 
@@ -1933,7 +1942,7 @@ async function resetMatch() {
   if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
   await resetMatchScores();
 
-  timerState = { round: 1, roundTime: timerState.roundTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+  timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
   saveTimerState();
   broadcastTimerState();
 
@@ -1963,6 +1972,7 @@ async function declareWinner(side) {
   
   timerState.finished = true;
   timerState.paused = true;
+  timerState.isBreak = false;
   timerState.winner = side;
   saveTimerState();
   broadcastTimerState();
@@ -2077,7 +2087,6 @@ function updateCompetitorDisplay() {
   const catId = state.ring?.category_id || state.currentMatch?.category_id;
   if (categoryLinkContainer && categoryLinkAnchor) {
     if (catId) {
-      // Construct tournament portal link or public yreb view
       const yrebUrl = `https://www.tkd-iscore.com/category/${catId}`;
       categoryLinkAnchor.href = yrebUrl;
       categoryLinkAnchor.textContent = `View Category #${catId} Web Portal (Yreb)`;
