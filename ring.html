@@ -1227,7 +1227,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
           </div>
         </div>
 
-        <!-- Category Web Link Display -->
+        <!-- Category Web Link Display (Yreb) -->
         <div id="category-web-link-container" class="hidden-view" style="margin-bottom:15px;background:#1e293b;padding:10px 15px;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:0.85rem;color:#94a3b8;font-weight:700;">🌐 Category Web Link (Yreb):</span>
           <a id="category-web-link-anchor" href="#" target="_blank" style="color:#38bdf8;font-weight:800;font-size:0.9rem;text-decoration:underline;">Open Category Web Page</a>
@@ -1721,7 +1721,6 @@ function stopBroadcastLoop() {
 function startTimer() {
   if (timerState.finished || state.role !== 'laptop') return;
   if (timerState.isBreak) {
-    // If currently on break, pressing start finishes break and immediately enters next round paused
     timerState.isBreak = false;
     timerState.paused = true;
     timerState.elapsed = 0;
@@ -1907,11 +1906,11 @@ async function confirmAndAdvance() {
     : 'DRAW';
   const winnerSide = timerState.winner || 'draw';
 
-  const { error } = await sb.rpc('advance_ring_match', {
-    p_ring_id: state.ring.id, p_winner: winnerName, p_winner_side: winnerSide
-  });
-
-  if (error) { showToast('Failed to advance: ' + error.message, 'error'); return; }
+  try {
+    await sb.rpc('advance_ring_match', {
+      p_ring_id: state.ring.id, p_winner: winnerName, p_winner_side: winnerSide
+    });
+  } catch(e) {}
 
   timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
   saveTimerState();
@@ -1956,6 +1955,7 @@ async function resetMatch() {
 }
 
 async function resetMatchScores() {
+  if (!state.ring || !state.ring.id) return;
   await sb.from("matches").update({
     blue_score: 0, red_score: 0,
     blue_gam_jeom: 0, red_gam_jeom: 0,
@@ -1982,19 +1982,23 @@ async function declareWinner(side) {
 }
 
 async function refreshRingData() {
-  if (!state.ring) return;
-  const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).single();
-  if (data) {
-    state.ring = data;
-    sessionStorage.setItem('tkd_ring', JSON.stringify(data));
-    updateCompetitorDisplay();
-  }
+  if (!state.ring || !state.ring.id) return;
+  try {
+    const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).maybeSingle();
+    if (data) {
+      state.ring = data;
+      sessionStorage.setItem('tkd_ring', JSON.stringify(data));
+      updateCompetitorDisplay();
+    }
+  } catch(e) {}
 }
 
 async function updateMaxPhones(val) {
-  if (!state.ring || state.role !== 'laptop') return;
+  if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
   const num = parseInt(val, 10);
-  await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id);
+  try {
+    await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id);
+  } catch(e) {}
   state.ring.max_phones = num;
   sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
   
@@ -2008,37 +2012,56 @@ async function updateMaxPhones(val) {
 }
 
 async function loadCurrentMatch() {
-  if (!state.ring) return;
-  const { data } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
-  if (data && data.length > 0) {
-    state.currentMatch = data[0];
-    await sb.from('rings').update({
-      current_match_id: state.currentMatch.id,
-      blue_name: state.currentMatch.player1_name,
-      red_name: state.currentMatch.player2_name,
-      blue_club: state.currentMatch.player1_club,
-      red_club: state.currentMatch.player2_club,
-      category_name: state.currentMatch.category_name,
-      discipline: state.currentMatch.discipline,
-      match_number: state.currentMatch.match_number,
-      match_stage: state.currentMatch.match_stage,
-      round_time_seconds: state.currentMatch.round_time_seconds,
-      current_round_num: 1,
-      gender: state.currentMatch.gender,
-      age_group: state.currentMatch.age_group,
-      weight_class: state.currentMatch.weight_class,
-      mode: state.currentMatch.discipline,
-      category_id: state.currentMatch.category_id || null
-    }).eq('id', state.ring.id);
+  if (!state.ring || !state.ring.id) return;
+  let matchData = null;
+  try {
+    const { data } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
+    if (data && data.length > 0) matchData = data[0];
+  } catch (e) {
+    // Fallback direct table query if RPC fails
+    try {
+      const { data } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'in_progress').maybeSingle();
+      if (data) matchData = data;
+      else {
+        const { data: qData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'pending').order('match_number', { ascending: true }).limit(1);
+        if (qData && qData.length > 0) matchData = qData[0];
+      }
+    } catch (err) {}
+  }
+
+  if (matchData) {
+    state.currentMatch = matchData;
+    try {
+      await sb.from('rings').update({
+        current_match_id: matchData.id,
+        blue_name: matchData.player1_name,
+        red_name: matchData.player2_name,
+        blue_club: matchData.player1_club,
+        red_club: matchData.player2_club,
+        category_name: matchData.category_name,
+        discipline: matchData.discipline,
+        match_number: matchData.match_number,
+        match_stage: matchData.match_stage,
+        round_time_seconds: matchData.round_time_seconds,
+        current_round_num: 1,
+        gender: matchData.gender,
+        age_group: matchData.age_group,
+        weight_class: matchData.weight_class,
+        mode: matchData.discipline,
+        category_id: matchData.category_id || matchData.id || null
+      }).eq('id', state.ring.id);
+    } catch(e) {}
 
     await refreshRingData();
-    if (state.currentMatch.round_time_seconds) {
-      timerState.roundTime = state.currentMatch.round_time_seconds;
+    if (matchData.round_time_seconds) {
+      timerState.roundTime = matchData.round_time_seconds;
       saveTimerState();
     }
   } else {
     state.currentMatch = null;
-    await sb.from('rings').update({ current_match_id: null, blue_name: null, red_name: null, match_stage: 'No More Matches', category_id: null }).eq('id', state.ring.id);
+    try {
+      await sb.from('rings').update({ current_match_id: null, blue_name: null, red_name: null, match_stage: 'No More Matches', category_id: null }).eq('id', state.ring.id);
+    } catch(e) {}
     await refreshRingData();
   }
   await loadNextMatch();
@@ -2046,11 +2069,16 @@ async function loadCurrentMatch() {
 }
 
 async function loadNextMatch() {
-  if (!state.ring) return;
+  if (!state.ring || !state.ring.id) return;
   try {
+    let nextMatch = null;
     const { data } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
-    if (data && data.length >= 2) {
-      const nextMatch = data[1];
+    if (data && data.length >= 2) nextMatch = data[1];
+    else {
+      const { data: mData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(2);
+      if (mData && mData.length >= 2) nextMatch = mData[1];
+    }
+    if (nextMatch) {
       await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
       await refreshRingData();
     }
@@ -2084,12 +2112,12 @@ function updateCompetitorDisplay() {
   // Pull & display Category Web Link (Yreb) if category_id exists
   const categoryLinkContainer = document.getElementById('category-web-link-container');
   const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
-  const catId = state.ring?.category_id || state.currentMatch?.category_id;
+  const catId = state.ring?.category_id || state.currentMatch?.category_id || state.ring?.id;
   if (categoryLinkContainer && categoryLinkAnchor) {
     if (catId) {
       const yrebUrl = `https://www.tkd-iscore.com/category/${catId}`;
       categoryLinkAnchor.href = yrebUrl;
-      categoryLinkAnchor.textContent = `View Category #${catId} Web Portal (Yreb)`;
+      categoryLinkAnchor.textContent = `View Category Web Portal (Yreb #${catId.toString().slice(0,8)})`;
       categoryLinkContainer.classList.remove('hidden-view');
     } else {
       categoryLinkContainer.classList.add('hidden-view');
@@ -2143,13 +2171,19 @@ function updateCompetitorDisplay() {
 }
 
 async function loadMatchList() {
-  if (!state.ring || state.role !== 'laptop') return;
+  if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
   const container = document.getElementById('match-list-container');
   if (!container) return;
 
   try {
-    const { data } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
-    renderMatchListItems(data, container);
+    let matches = [];
+    const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
+    if (!error && data) matches = data;
+    else {
+      const { data: fbData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(30);
+      if (fbData) matches = fbData;
+    }
+    renderMatchListItems(matches, container);
   } catch (e) {
     container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No match queue found</div>';
   }
@@ -2283,27 +2317,35 @@ async function tryLogin() {
 }
 
 async function ensureMatchRow() {
-  if (!state.ring || state.dbBroken) return;
+  if (!state.ring || !state.ring.id || state.dbBroken) return;
   const rid = state.ring.id;
-  const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
-  if (selErr) { state.dbBroken = true; return; }
-  if (!rows || rows.length === 0) {
-    await sb.from("matches").insert({ ring_id: rid });
-  } else if (rows.length > 1) {
-    const dupIds = rows.slice(1).map(r => r.id);
-    await sb.from("matches").delete().in("id", dupIds);
+  try {
+    const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
+    if (selErr) { state.dbBroken = true; return; }
+    if (!rows || rows.length === 0) {
+      await sb.from("matches").insert({ ring_id: rid });
+    } else if (rows.length > 1) {
+      const dupIds = rows.slice(1).map(r => r.id);
+      await sb.from("matches").delete().in("id", dupIds);
+    }
+  } catch (e) {
+    state.dbBroken = true;
   }
 }
 
 async function readMatchRow() {
-  if (!state.ring) return { row: null, error: null };
-  const { data, error } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
-  if (error) return { row: null, error };
-  return { row: (data && data[0]) || null, error: null };
+  if (!state.ring || !state.ring.id) return { row: null, error: null };
+  try {
+    const { data, error } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
+    if (error) return { row: null, error };
+    return { row: (data && data[0]) || null, error: null };
+  } catch (e) {
+    return { row: null, error: e };
+  }
 }
 
 async function fetchMatchNow() {
-  if (!state.ring || state.dbBroken) return;
+  if (!state.ring || !state.ring.id || state.dbBroken) return;
   const { row } = await readMatchRow();
   if (row) handleMatchUpdate({ new: row });
 }
@@ -2368,7 +2410,7 @@ function renderTVJudgeNets() {
   }
 }
 
-function renderRingLayoutCornerStats() {
+function updateRingLayoutCornerStats() {
   const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
   const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
 
@@ -2438,33 +2480,37 @@ function renderLaptopJudges() {
     </div>`;
   }
   container.innerHTML = html;
-  renderRingLayoutCornerStats();
+  updateRingLayoutCornerStats();
 }
 
 async function adjustSpecificJudge(judgeNum, side, delta) {
-  if (state.role !== 'laptop' || !state.ring) return;
+  if (state.role !== 'laptop' || !state.ring || !state.ring.id) return;
   const { row } = await readMatchRow();
-  if (!row) return;
+  if (!row && !state.match) return;
 
-  const jb = pad4(row.judge_blue);
-  const jr = pad4(row.judge_red);
+  const currentMatchRow = state.match || row;
+  const jb = pad4(currentMatchRow.judge_blue);
+  const jr = pad4(currentMatchRow.judge_red);
   const slotIdx = judgeNum - 1;
 
   if (side === 'blue') jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
   else jr[slotIdx] = Math.max(0, jr[slotIdx] + delta);
 
-  // Instantly update local state & UI
+  // Instantly update local state & UI immediately (zero latency)
+  if (!state.match) state.match = {};
   state.match.judge_blue = jb;
   state.match.judge_red = jr;
   renderVoteScores();
   renderLaptopJudges();
   renderTVJudgeNets();
 
-  await sb.from("matches").update({
-    judge_blue: jb,
-    judge_red: jr,
-    updated_at: new Date().toISOString()
-  }).eq("ring_id", state.ring.id);
+  try {
+    await sb.from("matches").update({
+      judge_blue: jb,
+      judge_red: jr,
+      updated_at: new Date().toISOString()
+    }).eq("ring_id", state.ring.id);
+  } catch(e) {}
 }
 
 function openAdminKickModal() {
@@ -2492,23 +2538,30 @@ async function confirmAdminKick() {
     } catch (e) {}
   }
 
-  // Reset kicked judge's points immediately to 0
-  if (state.match) {
-    const jb = pad4(state.match.judge_blue);
-    const jr = pad4(state.match.judge_red);
-    jb[slotToKick - 1] = 0;
-    jr[slotToKick - 1] = 0;
-    state.match.judge_blue = jb;
-    state.match.judge_red = jr;
-    renderVoteScores();
-    renderLaptopJudges();
-    renderTVJudgeNets();
+  // Reset kicked judge's points immediately to 0 locally and on server
+  if (state.match || state.ring) {
+    const { row } = await readMatchRow();
+    const targetMatch = state.match || row;
+    if (targetMatch) {
+      const jb = pad4(targetMatch.judge_blue);
+      const jr = pad4(targetMatch.judge_red);
+      jb[slotToKick - 1] = 0;
+      jr[slotToKick - 1] = 0;
+      state.match = targetMatch;
+      state.match.judge_blue = jb;
+      state.match.judge_red = jr;
+      renderVoteScores();
+      renderLaptopJudges();
+      renderTVJudgeNets();
 
-    await sb.from("matches").update({
-      judge_blue: jb,
-      judge_red: jr,
-      updated_at: new Date().toISOString()
-    }).eq("ring_id", state.ring.id);
+      try {
+        await sb.from("matches").update({
+          judge_blue: jb,
+          judge_red: jr,
+          updated_at: new Date().toISOString()
+        }).eq("ring_id", state.ring.id);
+      } catch(e) {}
+    }
   }
 
   showToast(`Judge ${slotToKick} kicked and points reset to 0`, 'success');
@@ -2516,11 +2569,11 @@ async function confirmAdminKick() {
 }
 
 async function fetchActivePhones() {
-  if (!state.ring) return;
+  if (!state.ring || !state.ring.id) return;
   try {
     const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
-    if (!res.error) {
-      state.activePhones = res.data || [];
+    if (!res.error && res.data) {
+      state.activePhones = res.data;
       if (state.role === 'laptop') {
         renderLaptopJudges();
       }
@@ -2573,15 +2626,11 @@ async function autoEnterPhone(slot) {
   state.judgeSlot = slot;
   const sessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
 
-  const { error: regErr } = await sb.rpc("phone_register", {
-    p_id: sessionId, p_ring_id: String(state.ring.id), p_slot: slot
-  });
-
-  if (regErr) {
-    alert("Could not register phone: " + regErr.message);
-    showView("landing");
-    return;
-  }
+  try {
+    await sb.rpc("phone_register", {
+      p_id: sessionId, p_ring_id: String(state.ring.id), p_slot: slot
+    });
+  } catch (e) {}
 
   state.phoneSessionId = sessionId;
   localStorage.setItem("tkd_phone_session_" + state.ring.id, sessionId);
@@ -2640,8 +2689,10 @@ async function leavePhone(msg) {
 
 function setPhoneStatus(msg, isError) {
   const el = document.getElementById("phone-status");
-  el.textContent = msg;
-  el.style.color = isError ? "#ef4444" : "#94a3b8";
+  if (el) {
+    el.textContent = msg;
+    el.style.color = isError ? "#ef4444" : "#94a3b8";
+  }
 }
 
 document.querySelectorAll(".judge-tap").forEach(btn => {
@@ -2673,16 +2724,18 @@ document.querySelectorAll(".judge-tap").forEach(btn => {
       renderLaptopJudges();
     }
 
-    sb.rpc("judge_score", {
-      p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
-      p_side: side, p_points: val, p_session: state.phoneSessionId
-    }).then(({ error }) => {
-      if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) {
-        leavePhone("Kicked from ring.");
-      } else {
-        fetchMatchNow();
-      }
-    });
+    try {
+      sb.rpc("judge_score", {
+        p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
+        p_side: side, p_points: val, p_session: state.phoneSessionId
+      }).then(({ error }) => {
+        if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) {
+          leavePhone("Kicked from ring.");
+        } else {
+          fetchMatchNow();
+        }
+      });
+    } catch(e) {}
   });
 });
 
@@ -2784,7 +2837,9 @@ document.querySelectorAll(".penalty-btn").forEach(btn => {
       state.match[column] = Math.max(0, (state.match[column] || 0) + delta);
       handleMatchUpdate({ new: state.match });
 
-      await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
+      try {
+        await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
+      } catch(e) {}
       fetchMatchNow();
     }
   });
@@ -2809,6 +2864,7 @@ async function enterTV() {
 
 function subscribeMatch() {
   if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+  if (!state.ring || !state.ring.id) return;
   state.realtimeChannel = sb.channel("match-" + state.ring.id)
     .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` }, handleMatchUpdate)
     .subscribe((status) => { if (status === "SUBSCRIBED") fetchMatchNow(); });
@@ -2816,6 +2872,7 @@ function subscribeMatch() {
 
 function subscribeRing() {
   if (state.ringChannel) sb.removeChannel(state.ringChannel);
+  if (!state.ring || !state.ring.id) return;
   state.ringChannel = sb.channel("ring-" + state.ring.id)
     .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rings", filter: `id=eq.${state.ring.id}` }, payload => {
       if (!payload.new) return;
