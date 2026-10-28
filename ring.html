@@ -1,2644 +1,2710 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>TKD iScore - 9th Vojvodina Open ITF</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>
-* { -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
-input, textarea, select { user-select: text; }
-body { font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior: none; margin: 0; padding: 0; }
-button { touch-action: manipulation; cursor: pointer; }
-button:disabled { opacity: .6; cursor: not-allowed; }
-.hidden-view { display: none !important; }
-/* ===== TV DISPLAY STYLES ===== */
-.tv-container {
-width: 100vw;
-height: 100vh;
-background: #090d16;
-position: relative;
-overflow: hidden;
-display: flex;
-flex-direction: column;
-}
-.tv-top-bar {
-background: linear-gradient(90deg, #111827 0%, #1f2937 100%);
-padding: 12px 30px;
-display: flex;
-justify-content: space-between;
-align-items: center;
-border-bottom: 3px solid #fbbf24;
-z-index: 10;
-}
-.tv-top-info {
-display: flex;
-align-items: center;
-gap: 20px;
-color: white;
-font-size: 16px;
-}
-.tv-top-info .stage-badge {
-background: #dc2626;
-color: white;
-padding: 5px 14px;
-border-radius: 6px;
-font-weight: 800;
-font-size: 14px;
-}
-.tv-top-info .category-info {
-display: flex;
-align-items: center;
-gap: 10px;
-color: #fbbf24;
-font-weight: 700;
-font-size: 1.1rem;
-}
-.tv-main-area {
-flex: 1;
-display: grid;
-grid-template-columns: 1fr 1fr;
-position: relative;
-}
-.tv-side {
-display: flex;
-flex-direction: column;
-justify-content: center;
-padding: 40px;
-position: relative;
-}
-.tv-side.blue-side {
-background: linear-gradient(135deg, rgba(30,58,138,0.85) 0%, rgba(37,99,235,0.75) 100%);
-border-right: 2px solid rgba(255,255,255,0.1);
-}
-.tv-side.red-side {
-background: linear-gradient(135deg, rgba(127,29,29,0.85) 0%, rgba(220,38,38,0.75) 100%);
-border-left: 2px solid rgba(255,255,255,0.1);
-}
-.tv-competitor-name {
-font-size: clamp(2.5rem, 5vw, 4.5rem);
-font-weight: 900;
-color: white;
-text-shadow: 0 4px 16px rgba(0,0,0,0.6);
-margin-bottom: 10px;
-line-height: 1.1;
-}
-.tv-competitor-club {
-font-size: clamp(1.2rem, 2.5vw, 2rem);
-color: rgba(255,255,255,0.9);
-font-weight: 700;
-margin-bottom: 25px;
-}
-.tv-big-score {
-font-size: clamp(5rem, 12vw, 10rem);
-font-weight: 900;
-color: white;
-text-shadow: 0 8px 24px rgba(0,0,0,0.7);
-line-height: 1;
-font-variant-numeric: tabular-nums;
-}
-.tv-center-overlay {
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-background: rgba(15, 23, 42, 0.95);
-border: 4px solid #fbbf24;
-border-radius: 24px;
-padding: 25px 50px;
-text-align: center;
-z-index: 20;
-box-shadow: 0 15px 50px rgba(0,0,0,0.8);
-min-width: 340px;
-}
-.tv-round-info {
-color: #fbbf24;
-font-size: 1.3rem;
-font-weight: 800;
-letter-spacing: 3px;
-margin-bottom: 6px;
-}
-.tv-timer-display {
-color: white;
-font-size: clamp(3.5rem, 7vw, 6rem);
-font-weight: 900;
-font-variant-numeric: tabular-nums;
-line-height: 1;
-margin-bottom: 15px;
-}
-.tv-timer-display.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
-.tv-timer-display.break-mode { color: #38bdf8; }
-.tv-penalties {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 25px;
-color: white;
-font-size: 1.4rem;
-font-weight: 800;
-}
-.tv-penalty-item {
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.tv-penalty-label { color: #fbbf24; }
-/* TV Corner Judge Net Displays */
-.tv-judge-corner {
-position: absolute;
-background: rgba(15, 23, 42, 0.85);
-border: 2px solid #334155;
-border-radius: 12px;
-padding: 10px 18px;
-text-align: center;
-z-index: 25;
-min-width: 90px;
-}
-.tv-judge-corner.tl { top: 80px; left: 30px; }
-.tv-judge-corner.tr { top: 80px; right: 30px; }
-.tv-judge-corner.br { bottom: 80px; right: 30px; }
-.tv-judge-corner.bl { bottom: 80px; left: 30px; }
-.tv-jc-label { font-size: 0.75rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
-.tv-jc-score { font-size: 1.8rem; font-weight: 900; color: white; font-variant-numeric: tabular-nums; }
-.tv-judge-corner.lead-blue { border-color: #2563eb; background: rgba(30,58,138,0.7); }
-.tv-judge-corner.lead-red { border-color: #dc2626; background: rgba(127,29,29,0.7); }
-.tv-bottom-bar {
-background: linear-gradient(90deg, #111827 0%, #030712 100%);
-border-top: 3px solid #fbbf24;
-padding: 15px 35px;
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 30px;
-z-index: 10;
-}
-.tv-next-match {
-display: flex;
-align-items: center;
-gap: 15px;
-}
-.tv-next-label {
-color: #9ca3af;
-font-size: 0.9rem;
-font-weight: 700;
-text-transform: uppercase;
-letter-spacing: 1px;
-}
-.tv-next-name {
-color: white;
-font-size: 1.5rem;
-font-weight: 800;
-}
-.tv-next-name.blue-next { color: #60a5fa; }
-.tv-next-name.red-next { color: #f87171; }
-.tv-winner-overlay {
-position: absolute;
-inset: 0;
-background: rgba(0,0,0,0.92);
-display: flex;
-align-items: center;
-justify-content: center;
-z-index: 100;
-}
-.tv-winner-box {
-background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-border: 4px solid #fbbf24;
-border-radius: 24px;
-padding: 60px 80px;
-text-align: center;
-box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-}
-.tv-winner-trophy { font-size: 6rem; margin-bottom: 20px; }
-.tv-winner-text {
-font-size: 4rem;
-font-weight: 900;
-color: #fbbf24;
-margin-bottom: 10px;
-}
-.tv-winner-name {
-font-size: 2.5rem;
-font-weight: 700;
-color: white;
-margin-bottom: 20px;
-}
-.tv-winner-sub {
-font-size: 1.5rem;
-color: #9ca3af;
-font-weight: 600;
-letter-spacing: 3px;
-}
-@keyframes timerBlink {
-0%, 100% { opacity: 1; }
-50% { opacity: 0.4; }
-}
-/* ===== LAPTOP VIEW STYLES ===== */
-.laptop-container {
-background: #1e293b;
-min-height: 100vh;
-padding: 20px;
-color: white;
-}
-.laptop-header {
-background: #0f172a;
-border-radius: 12px;
-padding: 15px 20px;
-margin-bottom: 20px;
-display: flex;
-justify-content: space-between;
-align-items: center;
-flex-wrap: wrap;
-gap: 15px;
-}
-.laptop-header-left h1 {
-font-size: 1.5rem;
-font-weight: 800;
-margin: 0;
-}
-.laptop-header-left p {
-color: #94a3b8;
-font-size: 0.9rem;
-margin: 5px 0 0 0;
-}
-.laptop-header-right {
-display: flex;
-gap: 10px;
-flex-wrap: wrap;
-align-items: center;
-}
-.laptop-main-grid {
-display: grid;
-grid-template-columns: 340px 1fr; /* ✅ FIXED: Sidebar on LEFT, main content on RIGHT */
-gap: 20px;
-}
-@media (max-width: 1200px) {
-.laptop-main-grid { grid-template-columns: 1fr; }
-}
-.current-match-card {
-background: #0f172a;
-border-radius: 16px;
-padding: 25px;
-border: 2px solid #334155;
-}
-.current-match-header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 20px;
-padding-bottom: 15px;
-border-bottom: 1px solid #334155;
-}
-.match-stage-badge {
-background: #dc2626;
-color: white;
-padding: 6px 16px;
-border-radius: 8px;
-font-weight: 700;
-font-size: 0.9rem;
-}
-.match-number-badge {
-background: #1e40af;
-color: white;
-padding: 6px 16px;
-border-radius: 8px;
-font-weight: 700;
-font-size: 0.9rem;
-}
-.competitors-display {
-display: grid;
-grid-template-columns: 1fr auto 1fr;
-gap: 20px;
-align-items: center;
-margin-bottom: 25px;
-}
-.competitor-box {
-background: #1e293b;
-border-radius: 12px;
-padding: 20px;
-text-align: center;
-border: 3px solid;
-}
-.competitor-box.blue-box { border-color: #2563eb; }
-.competitor-box.red-box { border-color: #dc2626; }
-.competitor-box .comp-name {
-font-size: 1.8rem;
-font-weight: 800;
-margin-bottom: 8px;
-}
-.competitor-box.blue-box .comp-name { color: #60a5fa; }
-.competitor-box.red-box .comp-name { color: #f87171; }
-.competitor-box .comp-club {
-color: #94a3b8;
-font-size: 1rem;
-font-weight: 600;
-}
-.vs-divider {
-font-size: 2rem;
-font-weight: 900;
-color: #fbbf24;
-}
-/* Timer section */
-.timer-section {
-background: #1e293b;
-border-radius: 12px;
-padding: 20px;
-margin-bottom: 20px;
-}
-.timer-display-row {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 15px;
-}
-.timer-round-badge {
-background: #334155;
-color: white;
-padding: 8px 16px;
-border-radius: 8px;
-font-weight: 700;
-}
-.timer-time {
-font-size: 3rem;
-font-weight: 900;
-font-variant-numeric: tabular-nums;
-color: white;
-}
-.timer-time.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
-.timer-time.break-mode { color: #38bdf8; }
-.timer-controls {
-display: flex;
-gap: 10px;
-flex-wrap: wrap;
-align-items: center;
-justify-content: space-between;
-}
-.timer-btn {
-padding: 10px 20px;
-border-radius: 8px;
-font-weight: 700;
-border: none;
-font-size: 0.95rem;
-transition: all 0.2s;
-}
-.timer-btn.start { background: #10b981; color: white; }
-.timer-btn.start:hover { background: #059669; }
-.timer-btn.pause { background: #f59e0b; color: white; }
-.timer-btn.pause:hover { background: #d97706; }
-.timer-btn.reset { background: #ef4444; color: white; }
-.timer-btn.reset:hover { background: #dc2626; }
-/* Score boxes */
-.score-section {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 15px;
-margin-bottom: 20px;
-}
-.score-box {
-background: #1e293b;
-border-radius: 12px;
-padding: 25px;
-text-align: center;
-border: 2px solid;
-}
-.score-box.blue-score { border-color: #2563eb; }
-.score-box.red-score { border-color: #dc2626; }
-.score-box .score-label {
-font-size: 0.85rem;
-color: #94a3b8;
-font-weight: 700;
-text-transform: uppercase;
-letter-spacing: 1px;
-margin-bottom: 10px;
-}
-.score-box .score-value {
-font-size: 4.5rem;
-font-weight: 900;
-font-variant-numeric: tabular-nums;
-}
-.score-box.blue-score .score-value { color: #60a5fa; }
-.score-box.red-score .score-value { color: #f87171; }
-/* Judge boxes */
-.judges-section {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 10px;
-margin-bottom: 20px;
-}
-.judge-box {
-background: #1e293b;
-border-radius: 10px;
-padding: 15px;
-text-align: center;
-border: 2px solid #334155;
-transition: all 0.3s;
-}
-.judge-box.leading-blue {
-border-color: #2563eb;
-background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
-}
-.judge-box.leading-red {
-border-color: #dc2626;
-background: linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%);
-}
-.judge-box .judge-label {
-font-size: 0.75rem;
-color: #94a3b8;
-font-weight: 700;
-text-transform: uppercase;
-margin-bottom: 4px;
-}
-.judge-box .judge-status-badge {
-display: inline-block;
-font-size: 0.65rem;
-padding: 2px 6px;
-border-radius: 4px;
-font-weight: 800;
-margin-bottom: 6px;
-}
-.judge-status-badge.online { background: #065f46; color: #34d399; }
-.judge-status-badge.offline { background: #7f1d1d; color: #fca5a5; }
-.judge-box .judge-score {
-font-size: 1.5rem;
-font-weight: 900;
-font-variant-numeric: tabular-nums;
-}
-.judge-box .judge-detail {
-font-size: 0.75rem;
-color: #94a3b8;
-margin-top: 4px;
-font-weight: 600;
-}
-.judge-row-controls {
-display: flex;
-justify-content: center;
-gap: 10px;
-margin-top: 8px;
-font-size: 0.75rem;
-}
-.judge-side-adj {
-display: flex;
-align-items: center;
-gap: 3px;
-}
-.judge-adj-btn {
-width: 22px;
-height: 22px;
-border-radius: 4px;
-border: none;
-font-size: 0.8rem;
-font-weight: 800;
-color: white;
-}
-.judge-adj-btn.plus { background: #10b981; }
-.judge-adj-btn.minus { background: #ef4444; }
-/* Penalties section */
-.penalties-section {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 15px;
-margin-bottom: 20px;
-}
-.penalty-box {
-background: #1e293b;
-border-radius: 10px;
-padding: 15px;
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-.penalty-box .penalty-info {
-display: flex;
-flex-direction: column;
-}
-.penalty-box .penalty-label {
-font-size: 0.75rem;
-color: #94a3b8;
-font-weight: 700;
-text-transform: uppercase;
-}
-.penalty-box .penalty-value {
-font-size: 1.8rem;
-font-weight: 900;
-font-variant-numeric: tabular-nums;
-}
-.penalty-box .penalty-controls {
-display: flex;
-gap: 5px;
-}
-.penalty-btn {
-width: 35px;
-height: 35px;
-border-radius: 6px;
-border: none;
-font-size: 1.2rem;
-font-weight: 900;
-background: #334155;
-color: white;
-transition: all 0.15s;
-}
-.penalty-btn:active { transform: scale(0.95); }
-.penalty-btn.plus { background: #10b981; }
-.penalty-btn.minus { background: #ef4444; }
-/* Ring layout settings with precise corner box positioning */
-.settings-panel {
-background: #0f172a;
-border-radius: 12px;
-padding: 20px;
-margin-bottom: 20px;
-border: 2px solid #334155;
-position: relative;
-}
-.ring-layout-box {
-position: relative;
-width: 100%;
-max-width: 340px;
-height: 200px;
-margin: 20px auto;
-background: #1e293b;
-border: 2px dashed #475569;
-border-radius: 12px;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-.ring-center-label {
-color: #64748b;
-font-weight: 800;
-font-size: 0.9rem;
-text-transform: uppercase;
-letter-spacing: 2px;
-}
-.ring-corner-btn {
-position: absolute;
-background: #334155;
-color: white;
-border: 2px solid #fbbf24;
-padding: 8px 12px;
-border-radius: 8px;
-font-weight: 800;
-font-size: 0.8rem;
-cursor: pointer;
-transition: all 0.2s;
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 2px;
-}
-.ring-corner-btn:hover { background: #2563eb; transform: scale(1.05); }
-.ring-corner-btn.connected { border-color: #10b981; background: #064e3b; }
-.ring-corner-btn.tl { top: -15px; left: -15px; }
-.ring-corner-btn.tr { top: -15px; right: -15px; }
-.ring-corner-btn.br { bottom: -15px; right: -15px; }
-.ring-corner-btn.bl { bottom: -15px; left: -15px; }
-/* Bottom-Right Admin Kick Button Box */
-.admin-kick-corner-box {
-position: absolute;
-bottom: 12px;
-right: 15px;
-}
-.admin-kick-panel-btn {
-background: rgba(239, 68, 68, 0.15);
-color: #fca5a5;
-border: 1px solid #ef4444;
-border-radius: 8px;
-padding: 6px 14px;
-font-size: 0.8rem;
-font-weight: 800;
-cursor: pointer;
-transition: all 0.2s;
-display: flex;
-align-items: center;
-gap: 6px;
-}
-.admin-kick-panel-btn:hover {
-background: #ef4444;
-color: white;
-}
-/* Match list sidebar */
-.match-list-sidebar {
-background: #0f172a;
-border-radius: 12px;
-padding: 20px;
-border: 2px solid #334155;
-max-height: calc(100vh - 140px);
-overflow-y: auto;
-}
-.match-list-sidebar h3 {
-font-size: 1.1rem;
-font-weight: 800;
-margin-bottom: 15px;
-color: #fbbf24;
-display: flex;
-align-items: center;
-gap: 8px;
-}
-.match-list-item {
-background: #1e293b;
-border-radius: 8px;
-padding: 12px;
-margin-bottom: 8px;
-border-left: 4px solid #334155;
-transition: all 0.2s;
-}
-.match-list-item.active {
-border-left-color: #10b981;
-background: #064e3b;
-}
-.match-list-item.completed {
-border-left-color: #6b7280;
-opacity: 0.6;
-}
-.match-list-item .ml-number {
-font-size: 0.75rem;
-color: #94a3b8;
-font-weight: 700;
-margin-bottom: 4px;
-}
-.match-list-item .ml-names {
-font-size: 0.95rem;
-font-weight: 700;
-color: white;
-margin-bottom: 4px;
-}
-.match-list-item .ml-category {
-font-size: 0.75rem;
-color: #64748b;
-}
-.match-list-item .ml-winner {
-font-size: 0.8rem;
-color: #10b981;
-font-weight: 700;
-margin-top: 4px;
-}
-/* Modals */
-.modal-overlay {
-position: fixed;
-inset: 0;
-background: rgba(0,0,0,0.88);
-display: flex;
-align-items: center;
-justify-content: center;
-z-index: 1000;
-padding: 20px;
-}
-.modal-box {
-background: #1e293b;
-border-radius: 20px;
-padding: 40px;
-max-width: 450px;
-width: 100%;
-border: 3px solid #fbbf24;
-text-align: center;
-box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-/* Phone view styles */
-.phone-container {
-background: #0f172a;
-min-height: 100vh;
-color: white;
-display: flex;
-flex-direction: column;
-}
-.phone-header {
-background: #1e293b;
-padding: 15px 20px;
-display: flex;
-justify-content: space-between;
-align-items: center;
-border-bottom: 2px solid #334155;
-}
-.phone-competitors-bar {
-background: #000;
-padding: 15px 20px;
-display: flex;
-justify-content: space-between;
-align-items: center;
-border-bottom: 2px solid #334155;
-}
-.phone-competitor {
-flex: 1;
-text-align: center;
-}
-.phone-competitor.blue .pc-label { color: #60a5fa; }
-.phone-competitor.red .pc-label { color: #f87171; }
-.phone-competitor .pc-name {
-font-size: 1.2rem;
-font-weight: 800;
-color: white;
-}
-.phone-vs {
-font-size: 1.5rem;
-font-weight: 900;
-color: #fbbf24;
-padding: 0 15px;
-}
-.phone-timer-bar {
-background: #000;
-padding: 10px 20px;
-display: flex;
-justify-content: space-between;
-align-items: center;
-border-bottom: 2px solid #334155;
-font-size: 0.9rem;
-}
-.phone-timer-bar .pt-round { font-weight: 700; }
-.phone-timer-bar .pt-time {
-font-size: 1.5rem;
-font-weight: 900;
-font-variant-numeric: tabular-nums;
-}
-.phone-timer-bar .pt-status { color: #94a3b8; font-size: 0.8rem; }
-.phone-scoring-area {
-flex: 1;
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-padding: 10px;
-}
-.phone-side {
-border-radius: 16px;
-padding: 15px;
-display: flex;
-flex-direction: column;
-}
-.phone-side.blue-side {
-background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-}
-.phone-side.red-side {
-background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
-}
-.phone-side-title {
-text-align: center;
-font-weight: 800;
-font-size: 0.9rem;
-margin-bottom: 10px;
-letter-spacing: 1px;
-}
-.phone-buttons {
-flex: 1;
-display: grid;
-grid-template-rows: repeat(5, 1fr);
-gap: 8px;
-}
-.phone-btn {
-background: rgba(255,255,255,0.15);
-border: 2px solid rgba(255,255,255,0.3);
-border-radius: 10px;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-transition: all 0.05s;
-color: white;
-}
-.phone-btn:active {
-transform: scale(0.94);
-background: rgba(255,255,255,0.3);
-}
-.phone-btn .pb-value {
-font-size: 2.5rem;
-font-weight: 900;
-line-height: 1;
-}
-.phone-btn .pb-label {
-font-size: 0.65rem;
-font-weight: 700;
-letter-spacing: 1px;
-opacity: 0.8;
-margin-top: 3px;
-}
-.phone-status-bar {
-padding: 12px 20px;
-text-align: center;
-font-size: 0.85rem;
-background: #1e293b;
-border-top: 2px solid #334155;
-}
-/* Landing page */
-.landing-container {
-min-height: 100vh;
-background: #0f172a;
-display: flex;
-align-items: center;
-justify-content: center;
-padding: 20px;
-}
-.landing-box {
-background: #1e293b;
-border-radius: 20px;
-padding: 40px;
-max-width: 450px;
-width: 100%;
-border: 2px solid #334155;
-box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.landing-title {
-text-align: center;
-margin-bottom: 30px;
-}
-.landing-title .lt-icon { font-size: 4rem; margin-bottom: 10px; }
-.landing-title h1 {
-font-size: 2rem;
-font-weight: 900;
-margin: 0 0 10px 0;
-color: white;
-}
-.landing-title p {
-color: #94a3b8;
-margin: 0;
-font-size: 0.95rem;
-}
-.landing-input {
-width: 100%;
-padding: 15px;
-background: #0f172a;
-border: 2px solid #334155;
-border-radius: 12px;
-color: white;
-font-size: 1.5rem;
-text-align: center;
-letter-spacing: 3px;
-margin-bottom: 20px;
-font-family: monospace;
-}
-.landing-input:focus {
-outline: none;
-border-color: #2563eb;
-}
-.landing-btn {
-width: 100%;
-padding: 18px;
-background: #2563eb;
-color: white;
-border: none;
-border-radius: 12px;
-font-size: 1.2rem;
-font-weight: 800;
-transition: all 0.2s;
-}
-.landing-btn:hover { background: #1d4ed8; }
-.landing-btn:active { transform: scale(0.98); }
-.landing-error {
-color: #ef4444;
-text-align: center;
-margin-top: 15px;
-font-size: 0.9rem;
-min-height: 20px;
-}
-.landing-hints {
-margin-top: 30px;
-padding-top: 20px;
-border-top: 1px solid #334155;
-text-align: center;
-color: #64748b;
-font-size: 0.85rem;
-line-height: 1.8;
-}
-/* Toast */
-.toast {
-position: fixed;
-bottom: 30px;
-right: 30px;
-background: #1e293b;
-color: white;
-padding: 15px 25px;
-border-radius: 12px;
-font-weight: 700;
-box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-z-index: 2000;
-opacity: 0;
-transform: translateY(20px);
-transition: all 0.3s;
-pointer-events: none;
-border-left: 4px solid #10b981;
-}
-.toast.show {
-opacity: 1;
-transform: translateY(0);
-}
-.toast.error { border-left-color: #ef4444; }
-.toast.warning { border-left-color: #f59e0b; }
-.pulse { animation: pulse 0.3s ease; }
-@keyframes pulse {
-0% { transform: scale(1); }
-50% { transform: scale(1.08); }
-100% { transform: scale(1); }
-}
-.scored-flash { animation: scoredFlash 0.25s ease; }
-@keyframes scoredFlash {
-0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); }
-100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); }
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TKD iScore - 9th Vojvodina Open ITF</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    input, textarea, select {
+      user-select: text;
+    }
+    body {
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      overscroll-behavior: none;
+      margin: 0;
+      padding: 0;
+    }
+    button {
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+    .hidden-view {
+      display: none !important;
+    }
+
+    /* ===== TV DISPLAY STYLES ===== */
+    .tv-container {
+      width: 100vw;
+      height: 100vh;
+      background: #090d16;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .tv-top-bar {
+      background: linear-gradient(90deg, #111827 0%, #1f2937 100%);
+      padding: 12px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #fbbf24;
+      z-index: 10;
+    }
+    .tv-top-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: white;
+      font-size: 16px;
+    }
+    .tv-top-info .stage-badge {
+      background: #dc2626;
+      color: white;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .tv-top-info .category-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fbbf24;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .tv-main-area {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+    }
+    .tv-side {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+    }
+    .tv-side.blue-side {
+      background: linear-gradient(135deg, rgba(30,58,138,0.85) 0%, rgba(37,99,235,0.75) 100%);
+      border-right: 2px solid rgba(255,255,255,0.1);
+    }
+    .tv-side.red-side {
+      background: linear-gradient(135deg, rgba(127,29,29,0.85) 0%, rgba(220,38,38,0.75) 100%);
+      border-left: 2px solid rgba(255,255,255,0.1);
+    }
+    .tv-competitor-name {
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      margin-bottom: 10px;
+      line-height: 1.1;
+    }
+    .tv-competitor-club {
+      font-size: clamp(1.2rem, 2.5vw, 2rem);
+      color: rgba(255,255,255,0.9);
+      font-weight: 700;
+      margin-bottom: 25px;
+    }
+    .tv-big-score {
+      font-size: clamp(5rem, 12vw, 10rem);
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 8px 24px rgba(0,0,0,0.7);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .tv-center-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 4px solid #fbbf24;
+      border-radius: 24px;
+      padding: 25px 50px;
+      text-align: center;
+      z-index: 20;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+      min-width: 340px;
+    }
+    .tv-round-info {
+      color: #fbbf24;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 3px;
+      margin-bottom: 6px;
+    }
+    .tv-timer-display {
+      color: white;
+      font-size: clamp(3.5rem, 7vw, 6rem);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-bottom: 15px;
+    }
+    .tv-timer-display.warning {
+      color: #ef4444;
+      animation: timerBlink 0.8s infinite;
+    }
+    .tv-timer-display.break-mode {
+      color: #38bdf8;
+    }
+    .tv-penalties {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      color: white;
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+    .tv-penalty-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tv-penalty-label {
+      color: #fbbf24;
+    }
+    .tv-judge-corner {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 10px 18px;
+      text-align: center;
+      z-index: 25;
+      min-width: 90px;
+    }
+    .tv-judge-corner.tl { top: 80px; left: 30px; }
+    .tv-judge-corner.tr { top: 80px; right: 30px; }
+    .tv-judge-corner.br { bottom: 80px; right: 30px; }
+    .tv-judge-corner.bl { bottom: 80px; left: 30px; }
+    .tv-jc-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .tv-jc-score {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: white;
+      font-variant-numeric: tabular-nums;
+    }
+    .tv-judge-corner.lead-blue {
+      border-color: #2563eb;
+      background: rgba(30,58,138,0.7);
+    }
+    .tv-judge-corner.lead-red {
+      border-color: #dc2626;
+      background: rgba(127,29,29,0.7);
+    }
+    .tv-bottom-bar {
+      background: linear-gradient(90deg, #111827 0%, #030712 100%);
+      border-top: 3px solid #fbbf24;
+      padding: 15px 35px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      z-index: 10;
+    }
+    .tv-next-match {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .tv-next-label {
+      color: #9ca3af;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .tv-next-name {
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    .tv-next-name.blue-next { color: #60a5fa; }
+    .tv-next-name.red-next { color: #f87171; }
+    .tv-winner-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .tv-winner-box {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      border: 4px solid #fbbf24;
+      border-radius: 24px;
+      padding: 60px 80px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .tv-winner-trophy {
+      font-size: 6rem;
+      margin-bottom: 20px;
+    }
+    .tv-winner-text {
+      font-size: 4rem;
+      font-weight: 900;
+      color: #fbbf24;
+      margin-bottom: 10px;
+    }
+    .tv-winner-name {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 20px;
+    }
+    .tv-winner-sub {
+      font-size: 1.5rem;
+      color: #9ca3af;
+      font-weight: 600;
+      letter-spacing: 3px;
+    }
+    @keyframes timerBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ===== LAPTOP VIEW STYLES ===== */
+    .laptop-container {
+      background: #1e293b;
+      min-height: 100vh;
+      padding: 20px;
+      color: white;
+    }
+    .laptop-header {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .laptop-header-left h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin: 0;
+    }
+    .laptop-header-left p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin: 5px 0 0 0;
+    }
+    .laptop-header-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    /* ✅ FIXED: Sidebar on LEFT (340px), Main Content on RIGHT (1fr) */
+    .laptop-main-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 1200px) {
+      .laptop-main-grid { grid-template-columns: 1fr; }
+    }
+    
+    .current-match-card {
+      background: #0f172a;
+      border-radius: 16px;
+      padding: 25px;
+      border: 2px solid #334155;
+    }
+    .current-match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #334155;
+    }
+    .match-stage-badge {
+      background: #dc2626;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .match-number-badge {
+      background: #1e40af;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .competitors-display {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+    .competitor-box {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      border: 3px solid;
+    }
+    .competitor-box.blue-box { border-color: #2563eb; }
+    .competitor-box.red-box { border-color: #dc2626; }
+    .competitor-box .comp-name {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .competitor-box.blue-box .comp-name { color: #60a5fa; }
+    .competitor-box.red-box .comp-name { color: #f87171; }
+    .competitor-box .comp-club {
+      color: #94a3b8;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .vs-divider {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fbbf24;
+    }
+    
+    /* Timer section */
+    .timer-section {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .timer-display-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .timer-round-badge {
+      background: #334155;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    .timer-time {
+      font-size: 3rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: white;
+    }
+    .timer-time.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
+    .timer-time.break-mode { color: #38bdf8; }
+    .timer-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .timer-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      border: none;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .timer-btn.start { background: #10b981; color: white; }
+    .timer-btn.start:hover { background: #059669; }
+    .timer-btn.pause { background: #f59e0b; color: white; }
+    .timer-btn.pause:hover { background: #d97706; }
+    .timer-btn.reset { background: #ef4444; color: white; }
+    .timer-btn.reset:hover { background: #dc2626; }
+    
+    /* Score boxes */
+    .score-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .score-box {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 25px;
+      text-align: center;
+      border: 2px solid;
+    }
+    .score-box.blue-score { border-color: #2563eb; }
+    .score-box.red-score { border-color: #dc2626; }
+    .score-box .score-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .score-box .score-value {
+      font-size: 4.5rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .score-box.blue-score .score-value { color: #60a5fa; }
+    .score-box.red-score .score-value { color: #f87171; }
+    
+    /* Judge boxes */
+    .judges-section {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .judge-box {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      border: 2px solid #334155;
+      transition: all 0.3s;
+    }
+    .judge-box.leading-blue {
+      border-color: #2563eb;
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+    }
+    .judge-box.leading-red {
+      border-color: #dc2626;
+      background: linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%);
+    }
+    .judge-box .judge-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .judge-box .judge-status-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .judge-status-badge.online { background: #065f46; color: #34d399; }
+    .judge-status-badge.offline { background: #7f1d1d; color: #fca5a5; }
+    .judge-box .judge-score {
+      font-size: 1.5rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .judge-box .judge-detail {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .judge-row-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 0.75rem;
+    }
+    .judge-side-adj {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .judge-adj-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: white;
+    }
+    .judge-adj-btn.plus { background: #10b981; }
+    .judge-adj-btn.minus { background: #ef4444; }
+    
+    /* Penalties section */
+    .penalties-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .penalty-box {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .penalty-box .penalty-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .penalty-box .penalty-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .penalty-box .penalty-value {
+      font-size: 1.8rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .penalty-box .penalty-controls {
+      display: flex;
+      gap: 5px;
+    }
+    .penalty-btn {
+      width: 35px;
+      height: 35px;
+      border-radius: 6px;
+      border: none;
+      font-size: 1.2rem;
+      font-weight: 900;
+      background: #334155;
+      color: white;
+      transition: all 0.15s;
+    }
+    .penalty-btn:active { transform: scale(0.95); }
+    .penalty-btn.plus { background: #10b981; }
+    .penalty-btn.minus { background: #ef4444; }
+    
+    /* Ring layout settings */
+    .settings-panel {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 2px solid #334155;
+      position: relative;
+    }
+    .ring-layout-box {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      height: 200px;
+      margin: 20px auto;
+      background: #1e293b;
+      border: 2px dashed #475569;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-center-label {
+      color: #64748b;
+      font-weight: 800;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .ring-corner-btn {
+      position: absolute;
+      background: #334155;
+      color: white;
+      border: 2px solid #fbbf24;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .ring-corner-btn:hover { background: #2563eb; transform: scale(1.05); }
+    .ring-corner-btn.connected { border-color: #10b981; background: #064e3b; }
+    .ring-corner-btn.tl { top: -15px; left: -15px; }
+    .ring-corner-btn.tr { top: -15px; right: -15px; }
+    .ring-corner-btn.br { bottom: -15px; right: -15px; }
+    .ring-corner-btn.bl { bottom: -15px; left: -15px; }
+    
+    /* Bottom-Right Admin Kick Button Box */
+    .admin-kick-corner-box {
+      position: absolute;
+      bottom: 12px;
+      right: 15px;
+    }
+    .admin-kick-panel-btn {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .admin-kick-panel-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+    
+    /* Match list sidebar */
+    .match-list-sidebar {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 20px;
+      border: 2px solid #334155;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+    .match-list-sidebar h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 15px;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .match-list-item {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-left: 4px solid #334155;
+      transition: all 0.2s;
+    }
+    .match-list-item.active {
+      border-left-color: #10b981;
+      background: #064e3b;
+    }
+    .match-list-item.completed {
+      border-left-color: #6b7280;
+      opacity: 0.6;
+    }
+    .match-list-item .ml-number {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .match-list-item .ml-names {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+    .match-list-item .ml-category {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .match-list-item .ml-winner {
+      font-size: 0.8rem;
+      color: #10b981;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-box {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 450px;
+      width: 100%;
+      border: 3px solid #fbbf24;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    
+    /* Phone view styles */
+    .phone-container {
+      background: #0f172a;
+      min-height: 100vh;
+      color: white;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-header {
+      background: #1e293b;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+    }
+    .phone-competitors-bar {
+      background: #000;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+    }
+    .phone-competitor {
+      flex: 1;
+      text-align: center;
+    }
+    .phone-competitor.blue .pc-label { color: #60a5fa; }
+    .phone-competitor.red .pc-label { color: #f87171; }
+    .phone-competitor .pc-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: white;
+    }
+    .phone-vs {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #fbbf24;
+      padding: 0 15px;
+    }
+    .phone-timer-bar {
+      background: #000;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+      font-size: 0.9rem;
+    }
+    .phone-timer-bar .pt-round { font-weight: 700; }
+    .phone-timer-bar .pt-time {
+      font-size: 1.5rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .phone-timer-bar .pt-status { color: #94a3b8; font-size: 0.8rem; }
+    .phone-scoring-area {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+    }
+    .phone-side {
+      border-radius: 16px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-side.blue-side {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    }
+    .phone-side.red-side {
+      background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+    }
+    .phone-side-title {
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .phone-buttons {
+      flex: 1;
+      display: grid;
+      grid-template-rows: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .phone-btn {
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.05s;
+      color: white;
+    }
+    .phone-btn:active {
+      transform: scale(0.94);
+      background: rgba(255,255,255,0.3);
+    }
+    .phone-btn .pb-value {
+      font-size: 2.5rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .phone-btn .pb-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      opacity: 0.8;
+      margin-top: 3px;
+    }
+    .phone-status-bar {
+      padding: 12px 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      background: #1e293b;
+      border-top: 2px solid #334155;
+    }
+    
+    /* Landing page */
+    .landing-container {
+      min-height: 100vh;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .landing-box {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 450px;
+      width: 100%;
+      border: 2px solid #334155;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .landing-title {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .landing-title .lt-icon { font-size: 4rem; margin-bottom: 10px; }
+    .landing-title h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      margin: 0 0 10px 0;
+      color: white;
+    }
+    .landing-title p {
+      color: #94a3b8;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    .landing-input {
+      width: 100%;
+      padding: 15px;
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      color: white;
+      font-size: 1.5rem;
+      text-align: center;
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+      font-family: monospace;
+    }
+    .landing-input:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    .landing-btn {
+      width: 100%;
+      padding: 18px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      transition: all 0.2s;
+    }
+    .landing-btn:hover { background: #1d4ed8; }
+    .landing-btn:active { transform: scale(0.98); }
+    .landing-error {
+      color: #ef4444;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      min-height: 20px;
+    }
+    .landing-hints {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #334155;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #1e293b;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 12px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      z-index: 2000;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s;
+      pointer-events: none;
+      border-left: 4px solid #10b981;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.warning { border-left-color: #f59e0b; }
+    .pulse { animation: pulse 0.3s ease; }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .scored-flash { animation: scoredFlash 0.25s ease; }
+    @keyframes scoredFlash {
+      0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); }
+      100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); }
+    }
+  </style>
 </head>
 <body class="bg-slate-900">
-<!-- ===== LANDING VIEW ===== -->
-<div id="view-landing" class="landing-container">
-<div class="landing-box">
-<div class="landing-title">
-<div class="lt-icon">🥋</div>
-<h1>TKD iScore</h1>
-<p>9th Vojvodina Open ITF</p>
-</div>
-<input id="inp-password" type="password" inputmode="numeric" maxlength="10" autocomplete="off"
-class="landing-input" placeholder="••••" />
-<button id="btn-enter" class="landing-btn">Enter Ring</button>
-<div id="landing-error" class="landing-error"></div>
-<div class="landing-hints">
-<div>💻 Laptop password → Control panel</div>
-<div>📱 Phone QR scan → Instant Judge device</div>
-<div>📺 TV code → Big screen display</div>
-</div>
-</div>
-</div>
-<!-- ===== PHONE VIEW ===== -->
-<div id="view-phone" class="hidden-view phone-container">
-<div class="phone-header">
-<div style="display:flex;align-items:center;gap:10px;">
-<span style="font-size:1.5rem;">🥋</span>
-<span id="phone-ring-name" style="font-weight:800;"></span>
-<span id="phone-mode-badge" class="match-stage-badge" style="font-size:0.7rem;padding:3px 8px;">SPARRING</span>
-</div>
-<div style="display:flex;align-items:center;gap:10px;">
-<span id="phone-judge-badge" style="background:#fbbf24;color:black;font-weight:900;padding:5px 12px;border-radius:8px;font-size:0.85rem;">JUDGE –</span>
-<span style="color:#10b981;font-size:0.8rem;display:flex;align-items:center;gap:5px;">
-<span style="width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite;"></span>
-Live
-</span>
-</div>
-</div>
-<div class="phone-competitors-bar">
-<div class="phone-competitor blue">
-<div class="pc-label">🔵 BLUE</div>
-<div id="phone-blue-name" class="pc-name">---</div>
-</div>
-<div class="phone-vs">VS</div>
-<div class="phone-competitor red">
-<div class="pc-label">🔴 RED</div>
-<div id="phone-red-name" class="pc-name">---</div>
-</div>
-</div>
-<div class="phone-timer-bar">
-<span class="pt-round">Round <span id="phone-timer-round">1</span></span>
-<span id="phone-timer-time" class="pt-time">2:00</span>
-<span id="phone-timer-status" class="pt-status">Paused</span>
-</div>
-<div id="sparring-controls" class="phone-scoring-area">
-<div class="phone-side blue-side">
-<div class="phone-side-title">🔵 BLUE · CHUNG</div>
-<div class="phone-buttons">
-<button class="phone-btn judge-tap" data-side="blue" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
-<button class="phone-btn judge-tap" data-side="blue" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
-<button class="phone-btn judge-tap" data-side="blue" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
-<button class="phone-btn judge-tap" data-side="blue" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
-<button class="phone-btn judge-tap" data-side="blue" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
-</div>
-</div>
-<div class="phone-side red-side">
-<div class="phone-side-title">🔴 RED · HONG</div>
-<div class="phone-buttons">
-<button class="phone-btn judge-tap" data-side="red" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
-<button class="phone-btn judge-tap" data-side="red" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
-<button class="phone-btn judge-tap" data-side="red" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
-<button class="phone-btn judge-tap" data-side="red" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
-<button class="phone-btn judge-tap" data-side="red" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
-</div>
-</div>
-</div>
-<div id="patterns-controls" class="hidden-view phone-scoring-area" style="grid-template-rows:repeat(3,1fr);">
-<button class="phone-btn patterns-tap" data-winner="blue" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);font-size:1.5rem;">🔵 BLUE WINS</button>
-<button class="phone-btn patterns-tap" data-winner="draw" style="background:linear-gradient(135deg,#4b5563,#6b7280);font-size:1.5rem;">🤝 DRAW</button>
-<button class="phone-btn patterns-tap" data-winner="red" style="background:linear-gradient(135deg,#7f1d1d,#dc2626);font-size:1.5rem;">🔴 RED WINS</button>
-</div>
-<div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
-</div>
-<!-- ===== LAPTOP VIEW ===== -->
-<div id="view-laptop" class="hidden-view laptop-container">
-<div class="laptop-header">
-<div class="laptop-header-left">
-<h1 id="laptop-ring-name">Ring 1</h1>
-<p>Control Panel · <span id="laptop-ring-id" style="font-family:monospace;"></span> · TV: <span id="laptop-tv-code" style="color:#fbbf24;font-weight:700;">—</span></p>
-</div>
-<div class="laptop-header-right">
-<div style="display:flex;align-items:center;gap:6px;background:#1e293b;padding:6px 12px;border-radius:8px;border:1px solid #334155;">
-<span style="font-size:0.8rem;color:#94a3b8;font-weight:700;">Referees:</span>
-<select id="sel-max-phones" style="background:#0f172a;color:white;border:1px solid #475569;border-radius:6px;padding:4px 8px;font-weight:700;font-size:0.85rem;" onchange="updateMaxPhones(this.value)">
-<option value="3">3 Judges</option>
-<option value="4">4 Judges</option>
-</select>
-</div>
-<button id="btn-open-tv" class="timer-btn" style="background:#334155;">📺 Open TV</button>
-<button id="btn-reset-match" class="timer-btn reset">⟲ Reset Match</button>
-<button id="btn-logout" class="timer-btn" style="background:#475569;">Logout</button>
-</div>
-</div>
-<!-- Ring Layout Corner Boxes for QR Codes with Connected State & Bottom-Right Admin Kick -->
-<div class="settings-panel">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-<h3 style="margin:0;font-size:1.0rem;color:#fbbf24;font-weight:800;">⚙️ Ring Corner QR Codes (Instant Auto-Login)</h3>
-<span style="font-size:0.8rem;color:#94a3b8;">Green = Connected | Gray = Empty</span>
-</div>
-<div class="ring-layout-box">
-<div class="ring-center-label">Ring Center</div>
-<button id="qr-btn-1" class="ring-corner-btn tl" onclick="openJudgeQR(1)">
-<span>Judge 1</span>
-<span id="qr-stat-1" style="font-size:0.6rem;opacity:0.8;">Empty</span>
-</button>
-<button id="qr-btn-2" class="ring-corner-btn tr" onclick="openJudgeQR(2)">
-<span>Judge 2</span>
-<span id="qr-stat-2" style="font-size:0.6rem;opacity:0.8;">Empty</span>
-</button>
-<button id="qr-btn-3" class="ring-corner-btn br" onclick="openJudgeQR(3)">
-<span>Judge 3</span>
-<span id="qr-stat-3" style="font-size:0.6rem;opacity:0.8;">Empty</span>
-</button>
-<button id="qr-btn-4" class="ring-corner-btn bl" onclick="openJudgeQR(4)">
-<span>Judge 4</span>
-<span id="qr-stat-4" style="font-size:0.6rem;opacity:0.8;">Empty</span>
-</button>
-</div>
-<!-- Bottom Right Admin Kick Button -->
-<div class="admin-kick-corner-box">
-<button class="admin-kick-panel-btn" onclick="openAdminKickModal()">⚠️ Kick Judge (Admin PIN)</button>
-</div>
-</div>
 
-<!-- ✅ FIXED: Match Queue is NOW ON THE LEFT, Main Content on the RIGHT -->
-<div class="laptop-main-grid">
-  
-  <!-- 1. MATCH QUEUE SIDEBAR (LEFT) -->
-  <div class="match-list-sidebar">
-    <h3>📋 Match Queue</h3>
-    <div id="match-list-container">
-      <div style="color:#64748b;text-align:center;padding:20px;">Loading matches...</div>
-    </div>
-  </div>
-
-  <!-- 2. MAIN CONTROL PANEL (RIGHT) -->
-  <div class="laptop-main-content">
-    <div class="current-match-card">
-      <div class="current-match-header">
-        <div style="display:flex;gap:10px;align-items:center;">
-          <span id="laptop-match-stage" class="match-stage-badge">Preliminary</span>
-          <span id="laptop-category-name" style="font-weight:700;font-size:1.1rem;">Loading...</span>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <span id="laptop-discipline-badge" class="match-stage-badge" style="background:#1e40af;">SPARRING</span>
-          <span class="match-number-badge">Match #<span id="laptop-match-number">-</span></span>
-        </div>
+  <!-- ===== LANDING VIEW ===== -->
+  <div id="view-landing" class="landing-container">
+    <div class="landing-box">
+      <div class="landing-title">
+        <div class="lt-icon">🥋</div>
+        <h1>TKD iScore</h1>
+        <p>9th Vojvodina Open ITF</p>
       </div>
-      
-      <!-- ✅ FIXED: Category Links & Bracket View Button (No more hardcoded broken URLs) -->
-      <div id="category-web-link-container" class="hidden-view" style="margin-bottom:15px;background:#1e293b;padding:10px 15px;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span style="font-size:0.85rem;color:#94a3b8;font-weight:700;">📊 Category Actions:</span>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <a id="category-web-link-anchor" href="#" target="_blank" style="color:#38bdf8;font-weight:700;font-size:0.85rem;text-decoration:none;background:#0f172a;padding:8px 12px;border-radius:6px;border:1px solid #334155;transition:0.2s;">🔗 Category Page</a>
-          <a href="manage.html" target="_blank" style="color:#10b981;font-weight:700;font-size:0.85rem;text-decoration:none;background:#0f172a;padding:8px 12px;border-radius:6px;border:1px solid #334155;transition:0.2s;">📊 View Bracket</a>
-        </div>
-      </div>
-
-      <div class="competitors-display">
-        <div class="competitor-box blue-box">
-          <div class="comp-name" id="laptop-blue-name">---</div>
-          <div class="comp-club" id="laptop-blue-club">---</div>
-        </div>
-        <div class="vs-divider">VS</div>
-        <div class="competitor-box red-box">
-          <div class="comp-name" id="laptop-red-name">---</div>
-          <div class="comp-club" id="laptop-red-club">---</div>
-        </div>
-      </div>
-      
-      <div class="timer-section">
-        <div class="timer-display-row">
-          <span class="timer-round-badge">Round <span id="l-timer-round">1</span></span>
-          <span id="l-timer-time" class="timer-time">2:00</span>
-          <span id="l-timer-status" style="color:#94a3b8;font-weight:600;">Paused (Press SPACE)</span>
-        </div>
-        <div class="timer-controls">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
-            <button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
-            <button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
-          </div>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <div style="display:flex;gap:4px;align-items:center;">
-              <span style="font-size:0.8rem;color:#94a3b8;">Round M:</span>
-              <input id="inp-timer-min" type="number" min="0" max="10" value="2" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
-              <span style="font-size:0.8rem;color:#94a3b8;">S:</span>
-              <input id="inp-timer-sec" type="number" min="0" max="59" value="0" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
-            </div>
-            <div style="display:flex;gap:4px;align-items:center;">
-              <span style="font-size:0.8rem;color:#38bdf8;">Break S:</span>
-              <input id="inp-break-sec" type="number" min="0" max="300" value="30" style="width:50px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
-            </div>
-            <button id="btn-set-time" class="timer-btn" style="background:#3b82f6;padding:8px 12px;font-size:0.85rem;">Set Times</button>
-          </div>
-        </div>
-        <div id="timer-round3-note" class="hidden-view" style="background:#854d0e;color:#fbbf24;padding:10px;border-radius:8px;margin-top:10px;text-align:center;font-weight:700;">
-          ⚡ Round 3 activated (tie-breaker)
-        </div>
-      </div>
-      
-      <div class="score-section">
-        <div class="score-box blue-score">
-          <div class="score-label">🔵 Blue Majority Score</div>
-          <div id="l-blue-score" class="score-value">0</div>
-        </div>
-        <div class="score-box red-score">
-          <div class="score-label">🔴 Red Majority Score</div>
-          <div id="l-red-score" class="score-value">0</div>
-        </div>
-      </div>
-      
-      <div id="laptop-judges-container" class="judges-section"></div>
-      
-      <div class="penalties-section">
-        <div class="penalty-box">
-          <div class="penalty-info">
-            <span class="penalty-label">🔵 Blue Gam-Jeom</span>
-            <span id="l-blue-gj" class="penalty-value" style="color:#60a5fa;">0</span>
-          </div>
-          <div class="penalty-controls">
-            <button class="penalty-btn plus" data-act="blue-gj-plus">+</button>
-            <button class="penalty-btn minus" data-act="blue-gj-minus">−</button>
-          </div>
-        </div>
-        <div class="penalty-box">
-          <div class="penalty-info">
-            <span class="penalty-label">🔴 Red Gam-Jeom</span>
-            <span id="l-red-gj" class="penalty-value" style="color:#f87171;">0</span>
-          </div>
-          <div class="penalty-controls">
-            <button class="penalty-btn plus" data-act="red-gj-plus">+</button>
-            <button class="penalty-btn minus" data-act="red-gj-minus">−</button>
-          </div>
-        </div>
-        <div class="penalty-box">
-          <div class="penalty-info">
-            <span class="penalty-label">🔵 Blue Yellow Card</span>
-            <span id="l-blue-yc" class="penalty-value" style="color:#fbbf24;">0</span>
-          </div>
-          <div class="penalty-controls">
-            <button class="penalty-btn plus" data-act="blue-yc-plus">+</button>
-            <button class="penalty-btn minus" data-act="blue-yc-minus">−</button>
-          </div>
-        </div>
-        <div class="penalty-box">
-          <div class="penalty-info">
-            <span class="penalty-label">🔴 Red Yellow Card</span>
-            <span id="l-red-yc" class="penalty-value" style="color:#fbbf24;">0</span>
-          </div>
-          <div class="penalty-controls">
-            <button class="penalty-btn plus" data-act="red-yc-plus">+</button>
-            <button class="penalty-btn minus" data-act="red-yc-minus">−</button>
-          </div>
-        </div>
-      </div>
-      
-      <div id="laptop-declare-winner" class="hidden-view" style="background:#1e293b;border-radius:12px;padding:20px;margin-top:20px;border:2px solid #fbbf24;">
-        <h3 style="margin:0 0 15px 0;color:#fbbf24;font-size:1.1rem;">🏆 Declare Winner</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <button class="timer-btn" style="background:#2563eb;" onclick="declareWinner('blue')">🔵 Blue Wins</button>
-          <button class="timer-btn" style="background:#6b7280;" onclick="declareWinner('draw')">🤝 Draw</button>
-          <button class="timer-btn" style="background:#dc2626;" onclick="declareWinner('red')">🔴 Red Wins</button>
-        </div>
+      <input id="inp-password" type="password" inputmode="numeric" maxlength="10" autocomplete="off"
+             class="landing-input" placeholder="••••" />
+      <button id="btn-enter" class="landing-btn">Enter Ring</button>
+      <div id="landing-error" class="landing-error"></div>
+      <div class="landing-hints">
+        <div>💻 Laptop password → Control panel</div>
+        <div>📱 Phone QR scan → Instant Judge device</div>
+        <div>📺 TV code → Big screen display</div>
       </div>
     </div>
   </div>
-</div>
-</div>
 
-<!-- ===== TV VIEW WITH CORNER JUDGE NETS ===== -->
-<div id="view-tv" class="hidden-view tv-container">
-<div class="tv-top-bar">
-<div class="tv-top-info">
-<span id="tv-ring-name" style="font-weight:900;font-size:1.3rem;">Ring 1</span>
-<span id="tv-match-stage" class="stage-badge">Preliminary</span>
-</div>
-<div class="tv-top-info">
-<span id="tv-category-name" class="category-info">Category</span>
-<span style="color:#475569;">|</span>
-<span id="tv-match-number-display" style="color:#94a3b8;font-weight:700;">Match #1</span>
-</div>
-<div class="tv-top-info">
-<span id="tv-discipline-badge" class="stage-badge" style="background:#1e40af;">SPARRING</span>
-</div>
-</div>
-<div class="tv-main-area">
-<!-- Judge 1 Corner (Top-Left) -->
-<div id="tv-corner-1" class="tv-judge-corner tl">
-<div class="tv-jc-label">Judge 1</div>
-<div id="tv-net-1" class="tv-jc-score">0</div>
-</div>
-<!-- Judge 2 Corner (Top-Right) -->
-<div id="tv-corner-2" class="tv-judge-corner tr">
-<div class="tv-jc-label">Judge 2</div>
-<div id="tv-net-2" class="tv-jc-score">0</div>
-</div>
-<!-- Judge 3 Corner (Bottom-Right) -->
-<div id="tv-corner-3" class="tv-judge-corner br">
-<div class="tv-jc-label">Judge 3</div>
-<div id="tv-net-3" class="tv-jc-score">0</div>
-</div>
-<!-- Judge 4 Corner (Bottom-Left) -->
-<div id="tv-corner-4" class="tv-judge-corner bl">
-<div class="tv-jc-label">Judge 4</div>
-<div id="tv-net-4" class="tv-jc-score">0</div>
-</div>
-<div class="tv-side blue-side">
-<div class="tv-competitor-name" id="tv-blue-name">BLUE</div>
-<div class="tv-competitor-club" id="tv-blue-club">---</div>
-<div class="tv-big-score" id="tv-blue-score">0</div>
-</div>
-<div class="tv-side red-side" style="align-items: flex-end; text-align: right;">
-<div class="tv-competitor-name" id="tv-red-name">RED</div>
-<div class="tv-competitor-club" id="tv-red-club">---</div>
-<div class="tv-big-score" id="tv-red-score">0</div>
-</div>
-<div class="tv-center-overlay">
-<div id="tv-timer-label-top" class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
-<div id="tv-timer-time" class="tv-timer-display">2:00</div>
-<div class="tv-penalties">
-<div class="tv-penalty-item">
-<span class="tv-penalty-label">BLU GJ:</span>
-<span id="tv-blue-gj" style="color:#60a5fa;">0</span>
-</div>
-<div class="tv-penalty-item">
-<span class="tv-penalty-label">YC:</span>
-<span id="tv-blue-yc" style="color:#fbbf24;">0</span>
-</div>
-<span style="color:#475569;">|</span>
-<div class="tv-penalty-item">
-<span class="tv-penalty-label">RED YC:</span>
-<span id="tv-red-yc" style="color:#fbbf24;">0</span>
-</div>
-<div class="tv-penalty-item">
-<span class="tv-penalty-label">GJ:</span>
-<span id="tv-red-gj" style="color:#f87171;">0</span>
-</div>
-</div>
-</div>
-</div>
-<div class="tv-bottom-bar">
-<div class="tv-next-match">
-<div>
-<div class="tv-next-label">⏭️ Next Blue Competitor</div>
-<div id="tv-next-blue" class="tv-next-name blue-next">---</div>
-</div>
-</div>
-<div class="tv-next-match" style="justify-content:flex-end;text-align:right;">
-<div>
-<div class="tv-next-label">Next Red Competitor ⏭️</div>
-<div id="tv-next-red" class="tv-next-name red-next">---</div>
-</div>
-</div>
-</div>
-<div id="tv-winner-overlay" class="hidden-view tv-winner-overlay">
-<div class="tv-winner-box">
-<div class="tv-winner-trophy">🏆</div>
-<div id="tv-winner-text" class="tv-winner-text">BLUE WINS!</div>
-<div id="tv-winner-name" class="tv-winner-name">Competitor Name</div>
-<div class="tv-winner-sub">MATCH COMPLETE</div>
-</div>
-</div>
-</div>
+  <!-- ===== PHONE VIEW ===== -->
+  <div id="view-phone" class="hidden-view phone-container">
+    <div class="phone-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.5rem;">🥋</span>
+        <span id="phone-ring-name" style="font-weight:800;"></span>
+        <span id="phone-mode-badge" class="match-stage-badge" style="font-size:0.7rem;padding:3px 8px;">SPARRING</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="phone-judge-badge" style="background:#fbbf24;color:black;font-weight:900;padding:5px 12px;border-radius:8px;font-size:0.85rem;">JUDGE –</span>
+        <span style="color:#10b981;font-size:0.8rem;display:flex;align-items:center;gap:5px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite;"></span>
+          Live
+        </span>
+      </div>
+    </div>
+    <div class="phone-competitors-bar">
+      <div class="phone-competitor blue">
+        <div class="pc-label">🔵 BLUE</div>
+        <div id="phone-blue-name" class="pc-name">---</div>
+      </div>
+      <div class="phone-vs">VS</div>
+      <div class="phone-competitor red">
+        <div class="pc-label">🔴 RED</div>
+        <div id="phone-red-name" class="pc-name">---</div>
+      </div>
+    </div>
+    <div class="phone-timer-bar">
+      <span class="pt-round">Round <span id="phone-timer-round">1</span></span>
+      <span id="phone-timer-time" class="pt-time">2:00</span>
+      <span id="phone-timer-status" class="pt-status">Paused</span>
+    </div>
+    <div id="sparring-controls" class="phone-scoring-area">
+      <div class="phone-side blue-side">
+        <div class="phone-side-title">🔵 BLUE · CHUNG</div>
+        <div class="phone-buttons">
+          <button class="phone-btn judge-tap" data-side="blue" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
+          <button class="phone-btn judge-tap" data-side="blue" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
+          <button class="phone-btn judge-tap" data-side="blue" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
+          <button class="phone-btn judge-tap" data-side="blue" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
+          <button class="phone-btn judge-tap" data-side="blue" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
+        </div>
+      </div>
+      <div class="phone-side red-side">
+        <div class="phone-side-title">🔴 RED · HONG</div>
+        <div class="phone-buttons">
+          <button class="phone-btn judge-tap" data-side="red" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
+          <button class="phone-btn judge-tap" data-side="red" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
+          <button class="phone-btn judge-tap" data-side="red" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
+          <button class="phone-btn judge-tap" data-side="red" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
+          <button class="phone-btn judge-tap" data-side="red" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
+        </div>
+      </div>
+    </div>
+    <div id="patterns-controls" class="hidden-view phone-scoring-area" style="grid-template-rows:repeat(3,1fr);">
+      <button class="phone-btn patterns-tap" data-winner="blue" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);font-size:1.5rem;">🔵 BLUE WINS</button>
+      <button class="phone-btn patterns-tap" data-winner="draw" style="background:linear-gradient(135deg,#4b5563,#6b7280);font-size:1.5rem;">🤝 DRAW</button>
+      <button class="phone-btn patterns-tap" data-winner="red" style="background:linear-gradient(135deg,#7f1d1d,#dc2626);font-size:1.5rem;">🔴 RED WINS</button>
+    </div>
+    <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
+  </div>
 
-<!-- ===== QR CODE MODAL ===== -->
-<div id="modal-qr" class="hidden-view modal-overlay">
-<div class="modal-box">
-<h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
-<p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;">Scan with phone to instantly join as this judge</p>
-<div id="qrcode-container" style="background:white;padding:15px;border-radius:12px;display:inline-block;margin-bottom:20px;"></div>
-<div>
-<button class="timer-btn" style="background:#475569;width:100%;" onclick="closeQRModal()">Close</button>
-</div>
-</div>
-</div>
+  <!-- ===== LAPTOP VIEW ===== -->
+  <div id="view-laptop" class="hidden-view laptop-container">
+    <div class="laptop-header">
+      <div class="laptop-header-left">
+        <h1 id="laptop-ring-name">Ring 1</h1>
+        <p>Control Panel · <span id="laptop-ring-id" style="font-family:monospace;"></span> · TV: <span id="laptop-tv-code" style="color:#fbbf24;font-weight:700;">—</span></p>
+      </div>
+      <div class="laptop-header-right">
+        <div style="display:flex;align-items:center;gap:6px;background:#1e293b;padding:6px 12px;border-radius:8px;border:1px solid #334155;">
+          <span style="font-size:0.8rem;color:#94a3b8;font-weight:700;">Referees:</span>
+          <select id="sel-max-phones" style="background:#0f172a;color:white;border:1px solid #475569;border-radius:6px;padding:4px 8px;font-weight:700;font-size:0.85rem;" onchange="updateMaxPhones(this.value)">
+            <option value="3">3 Judges</option>
+            <option value="4">4 Judges</option>
+          </select>
+        </div>
+        <button id="btn-open-tv" class="timer-btn" style="background:#334155;">📺 Open TV</button>
+        <button id="btn-reset-match" class="timer-btn reset">⟲ Reset Match</button>
+        <button id="btn-logout" class="timer-btn" style="background:#475569;">Logout</button>
+      </div>
+    </div>
 
-<!-- ===== ADMIN KICK MODAL ===== -->
-<div id="modal-admin-kick" class="hidden-view modal-overlay">
-<div class="modal-box">
-<h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
-<p style="color:#94a3b8;font-size:0.9rem;margin-bottom:15px;">Enter Admin PIN and select which judge slot to kick.</p>
-<div style="margin-bottom:15px;">
-<label style="display:block;color:#94a3b8;font-size:0.8rem;margin-bottom:5px;font-weight:700;">Judge Slot to Kick:</label>
-<select id="sel-kick-slot" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;font-size:1rem;font-weight:700;">
-<option value="1">Judge 1</option>
-<option value="2">Judge 2</option>
-<option value="3">Judge 3</option>
-<option value="4">Judge 4</option>
-</select>
-</div>
-<div style="margin-bottom:20px;">
-<input id="inp-admin-pin" type="password" maxlength="10" placeholder="Admin PIN (admina)" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;text-align:center;font-size:1.2rem;" />
-</div>
-<div style="display:flex;gap:10px;">
-<button class="timer-btn" style="flex:1;background:#ef4444;" onclick="confirmAdminKick()">Kick Judge</button>
-<button class="timer-btn" style="flex:1;background:#475569;" onclick="closeAdminKickModal()">Cancel</button>
-</div>
-</div>
-</div>
+    <!-- Ring Layout Corner Boxes for QR Codes -->
+    <div class="settings-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="margin:0;font-size:1.0rem;color:#fbbf24;font-weight:800;">⚙️ Ring Corner QR Codes (Instant Auto-Login)</h3>
+        <span style="font-size:0.8rem;color:#94a3b8;">Green = Connected | Gray = Empty</span>
+      </div>
+      <div class="ring-layout-box">
+        <div class="ring-center-label">Ring Center</div>
+        <button id="qr-btn-1" class="ring-corner-btn tl" onclick="openJudgeQR(1)">
+          <span>Judge 1</span>
+          <span id="qr-stat-1" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+        </button>
+        <button id="qr-btn-2" class="ring-corner-btn tr" onclick="openJudgeQR(2)">
+          <span>Judge 2</span>
+          <span id="qr-stat-2" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+        </button>
+        <button id="qr-btn-3" class="ring-corner-btn br" onclick="openJudgeQR(3)">
+          <span>Judge 3</span>
+          <span id="qr-stat-3" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+        </button>
+        <button id="qr-btn-4" class="ring-corner-btn bl" onclick="openJudgeQR(4)">
+          <span>Judge 4</span>
+          <span id="qr-stat-4" style="font-size:0.6rem;opacity:0.8;">Empty</span>
+        </button>
+      </div>
+      <!-- Bottom Right Admin Kick Button -->
+      <div class="admin-kick-corner-box">
+        <button class="admin-kick-panel-btn" onclick="openAdminKickModal()">⚠️ Kick Judge (Admin PIN)</button>
+      </div>
+    </div>
 
-<!-- ===== WINNER MODAL ===== -->
-<div id="modal-winner" class="hidden-view modal-overlay">
-<div class="modal-box" style="max-width:600px;">
-<h2 id="modal-winner-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
-<p id="modal-winner-name" style="font-size:1.5rem;color:#fbbf24;font-weight:700;margin-bottom:25px;">Competitor Name</p>
-<p id="modal-winner-question" style="text-align:center;color:#94a3b8;margin-bottom:25px;font-size:1.1rem;">Is this correct?</p>
-<div id="winner-btn-container" style="display:flex;gap:15px;">
-<button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
-<button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
-</div>
-<div id="winner-deny-section" class="hidden-view" style="margin-top:20px;padding-top:20px;border-top:1px solid #334155;">
-<p style="text-align:center;color:#ef4444;margin-bottom:15px;">Result denied. Reset to try again.</p>
-<button id="btn-winner-reset" class="timer-btn" style="background:#f59e0b;width:100%;">⟲ Reset Match</button>
-</div>
-</div>
-</div>
+    <!-- ✅ FIXED: Match Queue is NOW ON THE LEFT, Main Content on the RIGHT -->
+    <div class="laptop-main-grid">
+      
+      <!-- 1. MATCH QUEUE SIDEBAR (LEFT) -->
+      <div class="match-list-sidebar">
+        <h3>📋 Match Queue</h3>
+        <div id="match-list-container">
+          <div style="color:#64748b;text-align:center;padding:20px;">Loading matches...</div>
+        </div>
+      </div>
 
-<div id="toast" class="toast"></div>
+      <!-- 2. MAIN CONTROL PANEL (RIGHT) -->
+      <div class="laptop-main-content">
+        <div class="current-match-card">
+          <div class="current-match-header">
+            <div style="display:flex;gap:10px;align-items:center;">
+              <span id="laptop-match-stage" class="match-stage-badge">Preliminary</span>
+              <span id="laptop-category-name" style="font-weight:700;font-size:1.1rem;">Loading...</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <span id="laptop-discipline-badge" class="match-stage-badge" style="background:#1e40af;">SPARRING</span>
+              <span class="match-number-badge">Match #<span id="laptop-match-number">-</span></span>
+            </div>
+          </div>
+          
+          <!-- ✅ FIXED: Category Links & Bracket View Button -->
+          <div id="category-web-link-container" class="hidden-view" style="margin-bottom:15px;background:#1e293b;padding:10px 15px;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:0.85rem;color:#94a3b8;font-weight:700;">📊 Category Actions:</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <a id="category-web-link-anchor" href="#" target="_blank" style="color:#38bdf8;font-weight:700;font-size:0.85rem;text-decoration:none;background:#0f172a;padding:8px 12px;border-radius:6px;border:1px solid #334155;transition:0.2s;">🔗 Category Page</a>
+              <a href="manage.html" target="_blank" style="color:#10b981;font-weight:700;font-size:0.85rem;text-decoration:none;background:#0f172a;padding:8px 12px;border-radius:6px;border:1px solid #334155;transition:0.2s;">📊 View Bracket</a>
+            </div>
+          </div>
 
-<script>
-const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-const state = {
-role: null,
-ring: null,
-match: null,
-currentMatch: null,
-judgeSlot: null,
-phoneSessionId: null,
-realtimeChannel: null,
-ringChannel: null,
-heartbeatInterval: null,
-pollInterval: null,
-matchPollInterval: null,
-matchListInterval: null,
-activePhones: [],
-heartbeatBusy: false,
-loggingIn: false,
-dbBroken: false
-};
-const TIMER_CHANNEL_PREFIX = "timer-";
-let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
-let timerChannel = null;
-let timerTickInterval = null;
-let broadcastInterval = null;
+          <div class="competitors-display">
+            <div class="competitor-box blue-box">
+              <div class="comp-name" id="laptop-blue-name">---</div>
+              <div class="comp-club" id="laptop-blue-club">---</div>
+            </div>
+            <div class="vs-divider">VS</div>
+            <div class="competitor-box red-box">
+              <div class="comp-name" id="laptop-red-name">---</div>
+              <div class="comp-club" id="laptop-red-club">---</div>
+            </div>
+          </div>
+          
+          <div class="timer-section">
+            <div class="timer-display-row">
+              <span class="timer-round-badge">Round <span id="l-timer-round">1</span></span>
+              <span id="l-timer-time" class="timer-time">2:00</span>
+              <span id="l-timer-status" style="color:#94a3b8;font-weight:600;">Paused (Press SPACE)</span>
+            </div>
+            <div class="timer-controls">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
+                <button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
+                <button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
+              </div>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <div style="display:flex;gap:4px;align-items:center;">
+                  <span style="font-size:0.8rem;color:#94a3b8;">Round M:</span>
+                  <input id="inp-timer-min" type="number" min="0" max="10" value="2" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+                  <span style="font-size:0.8rem;color:#94a3b8;">S:</span>
+                  <input id="inp-timer-sec" type="number" min="0" max="59" value="0" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+                </div>
+                <div style="display:flex;gap:4px;align-items:center;">
+                  <span style="font-size:0.8rem;color:#38bdf8;">Break S:</span>
+                  <input id="inp-break-sec" type="number" min="0" max="300" value="30" style="width:50px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+                </div>
+                <button id="btn-set-time" class="timer-btn" style="background:#3b82f6;padding:8px 12px;font-size:0.85rem;">Set Times</button>
+              </div>
+            </div>
+            <div id="timer-round3-note" class="hidden-view" style="background:#854d0e;color:#fbbf24;padding:10px;border-radius:8px;margin-top:10px;text-align:center;font-weight:700;">
+              ⚡ Round 3 activated (tie-breaker)
+            </div>
+          </div>
+          
+          <div class="score-section">
+            <div class="score-box blue-score">
+              <div class="score-label">🔵 Blue Majority Score</div>
+              <div id="l-blue-score" class="score-value">0</div>
+            </div>
+            <div class="score-box red-score">
+              <div class="score-label">🔴 Red Majority Score</div>
+              <div id="l-red-score" class="score-value">0</div>
+            </div>
+          </div>
+          
+          <div id="laptop-judges-container" class="judges-section"></div>
+          
+          <div class="penalties-section">
+            <div class="penalty-box">
+              <div class="penalty-info">
+                <span class="penalty-label">🔵 Blue Gam-Jeom</span>
+                <span id="l-blue-gj" class="penalty-value" style="color:#60a5fa;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="blue-gj-plus">+</button>
+                <button class="penalty-btn minus" data-act="blue-gj-minus">−</button>
+              </div>
+            </div>
+            <div class="penalty-box">
+              <div class="penalty-info">
+                <span class="penalty-label">🔴 Red Gam-Jeom</span>
+                <span id="l-red-gj" class="penalty-value" style="color:#f87171;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="red-gj-plus">+</button>
+                <button class="penalty-btn minus" data-act="red-gj-minus">−</button>
+              </div>
+            </div>
+            <div class="penalty-box">
+              <div class="penalty-info">
+                <span class="penalty-label">🔵 Blue Yellow Card</span>
+                <span id="l-blue-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="blue-yc-plus">+</button>
+                <button class="penalty-btn minus" data-act="blue-yc-minus">−</button>
+              </div>
+            </div>
+            <div class="penalty-box">
+              <div class="penalty-info">
+                <span class="penalty-label">🔴 Red Yellow Card</span>
+                <span id="l-red-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="red-yc-plus">+</button>
+                <button class="penalty-btn minus" data-act="red-yc-minus">−</button>
+              </div>
+            </div>
+          </div>
+          
+          <div id="laptop-declare-winner" class="hidden-view" style="background:#1e293b;border-radius:12px;padding:20px;margin-top:20px;border:2px solid #fbbf24;">
+            <h3 style="margin:0 0 15px 0;color:#fbbf24;font-size:1.1rem;">🏆 Declare Winner</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+              <button class="timer-btn" style="background:#2563eb;" onclick="declareWinner('blue')">🔵 Blue Wins</button>
+              <button class="timer-btn" style="background:#6b7280;" onclick="declareWinner('draw')">🤝 Draw</button>
+              <button class="timer-btn" style="background:#dc2626;" onclick="declareWinner('red')">🔴 Red Wins</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-function getTimerKey() { return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`; }
-function loadTimerState() {
-try { const saved = localStorage.getItem(getTimerKey()); if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved)); } catch (e) {}
-}
-function saveTimerState() { try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e) {} }
-function broadcastTimerState() {
-if (timerChannel && state.role === 'laptop') {
-try { timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState }); } catch (e) {}
-}
-}
-function subscribeTimer() {
-if (timerChannel) sb.removeChannel(timerChannel);
-if (!state.ring) return;
-timerChannel = sb.channel(TIMER_CHANNEL_PREFIX + state.ring.id)
-.on('broadcast', { event: 'timer-update' }, (msg) => {
-const s = msg && msg.payload;
-if (s) { timerState = Object.assign({}, timerState, s); saveTimerState(); renderTimer(); }
-})
-.on('broadcast', { event: 'timer-request' }, () => {
-if (state.role === 'laptop') broadcastTimerState();
-})
-.subscribe((status) => {
-if (status === 'SUBSCRIBED' && state.role !== 'laptop') {
-try { timerChannel.send({ type: 'broadcast', event: 'timer-request' }); } catch (e) {}
-}
-});
-}
-function getRemaining() {
-if (timerState.finished) return 0;
-const now = Date.now();
-let total = timerState.elapsed;
-if (timerState.startTime) total += (now - timerState.startTime) / 1000;
-const limit = timerState.isBreak ? timerState.breakTime : timerState.roundTime;
-return Math.max(0, limit - total);
-}
-function formatTime(seconds) {
-const m = Math.floor(seconds / 60);
-const s = Math.floor(seconds % 60);
-return `${m}:${s.toString().padStart(2, '0')}`;
-}
-function formatTimeDecimal(seconds) {
-const m = Math.floor(seconds / 60);
-const s = seconds % 60;
-return `${m}:${s.toFixed(1).padStart(4, '0')}`;
-}
-function renderTimer() {
-const remaining = getRemaining();
-const timeStr = formatTime(remaining);
-const timeStrDecimal = formatTimeDecimal(remaining);
-const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished && !timerState.isBreak;
-const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-setEl('l-timer-round', timerState.round);
-setEl('tv-timer-round', timerState.round);
-setEl('phone-timer-round', timerState.round);
-const tvTimerLabelTop = document.getElementById('tv-timer-label-top');
-if (tvTimerLabelTop) {
-if (timerState.isBreak) {
-tvTimerLabelTop.innerHTML = '<span style="color:#38bdf8;">☕ BREAK TIME</span>';
-} else {
-tvTimerLabelTop.innerHTML = `ROUND <span id="tv-timer-round">${timerState.round}</span>`;
-}
-}
-['l-timer-time', 'tv-timer-time', 'phone-timer-time'].forEach(id => {
-const el = document.getElementById(id);
-if (!el) return;
-el.textContent = id === 'tv-timer-time' ? timeStrDecimal : timeStr;
-el.classList.toggle('warning', warn);
-el.classList.toggle('break-mode', timerState.isBreak);
-});
-const statusEl = document.getElementById('l-timer-status');
-const phoneStatusEl = document.getElementById('phone-timer-status');
-let status = '';
-if (timerState.finished) {
-status = timerState.winner === 'draw' ? 'Match Complete · DRAW' : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
-} else if (timerState.isBreak) {
-status = timerState.paused ? '☕ Break · Paused (Press SPACE to Start Next Round)' : '☕ Break in Progress';
-} else if (timerState.paused) {
-status = `Round ${timerState.round} · Paused (Press SPACE)`;
-} else {
-status = `Round ${timerState.round} · Running (Press SPACE to Pause)`;
-}
-if (statusEl) statusEl.textContent = status;
-if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.isBreak ? 'Break' : (timerState.paused ? 'Paused' : 'Running'));
-const btnStart = document.getElementById('btn-timer-start');
-const btnPause = document.getElementById('btn-timer-pause');
-if (btnStart && btnPause) {
-if (timerState.finished) {
-btnStart.classList.remove('hidden-view');
-btnPause.classList.add('hidden-view');
-btnStart.disabled = true;
-btnStart.textContent = '▶ Start Round';
-} else if (timerState.isBreak) {
-btnStart.classList.remove('hidden-view');
-btnPause.classList.add('hidden-view');
-btnStart.disabled = false;
-btnStart.textContent = '▶ Start Next Round Now';
-} else if (timerState.paused) {
-btnStart.classList.remove('hidden-view');
-btnPause.classList.add('hidden-view');
-btnStart.disabled = false;
-btnStart.textContent = '▶ Start Round';
-} else {
-btnStart.classList.add('hidden-view');
-btnPause.classList.remove('hidden-view');
-}
-}
-const r3note = document.getElementById('timer-round3-note');
-if (r3note) r3note.classList.toggle('hidden-view', timerState.round !== 3 || timerState.isBreak);
-const tvOverlay = document.getElementById('tv-winner-overlay');
-const tvText = document.getElementById('tv-winner-text');
-const tvWinnerName = document.getElementById('tv-winner-name');
-if (tvOverlay && tvText) {
-if (timerState.finished && timerState.winner) {
-if (timerState.winner === 'draw') {
-tvText.textContent = 'DRAW!';
-if (tvWinnerName) tvWinnerName.textContent = '';
-} else {
-tvText.textContent = timerState.winner.toUpperCase() + ' WINS!';
-const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
-if (tvWinnerName) tvWinnerName.textContent = winnerName;
-}
-tvOverlay.classList.remove('hidden-view');
-} else {
-tvOverlay.classList.add('hidden-view');
-}
-}
-}
-function tickTimer() {
-if (timerState.finished) return;
-renderTimer();
-if (state.role === 'laptop' && !timerState.paused && getRemaining() <= 0) {
-if (timerState.isBreak) {
-timerState.isBreak = false;
-timerState.paused = true;
-timerState.elapsed = 0;
-timerState.startTime = null;
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-stopTimerTick();
-showToast('☕ Break time finished! Press Start or Space for next round.', 'success');
-} else {
-endRound();
-}
-}
-}
-function startTimerTick() {
-if (timerTickInterval) clearInterval(timerTickInterval);
-timerTickInterval = setInterval(tickTimer, 100);
-}
-function stopTimerTick() {
-if (timerTickInterval) clearInterval(timerTickInterval);
-timerTickInterval = null;
-}
-function startBroadcastLoop() {
-if (broadcastInterval) clearInterval(broadcastInterval);
-broadcastInterval = setInterval(() => {
-if (state.role === 'laptop' && !timerState.paused && !timerState.finished) broadcastTimerState();
-}, 1000);
-}
-function stopBroadcastLoop() {
-if (broadcastInterval) clearInterval(broadcastInterval);
-broadcastInterval = null;
-}
-function startTimer() {
-if (timerState.finished || state.role !== 'laptop') return;
-if (timerState.isBreak) {
-timerState.isBreak = false;
-timerState.paused = true;
-timerState.elapsed = 0;
-timerState.startTime = null;
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-stopTimerTick();
-showToast('Break skipped. Ready for round ' + timerState.round, 'success');
-return;
-}
-timerState.paused = false;
-timerState.startTime = Date.now();
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-startTimerTick();
-}
-function pauseTimer() {
-if (timerState.finished || timerState.paused || state.role !== 'laptop') return;
-const now = Date.now();
-if (timerState.startTime) timerState.elapsed += (now - timerState.startTime) / 1000;
-timerState.startTime = null;
-timerState.paused = true;
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-}
-window.addEventListener("keydown", (e) => {
-if (e.code === "Space" && state.role === "laptop") {
-if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
-e.preventDefault();
-if (timerState.paused) startTimer();
-else pauseTimer();
-}
-});
-function resetRound() {
-if (state.role !== 'laptop') return;
-if (!confirm('Reset the current timer?')) return;
-timerState.elapsed = 0;
-timerState.startTime = null;
-timerState.paused = true;
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-stopTimerTick();
-}
-document.addEventListener("DOMContentLoaded", () => {
-const setTimeBtn = document.getElementById("btn-set-time");
-if (setTimeBtn) {
-setTimeBtn.addEventListener("click", () => {
-if (state.role !== 'laptop') return;
-const mins = parseInt(document.getElementById("inp-timer-min").value) || 0;
-const secs = parseInt(document.getElementById("inp-timer-sec").value) || 0;
-const breakSecs = parseInt(document.getElementById("inp-break-sec").value) || 30;
-const totalSecs = (mins * 60) + secs;
-timerState.roundTime = totalSecs;
-timerState.breakTime = breakSecs;
-if (!timerState.isBreak) {
-timerState.elapsed = 0;
-timerState.startTime = null;
-timerState.paused = true;
-}
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-showToast(`Timer set: Round ${mins}:` + secs.toString().padStart(2, '0') + ` | Break ${breakSecs}s`, 'success');
-});
-}
-});
-async function endRound() {
-if (timerState.finished) return;
-timerState.paused = true;
-timerState.startTime = null;
-timerState.elapsed = 0;
-await fetchMatchNow();
-const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-if (mode === 'patterns') { finishMatch(); return; }
-if (timerState.round === 1) {
-timerState.round = 2;
-timerState.isBreak = true;
-timerState.paused = false;
-timerState.startTime = Date.now();
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-startTimerTick();
-showToast('☕ Round 1 ended. Break time started!', 'success');
-} else if (timerState.round === 2) {
-const votes = judgeVoteCounts();
-if (votes.blue === votes.red) {
-timerState.round = 3;
-timerState.isBreak = true;
-timerState.paused = false;
-timerState.startTime = Date.now();
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-startTimerTick();
-showToast('☕ Round 2 tied! Break started before Round 3 tie-breaker.', 'warning');
-} else {
-finishMatch();
-}
-} else if (timerState.round === 3) {
-finishMatch();
-}
-}
-function finishMatch() {
-const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-if (mode === 'patterns') {
-timerState.finished = true;
-timerState.paused = true;
-timerState.isBreak = false;
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-stopTimerTick();
-if (state.role === 'laptop') showWinnerConfirmStep1();
-return;
-}
-const votes = judgeVoteCounts();
-timerState.finished = true;
-timerState.paused = true;
-timerState.isBreak = false;
-if (votes.blue > votes.red) timerState.winner = 'blue';
-else if (votes.red > votes.blue) timerState.winner = 'red';
-else timerState.winner = 'draw';
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-stopTimerTick();
-if (state.role === 'laptop') showWinnerConfirmStep1();
-}
-function showWinnerConfirmStep1() {
-const modal = document.getElementById('modal-winner');
-const title = document.getElementById('modal-winner-title');
-const winnerNameEl = document.getElementById('modal-winner-name');
-const question = document.getElementById('modal-winner-question');
-const btnContainer = document.getElementById('winner-btn-container');
-const denySection = document.getElementById('winner-deny-section');
-let winnerName = '';
-if (timerState.winner === 'draw') {
-title.textContent = 'DRAW!';
-winnerName = 'No winner';
-} else {
-title.textContent = timerState.winner.toUpperCase() + ' WINS!';
-winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
-}
-if (winnerNameEl) winnerNameEl.textContent = winnerName;
-question.textContent = 'Is this correct?';
-btnContainer.innerHTML = `
-<button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
-<button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
-`;
-document.getElementById('btn-winner-confirm').addEventListener('click', confirmAndAdvance);
-document.getElementById('btn-winner-deny').addEventListener('click', showWinnerDenied);
-denySection.classList.add('hidden-view');
-modal.classList.remove('hidden-view');
-}
-async function confirmAndAdvance() {
-document.getElementById('modal-winner').classList.add('hidden-view');
-const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE')
-: timerState.winner === 'red' ? (state.ring?.red_name || 'RED')
-: 'DRAW';
-const winnerSide = timerState.winner || 'draw';
-try {
-await sb.rpc('advance_ring_match', {
-p_ring_id: state.ring.id, p_winner: winnerName, p_winner_side: winnerSide
-});
-} catch(e) {}
-timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
-saveTimerState();
-broadcastTimerState();
-const tvOverlay = document.getElementById('tv-winner-overlay');
-if (tvOverlay) tvOverlay.classList.add('hidden-view');
-await refreshRingData();
-await loadCurrentMatch();
-await resetMatchScores();
-renderTimer();
-updateCompetitorDisplay();
-showToast('✓ Match advanced to next!', 'success');
-}
-function showWinnerDenied() {
-const title = document.getElementById('modal-winner-title');
-const question = document.getElementById('modal-winner-question');
-title.textContent = 'RESULT DENIED';
-question.textContent = 'Please reset the match to try again.';
-document.getElementById('winner-btn-container').innerHTML = '';
-document.getElementById('winner-deny-section').classList.remove('hidden-view');
-}
-async function resetMatch() {
-if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
-await resetMatchScores();
-timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
-saveTimerState();
-broadcastTimerState();
-document.getElementById('modal-winner').classList.add('hidden-view');
-const tvOverlay = document.getElementById('tv-winner-overlay');
-if (tvOverlay) tvOverlay.classList.add('hidden-view');
-stopTimerTick();
-renderTimer();
-fetchMatchNow();
-}
-async function resetMatchScores() {
-if (!state.ring || !state.ring.id) return;
-await sb.from("matches").update({
-blue_score: 0, red_score: 0,
-blue_gam_jeom: 0, red_gam_jeom: 0,
-blue_yellow_cards: 0, red_yellow_cards: 0,
-judge_blue: [0,0,0,0],
-judge_red: [0,0,0,0],
-updated_at: new Date().toISOString()
-}).eq("ring_id", state.ring.id);
-}
-async function declareWinner(side) {
-if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
-if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
-timerState.finished = true;
-timerState.paused = true;
-timerState.isBreak = false;
-timerState.winner = side;
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-stopTimerTick();
-showWinnerConfirmStep1();
-}
-async function refreshRingData() {
-if (!state.ring || !state.ring.id) return;
-try {
-const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).maybeSingle();
-if (data) {
-state.ring = data;
-sessionStorage.setItem('tkd_ring', JSON.stringify(data));
-updateCompetitorDisplay();
-}
-} catch(e) {}
-}
-async function updateMaxPhones(val) {
-if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
-const num = parseInt(val, 10);
-try {
-await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id);
-} catch(e) {}
-state.ring.max_phones = num;
-sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
-const btn4 = document.getElementById("qr-btn-4");
-if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
-renderLaptopJudges();
-renderVoteScores();
-updateRingLayoutCornerStats();
-showToast(`Ring set to ${num} judges`, 'success');
-}
-async function loadCurrentMatch() {
-if (!state.ring || !state.ring.id) return;
-let matchData = null;
-try {
-const { data } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
-if (data && data.length > 0) matchData = data[0];
-} catch (e) {
-try {
-const { data } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'in_progress').maybeSingle();
-if (data) matchData = data;
-else {
-const { data: qData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'pending').order('match_number', { ascending: true }).limit(1);
-if (qData && qData.length > 0) matchData = qData[0];
-}
-} catch (err) {}
-}
-if (matchData) {
-state.currentMatch = matchData;
-try {
-await sb.from('rings').update({
-current_match_id: matchData.id,
-blue_name: matchData.player1_name,
-red_name: matchData.player2_name,
-blue_club: matchData.player1_club,
-red_club: matchData.player2_club,
-category_name: matchData.category_name,
-discipline: matchData.discipline,
-match_number: matchData.match_number,
-match_stage: matchData.match_stage,
-round_time_seconds: matchData.round_time_seconds,
-current_round_num: 1,
-gender: matchData.gender,
-age_group: matchData.age_group,
-weight_class: matchData.weight_class,
-mode: matchData.discipline,
-category_id: matchData.category_id || matchData.id || null
-}).eq('id', state.ring.id);
-} catch(e) {}
-await refreshRingData();
-if (matchData.round_time_seconds) {
-timerState.roundTime = matchData.round_time_seconds;
-saveTimerState();
-}
-} else {
-state.currentMatch = null;
-try {
-await sb.from('rings').update({ current_match_id: null, blue_name: null, red_name: null, match_stage: 'No More Matches', category_id: null }).eq('id', state.ring.id);
-} catch(e) {}
-await refreshRingData();
-}
-await loadNextMatch();
-if (state.role === 'laptop') await loadMatchList();
-}
-async function loadNextMatch() {
-if (!state.ring || !state.ring.id) return;
-try {
-let nextMatch = null;
-const { data } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
-if (data && data.length >= 2) nextMatch = data[1];
-else {
-const { data: mData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(2);
-if (mData && mData.length >= 2) nextMatch = mData[1];
-}
-if (nextMatch) {
-await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
-await refreshRingData();
-}
-} catch(e) {}
-}
+  <!-- ===== TV VIEW WITH CORNER JUDGE NETS ===== -->
+  <div id="view-tv" class="hidden-view tv-container">
+    <div class="tv-top-bar">
+      <div class="tv-top-info">
+        <span id="tv-ring-name" style="font-weight:900;font-size:1.3rem;">Ring 1</span>
+        <span id="tv-match-stage" class="stage-badge">Preliminary</span>
+      </div>
+      <div class="tv-top-info">
+        <span id="tv-category-name" class="category-info">Category</span>
+        <span style="color:#475569;">|</span>
+        <span id="tv-match-number-display" style="color:#94a3b8;font-weight:700;">Match #1</span>
+      </div>
+      <div class="tv-top-info">
+        <span id="tv-discipline-badge" class="stage-badge" style="background:#1e40af;">SPARRING</span>
+      </div>
+    </div>
+    <div class="tv-main-area">
+      <!-- Judge 1 Corner (Top-Left) -->
+      <div id="tv-corner-1" class="tv-judge-corner tl">
+        <div class="tv-jc-label">Judge 1</div>
+        <div id="tv-net-1" class="tv-jc-score">0</div>
+      </div>
+      <!-- Judge 2 Corner (Top-Right) -->
+      <div id="tv-corner-2" class="tv-judge-corner tr">
+        <div class="tv-jc-label">Judge 2</div>
+        <div id="tv-net-2" class="tv-jc-score">0</div>
+      </div>
+      <!-- Judge 3 Corner (Bottom-Right) -->
+      <div id="tv-corner-3" class="tv-judge-corner br">
+        <div class="tv-jc-label">Judge 3</div>
+        <div id="tv-net-3" class="tv-jc-score">0</div>
+      </div>
+      <!-- Judge 4 Corner (Bottom-Left) -->
+      <div id="tv-corner-4" class="tv-judge-corner bl">
+        <div class="tv-jc-label">Judge 4</div>
+        <div id="tv-net-4" class="tv-jc-score">0</div>
+      </div>
+      <div class="tv-side blue-side">
+        <div class="tv-competitor-name" id="tv-blue-name">BLUE</div>
+        <div class="tv-competitor-club" id="tv-blue-club">---</div>
+        <div class="tv-big-score" id="tv-blue-score">0</div>
+      </div>
+      <div class="tv-side red-side" style="align-items: flex-end; text-align: right;">
+        <div class="tv-competitor-name" id="tv-red-name">RED</div>
+        <div class="tv-competitor-club" id="tv-red-club">---</div>
+        <div class="tv-big-score" id="tv-red-score">0</div>
+      </div>
+      <div class="tv-center-overlay">
+        <div id="tv-timer-label-top" class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
+        <div id="tv-timer-time" class="tv-timer-display">2:00</div>
+        <div class="tv-penalties">
+          <div class="tv-penalty-item">
+            <span class="tv-penalty-label">BLU GJ:</span>
+            <span id="tv-blue-gj" style="color:#60a5fa;">0</span>
+          </div>
+          <div class="tv-penalty-item">
+            <span class="tv-penalty-label">YC:</span>
+            <span id="tv-blue-yc" style="color:#fbbf24;">0</span>
+          </div>
+          <span style="color:#475569;">|</span>
+          <div class="tv-penalty-item">
+            <span class="tv-penalty-label">RED YC:</span>
+            <span id="tv-red-yc" style="color:#fbbf24;">0</span>
+          </div>
+          <div class="tv-penalty-item">
+            <span class="tv-penalty-label">GJ:</span>
+            <span id="tv-red-gj" style="color:#f87171;">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tv-bottom-bar">
+      <div class="tv-next-match">
+        <div>
+          <div class="tv-next-label">⏭️ Next Blue Competitor</div>
+          <div id="tv-next-blue" class="tv-next-name blue-next">---</div>
+        </div>
+      </div>
+      <div class="tv-next-match" style="justify-content:flex-end;text-align:right;">
+        <div>
+          <div class="tv-next-label">Next Red Competitor ⏭️</div>
+          <div id="tv-next-red" class="tv-next-name red-next">---</div>
+        </div>
+      </div>
+    </div>
+    <div id="tv-winner-overlay" class="hidden-view tv-winner-overlay">
+      <div class="tv-winner-box">
+        <div class="tv-winner-trophy">🏆</div>
+        <div id="tv-winner-text" class="tv-winner-text">BLUE WINS!</div>
+        <div id="tv-winner-name" class="tv-winner-name">Competitor Name</div>
+        <div class="tv-winner-sub">MATCH COMPLETE</div>
+      </div>
+    </div>
+  </div>
 
-// ✅ FIXED: Robust updateCompetitorDisplay function
-function updateCompetitorDisplay() {
-  const blueName = state.ring?.blue_name || '---';
-  const redName = state.ring?.red_name || '---';
-  const blueClub = state.ring?.blue_club || '---';
-  const redClub = state.ring?.red_club || '---';
-  const nextBlueName = state.ring?.next_blue_name || '---';
-  const nextRedName = state.ring?.next_red_name || '---';
-  const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-  const categoryName = state.ring?.category_name || 'No Match';
-  const matchNumber = state.ring?.match_number || 0;
-  const matchStage = state.ring?.match_stage || 'Preliminary';
-  
-  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  
-  setTxt('laptop-blue-name', blueName);
-  setTxt('laptop-red-name', redName);
-  setTxt('laptop-blue-club', blueClub);
-  setTxt('laptop-red-club', redClub);
-  setTxt('laptop-category-name', categoryName);
-  setTxt('laptop-match-number', matchNumber);
-  setTxt('laptop-match-stage', matchStage);
+  <!-- ===== QR CODE MODAL ===== -->
+  <div id="modal-qr" class="hidden-view modal-overlay">
+    <div class="modal-box">
+      <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
+      <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;">Scan with phone to instantly join as this judge</p>
+      <div id="qrcode-container" style="background:white;padding:15px;border-radius:12px;display:inline-block;margin-bottom:20px;"></div>
+      <div>
+        <button class="timer-btn" style="background:#475569;width:100%;" onclick="closeQRModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
-  // ✅ FIXED: No more hardcoded www.tkd-iscore.com! Uses your actual current domain.
-  const categoryLinkContainer = document.getElementById('category-web-link-container');
-  const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
-  const catId = state.ring?.category_id || state.currentMatch?.category_id || state.ring?.id;
-  
-  if (categoryLinkContainer && categoryLinkAnchor) {
-    if (catId) {
-      const yrebUrl = `${window.location.origin}/manage.html`; 
-      categoryLinkAnchor.href = yrebUrl;
-      categoryLinkAnchor.textContent = `🔗 Manage / Bracket View`;
-      categoryLinkContainer.classList.remove('hidden-view');
-    } else {
-      categoryLinkContainer.classList.add('hidden-view');
-    }
-  }
+  <!-- ===== ADMIN KICK MODAL ===== -->
+  <div id="modal-admin-kick" class="hidden-view modal-overlay">
+    <div class="modal-box">
+      <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
+      <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:15px;">Enter Admin PIN and select which judge slot to kick.</p>
+      <div style="margin-bottom:15px;">
+        <label style="display:block;color:#94a3b8;font-size:0.8rem;margin-bottom:5px;font-weight:700;">Judge Slot to Kick:</label>
+        <select id="sel-kick-slot" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;font-size:1rem;font-weight:700;">
+          <option value="1">Judge 1</option>
+          <option value="2">Judge 2</option>
+          <option value="3">Judge 3</option>
+          <option value="4">Judge 4</option>
+        </select>
+      </div>
+      <div style="margin-bottom:20px;">
+        <input id="inp-admin-pin" type="password" maxlength="10" placeholder="Admin PIN (admina)" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;text-align:center;font-size:1.2rem;" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="timer-btn" style="flex:1;background:#ef4444;" onclick="confirmAdminKick()">Kick Judge</button>
+        <button class="timer-btn" style="flex:1;background:#475569;" onclick="closeAdminKickModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
 
-  const laptopDisc = document.getElementById('laptop-discipline-badge');
-  if (laptopDisc) {
-    laptopDisc.textContent = discipline.toUpperCase();
-    laptopDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
-  }
+  <!-- ===== WINNER MODAL ===== -->
+  <div id="modal-winner" class="hidden-view modal-overlay">
+    <div class="modal-box" style="max-width:600px;">
+      <h2 id="modal-winner-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
+      <p id="modal-winner-name" style="font-size:1.5rem;color:#fbbf24;font-weight:700;margin-bottom:25px;">Competitor Name</p>
+      <p id="modal-winner-question" style="text-align:center;color:#94a3b8;margin-bottom:25px;font-size:1.1rem;">Is this correct?</p>
+      <div id="winner-btn-container" style="display:flex;gap:15px;">
+        <button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
+        <button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
+      </div>
+      <div id="winner-deny-section" class="hidden-view" style="margin-top:20px;padding-top:20px;border-top:1px solid #334155;">
+        <p style="text-align:center;color:#ef4444;margin-bottom:15px;">Result denied. Reset to try again.</p>
+        <button id="btn-winner-reset" class="timer-btn" style="background:#f59e0b;width:100%;">⟲ Reset Match</button>
+      </div>
+    </div>
+  </div>
 
-  setTxt('tv-blue-name', blueName);
-  setTxt('tv-red-name', redName);
-  setTxt('tv-blue-club', blueClub);
-  setTxt('tv-red-club', redClub);
-  setTxt('tv-next-blue', nextBlueName);
-  setTxt('tv-next-red', nextRedName);
-  setTxt('tv-category-name', categoryName);
-  setTxt('tv-match-number-display', 'Match #' + matchNumber);
-  setTxt('tv-match-stage', matchStage);
-  
-  const tvDisc = document.getElementById('tv-discipline-badge');
-  if (tvDisc) {
-    tvDisc.textContent = discipline.toUpperCase();
-    tvDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
-  }
+  <div id="toast" class="toast"></div>
 
-  setTxt('phone-blue-name', blueName);
-  setTxt('phone-red-name', redName);
-  const phoneMode = document.getElementById('phone-mode-badge');
-  if (phoneMode) {
-    phoneMode.textContent = discipline.toUpperCase();
-    phoneMode.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
-  }
-
-  const sparringControls = document.getElementById('sparring-controls');
-  const patternsControls = document.getElementById('patterns-controls');
-  const declareWinner = document.getElementById('laptop-declare-winner');
-  
-  if (discipline === 'patterns') {
-    if (sparringControls) sparringControls.classList.add('hidden-view');
-    if (patternsControls) patternsControls.classList.remove('hidden-view');
-    if (declareWinner) declareWinner.classList.remove('hidden-view');
-  } else {
-    if (sparringControls) sparringControls.classList.remove('hidden-view');
-    if (patternsControls) patternsControls.classList.add('hidden-view');
-    if (declareWinner) declareWinner.classList.add('hidden-view');
-  }
-}
-
-// ✅ FIXED: Robust loadMatchList function with explicit name pulling fallback
-async function loadMatchList() {
-  if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
-  const container = document.getElementById('match-list-container');
-  if (!container) return;
-  
-  try {
-    let matches = [];
-    const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
+  <script>
+    const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
     
-    if (!error && data) {
-      matches = data;
-    } else {
-      // ✅ FIXED: Robust fallback to directly pull names from the matches table
-      const { data: fbData, error: fbError } = await sb.from('matches')
-        .select('id, match_number, match_stage, player1_name, player2_name, category_name, gender, age_group, status, winner_name')
-        .eq('ring_id', state.ring.id)
-        .order('match_number', { ascending: true })
-        .limit(30);
-      
-      if (fbError) {
-        console.error("Match list fetch error:", fbError);
-        container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">⚠️ Error loading matches. Check console.</div>';
+    const state = {
+      role: null,
+      ring: null,
+      match: null,
+      currentMatch: null,
+      judgeSlot: null,
+      phoneSessionId: null,
+      realtimeChannel: null,
+      ringChannel: null,
+      heartbeatInterval: null,
+      pollInterval: null,
+      matchPollInterval: null,
+      matchListInterval: null,
+      activePhones: [],
+      heartbeatBusy: false,
+      loggingIn: false,
+      dbBroken: false
+    };
+    
+    const TIMER_CHANNEL_PREFIX = "timer-";
+    let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+    let timerChannel = null;
+    let timerTickInterval = null;
+    let broadcastInterval = null;
+
+    function getTimerKey() { return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`; }
+    function loadTimerState() {
+      try { const saved = localStorage.getItem(getTimerKey()); if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved)); } catch (e) {}
+    }
+    function saveTimerState() { try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e) {} }
+    function broadcastTimerState() {
+      if (timerChannel && state.role === 'laptop') {
+        try { timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState }); } catch (e) {}
+      }
+    }
+    function subscribeTimer() {
+      if (timerChannel) sb.removeChannel(timerChannel);
+      if (!state.ring) return;
+      timerChannel = sb.channel(TIMER_CHANNEL_PREFIX + state.ring.id)
+        .on('broadcast', { event: 'timer-update' }, (msg) => {
+          const s = msg && msg.payload;
+          if (s) { timerState = Object.assign({}, timerState, s); saveTimerState(); renderTimer(); }
+        })
+        .on('broadcast', { event: 'timer-request' }, () => {
+          if (state.role === 'laptop') broadcastTimerState();
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED' && state.role !== 'laptop') {
+            try { timerChannel.send({ type: 'broadcast', event: 'timer-request' }); } catch (e) {}
+          }
+        });
+    }
+    function getRemaining() {
+      if (timerState.finished) return 0;
+      const now = Date.now();
+      let total = timerState.elapsed;
+      if (timerState.startTime) total += (now - timerState.startTime) / 1000;
+      const limit = timerState.isBreak ? timerState.breakTime : timerState.roundTime;
+      return Math.max(0, limit - total);
+    }
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+    function formatTimeDecimal(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s.toFixed(1).padStart(4, '0')}`;
+    }
+    function renderTimer() {
+      const remaining = getRemaining();
+      const timeStr = formatTime(remaining);
+      const timeStrDecimal = formatTimeDecimal(remaining);
+      const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished && !timerState.isBreak;
+      const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setEl('l-timer-round', timerState.round);
+      setEl('tv-timer-round', timerState.round);
+      setEl('phone-timer-round', timerState.round);
+      const tvTimerLabelTop = document.getElementById('tv-timer-label-top');
+      if (tvTimerLabelTop) {
+        if (timerState.isBreak) {
+          tvTimerLabelTop.innerHTML = '<span style="color:#38bdf8;">☕ BREAK TIME</span>';
+        } else {
+          tvTimerLabelTop.innerHTML = `ROUND <span id="tv-timer-round">${timerState.round}</span>`;
+        }
+      }
+      ['l-timer-time', 'tv-timer-time', 'phone-timer-time'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = id === 'tv-timer-time' ? timeStrDecimal : timeStr;
+        el.classList.toggle('warning', warn);
+        el.classList.toggle('break-mode', timerState.isBreak);
+      });
+      const statusEl = document.getElementById('l-timer-status');
+      const phoneStatusEl = document.getElementById('phone-timer-status');
+      let status = '';
+      if (timerState.finished) {
+        status = timerState.winner === 'draw' ? 'Match Complete · DRAW' : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
+      } else if (timerState.isBreak) {
+        status = timerState.paused ? '☕ Break · Paused (Press SPACE to Start Next Round)' : '☕ Break in Progress';
+      } else if (timerState.paused) {
+        status = `Round ${timerState.round} · Paused (Press SPACE)`;
+      } else {
+        status = `Round ${timerState.round} · Running (Press SPACE to Pause)`;
+      }
+      if (statusEl) statusEl.textContent = status;
+      if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.isBreak ? 'Break' : (timerState.paused ? 'Paused' : 'Running'));
+      const btnStart = document.getElementById('btn-timer-start');
+      const btnPause = document.getElementById('btn-timer-pause');
+      if (btnStart && btnPause) {
+        if (timerState.finished) {
+          btnStart.classList.remove('hidden-view');
+          btnPause.classList.add('hidden-view');
+          btnStart.disabled = true;
+          btnStart.textContent = '▶ Start Round';
+        } else if (timerState.isBreak) {
+          btnStart.classList.remove('hidden-view');
+          btnPause.classList.add('hidden-view');
+          btnStart.disabled = false;
+          btnStart.textContent = '▶ Start Next Round Now';
+        } else if (timerState.paused) {
+          btnStart.classList.remove('hidden-view');
+          btnPause.classList.add('hidden-view');
+          btnStart.disabled = false;
+          btnStart.textContent = '▶ Start Round';
+        } else {
+          btnStart.classList.add('hidden-view');
+          btnPause.classList.remove('hidden-view');
+        }
+      }
+      const r3note = document.getElementById('timer-round3-note');
+      if (r3note) r3note.classList.toggle('hidden-view', timerState.round !== 3 || timerState.isBreak);
+      const tvOverlay = document.getElementById('tv-winner-overlay');
+      const tvText = document.getElementById('tv-winner-text');
+      const tvWinnerName = document.getElementById('tv-winner-name');
+      if (tvOverlay && tvText) {
+        if (timerState.finished && timerState.winner) {
+          if (timerState.winner === 'draw') {
+            tvText.textContent = 'DRAW!';
+            if (tvWinnerName) tvWinnerName.textContent = '';
+          } else {
+            tvText.textContent = timerState.winner.toUpperCase() + ' WINS!';
+            const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
+            if (tvWinnerName) tvWinnerName.textContent = winnerName;
+          }
+          tvOverlay.classList.remove('hidden-view');
+        } else {
+          tvOverlay.classList.add('hidden-view');
+        }
+      }
+    }
+    function tickTimer() {
+      if (timerState.finished) return;
+      renderTimer();
+      if (state.role === 'laptop' && !timerState.paused && getRemaining() <= 0) {
+        if (timerState.isBreak) {
+          timerState.isBreak = false;
+          timerState.paused = true;
+          timerState.elapsed = 0;
+          timerState.startTime = null;
+          saveTimerState();
+          broadcastTimerState();
+          renderTimer();
+          stopTimerTick();
+          showToast('☕ Break time finished! Press Start or Space for next round.', 'success');
+        } else {
+          endRound();
+        }
+      }
+    }
+    function startTimerTick() {
+      if (timerTickInterval) clearInterval(timerTickInterval);
+      timerTickInterval = setInterval(tickTimer, 100);
+    }
+    function stopTimerTick() {
+      if (timerTickInterval) clearInterval(timerTickInterval);
+      timerTickInterval = null;
+    }
+    function startBroadcastLoop() {
+      if (broadcastInterval) clearInterval(broadcastInterval);
+      broadcastInterval = setInterval(() => {
+        if (state.role === 'laptop' && !timerState.paused && !timerState.finished) broadcastTimerState();
+      }, 1000);
+    }
+    function stopBroadcastLoop() {
+      if (broadcastInterval) clearInterval(broadcastInterval);
+      broadcastInterval = null;
+    }
+    function startTimer() {
+      if (timerState.finished || state.role !== 'laptop') return;
+      if (timerState.isBreak) {
+        timerState.isBreak = false;
+        timerState.paused = true;
+        timerState.elapsed = 0;
+        timerState.startTime = null;
+        saveTimerState();
+        broadcastTimerState();
+        renderTimer();
+        stopTimerTick();
+        showToast('Break skipped. Ready for round ' + timerState.round, 'success');
         return;
       }
-      matches = fbData || [];
+      timerState.paused = false;
+      timerState.startTime = Date.now();
+      saveTimerState();
+      broadcastTimerState();
+      renderTimer();
+      startTimerTick();
     }
-    
-    if (matches.length === 0) {
-      container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches queued.<br><small>Assign matches to this ring in the Manage panel.</small></div>';
-    } else {
-      renderMatchListItems(matches, container);
+    function pauseTimer() {
+      if (timerState.finished || timerState.paused || state.role !== 'laptop') return;
+      const now = Date.now();
+      if (timerState.startTime) timerState.elapsed += (now - timerState.startTime) / 1000;
+      timerState.startTime = null;
+      timerState.paused = true;
+      saveTimerState();
+      broadcastTimerState();
+      renderTimer();
     }
-  } catch (e) {
-    console.error("loadMatchList exception:", e);
-    container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load match queue.</div>';
-  }
-}
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && state.role === "laptop") {
+        if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
+        e.preventDefault();
+        if (timerState.paused) startTimer();
+        else pauseTimer();
+      }
+    });
+    function resetRound() {
+      if (state.role !== 'laptop') return;
+      if (!confirm('Reset the current timer?')) return;
+      timerState.elapsed = 0;
+      timerState.startTime = null;
+      timerState.paused = true;
+      saveTimerState();
+      broadcastTimerState();
+      renderTimer();
+      stopTimerTick();
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      const setTimeBtn = document.getElementById("btn-set-time");
+      if (setTimeBtn) {
+        setTimeBtn.addEventListener("click", () => {
+          if (state.role !== 'laptop') return;
+          const mins = parseInt(document.getElementById("inp-timer-min").value) || 0;
+          const secs = parseInt(document.getElementById("inp-timer-sec").value) || 0;
+          const breakSecs = parseInt(document.getElementById("inp-break-sec").value) || 30;
+          const totalSecs = (mins * 60) + secs;
+          timerState.roundTime = totalSecs;
+          timerState.breakTime = breakSecs;
+          if (!timerState.isBreak) {
+            timerState.elapsed = 0;
+            timerState.startTime = null;
+            timerState.paused = true;
+          }
+          saveTimerState();
+          broadcastTimerState();
+          renderTimer();
+          showToast(`Timer set: Round ${mins}:` + secs.toString().padStart(2, '0') + ` | Break ${breakSecs}s`, 'success');
+        });
+      }
+    });
+    async function endRound() {
+      if (timerState.finished) return;
+      timerState.paused = true;
+      timerState.startTime = null;
+      timerState.elapsed = 0;
+      await fetchMatchNow();
+      const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+      if (mode === 'patterns') { finishMatch(); return; }
+      if (timerState.round === 1) {
+        timerState.round = 2;
+        timerState.isBreak = true;
+        timerState.paused = false;
+        timerState.startTime = Date.now();
+        saveTimerState();
+        broadcastTimerState();
+        renderTimer();
+        startTimerTick();
+        showToast('☕ Round 1 ended. Break time started!', 'success');
+      } else if (timerState.round === 2) {
+        const votes = judgeVoteCounts();
+        if (votes.blue === votes.red) {
+          timerState.round = 3;
+          timerState.isBreak = true;
+          timerState.paused = false;
+          timerState.startTime = Date.now();
+          saveTimerState();
+          broadcastTimerState();
+          renderTimer();
+          startTimerTick();
+          showToast('☕ Round 2 tied! Break started before Round 3 tie-breaker.', 'warning');
+        } else {
+          finishMatch();
+        }
+      } else if (timerState.round === 3) {
+        finishMatch();
+      }
+    }
+    function finishMatch() {
+      const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+      if (mode === 'patterns') {
+        timerState.finished = true;
+        timerState.paused = true;
+        timerState.isBreak = false;
+        saveTimerState();
+        broadcastTimerState();
+        renderTimer();
+        stopTimerTick();
+        if (state.role === 'laptop') showWinnerConfirmStep1();
+        return;
+      }
+      const votes = judgeVoteCounts();
+      timerState.finished = true;
+      timerState.paused = true;
+      timerState.isBreak = false;
+      if (votes.blue > votes.red) timerState.winner = 'blue';
+      else if (votes.red > votes.blue) timerState.winner = 'red';
+      else timerState.winner = 'draw';
+      saveTimerState();
+      broadcastTimerState();
+      renderTimer();
+      stopTimerTick();
+      if (state.role === 'laptop') showWinnerConfirmStep1();
+    }
+    function showWinnerConfirmStep1() {
+      const modal = document.getElementById('modal-winner');
+      const title = document.getElementById('modal-winner-title');
+      const winnerNameEl = document.getElementById('modal-winner-name');
+      const question = document.getElementById('modal-winner-question');
+      const btnContainer = document.getElementById('winner-btn-container');
+      const denySection = document.getElementById('winner-deny-section');
+      let winnerName = '';
+      if (timerState.winner === 'draw') {
+        title.textContent = 'DRAW!';
+        winnerName = 'No winner';
+      } else {
+        title.textContent = timerState.winner.toUpperCase() + ' WINS!';
+        winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
+      }
+      if (winnerNameEl) winnerNameEl.textContent = winnerName;
+      question.textContent = 'Is this correct?';
+      btnContainer.innerHTML = `
+        <button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm & Next</button>
+        <button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>
+      `;
+      document.getElementById('btn-winner-confirm').addEventListener('click', confirmAndAdvance);
+      document.getElementById('btn-winner-deny').addEventListener('click', showWinnerDenied);
+      denySection.classList.add('hidden-view');
+      modal.classList.remove('hidden-view');
+    }
+    async function confirmAndAdvance() {
+      document.getElementById('modal-winner').classList.add('hidden-view');
+      const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE')
+                         : timerState.winner === 'red' ? (state.ring?.red_name || 'RED')
+                         : 'DRAW';
+      const winnerSide = timerState.winner || 'draw';
+      try {
+        await sb.rpc('advance_ring_match', {
+          p_ring_id: state.ring.id, p_winner: winnerName, p_winner_side: winnerSide
+        });
+      } catch(e) {}
+      timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+      saveTimerState();
+      broadcastTimerState();
+      const tvOverlay = document.getElementById('tv-winner-overlay');
+      if (tvOverlay) tvOverlay.classList.add('hidden-view');
+      await refreshRingData();
+      await loadCurrentMatch();
+      await resetMatchScores();
+      renderTimer();
+      updateCompetitorDisplay();
+      showToast('✓ Match advanced to next!', 'success');
+    }
+    function showWinnerDenied() {
+      const title = document.getElementById('modal-winner-title');
+      const question = document.getElementById('modal-winner-question');
+      title.textContent = 'RESULT DENIED';
+      question.textContent = 'Please reset the match to try again.';
+      document.getElementById('winner-btn-container').innerHTML = '';
+      document.getElementById('winner-deny-section').classList.remove('hidden-view');
+    }
+    async function resetMatch() {
+      if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
+      await resetMatchScores();
+      timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+      saveTimerState();
+      broadcastTimerState();
+      document.getElementById('modal-winner').classList.add('hidden-view');
+      const tvOverlay = document.getElementById('tv-winner-overlay');
+      if (tvOverlay) tvOverlay.classList.add('hidden-view');
+      stopTimerTick();
+      renderTimer();
+      fetchMatchNow();
+    }
+    async function resetMatchScores() {
+      if (!state.ring || !state.ring.id) return;
+      await sb.from("matches").update({
+        blue_score: 0, red_score: 0,
+        blue_gam_jeom: 0, red_gam_jeom: 0,
+        blue_yellow_cards: 0, red_yellow_cards: 0,
+        judge_blue: [0,0,0,0],
+        judge_red: [0,0,0,0],
+        updated_at: new Date().toISOString()
+      }).eq("ring_id", state.ring.id);
+    }
+    async function declareWinner(side) {
+      if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
+      if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
+      timerState.finished = true;
+      timerState.paused = true;
+      timerState.isBreak = false;
+      timerState.winner = side;
+      saveTimerState();
+      broadcastTimerState();
+      renderTimer();
+      stopTimerTick();
+      showWinnerConfirmStep1();
+    }
+    async function refreshRingData() {
+      if (!state.ring || !state.ring.id) return;
+      try {
+        const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).maybeSingle();
+        if (data) {
+          state.ring = data;
+          sessionStorage.setItem('tkd_ring', JSON.stringify(data));
+          updateCompetitorDisplay();
+        }
+      } catch(e) {}
+    }
+    async function updateMaxPhones(val) {
+      if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
+      const num = parseInt(val, 10);
+      try {
+        await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id);
+      } catch(e) {}
+      state.ring.max_phones = num;
+      sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
+      const btn4 = document.getElementById("qr-btn-4");
+      if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
+      renderLaptopJudges();
+      renderVoteScores();
+      updateRingLayoutCornerStats();
+      showToast(`Ring set to ${num} judges`, 'success');
+    }
+    async function loadCurrentMatch() {
+      if (!state.ring || !state.ring.id) return;
+      let matchData = null;
+      try {
+        const { data } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
+        if (data && data.length > 0) matchData = data[0];
+      } catch (e) {
+        try {
+          const { data } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'in_progress').maybeSingle();
+          if (data) matchData = data;
+          else {
+            const { data: qData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'pending').order('match_number', { ascending: true }).limit(1);
+            if (qData && qData.length > 0) matchData = qData[0];
+          }
+        } catch (err) {}
+      }
+      if (matchData) {
+        state.currentMatch = matchData;
+        try {
+          await sb.from('rings').update({
+            current_match_id: matchData.id,
+            blue_name: matchData.player1_name,
+            red_name: matchData.player2_name,
+            blue_club: matchData.player1_club,
+            red_club: matchData.player2_club,
+            category_name: matchData.category_name,
+            discipline: matchData.discipline,
+            match_number: matchData.match_number,
+            match_stage: matchData.match_stage || 'Preliminary',
+            round_time_seconds: matchData.round_time_seconds,
+            current_round_num: 1,
+            gender: matchData.gender,
+            age_group: matchData.age_group,
+            weight_class: matchData.weight_class,
+            mode: matchData.discipline,
+            category_id: matchData.category_id || matchData.id || null
+          }).eq('id', state.ring.id);
+        } catch(e) {}
+        await refreshRingData();
+        if (matchData.round_time_seconds) {
+          timerState.roundTime = matchData.round_time_seconds;
+          saveTimerState();
+        }
+      } else {
+        state.currentMatch = null;
+        try {
+          await sb.from('rings').update({ current_match_id: null, blue_name: null, red_name: null, match_stage: 'No More Matches', category_id: null }).eq('id', state.ring.id);
+        } catch(e) {}
+        await refreshRingData();
+      }
+      await loadNextMatch();
+      if (state.role === 'laptop') await loadMatchList();
+    }
+    async function loadNextMatch() {
+      if (!state.ring || !state.ring.id) return;
+      try {
+        let nextMatch = null;
+        const { data } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
+        if (data && data.length >= 2) nextMatch = data[1];
+        else {
+          const { data: mData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(2);
+          if (mData && mData.length >= 2) nextMatch = mData[1];
+        }
+        if (nextMatch) {
+          await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
+          await refreshRingData();
+        }
+      } catch(e) {}
+    }
 
-function renderMatchListItems(data, container) {
-if (!data || data.length === 0) {
-container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No matches in queue</div>';
-return;
-}
-let html = '';
-data.forEach(m => {
-const isActive = state.currentMatch && m.id === state.currentMatch.id;
-const isCompleted = m.status === 'completed';
-const cls = isActive ? 'active' : (isCompleted ? 'completed' : '');
-html += `<div class="match-list-item ${cls}">
-<div class="ml-number">#${m.match_number || '-'} · ${m.match_stage || 'Preliminary'}</div>
-<div class="ml-names">${m.player1_name || 'TBD'} vs ${m.player2_name || 'TBD'}</div>
-<div class="ml-category">${m.category_name || ''} ${m.gender ? '· ' + m.gender : ''} ${m.age_group ? '· ' + m.age_group : ''}</div>
-${isCompleted && m.winner_name ? `<div class="ml-winner">✓ Winner: ${m.winner_name}</div>` : ''}
-</div>`;
-});
-container.innerHTML = html;
-}
-function showToast(msg, type) {
-const t = document.getElementById('toast');
-t.textContent = msg;
-t.className = 'toast show ' + (type || '');
-setTimeout(() => { t.className = 'toast'; }, 3500);
-}
-function showView(name) {
-["landing","phone","laptop","tv"].forEach(v => {
-document.getElementById("view-" + v).classList.toggle("hidden-view", v !== name);
-});
-}
-function parseHash() {
-const raw = location.hash.replace(/^#/, "");
-const qIndex = raw.indexOf("?");
-const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase();
-const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : "");
-return { name: path, code: (params.get("code") || "").trim(), slot: (params.get("slot") || "").trim() };
-}
-async function route() {
-const { name, code, slot } = parseHash();
-if (name === "tv") {
-if (code) {
-const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle();
-if (data) {
-state.ring = data;
-sessionStorage.setItem("tkd_ring", JSON.stringify(data));
-await enterTV();
-return;
-}
-}
-const cached = sessionStorage.getItem("tkd_ring");
-if (cached) {
-try { state.ring = JSON.parse(cached); await enterTV(); return; } catch(e){}
-}
-showView("landing");
-return;
-}
-if (name === "phone" || slot) {
-if (code) {
-const { data } = await sb.from("rings").select("*").eq("phone_password", code).maybeSingle();
-if (data) {
-state.ring = data;
-sessionStorage.setItem("tkd_ring", JSON.stringify(data));
-state.role = "phone";
-await autoEnterPhone(parseInt(slot, 10) || 1);
-return;
-}
-}
-}
-if (name === "") {
-if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
-if (state.role === "laptop") { showView("laptop"); return; }
-}
-showView("landing");
-}
-document.getElementById("btn-enter").addEventListener("click", tryLogin);
-document.getElementById("inp-password").addEventListener("keydown", e => {
-if (e.key === "Enter") tryLogin();
-});
-async function tryLogin() {
-if (state.loggingIn) return;
-const pwd = document.getElementById("inp-password").value.trim();
-const errEl = document.getElementById("landing-error");
-const btn = document.getElementById("btn-enter");
-errEl.textContent = "";
-if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
-state.loggingIn = true;
-btn.disabled = true;
-btn.textContent = "Entering…";
-try {
-const { data, error } = await sb.from("rings").select("*")
-.or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`).limit(1);
-if (error || !data || data.length === 0) { errEl.textContent = "Invalid password or TV code."; return; }
-const ring = data[0];
-state.ring = ring;
-sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
-if (pwd === ring.tv_code) {
-state.role = "tv";
-await enterTV();
-} else if (pwd === ring.laptop_password) {
-state.role = "laptop";
-await enterLaptop();
-} else if (pwd === ring.phone_password) {
-state.role = "phone";
-await enterPhone();
-}
-} finally {
-state.loggingIn = false;
-btn.disabled = false;
-btn.textContent = "Enter Ring";
-}
-}
-async function ensureMatchRow() {
-if (!state.ring || !state.ring.id || state.dbBroken) return;
-const rid = state.ring.id;
-try {
-const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
-if (selErr) { state.dbBroken = true; return; }
-if (!rows || rows.length === 0) {
-await sb.from("matches").insert({ ring_id: rid });
-} else if (rows.length > 1) {
-const dupIds = rows.slice(1).map(r => r.id);
-await sb.from("matches").delete().in("id", dupIds);
-}
-} catch (e) {
-state.dbBroken = true;
-}
-}
-async function readMatchRow() {
-if (!state.ring || !state.ring.id) return { row: null, error: null };
-try {
-const { data, error } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
-if (error) return { row: null, error };
-return { row: (data && data[0]) || null, error: null };
-} catch (e) {
-return { row: null, error: e };
-}
-}
-async function fetchMatchNow() {
-if (!state.ring || !state.ring.id || state.dbBroken) return;
-const { row } = await readMatchRow();
-if (row) handleMatchUpdate({ new: row });
-}
-function startMatchPolling() {
-if (state.matchPollInterval) clearInterval(state.matchPollInterval);
-fetchMatchNow();
-state.matchPollInterval = setInterval(fetchMatchNow, 800);
-}
-function pad4(arr) {
-const out = [0,0,0,0];
-if (Array.isArray(arr)) for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
-return out;
-}
-function judgeVoteCounts() {
-const jb = pad4(state.match ? state.match.judge_blue : null);
-const jr = pad4(state.match ? state.match.judge_red : null);
-const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
-let blue = 0, red = 0;
-for (let i = 0; i < max; i++) {
-if (jb[i] > jr[i]) blue++;
-else if (jr[i] > jb[i]) red++;
-}
-return { blue, red };
-}
-function renderVoteScores() {
-const v = judgeVoteCounts();
-const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-setEl("tv-blue-score", v.blue);
-setEl("tv-red-score", v.red);
-setEl("l-blue-score", v.blue);
-setEl("l-red-score", v.red);
-}
-function renderTVJudgeNets() {
-const jb = pad4(state.match ? state.match.judge_blue : null);
-const jr = pad4(state.match ? state.match.judge_red : null);
-const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
-for (let i = 1; i <= 4; i++) {
-const cornerEl = document.getElementById(`tv-corner-${i}`);
-if (!cornerEl) continue;
-if (i > max) {
-cornerEl.classList.add('hidden-view');
-continue;
-} else {
-cornerEl.classList.remove('hidden-view');
-}
-const givenBlue = jb[i-1];
-const givenRed = jr[i-1];
-const net = givenBlue - givenRed;
-document.getElementById(`tv-net-${i}`).textContent = Math.abs(net);
-cornerEl.classList.remove('lead-blue', 'lead-red');
-if (net > 0) cornerEl.classList.add('lead-blue');
-else if (net < 0) cornerEl.classList.add('lead-red');
-}
-}
-function updateRingLayoutCornerStats() {
-const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
-const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
-for (let i = 1; i <= 4; i++) {
-const btn = document.getElementById(`qr-btn-${i}`);
-const stat = document.getElementById(`qr-stat-${i}`);
-if (!btn || !stat) continue;
-if (i > max) {
-btn.style.display = 'none';
-continue;
-} else {
-btn.style.display = 'flex';
-}
-const isOnline = onlineSlots.has(i);
-if (isOnline) {
-btn.classList.add('connected');
-stat.textContent = 'Connected';
-} else {
-btn.classList.remove('connected');
-stat.textContent = 'Empty';
-}
-}
-}
-function renderLaptopJudges() {
-const container = document.getElementById("laptop-judges-container");
-if (!container) return;
-const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
-container.style.gridTemplateColumns = `repeat(${max}, 1fr)`;
-const jb = pad4(state.match ? state.match.judge_blue : null);
-const jr = pad4(state.match ? state.match.judge_red : null);
-const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
-let html = '';
-for (let i = 1; i <= max; i++) {
-const isOnline = onlineSlots.has(i);
-const givenBlue = jb[i-1];
-const givenRed = jr[i-1];
-const net = givenBlue - givenRed;
-let cls = '';
-if (net > 0) cls = 'leading-blue';
-else if (net < 0) cls = 'leading-red';
-html += `<div id="judge-laptop-${i}" class="judge-box ${cls}">
-<div class="judge-label">Judge ${i}</div>
-<div>
-<span class="judge-status-badge ${isOnline ? 'online' : 'offline'}">${isOnline ? 'Connected' : 'Empty'}</span>
-</div>
-<div class="judge-detail">Net: ${Math.abs(net)}</div>
-<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ${givenBlue} | R: ${givenRed}</div>
-<div class="judge-row-controls">
-<div class="judge-side-adj">
-<span style="color:#60a5fa;font-weight:700;">B</span>
-<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'blue', 1)">+</button>
-<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'blue', -1)">−</button>
-</div>
-<div class="judge-side-adj">
-<span style="color:#f87171;font-weight:700;">R</span>
-<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'red', 1)">+</button>
-<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'red', -1)">−</button>
-</div>
-</div>
-</div>`;
-}
-container.innerHTML = html;
-updateRingLayoutCornerStats();
-}
-async function adjustSpecificJudge(judgeNum, side, delta) {
-if (state.role !== 'laptop' || !state.ring || !state.ring.id) return;
-const { row } = await readMatchRow();
-if (!row && !state.match) return;
-const currentMatchRow = state.match || row;
-const jb = pad4(currentMatchRow.judge_blue);
-const jr = pad4(currentMatchRow.judge_red);
-const slotIdx = judgeNum - 1;
-if (side === 'blue') jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
-else jr[slotIdx] = Math.max(0, jr[slotIdx] + delta);
-if (!state.match) state.match = {};
-state.match.judge_blue = jb;
-state.match.judge_red = jr;
-renderVoteScores();
-renderLaptopJudges();
-renderTVJudgeNets();
-try {
-await sb.from("matches").update({
-judge_blue: jb,
-judge_red: jr,
-updated_at: new Date().toISOString()
-}).eq("ring_id", state.ring.id);
-} catch(e) {}
-}
-function openAdminKickModal() {
-document.getElementById("inp-admin-pin").value = "";
-document.getElementById("modal-admin-kick").classList.remove("hidden-view");
-}
-function closeAdminKickModal() {
-document.getElementById("modal-admin-kick").classList.add("hidden-view");
-}
-async function confirmAdminKick() {
-const pin = document.getElementById("inp-admin-pin").value.trim();
-if (pin !== "admina") {
-alert("Incorrect Admin PIN! (Hint: admina)");
-return;
-}
-const slotToKick = parseInt(document.getElementById("sel-kick-slot").value, 10);
-closeAdminKickModal();
-const targetPhone = state.activePhones.find(p => Number(p.judge_slot) === slotToKick);
-if (targetPhone) {
-try {
-await sb.rpc("phone_unregister", { p_id: targetPhone.id });
-} catch (e) {}
-}
-if (state.match || state.ring) {
-const { row } = await readMatchRow();
-const targetMatch = state.match || row;
-if (targetMatch) {
-const jb = pad4(targetMatch.judge_blue);
-const jr = pad4(targetMatch.judge_red);
-jb[slotToKick - 1] = 0;
-jr[slotToKick - 1] = 0;
-state.match = targetMatch;
-state.match.judge_blue = jb;
-state.match.judge_red = jr;
-renderVoteScores();
-renderLaptopJudges();
-renderTVJudgeNets();
-try {
-await sb.from("matches").update({
-judge_blue: jb,
-judge_red: jr,
-updated_at: new Date().toISOString()
-}).eq("ring_id", state.ring.id);
-} catch(e) {}
-}
-}
-showToast(`Judge ${slotToKick} kicked and points reset to 0`, 'success');
-fetchActivePhones();
-}
-async function fetchActivePhones() {
-if (!state.ring || !state.ring.id) return;
-try {
-const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
-if (!res.error && res.data) {
-state.activePhones = res.data;
-if (state.role === 'laptop') {
-renderLaptopJudges();
-}
-}
-} catch (e) {}
-}
-function startPhoneListPolling() {
-if (state.pollInterval) clearInterval(state.pollInterval);
-fetchActivePhones();
-state.pollInterval = setInterval(fetchActivePhones, 1500);
-}
-function openJudgeQR(slot) {
-const modal = document.getElementById("modal-qr");
-const title = document.getElementById("modal-qr-title");
-const container = document.getElementById("qrcode-container");
-container.innerHTML = "";
-title.textContent = `Judge ${slot} Connection QR`;
-const password = state.ring.phone_password || "";
-const targetUrl = `${location.origin}${location.pathname}#phone?code=${encodeURIComponent(password)}&slot=${slot}`;
-new QRCode(container, {
-text: targetUrl,
-width: 200,
-height: 200,
-colorDark: "#000000",
-colorLight: "#ffffff",
-correctLevel: QRCode.CorrectLevel.H
-});
-modal.classList.remove("hidden-view");
-}
-function closeQRModal() {
-document.getElementById("modal-qr").classList.add("hidden-view");
-}
-async function autoEnterPhone(slot) {
-const maxJ = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
-if (slot > maxJ) slot = maxJ;
-const prevSession = localStorage.getItem("tkd_phone_session_" + state.ring.id);
-if (prevSession) {
-try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
-localStorage.removeItem("tkd_phone_session_" + state.ring.id);
-}
-state.judgeSlot = slot;
-const sessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
-try {
-await sb.rpc("phone_register", {
-p_id: sessionId, p_ring_id: String(state.ring.id), p_slot: slot
-});
-} catch (e) {}
-state.phoneSessionId = sessionId;
-localStorage.setItem("tkd_phone_session_" + state.ring.id, sessionId);
-document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
-document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
-await ensureMatchRow();
-if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
-loadTimerState();
-subscribeTimer();
-renderTimer();
-startTimerTick();
-subscribeMatch();
-subscribeRing();
-updateCompetitorDisplay();
-showView("phone");
-setPhoneStatus("Connected instantly as Judge " + slot, false);
-}
-async function enterPhone() {
-await autoEnterPhone(1);
-}
-async function phoneHeartbeatTick() {
-const sid = state.phoneSessionId;
-if (!sid || state.heartbeatBusy) return;
-state.heartbeatBusy = true;
-try {
-const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
-if (state.phoneSessionId !== sid) return;
-if (hbErr && /not registered|not found|kicked|removed/i.test(hbErr.message || "")) {
-leavePhone("You were kicked by admin.");
-}
-} finally { state.heartbeatBusy = false; }
-}
-async function leavePhone(msg) {
-if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-const sid = state.phoneSessionId;
-state.phoneSessionId = null;
-state.judgeSlot = null;
-state.role = null;
-if (sid) { try { await sb.rpc("phone_unregister", { p_id: sid }); } catch (e) {} }
-if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
-if (state.ringChannel) sb.removeChannel(state.ringChannel);
-stopTimerTick();
-if (msg) alert(msg);
-location.hash = "";
-showView("landing");
-}
-function setPhoneStatus(msg, isError) {
-const el = document.getElementById("phone-status");
-if (el) {
-el.textContent = msg;
-el.style.color = isError ? "#ef4444" : "#94a3b8";
-}
-}
-document.querySelectorAll(".judge-tap").forEach(btn => {
-btn.addEventListener("click", async () => {
-if (timerState.finished) { setPhoneStatus("Match finished", true); return; }
-const side = btn.dataset.side;
-const val = parseInt(btn.dataset.val, 10);
-if (navigator.vibrate) navigator.vibrate(20);
-btn.classList.remove("pulse", "scored-flash");
-void btn.offsetWidth;
-btn.classList.add("pulse");
-if (!state.phoneSessionId || !state.judgeSlot || !state.ring) {
-setPhoneStatus("✗ Not connected", true); return;
-}
-btn.classList.add("scored-flash");
-setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
-if (state.match) {
-const jb = pad4(state.match.judge_blue);
-const jr = pad4(state.match.judge_red);
-if (side === 'blue') jb[state.judgeSlot - 1] += val;
-else jr[state.judgeSlot - 1] += val;
-renderVoteScores();
-renderTVJudgeNets();
-renderLaptopJudges();
-}
-try {
-sb.rpc("judge_score", {
-p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
-p_side: side, p_points: val, p_session: state.phoneSessionId
-}).then(({ error }) => {
-if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) {
-leavePhone("Kicked from ring.");
-} else {
-fetchMatchNow();
-}
-});
-} catch(e) {}
-});
-});
-document.querySelectorAll(".patterns-tap").forEach(btn => {
-btn.addEventListener("click", async () => {
-if (timerState.finished) { setPhoneStatus("✗ Match finished", true); return; }
-const winner = btn.dataset.winner;
-if (navigator.vibrate) navigator.vibrate(30);
-btn.classList.add("scored-flash");
-setPhoneStatus("✓ Winner: " + winner.toUpperCase(), false);
-timerState.finished = true;
-timerState.paused = true;
-timerState.winner = winner;
-saveTimerState();
-broadcastTimerState();
-renderTimer();
-stopTimerTick();
-});
-});
-async function enterLaptop() {
-document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
-document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
-document.getElementById("laptop-tv-code").textContent = state.ring.tv_code || "—";
-const maxP = state.ring.max_phones || 4;
-const selMax = document.getElementById("sel-max-phones");
-if (selMax) selMax.value = String(maxP);
-const btn4 = document.getElementById("qr-btn-4");
-if (btn4) btn4.style.display = maxP === 3 ? 'none' : 'flex';
-await ensureMatchRow();
-await loadCurrentMatch();
-loadTimerState();
-subscribeTimer();
-renderTimer();
-startTimerTick();
-startBroadcastLoop();
-subscribeMatch();
-subscribeRing();
-startPhoneListPolling();
-startMatchPolling();
-startMatchListPolling();
-renderLaptopJudges();
-renderVoteScores();
-updateCompetitorDisplay();
-showView("laptop");
-}
-function startMatchListPolling() {
-if (state.matchListInterval) clearInterval(state.matchListInterval);
-loadMatchList();
-state.matchListInterval = setInterval(loadMatchList, 3000);
-}
-document.getElementById("btn-open-tv").addEventListener("click", () => {
-let tvUrl = location.origin + location.pathname + "#tv";
-if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code);
-window.open(tvUrl, "_blank");
-});
-document.getElementById("btn-reset-match").addEventListener("click", resetMatch);
-document.getElementById("btn-logout").addEventListener("click", () => {
-state.role = null;
-cleanup();
-sessionStorage.removeItem("tkd_ring");
-location.hash = "";
-showView("landing");
-document.getElementById("inp-password").value = "";
-});
-document.getElementById('btn-timer-start').addEventListener('click', startTimer);
-document.getElementById('btn-timer-pause').addEventListener('click', pauseTimer);
-document.getElementById('btn-timer-reset').addEventListener('click', resetRound);
-document.getElementById('btn-winner-reset').addEventListener('click', resetMatch);
-document.querySelectorAll(".penalty-btn").forEach(btn => {
-btn.addEventListener("click", async () => {
-const act = btn.dataset.act;
-if (!act) return;
-if (timerState.finished) { showToast("Match finished. Reset first.", 'warning'); return; }
-let column = null;
-let delta = 0;
-if (act.includes('blue-gj-plus')) { column = 'blue_gam_jeom'; delta = 1; }
-else if (act.includes('blue-gj-minus')) { column = 'blue_gam_jeom'; delta = -1; }
-else if (act.includes('red-gj-plus')) { column = 'red_gam_jeom'; delta = 1; }
-else if (act.includes('red-gj-minus')) { column = 'red_gam_jeom'; delta = -1; }
-else if (act.includes('blue-yc-plus')) { column = 'blue_yellow_cards'; delta = 1; }
-else if (act.includes('blue-yc-minus')) { column = 'blue_yellow_cards'; delta = -1; }
-else if (act.includes('red-yc-plus')) { column = 'red_yellow_cards'; delta = 1; }
-else if (act.includes('red-yc-minus')) { column = 'red_yellow_cards'; delta = -1; }
-if (column && state.match) {
-state.match[column] = Math.max(0, (state.match[column] || 0) + delta);
-handleMatchUpdate({ new: state.match });
-try {
-await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
-} catch(e) {}
-fetchMatchNow();
-}
-});
-});
-async function enterTV() {
-document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
-await ensureMatchRow();
-loadTimerState();
-subscribeTimer();
-renderTimer();
-startTimerTick();
-subscribeMatch();
-subscribeRing();
-startMatchPolling();
-renderVoteScores();
-renderTVJudgeNets();
-updateCompetitorDisplay();
-showView("tv");
-document.body.style.cursor = "none";
-}
-function subscribeMatch() {
-if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
-if (!state.ring || !state.ring.id) return;
-state.realtimeChannel = sb.channel("match-" + state.ring.id)
-.on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` }, handleMatchUpdate)
-.subscribe((status) => { if (status === "SUBSCRIBED") fetchMatchNow(); });
-}
-function subscribeRing() {
-if (state.ringChannel) sb.removeChannel(state.ringChannel);
-if (!state.ring || !state.ring.id) return;
-state.ringChannel = sb.channel("ring-" + state.ring.id)
-.on("postgres_changes", { event: "UPDATE", schema: "public", table: "rings", filter: `id=eq.${state.ring.id}` }, payload => {
-if (!payload.new) return;
-state.ring = Object.assign({}, state.ring, payload.new);
-sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
-const selMax = document.getElementById("sel-max-phones");
-if (selMax) selMax.value = String(state.ring.max_phones || 4);
-updateCompetitorDisplay();
-renderLaptopJudges();
-renderVoteScores();
-renderTVJudgeNets();
-})
-.subscribe();
-}
-function handleMatchUpdate(payload) {
-const m = payload.new;
-if (!m) return;
-state.match = m;
-const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-set("l-blue-gj", m.blue_gam_jeom);
-set("l-red-gj", m.red_gam_jeom);
-set("l-blue-yc", m.blue_yellow_cards);
-set("l-red-yc", m.red_yellow_cards);
-set("tv-blue-gj", m.blue_gam_jeom);
-set("tv-red-gj", m.red_gam_jeom);
-set("tv-blue-yc", m.blue_yellow_cards);
-set("tv-red-yc", m.red_yellow_cards);
-renderVoteScores();
-renderLaptopJudges();
-renderTVJudgeNets();
-if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) {
-endRound();
-}
-}
-function cleanup() {
-if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
-if (state.ringChannel) sb.removeChannel(state.ringChannel);
-if (timerChannel) sb.removeChannel(timerChannel);
-if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-if (state.pollInterval) clearInterval(state.pollInterval);
-if (state.matchPollInterval) clearInterval(state.matchPollInterval);
-if (state.matchListInterval) clearInterval(state.matchListInterval);
-stopTimerTick();
-stopBroadcastLoop();
-state.realtimeChannel = null;
-state.ringChannel = null;
-timerChannel = null;
-}
-window.addEventListener("beforeunload", cleanup);
-window.addEventListener("pagehide", cleanup);
-route();
-window.addEventListener("hashchange", route);
-</script>
+    // ✅ FIXED: Robust updateCompetitorDisplay function
+    function updateCompetitorDisplay() {
+      const blueName = state.ring?.blue_name || '---';
+      const redName = state.ring?.red_name || '---';
+      const blueClub = state.ring?.blue_club || '---';
+      const redClub = state.ring?.red_club || '---';
+      const nextBlueName = state.ring?.next_blue_name || '---';
+      const nextRedName = state.ring?.next_red_name || '---';
+      const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+      const categoryName = state.ring?.category_name || 'No Match';
+      const matchNumber = state.ring?.match_number || 0;
+      const matchStage = state.ring?.match_stage || 'Preliminary';
+      
+      const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      
+      setTxt('laptop-blue-name', blueName);
+      setTxt('laptop-red-name', redName);
+      setTxt('laptop-blue-club', blueClub);
+      setTxt('laptop-red-club', redClub);
+      setTxt('laptop-category-name', categoryName);
+      setTxt('laptop-match-number', matchNumber);
+      setTxt('laptop-match-stage', matchStage);
+
+      // ✅ FIXED: No more hardcoded www.tkd-iscore.com! Uses your actual current domain.
+      const categoryLinkContainer = document.getElementById('category-web-link-container');
+      const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
+      const catId = state.ring?.category_id || state.currentMatch?.category_id || state.ring?.id;
+      
+      if (categoryLinkContainer && categoryLinkAnchor) {
+        if (catId) {
+          const yrebUrl = `${window.location.origin}/manage.html`; 
+          categoryLinkAnchor.href = yrebUrl;
+          categoryLinkAnchor.textContent = `🔗 Manage / Bracket View`;
+          categoryLinkContainer.classList.remove('hidden-view');
+        } else {
+          categoryLinkContainer.classList.add('hidden-view');
+        }
+      }
+
+      const laptopDisc = document.getElementById('laptop-discipline-badge');
+      if (laptopDisc) {
+        laptopDisc.textContent = discipline.toUpperCase();
+        laptopDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
+      }
+
+      setTxt('tv-blue-name', blueName);
+      setTxt('tv-red-name', redName);
+      setTxt('tv-blue-club', blueClub);
+      setTxt('tv-red-club', redClub);
+      setTxt('tv-next-blue', nextBlueName);
+      setTxt('tv-next-red', nextRedName);
+      setTxt('tv-category-name', categoryName);
+      setTxt('tv-match-number-display', 'Match #' + matchNumber);
+      setTxt('tv-match-stage', matchStage);
+      
+      const tvDisc = document.getElementById('tv-discipline-badge');
+      if (tvDisc) {
+        tvDisc.textContent = discipline.toUpperCase();
+        tvDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
+      }
+
+      setTxt('phone-blue-name', blueName);
+      setTxt('phone-red-name', redName);
+      const phoneMode = document.getElementById('phone-mode-badge');
+      if (phoneMode) {
+        phoneMode.textContent = discipline.toUpperCase();
+        phoneMode.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626';
+      }
+
+      const sparringControls = document.getElementById('sparring-controls');
+      const patternsControls = document.getElementById('patterns-controls');
+      const declareWinner = document.getElementById('laptop-declare-winner');
+      
+      if (discipline === 'patterns') {
+        if (sparringControls) sparringControls.classList.add('hidden-view');
+        if (patternsControls) patternsControls.classList.remove('hidden-view');
+        if (declareWinner) declareWinner.classList.remove('hidden-view');
+      } else {
+        if (sparringControls) sparringControls.classList.remove('hidden-view');
+        if (patternsControls) patternsControls.classList.add('hidden-view');
+        if (declareWinner) declareWinner.classList.add('hidden-view');
+      }
+    }
+
+    // ✅ FIXED: Robust loadMatchList function with explicit name pulling fallback
+    async function loadMatchList() {
+      if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
+      const container = document.getElementById('match-list-container');
+      if (!container) return;
+      
+      try {
+        let matches = [];
+        const { data, error } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
+        
+        if (!error && data) {
+          matches = data;
+        } else {
+          // ✅ FIXED: Robust fallback using '*' to prevent ANY missing column 400 errors
+          const { data: fbData, error: fbError } = await sb.from('matches')
+            .select('*')
+            .eq('ring_id', state.ring.id)
+            .order('match_number', { ascending: true })
+            .limit(30);
+          
+          if (fbError) {
+            console.error("Match list fetch error:", fbError);
+            container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">⚠️ Error loading matches. Check console.</div>';
+            return;
+          }
+          matches = fbData || [];
+        }
+        
+        if (matches.length === 0) {
+          container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches queued.<br><small>Assign matches to this ring in the Manage panel.</small></div>';
+        } else {
+          renderMatchListItems(matches, container);
+        }
+      } catch (e) {
+        console.error("loadMatchList exception:", e);
+        container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load match queue.</div>';
+      }
+    }
+
+    function renderMatchListItems(data, container) {
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No matches in queue</div>';
+        return;
+      }
+      let html = '';
+      data.forEach(m => {
+        const isActive = state.currentMatch && m.id === state.currentMatch.id;
+        const isCompleted = m.status === 'completed';
+        const cls = isActive ? 'active' : (isCompleted ? 'completed' : '');
+        html += `<div class="match-list-item ${cls}">
+          <div class="ml-number">#${m.match_number || '-'} · ${m.match_stage || 'Preliminary'}</div>
+          <div class="ml-names">${m.player1_name || 'TBD'} vs ${m.player2_name || 'TBD'}</div>
+          <div class="ml-category">${m.category_name || ''} ${m.gender ? '· ' + m.gender : ''} ${m.age_group ? '· ' + m.age_group : ''}</div>
+          ${isCompleted && m.winner_name ? `<div class="ml-winner">✓ Winner: ${m.winner_name}</div>` : ''}
+        </div>`;
+      });
+      container.innerHTML = html;
+    }
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + (type || '');
+      setTimeout(() => { t.className = 'toast'; }, 3500);
+    }
+    function showView(name) {
+      ["landing","phone","laptop","tv"].forEach(v => {
+        document.getElementById("view-" + v).classList.toggle("hidden-view", v !== name);
+      });
+    }
+    function parseHash() {
+      const raw = location.hash.replace(/^#/, "");
+      const qIndex = raw.indexOf("?");
+      const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase();
+      const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : "");
+      return { name: path, code: (params.get("code") || "").trim(), slot: (params.get("slot") || "").trim() };
+    }
+    async function route() {
+      const { name, code, slot } = parseHash();
+      if (name === "tv") {
+        if (code) {
+          const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle();
+          if (data) {
+            state.ring = data;
+            sessionStorage.setItem("tkd_ring", JSON.stringify(data));
+            await enterTV();
+            return;
+          }
+        }
+        const cached = sessionStorage.getItem("tkd_ring");
+        if (cached) {
+          try { state.ring = JSON.parse(cached); await enterTV(); return; } catch(e){}
+        }
+        showView("landing");
+        return;
+      }
+      if (name === "phone" || slot) {
+        if (code) {
+          const { data } = await sb.from("rings").select("*").eq("phone_password", code).maybeSingle();
+          if (data) {
+            state.ring = data;
+            sessionStorage.setItem("tkd_ring", JSON.stringify(data));
+            state.role = "phone";
+            await autoEnterPhone(parseInt(slot, 10) || 1);
+            return;
+          }
+        }
+      }
+      if (name === "") {
+        if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
+        if (state.role === "laptop") { showView("laptop"); return; }
+      }
+      showView("landing");
+    }
+    document.getElementById("btn-enter").addEventListener("click", tryLogin);
+    document.getElementById("inp-password").addEventListener("keydown", e => {
+      if (e.key === "Enter") tryLogin();
+    });
+    async function tryLogin() {
+      if (state.loggingIn) return;
+      const pwd = document.getElementById("inp-password").value.trim();
+      const errEl = document.getElementById("landing-error");
+      const btn = document.getElementById("btn-enter");
+      errEl.textContent = "";
+      if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
+      state.loggingIn = true;
+      btn.disabled = true;
+      btn.textContent = "Entering…";
+      try {
+        const { data, error } = await sb.from("rings").select("*")
+          .or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`).limit(1);
+        if (error || !data || data.length === 0) { errEl.textContent = "Invalid password or TV code."; return; }
+        const ring = data[0];
+        state.ring = ring;
+        sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
+        if (pwd === ring.tv_code) {
+          state.role = "tv";
+          await enterTV();
+        } else if (pwd === ring.laptop_password) {
+          state.role = "laptop";
+          await enterLaptop();
+        } else if (pwd === ring.phone_password) {
+          state.role = "phone";
+          await enterPhone();
+        }
+      } finally {
+        state.loggingIn = false;
+        btn.disabled = false;
+        btn.textContent = "Enter Ring";
+      }
+    }
+    async function ensureMatchRow() {
+      if (!state.ring || !state.ring.id || state.dbBroken) return;
+      const rid = state.ring.id;
+      try {
+        const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
+        if (selErr) { state.dbBroken = true; return; }
+        if (!rows || rows.length === 0) {
+          await sb.from("matches").insert({ ring_id: rid });
+        } else if (rows.length > 1) {
+          const dupIds = rows.slice(1).map(r => r.id);
+          await sb.from("matches").delete().in("id", dupIds);
+        }
+      } catch (e) {
+        state.dbBroken = true;
+      }
+    }
+    async function readMatchRow() {
+      if (!state.ring || !state.ring.id) return { row: null, error: null };
+      try {
+        const { data, error } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).limit(1);
+        if (error) return { row: null, error };
+        return { row: (data && data[0]) || null, error: null };
+      } catch (e) {
+        return { row: null, error: e };
+      }
+    }
+    async function fetchMatchNow() {
+      if (!state.ring || !state.ring.id || state.dbBroken) return;
+      const { row } = await readMatchRow();
+      if (row) handleMatchUpdate({ new: row });
+    }
+    function startMatchPolling() {
+      if (state.matchPollInterval) clearInterval(state.matchPollInterval);
+      fetchMatchNow();
+      state.matchPollInterval = setInterval(fetchMatchNow, 800);
+    }
+    function pad4(arr) {
+      const out = [0,0,0,0];
+      if (Array.isArray(arr)) for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
+      return out;
+    }
+    function judgeVoteCounts() {
+      const jb = pad4(state.match ? state.match.judge_blue : null);
+      const jr = pad4(state.match ? state.match.judge_red : null);
+      const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+      let blue = 0, red = 0;
+      for (let i = 0; i < max; i++) {
+        if (jb[i] > jr[i]) blue++;
+        else if (jr[i] > jb[i]) red++;
+      }
+      return { blue, red };
+    }
+    function renderVoteScores() {
+      const v = judgeVoteCounts();
+      const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setEl("tv-blue-score", v.blue);
+      setEl("tv-red-score", v.red);
+      setEl("l-blue-score", v.blue);
+      setEl("l-red-score", v.red);
+    }
+    function renderTVJudgeNets() {
+      const jb = pad4(state.match ? state.match.judge_blue : null);
+      const jr = pad4(state.match ? state.match.judge_red : null);
+      const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+      for (let i = 1; i <= 4; i++) {
+        const cornerEl = document.getElementById(`tv-corner-${i}`);
+        if (!cornerEl) continue;
+        if (i > max) {
+          cornerEl.classList.add('hidden-view');
+          continue;
+        } else {
+          cornerEl.classList.remove('hidden-view');
+        }
+        const givenBlue = jb[i-1];
+        const givenRed = jr[i-1];
+        const net = givenBlue - givenRed;
+        document.getElementById(`tv-net-${i}`).textContent = Math.abs(net);
+        cornerEl.classList.remove('lead-blue', 'lead-red');
+        if (net > 0) cornerEl.classList.add('lead-blue');
+        else if (net < 0) cornerEl.classList.add('lead-red');
+      }
+    }
+    function updateRingLayoutCornerStats() {
+      const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
+      const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`qr-btn-${i}`);
+        const stat = document.getElementById(`qr-stat-${i}`);
+        if (!btn || !stat) continue;
+        if (i > max) {
+          btn.style.display = 'none';
+          continue;
+        } else {
+          btn.style.display = 'flex';
+        }
+        const isOnline = onlineSlots.has(i);
+        if (isOnline) {
+          btn.classList.add('connected');
+          stat.textContent = 'Connected';
+        } else {
+          btn.classList.remove('connected');
+          stat.textContent = 'Empty';
+        }
+      }
+    }
+    function renderLaptopJudges() {
+      const container = document.getElementById("laptop-judges-container");
+      if (!container) return;
+      const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+      container.style.gridTemplateColumns = `repeat(${max}, 1fr)`;
+      const jb = pad4(state.match ? state.match.judge_blue : null);
+      const jr = pad4(state.match ? state.match.judge_red : null);
+      const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
+      let html = '';
+      for (let i = 1; i <= max; i++) {
+        const isOnline = onlineSlots.has(i);
+        const givenBlue = jb[i-1];
+        const givenRed = jr[i-1];
+        const net = givenBlue - givenRed;
+        let cls = '';
+        if (net > 0) cls = 'leading-blue';
+        else if (net < 0) cls = 'leading-red';
+        html += `<div id="judge-laptop-${i}" class="judge-box ${cls}">
+          <div class="judge-label">Judge ${i}</div>
+          <div>
+            <span class="judge-status-badge ${isOnline ? 'online' : 'offline'}">${isOnline ? 'Connected' : 'Empty'}</span>
+          </div>
+          <div class="judge-detail">Net: ${Math.abs(net)}</div>
+          <div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ${givenBlue} | R: ${givenRed}</div>
+          <div class="judge-row-controls">
+            <div class="judge-side-adj">
+              <span style="color:#60a5fa;font-weight:700;">B</span>
+              <button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'blue', 1)">+</button>
+              <button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'blue', -1)">−</button>
+            </div>
+            <div class="judge-side-adj">
+              <span style="color:#f87171;font-weight:700;">R</span>
+              <button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'red', 1)">+</button>
+              <button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'red', -1)">−</button>
+            </div>
+          </div>
+        </div>`;
+      }
+      container.innerHTML = html;
+      updateRingLayoutCornerStats();
+    }
+    async function adjustSpecificJudge(judgeNum, side, delta) {
+      if (state.role !== 'laptop' || !state.ring || !state.ring.id) return;
+      const { row } = await readMatchRow();
+      if (!row && !state.match) return;
+      const currentMatchRow = state.match || row;
+      const jb = pad4(currentMatchRow.judge_blue);
+      const jr = pad4(currentMatchRow.judge_red);
+      const slotIdx = judgeNum - 1;
+      if (side === 'blue') jb[slotIdx] = Math.max(0, jb[slotIdx] + delta);
+      else jr[slotIdx] = Math.max(0, jr[slotIdx] + delta);
+      if (!state.match) state.match = {};
+      state.match.judge_blue = jb;
+      state.match.judge_red = jr;
+      renderVoteScores();
+      renderLaptopJudges();
+      renderTVJudgeNets();
+      try {
+        await sb.from("matches").update({
+          judge_blue: jb,
+          judge_red: jr,
+          updated_at: new Date().toISOString()
+        }).eq("ring_id", state.ring.id);
+      } catch(e) {}
+    }
+    function openAdminKickModal() {
+      document.getElementById("inp-admin-pin").value = "";
+      document.getElementById("modal-admin-kick").classList.remove("hidden-view");
+    }
+    function closeAdminKickModal() {
+      document.getElementById("modal-admin-kick").classList.add("hidden-view");
+    }
+    async function confirmAdminKick() {
+      const pin = document.getElementById("inp-admin-pin").value.trim();
+      if (pin !== "admina") {
+        alert("Incorrect Admin PIN! (Hint: admina)");
+        return;
+      }
+      const slotToKick = parseInt(document.getElementById("sel-kick-slot").value, 10);
+      closeAdminKickModal();
+      const targetPhone = state.activePhones.find(p => Number(p.judge_slot) === slotToKick);
+      if (targetPhone) {
+        try {
+          await sb.rpc("phone_unregister", { p_id: targetPhone.id });
+        } catch (e) {}
+      }
+      if (state.match || state.ring) {
+        const { row } = await readMatchRow();
+        const targetMatch = state.match || row;
+        if (targetMatch) {
+          const jb = pad4(targetMatch.judge_blue);
+          const jr = pad4(targetMatch.judge_red);
+          jb[slotToKick - 1] = 0;
+          jr[slotToKick - 1] = 0;
+          state.match = targetMatch;
+          state.match.judge_blue = jb;
+          state.match.judge_red = jr;
+          renderVoteScores();
+          renderLaptopJudges();
+          renderTVJudgeNets();
+          try {
+            await sb.from("matches").update({
+              judge_blue: jb,
+              judge_red: jr,
+              updated_at: new Date().toISOString()
+            }).eq("ring_id", state.ring.id);
+          } catch(e) {}
+        }
+      }
+      showToast(`Judge ${slotToKick} kicked and points reset to 0`, 'success');
+      fetchActivePhones();
+    }
+    async function fetchActivePhones() {
+      if (!state.ring || !state.ring.id) return;
+      try {
+        const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
+        if (!res.error && res.data) {
+          state.activePhones = res.data;
+          if (state.role === 'laptop') {
+            renderLaptopJudges();
+          }
+        }
+      } catch (e) {}
+    }
+    function startPhoneListPolling() {
+      if (state.pollInterval) clearInterval(state.pollInterval);
+      fetchActivePhones();
+      state.pollInterval = setInterval(fetchActivePhones, 1500);
+    }
+    function openJudgeQR(slot) {
+      const modal = document.getElementById("modal-qr");
+      const title = document.getElementById("modal-qr-title");
+      const container = document.getElementById("qrcode-container");
+      container.innerHTML = "";
+      title.textContent = `Judge ${slot} Connection QR`;
+      const password = state.ring.phone_password || "";
+      const targetUrl = `${location.origin}${location.pathname}#phone?code=${encodeURIComponent(password)}&slot=${slot}`;
+      new QRCode(container, {
+        text: targetUrl,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      modal.classList.remove("hidden-view");
+    }
+    function closeQRModal() {
+      document.getElementById("modal-qr").classList.add("hidden-view");
+    }
+    async function autoEnterPhone(slot) {
+      const maxJ = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+      if (slot > maxJ) slot = maxJ;
+      const prevSession = localStorage.getItem("tkd_phone_session_" + state.ring.id);
+      if (prevSession) {
+        try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
+        localStorage.removeItem("tkd_phone_session_" + state.ring.id);
+      }
+      state.judgeSlot = slot;
+      const sessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+      try {
+        await sb.rpc("phone_register", {
+          p_id: sessionId, p_ring_id: String(state.ring.id), p_slot: slot
+        });
+      } catch (e) {}
+      state.phoneSessionId = sessionId;
+      localStorage.setItem("tkd_phone_session_" + state.ring.id, sessionId);
+      document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
+      document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
+      await ensureMatchRow();
+      if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+      state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
+      loadTimerState();
+      subscribeTimer();
+      renderTimer();
+      startTimerTick();
+      subscribeMatch();
+      subscribeRing();
+      updateCompetitorDisplay();
+      showView("phone");
+      setPhoneStatus("Connected instantly as Judge " + slot, false);
+    }
+    async function enterPhone() {
+      await autoEnterPhone(1);
+    }
+    async function phoneHeartbeatTick() {
+      const sid = state.phoneSessionId;
+      if (!sid || state.heartbeatBusy) return;
+      state.heartbeatBusy = true;
+      try {
+        const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
+        if (state.phoneSessionId !== sid) return;
+        if (hbErr && /not registered|not found|kicked|removed/i.test(hbErr.message || "")) {
+          leavePhone("You were kicked by admin.");
+        }
+      } finally { state.heartbeatBusy = false; }
+    }
+    async function leavePhone(msg) {
+      if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+      const sid = state.phoneSessionId;
+      state.phoneSessionId = null;
+      state.judgeSlot = null;
+      state.role = null;
+      if (sid) { try { await sb.rpc("phone_unregister", { p_id: sid }); } catch (e) {} }
+      if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+      if (state.ringChannel) sb.removeChannel(state.ringChannel);
+      stopTimerTick();
+      if (msg) alert(msg);
+      location.hash = "";
+      showView("landing");
+    }
+    function setPhoneStatus(msg, isError) {
+      const el = document.getElementById("phone-status");
+      if (el) {
+        el.textContent = msg;
+        el.style.color = isError ? "#ef4444" : "#94a3b8";
+      }
+    }
+    document.querySelectorAll(".judge-tap").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (timerState.finished) { setPhoneStatus("Match finished", true); return; }
+        const side = btn.dataset.side;
+        const val = parseInt(btn.dataset.val, 10);
+        if (navigator.vibrate) navigator.vibrate(20);
+        btn.classList.remove("pulse", "scored-flash");
+        void btn.offsetWidth;
+        btn.classList.add("pulse");
+        if (!state.phoneSessionId || !state.judgeSlot || !state.ring) {
+          setPhoneStatus("✗ Not connected", true); return;
+        }
+        btn.classList.add("scored-flash");
+        setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
+        if (state.match) {
+          const jb = pad4(state.match.judge_blue);
+          const jr = pad4(state.match.judge_red);
+          if (side === 'blue') jb[state.judgeSlot - 1] += val;
+          else jr[state.judgeSlot - 1] += val;
+          renderVoteScores();
+          renderTVJudgeNets();
+          renderLaptopJudges();
+        }
+        try {
+          sb.rpc("judge_score", {
+            p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
+            p_side: side, p_points: val, p_session: state.phoneSessionId
+          }).then(({ error }) => {
+            if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) {
+              leavePhone("Kicked from ring.");
+            } else {
+              fetchMatchNow();
+            }
+          });
+        } catch(e) {}
+      });
+    });
+    document.querySelectorAll(".patterns-tap").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (timerState.finished) { setPhoneStatus("✗ Match finished", true); return; }
+        const winner = btn.dataset.winner;
+        if (navigator.vibrate) navigator.vibrate(30);
+        btn.classList.add("scored-flash");
+        setPhoneStatus("✓ Winner: " + winner.toUpperCase(), false);
+        timerState.finished = true;
+        timerState.paused = true;
+        timerState.winner = winner;
+        saveTimerState();
+        broadcastTimerState();
+        renderTimer();
+        stopTimerTick();
+      });
+    });
+    async function enterLaptop() {
+      document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
+      document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
+      document.getElementById("laptop-tv-code").textContent = state.ring.tv_code || "—";
+      const maxP = state.ring.max_phones || 4;
+      const selMax = document.getElementById("sel-max-phones");
+      if (selMax) selMax.value = String(maxP);
+      const btn4 = document.getElementById("qr-btn-4");
+      if (btn4) btn4.style.display = maxP === 3 ? 'none' : 'flex';
+      await ensureMatchRow();
+      await loadCurrentMatch();
+      loadTimerState();
+      subscribeTimer();
+      renderTimer();
+      startTimerTick();
+      startBroadcastLoop();
+      subscribeMatch();
+      subscribeRing();
+      startPhoneListPolling();
+      startMatchPolling();
+      startMatchListPolling();
+      renderLaptopJudges();
+      renderVoteScores();
+      updateCompetitorDisplay();
+      showView("laptop");
+    }
+    function startMatchListPolling() {
+      if (state.matchListInterval) clearInterval(state.matchListInterval);
+      loadMatchList();
+      state.matchListInterval = setInterval(loadMatchList, 3000);
+    }
+    document.getElementById("btn-open-tv").addEventListener("click", () => {
+      let tvUrl = location.origin + location.pathname + "#tv";
+      if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code);
+      window.open(tvUrl, "_blank");
+    });
+    document.getElementById("btn-reset-match").addEventListener("click", resetMatch);
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      state.role = null;
+      cleanup();
+      sessionStorage.removeItem("tkd_ring");
+      location.hash = "";
+      showView("landing");
+      document.getElementById("inp-password").value = "";
+    });
+    document.getElementById('btn-timer-start').addEventListener('click', startTimer);
+    document.getElementById('btn-timer-pause').addEventListener('click', pauseTimer);
+    document.getElementById('btn-timer-reset').addEventListener('click', resetRound);
+    document.getElementById('btn-winner-reset').addEventListener('click', resetMatch);
+    document.querySelectorAll(".penalty-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const act = btn.dataset.act;
+        if (!act) return;
+        if (timerState.finished) { showToast("Match finished. Reset first.", 'warning'); return; }
+        let column = null;
+        let delta = 0;
+        if (act.includes('blue-gj-plus')) { column = 'blue_gam_jeom'; delta = 1; }
+        else if (act.includes('blue-gj-minus')) { column = 'blue_gam_jeom'; delta = -1; }
+        else if (act.includes('red-gj-plus')) { column = 'red_gam_jeom'; delta = 1; }
+        else if (act.includes('red-gj-minus')) { column = 'red_gam_jeom'; delta = -1; }
+        else if (act.includes('blue-yc-plus')) { column = 'blue_yellow_cards'; delta = 1; }
+        else if (act.includes('blue-yc-minus')) { column = 'blue_yellow_cards'; delta = -1; }
+        else if (act.includes('red-yc-plus')) { column = 'red_yellow_cards'; delta = 1; }
+        else if (act.includes('red-yc-minus')) { column = 'red_yellow_cards'; delta = -1; }
+        if (column && state.match) {
+          state.match[column] = Math.max(0, (state.match[column] || 0) + delta);
+          handleMatchUpdate({ new: state.match });
+          try {
+            await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
+          } catch(e) {}
+          fetchMatchNow();
+        }
+      });
+    });
+    async function enterTV() {
+      document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
+      await ensureMatchRow();
+      loadTimerState();
+      subscribeTimer();
+      renderTimer();
+      startTimerTick();
+      subscribeMatch();
+      subscribeRing();
+      startMatchPolling();
+      renderVoteScores();
+      renderTVJudgeNets();
+      updateCompetitorDisplay();
+      showView("tv");
+      document.body.style.cursor = "none";
+    }
+    function subscribeMatch() {
+      if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+      if (!state.ring || !state.ring.id) return;
+      state.realtimeChannel = sb.channel("match-" + state.ring.id)
+        .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` }, handleMatchUpdate)
+        .subscribe((status) => { if (status === "SUBSCRIBED") fetchMatchNow(); });
+    }
+    function subscribeRing() {
+      if (state.ringChannel) sb.removeChannel(state.ringChannel);
+      if (!state.ring || !state.ring.id) return;
+      state.ringChannel = sb.channel("ring-" + state.ring.id)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rings", filter: `id=eq.${state.ring.id}` }, payload => {
+          if (!payload.new) return;
+          state.ring = Object.assign({}, state.ring, payload.new);
+          sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
+          const selMax = document.getElementById("sel-max-phones");
+          if (selMax) selMax.value = String(state.ring.max_phones || 4);
+          updateCompetitorDisplay();
+          renderLaptopJudges();
+          renderVoteScores();
+          renderTVJudgeNets();
+        })
+        .subscribe();
+    }
+    function handleMatchUpdate(payload) {
+      const m = payload.new;
+      if (!m) return;
+      state.match = m;
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set("l-blue-gj", m.blue_gam_jeom);
+      set("l-red-gj", m.red_gam_jeom);
+      set("l-blue-yc", m.blue_yellow_cards);
+      set("l-red-yc", m.red_yellow_cards);
+      set("tv-blue-gj", m.blue_gam_jeom);
+      set("tv-red-gj", m.red_gam_jeom);
+      set("tv-blue-yc", m.blue_yellow_cards);
+      set("tv-red-yc", m.red_yellow_cards);
+      renderVoteScores();
+      renderLaptopJudges();
+      renderTVJudgeNets();
+      if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) {
+        endRound();
+      }
+    }
+    function cleanup() {
+      if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+      if (state.ringChannel) sb.removeChannel(state.ringChannel);
+      if (timerChannel) sb.removeChannel(timerChannel);
+      if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+      if (state.pollInterval) clearInterval(state.pollInterval);
+      if (state.matchPollInterval) clearInterval(state.matchPollInterval);
+      if (state.matchListInterval) clearInterval(state.matchListInterval);
+      stopTimerTick();
+      stopBroadcastLoop();
+      state.realtimeChannel = null;
+      state.ringChannel = null;
+      timerChannel = null;
+    }
+    window.addEventListener("beforeunload", cleanup);
+    window.addEventListener("pagehide", cleanup);
+    route();
+    window.addEventListener("hashchange", route);
+  </script>
 </body>
 </html>
