@@ -316,7 +316,7 @@
       align-items: center;
     }
     
-    /* ✅ FIXED: Sidebar on LEFT (340px), Main Content on RIGHT (1fr) */
+    /* Sidebar on LEFT (340px), Main Content on RIGHT (1fr) */
     .laptop-main-grid {
       display: grid;
       grid-template-columns: 340px 1fr;
@@ -1130,7 +1130,7 @@
       </div>
     </div>
 
-    <!-- ✅ FIXED: Match Queue is NOW ON THE LEFT, Main Content on the RIGHT -->
+    <!-- Match Queue is NOW ON THE LEFT, Main Content on the RIGHT -->
     <div class="laptop-main-grid">
       
       <!-- 1. MATCH QUEUE SIDEBAR (LEFT) -->
@@ -1155,7 +1155,7 @@
             </div>
           </div>
           
-          <!-- ✅ FIXED: Category Links & Bracket View Button (Opens Modal) -->
+          <!-- Category Links & Bracket View Button (Opens Modal) -->
           <div id="category-web-link-container" class="hidden-view" style="margin-bottom:15px;background:#1e293b;padding:10px 15px;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:0.85rem;color:#94a3b8;font-weight:700;">📊 Category Actions:</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1424,7 +1424,7 @@
     </div>
   </div>
 
-  <!-- ===== BRACKET MODAL (NEW) ===== -->
+  <!-- ===== BRACKET MODAL ===== -->
   <div id="modal-bracket" class="hidden-view modal-overlay">
     <div class="modal-box" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #334155; padding-bottom:10px;">
@@ -1959,7 +1959,6 @@
       } catch(e) {}
     }
 
-    // ✅ FIXED: Robust updateCompetitorDisplay function
     function updateCompetitorDisplay() {
       const blueName = state.ring?.blue_name || '---';
       const redName = state.ring?.red_name || '---';
@@ -1982,7 +1981,6 @@
       setTxt('laptop-match-number', matchNumber);
       setTxt('laptop-match-stage', matchStage);
 
-      // ✅ FIXED: No more hardcoded www.tkd-iscore.com! Uses your actual current domain.
       const categoryLinkContainer = document.getElementById('category-web-link-container');
       const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
       const catId = state.ring?.category_id || state.currentMatch?.category_id || state.ring?.id;
@@ -2043,7 +2041,6 @@
       }
     }
 
-    // ✅ FIXED: Robust loadMatchList function with explicit name pulling fallback
     async function loadMatchList() {
       if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
       const container = document.getElementById('match-list-container');
@@ -2056,7 +2053,6 @@
         if (!rpcError && rpcData) {
           matches = rpcData;
         } else {
-          // ✅ FIXED: Robust fallback using '*' to prevent ANY missing column 400 errors
           const { data: fbData, error: fbError } = await sb.from('matches')
             .select('*')
             .eq('ring_id', state.ring.id)
@@ -2092,7 +2088,6 @@
         const isActive = state.currentMatch && m.id === state.currentMatch.id;
         const isCompleted = m.status === 'completed';
         const cls = isActive ? 'active' : (isCompleted ? 'completed' : '');
-        // Use safe access for properties in case they are missing
         const p1 = m.player1_name || m.blue_name || 'TBD';
         const p2 = m.player2_name || m.red_name || 'TBD';
         const stage = m.match_stage || 'Preliminary';
@@ -2110,7 +2105,6 @@
       container.innerHTML = html;
     }
 
-    // ✅ NEW: Bracket Modal Functions
     async function openBracketModal() {
       const modal = document.getElementById('modal-bracket');
       const content = document.getElementById('bracket-modal-content');
