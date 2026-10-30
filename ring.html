@@ -16,7 +16,6 @@ button { touch-action: manipulation; cursor: pointer; }
 button:disabled { opacity: .6; cursor: not-allowed; }
 .hidden-view { display: none !important; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 /* ===== TV DISPLAY STYLES ===== */
 .tv-container { width: 100vw; height: 100vh; background: #090d16; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .tv-top-bar { background: linear-gradient(90deg, #111827 0%, #1f2937 100%); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #fbbf24; z-index: 10; }
@@ -60,7 +59,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tv-winner-name { font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 20px; }
 .tv-winner-sub { font-size: 1.5rem; color: #9ca3af; font-weight: 600; letter-spacing: 3px; }
 @keyframes timerBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
 /* ===== LAPTOP VIEW STYLES ===== */
 .laptop-container { background: #1e293b; min-height: 100vh; padding: 20px; color: white; }
 .laptop-header { background: #0f172a; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
@@ -150,6 +148,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .match-list-item .ml-number { font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
 .match-list-item .ml-names { font-size: 0.95rem; font-weight: 700; color: white; margin-bottom: 4px; }
 .match-list-item .ml-category { font-size: 0.75rem; color: #64748b; }
+.match-list-item .ml-winner { font-size: 0.8rem; color: #10b981; font-weight: 700; margin-top: 4px; }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
 .modal-box { background: #1e293b; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; border: 3px solid #fbbf24; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .phone-container { background: #0f172a; min-height: 100vh; color: white; display: flex; flex-direction: column; }
@@ -196,397 +195,413 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
 .scored-flash { animation: scoredFlash 0.25s ease; }
 @keyframes scoredFlash { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); } 100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); } }
+
+/* Bracket edit styles */
+.bracket-match-cell { cursor: pointer; transition: all 0.2s; }
+.bracket-match-cell:hover { background: #1e40af !important; }
+.bracket-player-row { padding: 8px 12px; border-bottom: 1px solid #334155; color: #f1f5f9; font-weight: 700; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; cursor: pointer; }
+.bracket-player-row:last-child { border-bottom: none; }
+.bracket-player-row:hover { background: rgba(251, 191, 36, 0.15); }
+.bracket-player-row.winner-row { background: rgba(16, 185, 129, 0.25); color: #10b981; }
+.bracket-player-row.winner-row::after { content: '🏆'; margin-left: 6px; }
+.bracket-player-row.loser-row { opacity: 0.5; text-decoration: line-through; }
+.bracket-edit-btn { background: #f59e0b; color: black; border: none; border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; font-weight: 900; cursor: pointer; margin-left: 6px; }
+.bracket-edit-btn:hover { background: #fbbf24; }
 </style>
 </head>
 <body class="bg-slate-900">
-
 <!-- ===== LANDING VIEW ===== -->
 <div id="view-landing" class="landing-container">
-  <div class="landing-box">
-    <div class="landing-title">
-      <div class="lt-icon">🥋</div>
-      <h1>TKD iScore</h1>
-      <p>9th Vojvodina Open ITF</p>
-    </div>
-    <input id="inp-password" type="password" inputmode="numeric" maxlength="10" autocomplete="off" class="landing-input" placeholder="••••" />
-    <button id="btn-enter" class="landing-btn">Enter Ring</button>
-    <div id="landing-error" class="landing-error"></div>
-    <div class="landing-hints">
-      <div>💻 Laptop password → Control panel</div>
-      <div>📱 Phone QR scan → Instant Judge device</div>
-      <div>📺 TV code → Big screen display</div>
-    </div>
-  </div>
+<div class="landing-box">
+<div class="landing-title">
+<div class="lt-icon">🥋</div>
+<h1>TKD iScore</h1>
+<p>9th Vojvodina Open ITF</p>
+</div>
+<input id="inp-password" type="password" inputmode="numeric" maxlength="10" autocomplete="off" class="landing-input" placeholder="••••" />
+<button id="btn-enter" class="landing-btn">Enter Ring</button>
+<div id="landing-error" class="landing-error"></div>
+<div class="landing-hints">
+<div>💻 Laptop password → Control panel</div>
+<div>📱 Phone QR scan → Instant Judge device</div>
+<div>📺 TV code → Big screen display</div>
+</div>
+</div>
 </div>
 
 <!-- ===== PHONE VIEW ===== -->
 <div id="view-phone" class="hidden-view phone-container">
-  <div class="phone-header">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:1.5rem;">🥋</span>
-      <span id="phone-ring-name" style="font-weight:800;"></span>
-      <span id="phone-mode-badge" class="match-stage-badge" style="font-size:0.7rem;padding:3px 8px;">SPARRING</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span id="phone-judge-badge" style="background:#fbbf24;color:black;font-weight:900;padding:5px 12px;border-radius:8px;font-size:0.85rem;">JUDGE –</span>
-      <span style="color:#10b981;font-size:0.8rem;display:flex;align-items:center;gap:5px;">
-        <span style="width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite;"></span> Live
-      </span>
-    </div>
-  </div>
-  <div class="phone-competitors-bar">
-    <div class="phone-competitor blue">
-      <div class="pc-label">🔵 BLUE</div>
-      <div id="phone-blue-name" class="pc-name">---</div>
-    </div>
-    <div class="phone-vs">VS</div>
-    <div class="phone-competitor red">
-      <div class="pc-label">🔴 RED</div>
-      <div id="phone-red-name" class="pc-name">---</div>
-    </div>
-  </div>
-  <div class="phone-timer-bar">
-    <span class="pt-round">Round <span id="phone-timer-round">1</span></span>
-    <span id="phone-timer-time" class="pt-time">2:00</span>
-    <span id="phone-timer-status" class="pt-status">Paused</span>
-  </div>
-  <div id="sparring-controls" class="phone-scoring-area">
-    <div class="phone-side blue-side">
-      <div class="phone-side-title">🔵 BLUE · CHUNG</div>
-      <div class="phone-buttons">
-        <button class="phone-btn judge-tap" data-side="blue" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
-        <button class="phone-btn judge-tap" data-side="blue" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
-      </div>
-    </div>
-    <div class="phone-side red-side">
-      <div class="phone-side-title">🔴 RED · HONG</div>
-      <div class="phone-buttons">
-        <button class="phone-btn judge-tap" data-side="red" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
-        <button class="phone-btn judge-tap" data-side="red" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
-      </div>
-    </div>
-  </div>
-  <div id="patterns-controls" class="hidden-view phone-scoring-area" style="grid-template-rows:repeat(3,1fr);">
-    <button class="phone-btn patterns-tap" data-winner="blue" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);font-size:1.5rem;">🔵 BLUE WINS</button>
-    <button class="phone-btn patterns-tap" data-winner="draw" style="background:linear-gradient(135deg,#4b5563,#6b7280);font-size:1.5rem;">🤝 DRAW</button>
-    <button class="phone-btn patterns-tap" data-winner="red" style="background:linear-gradient(135deg,#7f1d1d,#dc2626);font-size:1.5rem;">🔴 RED WINS</button>
-  </div>
-  <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
+<div class="phone-header">
+<div style="display:flex;align-items:center;gap:10px;">
+<span style="font-size:1.5rem;">🥋</span>
+<span id="phone-ring-name" style="font-weight:800;"></span>
+<span id="phone-mode-badge" class="match-stage-badge" style="font-size:0.7rem;padding:3px 8px;">SPARRING</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;">
+<span id="phone-judge-badge" style="background:#fbbf24;color:black;font-weight:900;padding:5px 12px;border-radius:8px;font-size:0.85rem;">JUDGE –</span>
+<span style="color:#10b981;font-size:0.8rem;display:flex;align-items:center;gap:5px;">
+<span style="width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite;"></span> Live
+</span>
+</div>
+</div>
+<div class="phone-competitors-bar">
+<div class="phone-competitor blue">
+<div class="pc-label">🔵 BLUE</div>
+<div id="phone-blue-name" class="pc-name">---</div>
+</div>
+<div class="phone-vs">VS</div>
+<div class="phone-competitor red">
+<div class="pc-label">🔴 RED</div>
+<div id="phone-red-name" class="pc-name">---</div>
+</div>
+</div>
+<div class="phone-timer-bar">
+<span class="pt-round">Round <span id="phone-timer-round">1</span></span>
+<span id="phone-timer-time" class="pt-time">2:00</span>
+<span id="phone-timer-status" class="pt-status">Paused</span>
+</div>
+<div id="sparring-controls" class="phone-scoring-area">
+<div class="phone-side blue-side">
+<div class="phone-side-title">🔵 BLUE · CHUNG</div>
+<div class="phone-buttons">
+<button class="phone-btn judge-tap" data-side="blue" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
+<button class="phone-btn judge-tap" data-side="blue" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
+<button class="phone-btn judge-tap" data-side="blue" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
+<button class="phone-btn judge-tap" data-side="blue" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
+<button class="phone-btn judge-tap" data-side="blue" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
+</div>
+</div>
+<div class="phone-side red-side">
+<div class="phone-side-title">🔴 RED · HONG</div>
+<div class="phone-buttons">
+<button class="phone-btn judge-tap" data-side="red" data-val="1"><span class="pb-value">1</span><span class="pb-label">POINT</span></button>
+<button class="phone-btn judge-tap" data-side="red" data-val="2"><span class="pb-value">2</span><span class="pb-label">POINTS</span></button>
+<button class="phone-btn judge-tap" data-side="red" data-val="3"><span class="pb-value">3</span><span class="pb-label">POINTS</span></button>
+<button class="phone-btn judge-tap" data-side="red" data-val="4"><span class="pb-value">4</span><span class="pb-label">POINTS</span></button>
+<button class="phone-btn judge-tap" data-side="red" data-val="5"><span class="pb-value">5</span><span class="pb-label">POINTS</span></button>
+</div>
+</div>
+</div>
+<div id="patterns-controls" class="hidden-view phone-scoring-area" style="grid-template-rows:repeat(3,1fr);">
+<button class="phone-btn patterns-tap" data-winner="blue" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);font-size:1.5rem;">🔵 BLUE WINS</button>
+<button class="phone-btn patterns-tap" data-winner="draw" style="background:linear-gradient(135deg,#4b5563,#6b7280);font-size:1.5rem;">🤝 DRAW</button>
+<button class="phone-btn patterns-tap" data-winner="red" style="background:linear-gradient(135deg,#7f1d1d,#dc2626);font-size:1.5rem;">🔴 RED WINS</button>
+</div>
+<div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
 </div>
 
 <!-- ===== LAPTOP VIEW ===== -->
 <div id="view-laptop" class="hidden-view laptop-container">
-  <div class="laptop-header">
-    <div class="laptop-header-left">
-      <h1 id="laptop-ring-name">Ring 1</h1>
-      <p>Control Panel · <span id="laptop-ring-id" style="font-family:monospace;"></span> · TV: <span id="laptop-tv-code" style="color:#fbbf24;font-weight:700;">—</span></p>
-    </div>
-    <div class="laptop-header-right">
-      <div style="display:flex;align-items:center;gap:6px;background:#1e293b;padding:6px 12px;border-radius:8px;border:1px solid #334155;">
-        <span style="font-size:0.8rem;color:#94a3b8;font-weight:700;">Referees:</span>
-        <select id="sel-max-phones" style="background:#0f172a;color:white;border:1px solid #475569;border-radius:6px;padding:4px 8px;font-weight:700;font-size:0.85rem;" onchange="updateMaxPhones(this.value)">
-          <option value="3">3 Judges</option>
-          <option value="4">4 Judges</option>
-        </select>
-      </div>
-      <button id="btn-open-tv" class="timer-btn" style="background:#334155;">📺 Open TV</button>
-      <button id="btn-reset-match" class="timer-btn reset">⟲ Reset Match</button>
-      <button id="btn-logout" class="timer-btn" style="background:#475569;">Logout</button>
-    </div>
-  </div>
-
-  <div class="settings-panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <h3 style="margin:0;font-size:1.0rem;color:#fbbf24;font-weight:800;">⚙️ Ring Corner QR Codes (Instant Auto-Login)</h3>
-      <span style="font-size:0.8rem;color:#94a3b8;">Green = Connected | Gray = Empty</span>
-    </div>
-    <div class="ring-layout-box">
-      <div class="ring-center-label">Ring Center</div>
-      <button id="qr-btn-1" class="ring-corner-btn tl" onclick="openJudgeQR(1)"><span>Judge 1</span><span id="qr-stat-1" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
-      <button id="qr-btn-2" class="ring-corner-btn tr" onclick="openJudgeQR(2)"><span>Judge 2</span><span id="qr-stat-2" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
-      <button id="qr-btn-3" class="ring-corner-btn br" onclick="openJudgeQR(3)"><span>Judge 3</span><span id="qr-stat-3" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
-      <button id="qr-btn-4" class="ring-corner-btn bl" onclick="openJudgeQR(4)"><span>Judge 4</span><span id="qr-stat-4" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
-    </div>
-    <div class="admin-kick-corner-box">
-      <button class="admin-kick-panel-btn" onclick="openAdminKickModal()">⚠️ Kick Judge (Admin PIN)</button>
-    </div>
-  </div>
-
-  <div class="laptop-main-grid">
-    <!-- 1. MATCH QUEUE SIDEBAR (LEFT) -->
-    <div class="match-list-sidebar">
-      <h3><i class="fas fa-ring"></i> Ring Assignments & Matches</h3>
-      <div id="match-list-container">
-        <div style="color:#64748b;text-align:center;padding:20px;">Loading assignments...</div>
-      </div>
-    </div>
-
-    <!-- 2. MAIN CONTROL PANEL (RIGHT) -->
-    <div class="laptop-main-content">
-      <div class="current-match-card">
-        <div class="current-match-header">
-          <div style="display:flex;gap:10px;align-items:center;">
-            <span id="laptop-match-stage" class="match-stage-badge">Scheduled</span>
-            <span id="laptop-category-name" style="font-weight:700;font-size:1.1rem;">Loading...</span>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <span id="laptop-discipline-badge" class="match-stage-badge" style="background:#1e40af;">SPARRING</span>
-          </div>
-        </div>
-        
-        <div id="category-web-link-container" class="hidden-view" style="margin-bottom:15px;background:#1e293b;padding:10px 15px;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:0.85rem;color:#94a3b8;font-weight:700;">📊 Category Actions:</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a id="category-web-link-anchor" href="#" style="color:#10b981;font-weight:700;font-size:0.85rem;text-decoration:none;background:#0f172a;padding:8px 12px;border-radius:6px;border:1px solid #334155;transition:0.2s;cursor:pointer;display:flex;align-items:center;gap:6px;">📊 View Bracket</a>
-          </div>
-        </div>
-
-        <div class="competitors-display">
-          <div class="competitor-box blue-box">
-            <div class="comp-name" id="laptop-blue-name">---</div>
-            <div class="comp-club" id="laptop-blue-club">---</div>
-          </div>
-          <div class="vs-divider">VS</div>
-          <div class="competitor-box red-box">
-            <div class="comp-name" id="laptop-red-name">---</div>
-            <div class="comp-club" id="laptop-red-club">---</div>
-          </div>
-        </div>
-        
-        <div class="timer-section">
-          <div class="timer-display-row">
-            <span class="timer-round-badge">Round <span id="l-timer-round">1</span></span>
-            <span id="l-timer-time" class="timer-time">2:00</span>
-            <span id="l-timer-status" style="color:#94a3b8;font-weight:600;">Paused (Press SPACE)</span>
-          </div>
-          <div class="timer-controls">
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
-              <button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
-              <button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
-            </div>
-            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-              <div style="display:flex;gap:4px;align-items:center;">
-                <span style="font-size:0.8rem;color:#94a3b8;">Round M:</span>
-                <input id="inp-timer-min" type="number" min="0" max="10" value="2" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
-                <span style="font-size:0.8rem;color:#94a3b8;">S:</span>
-                <input id="inp-timer-sec" type="number" min="0" max="59" value="0" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
-              </div>
-              <div style="display:flex;gap:4px;align-items:center;">
-                <span style="font-size:0.8rem;color:#38bdf8;">Break S:</span>
-                <input id="inp-break-sec" type="number" min="0" max="300" value="30" style="width:50px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
-              </div>
-              <button id="btn-set-time" class="timer-btn" style="background:#3b82f6;padding:8px 12px;font-size:0.85rem;">Set Times</button>
-            </div>
-          </div>
-          <div id="timer-round3-note" class="hidden-view" style="background:#854d0e;color:#fbbf24;padding:10px;border-radius:8px;margin-top:10px;text-align:center;font-weight:700;">
-            ⚡ Round 3 activated (tie-breaker)
-          </div>
-        </div>
-        
-        <div class="score-section">
-          <div class="score-box blue-score">
-            <div class="score-label">🔵 Blue Majority Score</div>
-            <div id="l-blue-score" class="score-value">0</div>
-          </div>
-          <div class="score-box red-score">
-            <div class="score-label">🔴 Red Majority Score</div>
-            <div id="l-red-score" class="score-value">0</div>
-          </div>
-        </div>
-        
-        <div id="laptop-judges-container" class="judges-section"></div>
-        
-        <div class="penalties-section">
-          <div class="penalty-box">
-            <div class="penalty-info">
-              <span class="penalty-label">🔵 Blue Gam-Jeom</span>
-              <span id="l-blue-gj" class="penalty-value" style="color:#60a5fa;">0</span>
-            </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="blue-gj-plus">+</button>
-              <button class="penalty-btn minus" data-act="blue-gj-minus">−</button>
-            </div>
-          </div>
-          <div class="penalty-box">
-            <div class="penalty-info">
-              <span class="penalty-label">🔴 Red Gam-Jeom</span>
-              <span id="l-red-gj" class="penalty-value" style="color:#f87171;">0</span>
-            </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="red-gj-plus">+</button>
-              <button class="penalty-btn minus" data-act="red-gj-minus">−</button>
-            </div>
-          </div>
-          <div class="penalty-box">
-            <div class="penalty-info">
-              <span class="penalty-label">🔵 Blue Yellow Card</span>
-              <span id="l-blue-yc" class="penalty-value" style="color:#fbbf24;">0</span>
-            </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="blue-yc-plus">+</button>
-              <button class="penalty-btn minus" data-act="blue-yc-minus">−</button>
-            </div>
-          </div>
-          <div class="penalty-box">
-            <div class="penalty-info">
-              <span class="penalty-label">🔴 Red Yellow Card</span>
-              <span id="l-red-yc" class="penalty-value" style="color:#fbbf24;">0</span>
-            </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="red-yc-plus">+</button>
-              <button class="penalty-btn minus" data-act="red-yc-minus">−</button>
-            </div>
-          </div>
-        </div>
-        
-        <div id="laptop-declare-winner" class="hidden-view" style="background:#1e293b;border-radius:12px;padding:20px;margin-top:20px;border:2px solid #fbbf24;">
-          <h3 style="margin:0 0 15px 0;color:#fbbf24;font-size:1.1rem;">🏆 Declare Winner</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-            <button class="timer-btn" style="background:#2563eb;" onclick="declareWinner('blue')">🔵 Blue Wins</button>
-            <button class="timer-btn" style="background:#6b7280;" onclick="declareWinner('draw')">🤝 Draw</button>
-            <button class="timer-btn" style="background:#dc2626;" onclick="declareWinner('red')">🔴 Red Wins</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="laptop-header">
+<div class="laptop-header-left">
+<h1 id="laptop-ring-name">Ring 1</h1>
+<p>Control Panel · <span id="laptop-ring-id" style="font-family:monospace;"></span> · TV: <span id="laptop-tv-code" style="color:#fbbf24;font-weight:700;">—</span></p>
+</div>
+<div class="laptop-header-right">
+<div style="display:flex;align-items:center;gap:6px;background:#1e293b;padding:6px 12px;border-radius:8px;border:1px solid #334155;">
+<span style="font-size:0.8rem;color:#94a3b8;font-weight:700;">Referees:</span>
+<select id="sel-max-phones" style="background:#0f172a;color:white;border:1px solid #475569;border-radius:6px;padding:4px 8px;font-weight:700;font-size:0.85rem;" onchange="updateMaxPhones(this.value)">
+<option value="3">3 Judges</option>
+<option value="4">4 Judges</option>
+</select>
+</div>
+<button id="btn-open-tv" class="timer-btn" style="background:#334155;">📺 Open TV</button>
+<button id="btn-reset-match" class="timer-btn reset">⟲ Reset Match</button>
+<button id="btn-logout" class="timer-btn" style="background:#475569;">Logout</button>
+</div>
+</div>
+<div class="settings-panel">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+<h3 style="margin:0;font-size:1.0rem;color:#fbbf24;font-weight:800;">⚙️ Ring Corner QR Codes (Instant Auto-Login)</h3>
+<span style="font-size:0.8rem;color:#94a3b8;">Green = Connected | Gray = Empty</span>
+</div>
+<div class="ring-layout-box">
+<div class="ring-center-label">Ring Center</div>
+<button id="qr-btn-1" class="ring-corner-btn tl" onclick="openJudgeQR(1)"><span>Judge 1</span><span id="qr-stat-1" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
+<button id="qr-btn-2" class="ring-corner-btn tr" onclick="openJudgeQR(2)"><span>Judge 2</span><span id="qr-stat-2" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
+<button id="qr-btn-3" class="ring-corner-btn br" onclick="openJudgeQR(3)"><span>Judge 3</span><span id="qr-stat-3" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
+<button id="qr-btn-4" class="ring-corner-btn bl" onclick="openJudgeQR(4)"><span>Judge 4</span><span id="qr-stat-4" style="font-size:0.6rem;opacity:0.8;">Empty</span></button>
+</div>
+<div class="admin-kick-corner-box">
+<button class="admin-kick-panel-btn" onclick="openAdminKickModal()">⚠️ Kick Judge (Admin PIN)</button>
+</div>
+</div>
+<div class="laptop-main-grid">
+<!-- 1. MATCH QUEUE SIDEBAR (LEFT) -->
+<div class="match-list-sidebar">
+<h3><i class="fas fa-ring"></i> Ring Assignments & Matches</h3>
+<div id="match-list-container">
+<div style="color:#64748b;text-align:center;padding:20px;">Loading assignments...</div>
+</div>
+</div>
+<!-- 2. MAIN CONTROL PANEL (RIGHT) -->
+<div class="laptop-main-content">
+<div class="current-match-card">
+<div class="current-match-header">
+<div style="display:flex;gap:10px;align-items:center;">
+<span id="laptop-match-stage" class="match-stage-badge">Scheduled</span>
+<span id="laptop-category-name" style="font-weight:700;font-size:1.1rem;">Loading...</span>
+</div>
+<div style="display:flex;gap:10px;align-items:center;">
+<span id="laptop-discipline-badge" class="match-stage-badge" style="background:#1e40af;">SPARRING</span>
+</div>
+</div>
+<div id="category-web-link-container" class="hidden-view" style="margin-bottom:15px;background:#1e293b;padding:10px 15px;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+<span style="font-size:0.85rem;color:#94a3b8;font-weight:700;">📊 Category Actions:</span>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<a id="category-web-link-anchor" href="#" style="color:#10b981;font-weight:700;font-size:0.85rem;text-decoration:none;background:#0f172a;padding:8px 12px;border-radius:6px;border:1px solid #334155;transition:0.2s;cursor:pointer;display:flex;align-items:center;gap:6px;">📊 View Bracket</a>
+</div>
+</div>
+<div class="competitors-display">
+<div class="competitor-box blue-box">
+<div class="comp-name" id="laptop-blue-name">---</div>
+<div class="comp-club" id="laptop-blue-club">---</div>
+</div>
+<div class="vs-divider">VS</div>
+<div class="competitor-box red-box">
+<div class="comp-name" id="laptop-red-name">---</div>
+<div class="comp-club" id="laptop-red-club">---</div>
+</div>
+</div>
+<div class="timer-section">
+<div class="timer-display-row">
+<span class="timer-round-badge">Round <span id="l-timer-round">1</span></span>
+<span id="l-timer-time" class="timer-time">2:00</span>
+<span id="l-timer-status" style="color:#94a3b8;font-weight:600;">Paused (Press SPACE)</span>
+</div>
+<div class="timer-controls">
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+<button id="btn-timer-start" class="timer-btn start">▶ Start Round</button>
+<button id="btn-timer-pause" class="timer-btn pause hidden-view">⏸ Pause</button>
+<button id="btn-timer-reset" class="timer-btn reset">⟲ Reset Round</button>
+</div>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+<div style="display:flex;gap:4px;align-items:center;">
+<span style="font-size:0.8rem;color:#94a3b8;">Round M:</span>
+<input id="inp-timer-min" type="number" min="0" max="10" value="2" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+<span style="font-size:0.8rem;color:#94a3b8;">S:</span>
+<input id="inp-timer-sec" type="number" min="0" max="59" value="0" style="width:45px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+</div>
+<div style="display:flex;gap:4px;align-items:center;">
+<span style="font-size:0.8rem;color:#38bdf8;">Break S:</span>
+<input id="inp-break-sec" type="number" min="0" max="300" value="30" style="width:50px;padding:5px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:0.9rem;" />
+</div>
+<button id="btn-set-time" class="timer-btn" style="background:#3b82f6;padding:8px 12px;font-size:0.85rem;">Set Times</button>
+</div>
+</div>
+<div id="timer-round3-note" class="hidden-view" style="background:#854d0e;color:#fbbf24;padding:10px;border-radius:8px;margin-top:10px;text-align:center;font-weight:700;">
+⚡ Round 3 activated (tie-breaker)
+</div>
+</div>
+<div class="score-section">
+<div class="score-box blue-score">
+<div class="score-label">🔵 Blue Majority Score</div>
+<div id="l-blue-score" class="score-value">0</div>
+</div>
+<div class="score-box red-score">
+<div class="score-label">🔴 Red Majority Score</div>
+<div id="l-red-score" class="score-value">0</div>
+</div>
+</div>
+<div id="laptop-judges-container" class="judges-section"></div>
+<div class="penalties-section">
+<div class="penalty-box">
+<div class="penalty-info">
+<span class="penalty-label">🔵 Blue Gam-Jeom</span>
+<span id="l-blue-gj" class="penalty-value" style="color:#60a5fa;">0</span>
+</div>
+<div class="penalty-controls">
+<button class="penalty-btn plus" data-act="blue-gj-plus">+</button>
+<button class="penalty-btn minus" data-act="blue-gj-minus">−</button>
+</div>
+</div>
+<div class="penalty-box">
+<div class="penalty-info">
+<span class="penalty-label">🔴 Red Gam-Jeom</span>
+<span id="l-red-gj" class="penalty-value" style="color:#f87171;">0</span>
+</div>
+<div class="penalty-controls">
+<button class="penalty-btn plus" data-act="red-gj-plus">+</button>
+<button class="penalty-btn minus" data-act="red-gj-minus">−</button>
+</div>
+</div>
+<div class="penalty-box">
+<div class="penalty-info">
+<span class="penalty-label">🔵 Blue Yellow Card</span>
+<span id="l-blue-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+</div>
+<div class="penalty-controls">
+<button class="penalty-btn plus" data-act="blue-yc-plus">+</button>
+<button class="penalty-btn minus" data-act="blue-yc-minus">−</button>
+</div>
+</div>
+<div class="penalty-box">
+<div class="penalty-info">
+<span class="penalty-label">🔴 Red Yellow Card</span>
+<span id="l-red-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+</div>
+<div class="penalty-controls">
+<button class="penalty-btn plus" data-act="red-yc-plus">+</button>
+<button class="penalty-btn minus" data-act="red-yc-minus">−</button>
+</div>
+</div>
+</div>
+<div id="laptop-declare-winner" class="hidden-view" style="background:#1e293b;border-radius:12px;padding:20px;margin-top:20px;border:2px solid #fbbf24;">
+<h3 style="margin:0 0 15px 0;color:#fbbf24;font-size:1.1rem;">🏆 Declare Winner</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+<button class="timer-btn" style="background:#2563eb;" onclick="declareWinner('blue')">🔵 Blue Wins</button>
+<button class="timer-btn" style="background:#6b7280;" onclick="declareWinner('draw')">🤝 Draw</button>
+<button class="timer-btn" style="background:#dc2626;" onclick="declareWinner('red')">🔴 Red Wins</button>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 
-<!-- ===== TV VIEW WITH CORNER JUDGE NETS ===== -->
+<!-- ===== TV VIEW ===== -->
 <div id="view-tv" class="hidden-view tv-container">
-  <div class="tv-top-bar">
-    <div class="tv-top-info">
-      <span id="tv-ring-name" style="font-weight:900;font-size:1.3rem;">Ring 1</span>
-      <span id="tv-match-stage" class="stage-badge">Preliminary</span>
-    </div>
-    <div class="tv-top-info">
-      <span id="tv-category-name" class="category-info">Category</span>
-      <span style="color:#475569;">|</span>
-      <span id="tv-match-number-display" style="color:#94a3b8;font-weight:700;">Match #1</span>
-    </div>
-    <div class="tv-top-info">
-      <span id="tv-discipline-badge" class="stage-badge" style="background:#1e40af;">SPARRING</span>
-    </div>
-  </div>
-  <div class="tv-main-area">
-    <div id="tv-corner-1" class="tv-judge-corner tl"><div class="tv-jc-label">Judge 1</div><div id="tv-net-1" class="tv-jc-score">0</div></div>
-    <div id="tv-corner-2" class="tv-judge-corner tr"><div class="tv-jc-label">Judge 2</div><div id="tv-net-2" class="tv-jc-score">0</div></div>
-    <div id="tv-corner-3" class="tv-judge-corner br"><div class="tv-jc-label">Judge 3</div><div id="tv-net-3" class="tv-jc-score">0</div></div>
-    <div id="tv-corner-4" class="tv-judge-corner bl"><div class="tv-jc-label">Judge 4</div><div id="tv-net-4" class="tv-jc-score">0</div></div>
-    <div class="tv-side blue-side">
-      <div class="tv-competitor-name" id="tv-blue-name">BLUE</div>
-      <div class="tv-competitor-club" id="tv-blue-club">---</div>
-      <div class="tv-big-score" id="tv-blue-score">0</div>
-    </div>
-    <div class="tv-side red-side" style="align-items: flex-end; text-align: right;">
-      <div class="tv-competitor-name" id="tv-red-name">RED</div>
-      <div class="tv-competitor-club" id="tv-red-club">---</div>
-      <div class="tv-big-score" id="tv-red-score">0</div>
-    </div>
-    <div class="tv-center-overlay">
-      <div id="tv-timer-label-top" class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
-      <div id="tv-timer-time" class="tv-timer-display">2:00</div>
-      <div class="tv-penalties">
-        <div class="tv-penalty-item"><span class="tv-penalty-label">BLU GJ:</span><span id="tv-blue-gj" style="color:#60a5fa;">0</span></div>
-        <div class="tv-penalty-item"><span class="tv-penalty-label">YC:</span><span id="tv-blue-yc" style="color:#fbbf24;">0</span></div>
-        <span style="color:#475569;">|</span>
-        <div class="tv-penalty-item"><span class="tv-penalty-label">RED YC:</span><span id="tv-red-yc" style="color:#fbbf24;">0</span></div>
-        <div class="tv-penalty-item"><span class="tv-penalty-label">GJ:</span><span id="tv-red-gj" style="color:#f87171;">0</span></div>
-      </div>
-    </div>
-  </div>
-  <div class="tv-bottom-bar">
-    <div class="tv-next-match">
-      <div><div class="tv-next-label">⏭️ Next Blue Competitor</div><div id="tv-next-blue" class="tv-next-name blue-next">---</div></div>
-    </div>
-    <div class="tv-next-match" style="justify-content:flex-end;text-align:right;">
-      <div><div class="tv-next-label">Next Red Competitor ⏭️</div><div id="tv-next-red" class="tv-next-name red-next">---</div></div>
-    </div>
-  </div>
-  <div id="tv-winner-overlay" class="hidden-view tv-winner-overlay">
-    <div class="tv-winner-box">
-      <div class="tv-winner-trophy">🏆</div>
-      <div id="tv-winner-text" class="tv-winner-text">BLUE WINS!</div>
-      <div id="tv-winner-name" class="tv-winner-name">Competitor Name</div>
-      <div class="tv-winner-sub">MATCH COMPLETE</div>
-    </div>
-  </div>
+<div class="tv-top-bar">
+<div class="tv-top-info">
+<span id="tv-ring-name" style="font-weight:900;font-size:1.3rem;">Ring 1</span>
+<span id="tv-match-stage" class="stage-badge">Preliminary</span>
+</div>
+<div class="tv-top-info">
+<span id="tv-category-name" class="category-info">Category</span>
+<span style="color:#475569;">|</span>
+<span id="tv-match-number-display" style="color:#94a3b8;font-weight:700;">Match #1</span>
+</div>
+<div class="tv-top-info">
+<span id="tv-discipline-badge" class="stage-badge" style="background:#1e40af;">SPARRING</span>
+</div>
+</div>
+<div class="tv-main-area">
+<div id="tv-corner-1" class="tv-judge-corner tl"><div class="tv-jc-label">Judge 1</div><div id="tv-net-1" class="tv-jc-score">0</div></div>
+<div id="tv-corner-2" class="tv-judge-corner tr"><div class="tv-jc-label">Judge 2</div><div id="tv-net-2" class="tv-jc-score">0</div></div>
+<div id="tv-corner-3" class="tv-judge-corner br"><div class="tv-jc-label">Judge 3</div><div id="tv-net-3" class="tv-jc-score">0</div></div>
+<div id="tv-corner-4" class="tv-judge-corner bl"><div class="tv-jc-label">Judge 4</div><div id="tv-net-4" class="tv-jc-score">0</div></div>
+<div class="tv-side blue-side">
+<div class="tv-competitor-name" id="tv-blue-name">BLUE</div>
+<div class="tv-competitor-club" id="tv-blue-club">---</div>
+<div class="tv-big-score" id="tv-blue-score">0</div>
+</div>
+<div class="tv-side red-side" style="align-items: flex-end; text-align: right;">
+<div class="tv-competitor-name" id="tv-red-name">RED</div>
+<div class="tv-competitor-club" id="tv-red-club">---</div>
+<div class="tv-big-score" id="tv-red-score">0</div>
+</div>
+<div class="tv-center-overlay">
+<div id="tv-timer-label-top" class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
+<div id="tv-timer-time" class="tv-timer-display">2:00</div>
+<div class="tv-penalties">
+<div class="tv-penalty-item"><span class="tv-penalty-label">BLU GJ:</span><span id="tv-blue-gj" style="color:#60a5fa;">0</span></div>
+<div class="tv-penalty-item"><span class="tv-penalty-label">YC:</span><span id="tv-blue-yc" style="color:#fbbf24;">0</span></div>
+<span style="color:#475569;">|</span>
+<div class="tv-penalty-item"><span class="tv-penalty-label">RED YC:</span><span id="tv-red-yc" style="color:#fbbf24;">0</span></div>
+<div class="tv-penalty-item"><span class="tv-penalty-label">GJ:</span><span id="tv-red-gj" style="color:#f87171;">0</span></div>
+</div>
+</div>
+</div>
+<div class="tv-bottom-bar">
+<div class="tv-next-match">
+<div><div class="tv-next-label">⏭️ Next Blue Competitor</div><div id="tv-next-blue" class="tv-next-name blue-next">---</div></div>
+</div>
+<div class="tv-next-match" style="justify-content:flex-end;text-align:right;">
+<div><div class="tv-next-label">Next Red Competitor ⏭️</div><div id="tv-next-red" class="tv-next-name red-next">---</div></div>
+</div>
+</div>
+<div id="tv-winner-overlay" class="hidden-view tv-winner-overlay">
+<div class="tv-winner-box">
+<div class="tv-winner-trophy">🏆</div>
+<div id="tv-winner-text" class="tv-winner-text">BLUE WINS!</div>
+<div id="tv-winner-name" class="tv-winner-name">Competitor Name</div>
+<div class="tv-winner-sub">MATCH COMPLETE</div>
+</div>
+</div>
 </div>
 
 <!-- ===== QR CODE MODAL ===== -->
 <div id="modal-qr" class="hidden-view modal-overlay">
-  <div class="modal-box">
-    <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
-    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;">Scan with phone to instantly join as this judge</p>
-    <div id="qrcode-container" style="background:white;padding:15px;border-radius:12px;display:inline-block;margin-bottom:20px;"></div>
-    <div><button class="timer-btn" style="background:#475569;width:100%;" onclick="closeQRModal()">Close</button></div>
-  </div>
+<div class="modal-box">
+<h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
+<p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;">Scan with phone to instantly join as this judge</p>
+<div id="qrcode-container" style="background:white;padding:15px;border-radius:12px;display:inline-block;margin-bottom:20px;"></div>
+<div><button class="timer-btn" style="background:#475569;width:100%;" onclick="closeQRModal()">Close</button></div>
+</div>
 </div>
 
 <!-- ===== ADMIN KICK MODAL ===== -->
 <div id="modal-admin-kick" class="hidden-view modal-overlay">
-  <div class="modal-box">
-    <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
-    <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:15px;">Enter Admin PIN and select which judge slot to kick.</p>
-    <div style="margin-bottom:15px;">
-      <label style="display:block;color:#94a3b8;font-size:0.8rem;margin-bottom:5px;font-weight:700;">Judge Slot to Kick:</label>
-      <select id="sel-kick-slot" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;font-size:1rem;font-weight:700;">
-        <option value="1">Judge 1</option><option value="2">Judge 2</option><option value="3">Judge 3</option><option value="4">Judge 4</option>
-      </select>
-    </div>
-    <div style="margin-bottom:20px;">
-      <input id="inp-admin-pin" type="password" maxlength="10" placeholder="Admin PIN (admina)" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;text-align:center;font-size:1.2rem;" />
-    </div>
-    <div style="display:flex;gap:10px;">
-      <button class="timer-btn" style="flex:1;background:#ef4444;" onclick="confirmAdminKick()">Kick Judge</button>
-      <button class="timer-btn" style="flex:1;background:#475569;" onclick="closeAdminKickModal()">Cancel</button>
-    </div>
-  </div>
+<div class="modal-box">
+<h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
+<p style="color:#94a3b8;font-size:0.9rem;margin-bottom:15px;">Enter Admin PIN and select which judge slot to kick.</p>
+<div style="margin-bottom:15px;">
+<label style="display:block;color:#94a3b8;font-size:0.8rem;margin-bottom:5px;font-weight:700;">Judge Slot to Kick:</label>
+<select id="sel-kick-slot" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;font-size:1rem;font-weight:700;">
+<option value="1">Judge 1</option><option value="2">Judge 2</option><option value="3">Judge 3</option><option value="4">Judge 4</option>
+</select>
+</div>
+<div style="margin-bottom:20px;">
+<input id="inp-admin-pin" type="password" maxlength="10" placeholder="Admin PIN (admina)" style="width:100%;padding:12px;background:#0f172a;border:2px solid #475569;border-radius:8px;color:white;text-align:center;font-size:1.2rem;" />
+</div>
+<div style="display:flex;gap:10px;">
+<button class="timer-btn" style="flex:1;background:#ef4444;" onclick="confirmAdminKick()">Kick Judge</button>
+<button class="timer-btn" style="flex:1;background:#475569;" onclick="closeAdminKickModal()">Cancel</button>
+</div>
+</div>
 </div>
 
-<!-- ===== WINNER CONFIRMATION & MANUAL OVERRIDE MODAL ===== -->
+<!-- ===== WINNER CONFIRMATION MODAL ===== -->
 <div id="modal-winner" class="hidden-view modal-overlay">
-  <div class="modal-box" style="max-width:650px;">
-    <h2 id="modal-winner-title" style="font-size:2.2rem;font-weight:900;margin-bottom:10px;">MATCH COMPLETE</h2>
-    <p id="modal-winner-subtitle" style="font-size:1.2rem;color:#fbbf24;font-weight:700;margin-bottom:20px;">Auto-Calculated Winner: <span id="auto-winner-name">---</span></p>
-    
-    <div style="background:#0f172a; padding:15px; border-radius:10px; margin-bottom:20px; text-align:left; border:1px solid #334155;">
-      <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px; text-align:center;">Need to override? (e.g. Knockout/KO, Disqualification/DSQ, DNF)</p>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <button class="timer-btn" style="background:#2563eb; font-size:0.9rem;" onclick="overrideWinner('blue')">🔵 Force Blue Win (<span id="override-blue-label">Blue</span>)</button>
-        <button class="timer-btn" style="background:#dc2626; font-size:0.9rem;" onclick="overrideWinner('red')">🔴 Force Red Win (<span id="override-red-label">Red</span>)</button>
-      </div>
-    </div>
-
-    <p id="modal-winner-question" style="text-align:center;color:#94a3b8;margin-bottom:15px;font-size:1rem;">Confirm result to automatically advance winner to the next bracket round:</p>
-    
-    <div id="winner-btn-container" style="display:flex;gap:15px;">
-      <button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm Winner & Advance</button>
-      <button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Cancel / Reset</button>
-    </div>
-    <div id="winner-deny-section" class="hidden-view" style="margin-top:20px;padding-top:20px;border-top:1px solid #334155;">
-      <button id="btn-winner-reset" class="timer-btn" style="background:#f59e0b;width:100%;">⟲ Reset Match Scores</button>
-    </div>
-  </div>
+<div class="modal-box" style="max-width:650px;">
+<h2 id="modal-winner-title" style="font-size:2.2rem;font-weight:900;margin-bottom:10px;">MATCH COMPLETE</h2>
+<p id="modal-winner-subtitle" style="font-size:1.2rem;color:#fbbf24;font-weight:700;margin-bottom:20px;">Auto-Calculated Winner: <span id="auto-winner-name">---</span></p>
+<div style="background:#0f172a; padding:15px; border-radius:10px; margin-bottom:20px; text-align:left; border:1px solid #334155;">
+<p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px; text-align:center;">Need to override? (e.g., Knockout/KO, Disqualification/DSQ, DNF)</p>
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+<button class="timer-btn" style="background:#2563eb; font-size:0.9rem;" onclick="overrideWinner('blue')">🔵 Force Blue Win (<span id="override-blue-label">Blue</span>)</button>
+<button class="timer-btn" style="background:#dc2626; font-size:0.9rem;" onclick="overrideWinner('red')">🔴 Force Red Win (<span id="override-red-label">Red</span>)</button>
+</div>
+</div>
+<p id="modal-winner-question" style="text-align:center;color:#94a3b8;margin-bottom:15px;font-size:1rem;">Confirm result to automatically advance winner to the next bracket round:</p>
+<div id="winner-btn-container" style="display:flex;gap:15px;">
+<button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm Winner & Advance</button>
+<button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Cancel / Reset</button>
+</div>
+<div id="winner-deny-section" class="hidden-view" style="margin-top:20px;padding-top:20px;border-top:1px solid #334155;">
+<button id="btn-winner-reset" class="timer-btn" style="background:#f59e0b;width:100%;">⟲ Reset Match Scores</button>
+</div>
+</div>
 </div>
 
-<!-- ===== BRACKET MODAL (WITH INTERACTIVE WINNER EDITING) ===== -->
+<!-- ===== BRACKET MODAL (with edit capability) ===== -->
 <div id="bracket-modal" class="hidden-view modal-overlay">
-  <div class="modal-box" style="max-width: 950px; max-height: 90vh; overflow-y: auto; text-align: left;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:15px;">
-      <h3 id="bracket-modal-title" style="margin:0; color:#fbbf24; font-size:1.4rem;">Category Bracket & Winner Overrides</h3>
-      <button class="timer-btn" style="background:#475569; padding:8px 16px;" onclick="closeBracketModal()">Close</button>
-    </div>
-    <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:15px;">💡 Click on any competitor box in later rounds to manually override or change winners across the bracket tree (synced instantly with database).</p>
-    <div id="bracket-modal-content"></div>
-  </div>
+<div class="modal-box" style="max-width: 1100px; max-height: 92vh; overflow-y: auto; text-align: left;">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:15px;">
+<h3 id="bracket-modal-title" style="margin:0; color:#fbbf24; font-size:1.4rem;">Category Bracket</h3>
+<div style="display:flex;gap:10px;align-items:center;">
+<span style="font-size:0.75rem;color:#94a3b8;font-weight:700;">💡 Click any player name to set winner</span>
+<button class="timer-btn" style="background:#475569; padding:8px 16px;" onclick="closeBracketModal()">Close</button>
+</div>
+</div>
+<div id="bracket-modal-content"></div>
+</div>
+</div>
+
+<!-- ===== BRACKET EDIT MODAL ===== -->
+<div id="bracket-edit-modal" class="hidden-view modal-overlay">
+<div class="modal-box" style="max-width:500px;">
+<h3 id="bracket-edit-title" style="margin-top:0;color:#fbbf24;font-size:1.3rem;">Edit Match Winner</h3>
+<p id="bracket-edit-subtitle" style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px;"></p>
+<div id="bracket-edit-players" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;"></div>
+<div style="display:flex;gap:10px;">
+<button id="btn-bracket-edit-save" class="timer-btn" style="flex:1;background:#10b981;">✓ Save & Propagate</button>
+<button class="timer-btn" style="flex:1;background:#475569;" onclick="closeBracketEditModal()">Cancel</button>
+</div>
+<div style="margin-top:15px;padding-top:15px;border-top:1px solid #334155;">
+<p style="color:#f59e0b;font-size:0.8rem;text-align:center;">⚠️ Changing a winner will cascade to all subsequent rounds</p>
+</div>
+</div>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -595,737 +610,1347 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-
 const state = {
-  role: null, ring: null, match: null, currentMatch: null, judgeSlot: null, phoneSessionId: null,
-  realtimeChannel: null, ringChannel: null, heartbeatInterval: null, pollInterval: null,
-  matchPollInterval: null, matchListInterval: null, activePhones: [], heartbeatBusy: false, loggingIn: false, dbBroken: false
+role: null, ring: null, match: null, currentMatch: null, judgeSlot: null, phoneSessionId: null,
+realtimeChannel: null, ringChannel: null, heartbeatInterval: null, pollInterval: null,
+matchPollInterval: null, matchListInterval: null, activePhones: [], heartbeatBusy: false, loggingIn: false, dbBroken: false
 };
-
 const TIMER_CHANNEL_PREFIX = "timer-";
 let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
 let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
 let currentActiveMatchAssignment = null;
-let currentBracketCategory = null;
-let currentBracketDiscipline = null;
+let bracketEditContext = null; // { categoryName, discipline, roundIndex, matchIndex, players: [{name, team}], currentWinner }
+let bracketDataCache = null; // cached bracket for current category
 
 function getTimerKey() { return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`; }
 function loadTimerState() { try { const saved = localStorage.getItem(getTimerKey()); if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved)); } catch (e) {} }
 function saveTimerState() { try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e) {} }
 function broadcastTimerState() { if (timerChannel && state.role === 'laptop') { try { timerChannel.send({ type: 'broadcast', event: 'timer-update', payload: timerState }); } catch (e) {} } }
 function subscribeTimer() {
-  if (timerChannel) sb.removeChannel(timerChannel);
-  if (!state.ring) return;
-  timerChannel = sb.channel(TIMER_CHANNEL_PREFIX + state.ring.id)
-    .on('broadcast', { event: 'timer-update' }, (msg) => { const s = msg && msg.payload; if (s) { timerState = Object.assign({}, timerState, s); saveTimerState(); renderTimer(); } })
-    .on('broadcast', { event: 'timer-request' }, () => { if (state.role === 'laptop') broadcastTimerState(); })
-    .subscribe((status) => { if (status === 'SUBSCRIBED' && state.role !== 'laptop') { try { timerChannel.send({ type: 'broadcast', event: 'timer-request' }); } catch (e) {} } });
+if (timerChannel) sb.removeChannel(timerChannel);
+if (!state.ring) return;
+timerChannel = sb.channel(TIMER_CHANNEL_PREFIX + state.ring.id)
+.on('broadcast', { event: 'timer-update' }, (msg) => { const s = msg && msg.payload; if (s) { timerState = Object.assign({}, timerState, s); saveTimerState(); renderTimer(); } })
+.on('broadcast', { event: 'timer-request' }, () => { if (state.role === 'laptop') broadcastTimerState(); })
+.subscribe((status) => { if (status === 'SUBSCRIBED' && state.role !== 'laptop') { try { timerChannel.send({ type: 'broadcast', event: 'timer-request' }); } catch (e) {} } });
 }
 function getRemaining() { if (timerState.finished) return 0; const now = Date.now(); let total = timerState.elapsed; if (timerState.startTime) total += (now - timerState.startTime) / 1000; const limit = timerState.isBreak ? timerState.breakTime : timerState.roundTime; return Math.max(0, limit - total); }
 function formatTime(seconds) { const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60); return `${m}:${s.toString().padStart(2, '0')}`; }
 function formatTimeDecimal(seconds) { const m = Math.floor(seconds / 60); const s = seconds % 60; return `${m}:${s.toFixed(1).padStart(4, '0')}`; }
-
 function renderTimer() {
-  const remaining = getRemaining();
-  const timeStr = formatTime(remaining);
-  const timeStrDecimal = formatTimeDecimal(remaining);
-  const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished && !timerState.isBreak;
-  const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  setEl('l-timer-round', timerState.round); setEl('tv-timer-round', timerState.round); setEl('phone-timer-round', timerState.round);
-  const tvTimerLabelTop = document.getElementById('tv-timer-label-top');
-  if (tvTimerLabelTop) {
-    if (timerState.isBreak) tvTimerLabelTop.innerHTML = '<span style="color:#38bdf8;">☕ BREAK TIME</span>';
-    else tvTimerLabelTop.innerHTML = `ROUND <span id="tv-timer-round">${timerState.round}</span>`;
-  }
-  ['l-timer-time', 'tv-timer-time', 'phone-timer-time'].forEach(id => {
-    const el = document.getElementById(id); if (!el) return;
-    el.textContent = id === 'tv-timer-time' ? timeStrDecimal : timeStr;
-    el.classList.toggle('warning', warn); el.classList.toggle('break-mode', timerState.isBreak);
-  });
-  const statusEl = document.getElementById('l-timer-status');
-  const phoneStatusEl = document.getElementById('phone-timer-status');
-  let status = '';
-  if (timerState.finished) status = timerState.winner === 'draw' ? 'Match Complete · DRAW' : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
-  else if (timerState.isBreak) status = timerState.paused ? '☕ Break · Paused (Press SPACE to Start Next Round)' : '☕ Break in Progress';
-  else if (timerState.paused) status = `Round ${timerState.round} · Paused (Press SPACE)`;
-  else status = `Round ${timerState.round} · Running (Press SPACE to Pause)`;
-  if (statusEl) statusEl.textContent = status;
-  if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.isBreak ? 'Break' : (timerState.paused ? 'Paused' : 'Running'));
-  const btnStart = document.getElementById('btn-timer-start');
-  const btnPause = document.getElementById('btn-timer-pause');
-  if (btnStart && btnPause) {
-    if (timerState.finished) { btnStart.classList.remove('hidden-view'); btnPause.classList.add('hidden-view'); btnStart.disabled = true; btnStart.textContent = '▶ Start Round'; }
-    else if (timerState.isBreak) { btnStart.classList.remove('hidden-view'); btnPause.classList.add('hidden-view'); btnStart.disabled = false; btnStart.textContent = '▶ Start Next Round Now'; }
-    else if (timerState.paused) { btnStart.classList.remove('hidden-view'); btnPause.classList.add('hidden-view'); btnStart.disabled = false; btnStart.textContent = '▶ Start Round'; }
-    else { btnStart.classList.add('hidden-view'); btnPause.classList.remove('hidden-view'); }
-  }
-  const r3note = document.getElementById('timer-round3-note');
-  if (r3note) r3note.classList.toggle('hidden-view', timerState.round !== 3 || timerState.isBreak);
-  const tvOverlay = document.getElementById('tv-winner-overlay');
-  const tvText = document.getElementById('tv-winner-text');
-  const tvWinnerName = document.getElementById('tv-winner-name');
-  if (tvOverlay && tvText) {
-    if (timerState.finished && timerState.winner) {
-      if (timerState.winner === 'draw') { tvText.textContent = 'DRAW!'; if (tvWinnerName) tvWinnerName.textContent = ''; }
-      else { tvText.textContent = timerState.winner.toUpperCase() + ' WINS!'; const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED'); if (tvWinnerName) tvWinnerName.textContent = winnerName; }
-      tvOverlay.classList.remove('hidden-view');
-    } else { tvOverlay.classList.add('hidden-view'); }
-  }
+const remaining = getRemaining();
+const timeStr = formatTime(remaining);
+const timeStrDecimal = formatTimeDecimal(remaining);
+const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished && !timerState.isBreak;
+const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+setEl('l-timer-round', timerState.round); setEl('tv-timer-round', timerState.round); setEl('phone-timer-round', timerState.round);
+const tvTimerLabelTop = document.getElementById('tv-timer-label-top');
+if (tvTimerLabelTop) {
+if (timerState.isBreak) tvTimerLabelTop.innerHTML = '<span style="color:#38bdf8;">☕ BREAK TIME</span>';
+else tvTimerLabelTop.innerHTML = `ROUND <span id="tv-timer-round">${timerState.round}</span>`;
 }
-
+['l-timer-time', 'tv-timer-time', 'phone-timer-time'].forEach(id => {
+const el = document.getElementById(id); if (!el) return;
+el.textContent = id === 'tv-timer-time' ? timeStrDecimal : timeStr;
+el.classList.toggle('warning', warn); el.classList.toggle('break-mode', timerState.isBreak);
+});
+const statusEl = document.getElementById('l-timer-status');
+const phoneStatusEl = document.getElementById('phone-timer-status');
+let status = '';
+if (timerState.finished) status = timerState.winner === 'draw' ? 'Match Complete · DRAW' : (timerState.winner ? `Match Complete · ${timerState.winner.toUpperCase()} wins` : 'Match Complete');
+else if (timerState.isBreak) status = timerState.paused ? '☕ Break · Paused (Press SPACE to Start Next Round)' : '☕ Break in Progress';
+else if (timerState.paused) status = `Round ${timerState.round} · Paused (Press SPACE)`;
+else status = `Round ${timerState.round} · Running (Press SPACE to Pause)`;
+if (statusEl) statusEl.textContent = status;
+if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? 'Finished' : (timerState.isBreak ? 'Break' : (timerState.paused ? 'Paused' : 'Running'));
+const btnStart = document.getElementById('btn-timer-start');
+const btnPause = document.getElementById('btn-timer-pause');
+if (btnStart && btnPause) {
+if (timerState.finished) { btnStart.classList.remove('hidden-view'); btnPause.classList.add('hidden-view'); btnStart.disabled = true; btnStart.textContent = '▶ Start Round'; }
+else if (timerState.isBreak) { btnStart.classList.remove('hidden-view'); btnPause.classList.add('hidden-view'); btnStart.disabled = false; btnStart.textContent = '▶ Start Next Round Now'; }
+else if (timerState.paused) { btnStart.classList.remove('hidden-view'); btnPause.classList.add('hidden-view'); btnStart.disabled = false; btnStart.textContent = '▶ Start Round'; }
+else { btnStart.classList.add('hidden-view'); btnPause.classList.remove('hidden-view'); }
+}
+const r3note = document.getElementById('timer-round3-note');
+if (r3note) r3note.classList.toggle('hidden-view', timerState.round !== 3 || timerState.isBreak);
+const tvOverlay = document.getElementById('tv-winner-overlay');
+const tvText = document.getElementById('tv-winner-text');
+const tvWinnerName = document.getElementById('tv-winner-name');
+if (tvOverlay && tvText) {
+if (timerState.finished && timerState.winner) {
+if (timerState.winner === 'draw') { tvText.textContent = 'DRAW!'; if (tvWinnerName) tvWinnerName.textContent = ''; }
+else { tvText.textContent = timerState.winner.toUpperCase() + ' WINS!'; const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED'); if (tvWinnerName) tvWinnerName.textContent = winnerName; }
+tvOverlay.classList.remove('hidden-view');
+} else { tvOverlay.classList.add('hidden-view'); }
+}
+}
 function tickTimer() {
-  if (timerState.finished) return;
-  renderTimer();
-  if (state.role === 'laptop' && !timerState.paused && getRemaining() <= 0) {
-    if (timerState.isBreak) {
-      timerState.isBreak = false; timerState.paused = true; timerState.elapsed = 0; timerState.startTime = null;
-      saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
-      showToast('☕ Break time finished! Press Start or Space for next round.', 'success');
-    } else { endRound(); }
-  }
+if (timerState.finished) return;
+renderTimer();
+if (state.role === 'laptop' && !timerState.paused && getRemaining() <= 0) {
+if (timerState.isBreak) {
+timerState.isBreak = false; timerState.paused = true; timerState.elapsed = 0; timerState.startTime = null;
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
+showToast('☕ Break time finished! Press Start or Space for next round.', 'success');
+} else { endRound(); }
+}
 }
 function startTimerTick() { if (timerTickInterval) clearInterval(timerTickInterval); timerTickInterval = setInterval(tickTimer, 100); }
 function stopTimerTick() { if (timerTickInterval) clearInterval(timerTickInterval); timerTickInterval = null; }
 function startBroadcastLoop() { if (broadcastInterval) clearInterval(broadcastInterval); broadcastInterval = setInterval(() => { if (state.role === 'laptop' && !timerState.paused && !timerState.finished) broadcastTimerState(); }, 1000); }
 function stopBroadcastLoop() { if (broadcastInterval) clearInterval(broadcastInterval); broadcastInterval = null; }
 function startTimer() {
-  if (timerState.finished || state.role !== 'laptop') return;
-  if (timerState.isBreak) {
-    timerState.isBreak = false; timerState.paused = true; timerState.elapsed = 0; timerState.startTime = null;
-    saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
-    showToast('Break skipped. Ready for round ' + timerState.round, 'success'); return;
-  }
-  timerState.paused = false; timerState.startTime = Date.now();
-  saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick();
+if (timerState.finished || state.role !== 'laptop') return;
+if (timerState.isBreak) {
+timerState.isBreak = false; timerState.paused = true; timerState.elapsed = 0; timerState.startTime = null;
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
+showToast('Break skipped. Ready for round ' + timerState.round, 'success'); return;
+}
+timerState.paused = false; timerState.startTime = Date.now();
+saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick();
 }
 function pauseTimer() {
-  if (timerState.finished || timerState.paused || state.role !== 'laptop') return;
-  const now = Date.now(); if (timerState.startTime) timerState.elapsed += (now - timerState.startTime) / 1000;
-  timerState.startTime = null; timerState.paused = true;
-  saveTimerState(); broadcastTimerState(); renderTimer();
+if (timerState.finished || timerState.paused || state.role !== 'laptop') return;
+const now = Date.now(); if (timerState.startTime) timerState.elapsed += (now - timerState.startTime) / 1000;
+timerState.startTime = null; timerState.paused = true;
+saveTimerState(); broadcastTimerState(); renderTimer();
 }
 window.addEventListener("keydown", (e) => {
-  if (e.code === "Space" && state.role === "laptop") {
-    if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
-    e.preventDefault(); if (timerState.paused) startTimer(); else pauseTimer();
-  }
+if (e.code === "Space" && state.role === "laptop") {
+if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
+e.preventDefault(); if (timerState.paused) startTimer(); else pauseTimer();
+}
 });
 function resetRound() {
-  if (state.role !== 'laptop') return; if (!confirm('Reset the current timer?')) return;
-  timerState.elapsed = 0; timerState.startTime = null; timerState.paused = true;
-  saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
+if (state.role !== 'laptop') return; if (!confirm('Reset the current timer?')) return;
+timerState.elapsed = 0; timerState.startTime = null; timerState.paused = true;
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
 }
 document.addEventListener("DOMContentLoaded", () => {
-  const setTimeBtn = document.getElementById("btn-set-time");
-  if (setTimeBtn) {
-    setTimeBtn.addEventListener("click", () => {
-      if (state.role !== 'laptop') return;
-      const mins = parseInt(document.getElementById("inp-timer-min").value) || 0;
-      const secs = parseInt(document.getElementById("inp-timer-sec").value) || 0;
-      const breakSecs = parseInt(document.getElementById("inp-break-sec").value) || 30;
-      const totalSecs = (mins * 60) + secs;
-      timerState.roundTime = totalSecs; timerState.breakTime = breakSecs;
-      if (!timerState.isBreak) { timerState.elapsed = 0; timerState.startTime = null; timerState.paused = true; }
-      saveTimerState(); broadcastTimerState(); renderTimer();
-      showToast(`Timer set: Round ${mins}:` + secs.toString().padStart(2, '0') + ` | Break ${breakSecs}s`, 'success');
-    });
-  }
+const setTimeBtn = document.getElementById("btn-set-time");
+if (setTimeBtn) {
+setTimeBtn.addEventListener("click", () => {
+if (state.role !== 'laptop') return;
+const mins = parseInt(document.getElementById("inp-timer-min").value) || 0;
+const secs = parseInt(document.getElementById("inp-timer-sec").value) || 0;
+const breakSecs = parseInt(document.getElementById("inp-break-sec").value) || 30;
+const totalSecs = (mins * 60) + secs;
+timerState.roundTime = totalSecs; timerState.breakTime = breakSecs;
+if (!timerState.isBreak) { timerState.elapsed = 0; timerState.startTime = null; timerState.paused = true; }
+saveTimerState(); broadcastTimerState(); renderTimer();
+showToast(`Timer set: Round ${mins}:` + secs.toString().padStart(2, '0') + ` | Break ${breakSecs}s`, 'success');
+});
+}
+});
+async function endRound() {
+if (timerState.finished) return;
+timerState.paused = true; timerState.startTime = null; timerState.elapsed = 0;
+await fetchMatchNow();
+const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+if (mode === 'patterns') { finishMatch(); return; }
+if (timerState.round === 1) {
+timerState.round = 2; timerState.isBreak = true; timerState.paused = false; timerState.startTime = Date.now();
+saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick();
+showToast('☕ Round 1 ended. Break time started!', 'success');
+} else if (timerState.round === 2) {
+const votes = judgeVoteCounts();
+if (votes.blue === votes.red) {
+timerState.round = 3; timerState.isBreak = true; timerState.paused = false; timerState.startTime = Date.now();
+saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick();
+showToast('☕ Round 2 tied! Break started before Round 3 tie-breaker.', 'warning');
+} else { finishMatch(); }
+} else if (timerState.round === 3) { finishMatch(); }
+}
+function finishMatch() {
+const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+if (mode === 'patterns') {
+timerState.finished = true; timerState.paused = true; timerState.isBreak = false;
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
+if (state.role === 'laptop') showWinnerConfirmStep1(); return;
+}
+const votes = judgeVoteCounts();
+timerState.finished = true; timerState.paused = true; timerState.isBreak = false;
+if (votes.blue > votes.red) timerState.winner = 'blue';
+else if (votes.red > votes.blue) timerState.winner = 'red';
+else timerState.winner = 'draw';
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
+if (state.role === 'laptop') showWinnerConfirmStep1();
+}
+function showWinnerConfirmStep1() {
+const modal = document.getElementById('modal-winner');
+const autoWinnerSpan = document.getElementById('auto-winner-name');
+const btnBlueLabel = document.getElementById('override-blue-label');
+const btnRedLabel = document.getElementById('override-red-label');
+const denySection = document.getElementById('winner-deny-section');
+const blueName = state.ring?.blue_name || 'Blue';
+const redName = state.ring?.red_name || 'Red';
+btnBlueLabel.textContent = blueName;
+btnRedLabel.textContent = redName;
+let calcWinnerName = 'Draw';
+if (timerState.winner === 'blue') calcWinnerName = `🔵 ${blueName} (Points: ${judgeVoteCounts().blue})`;
+else if (timerState.winner === 'red') calcWinnerName = `🔴 ${redName} (Points: ${judgeVoteCounts().red})`;
+autoWinnerSpan.textContent = calcWinnerName;
+denySection.classList.add('hidden-view');
+modal.classList.remove('hidden-view');
+const confirmBtn = document.getElementById('btn-winner-confirm');
+confirmBtn.onclick = () => confirmAndAdvance(timerState.winner);
+document.getElementById('btn-winner-deny').onclick = () => {
+denySection.classList.remove('hidden-view');
+};
+}
+function overrideWinner(side) {
+timerState.winner = side;
+const name = side === 'blue' ? (state.ring?.blue_name || 'Blue') : (state.ring?.red_name || 'Red');
+showToast(`Winner overridden to: ${name.toUpperCase()}`, 'warning');
+confirmAndAdvance(side);
+}
+async function confirmAndAdvance(winningSide) {
+document.getElementById('modal-winner').classList.add('hidden-view');
+if (!winningSide || winningSide === 'draw') {
+showToast('Match recorded as Draw. No automatic bracket progression.', 'warning');
+await resetMatch();
+return;
+}
+const winnerName = winningSide === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
+await advanceWinnerInDatabase(winnerName);
+timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+saveTimerState(); broadcastTimerState();
+const tvOverlay = document.getElementById('tv-winner-overlay'); if (tvOverlay) tvOverlay.classList.add('hidden-view');
+await refreshRingData();
+await loadCurrentMatch();
+await resetMatchScores();
+renderTimer();
+updateCompetitorDisplay();
+showToast(`✓ ${winnerName} advanced to the next bracket round!`, 'success');
+}
+async function advanceWinnerInDatabase(winnerName) {
+try {
+if (!currentActiveMatchAssignment) return;
+const currentCat = currentActiveMatchAssignment.category_name;
+const ringNum = currentActiveMatchAssignment.ring_number;
+const { data: catAssignments } = await sb.from('ring_assignments')
+.select('*')
+.eq('category_name', currentCat)
+.order('time_seconds', { ascending: true });
+if (catAssignments && catAssignments.length > 1) {
+const currentIndex = catAssignments.findIndex(a => a.id === currentActiveMatchAssignment.id);
+if (currentIndex !== -1 && currentIndex + 1 < catAssignments.length) {
+const nextMatch = catAssignments[currentIndex + 1];
+let updates = {};
+if (!nextMatch.player1_name || nextMatch.player1_name === 'TBD') updates.player1_name = winnerName;
+else if (!nextMatch.player2_name || nextMatch.player2_name === 'TBD') updates.player2_name = winnerName;
+if (Object.keys(updates).length > 0) {
+await sb.from('ring_assignments').update(updates).eq('id', nextMatch.id);
+}
+}
+}
+} catch (e) {
+console.error("Error auto-advancing bracket in database:", e);
+}
+}
+async function resetMatch() {
+if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
+await resetMatchScores();
+timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+saveTimerState(); broadcastTimerState();
+document.getElementById('modal-winner').classList.add('hidden-view');
+const tvOverlay = document.getElementById('tv-winner-overlay'); if (tvOverlay) tvOverlay.classList.add('hidden-view');
+stopTimerTick(); renderTimer(); fetchMatchNow();
+}
+async function resetMatchScores() {
+if (!state.ring || !state.ring.id) return;
+try {
+await sb.from("matches").update({
+blue_score: 0, red_score: 0, blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0,
+judge_blue: [0,0,0,0], judge_red: [0,0,0,0], updated_at: new Date().toISOString()
+}).eq("ring_id", state.ring.id);
+} catch(e) {}
+}
+async function declareWinner(side) {
+if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
+if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
+timerState.finished = true; timerState.paused = true; timerState.isBreak = false; timerState.winner = side;
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); showWinnerConfirmStep1();
+}
+async function refreshRingData() {
+if (!state.ring || !state.ring.id) return;
+try {
+const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).maybeSingle();
+if (data) { state.ring = data; sessionStorage.setItem('tkd_ring', JSON.stringify(data)); updateCompetitorDisplay(); }
+} catch(e) {}
+}
+async function updateMaxPhones(val) {
+if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
+const num = parseInt(val, 10);
+try { await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id); } catch(e) {}
+state.ring.max_phones = num; sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
+const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
+renderLaptopJudges(); renderVoteScores(); updateRingLayoutCornerStats(); showToast(`Ring set to ${num} judges`, 'success');
+}
+// Pull the FIRST fight (earliest time_seconds) and its two names
+async function loadCurrentMatch() {
+if (!state.ring || !state.ring.id) return;
+const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
+try {
+// Get assignments for this ring - FIRST match = earliest time_seconds
+const { data: assignments, error } = await sb.from('ring_assignments')
+.select('*')
+.eq('ring_number', ringNum)
+.order('time_seconds', { ascending: true }); // ASCENDING to get FIRST fight
+
+if (error) throw error;
+if (assignments && assignments.length > 0) {
+// Find the first match that hasn't been completed yet (no winner recorded)
+// OR just take the very first one
+const firstAssignment = assignments[0];
+currentActiveMatchAssignment = firstAssignment;
+state.currentMatch = firstAssignment;
+
+const p1 = firstAssignment.player1_name || firstAssignment.competitor1 || 'Blue Competitor';
+const p2 = firstAssignment.player2_name || firstAssignment.competitor2 || 'Red Competitor';
+const p1Club = firstAssignment.player1_club || firstAssignment.club1 || 'Team A';
+const p2Club = firstAssignment.player2_club || firstAssignment.club2 || 'Team B';
+
+state.ring.blue_name = p1;
+state.ring.red_name = p2;
+state.ring.blue_club = p1Club;
+state.ring.red_club = p2Club;
+state.ring.category_name = firstAssignment.category_name;
+state.ring.discipline = firstAssignment.discipline || 'sparring';
+state.ring.match_stage = firstAssignment.match_stage || 'Preliminary';
+
+try {
+await sb.from('rings').update({
+blue_name: p1,
+red_name: p2,
+blue_club: p1Club,
+red_club: p2Club,
+category_name: firstAssignment.category_name,
+discipline: firstAssignment.discipline,
+match_stage: firstAssignment.match_stage || 'Preliminary',
+category_id: firstAssignment.id
+}).eq('id', state.ring.id);
+} catch(e) {}
+await refreshRingData();
+} else {
+state.currentMatch = null;
+currentActiveMatchAssignment = null;
+try { await sb.from('rings').update({ category_name: null, discipline: null, match_stage: 'No Assignments', category_id: null }).eq('id', state.ring.id); } catch(e) {}
+await refreshRingData();
+}
+} catch (err) { console.error("loadCurrentMatch error:", err); }
+if (state.role === 'laptop') await loadMatchList();
+}
+async function loadNextMatch() {
+if (!state.ring || !state.ring.id) return;
+try {
+const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
+const { data: assignments } = await sb.from('ring_assignments').select('*').eq('ring_number', ringNum).order('time_seconds', { ascending: true }).limit(2);
+if (assignments && assignments.length >= 2) {
+await sb.from('rings').update({ next_blue_name: assignments[1].player1_name || 'TBD', next_red_name: assignments[1].player2_name || 'TBD' }).eq('id', state.ring.id);
+await refreshRingData();
+}
+} catch(e) {}
+}
+function updateCompetitorDisplay() {
+const blueName = state.ring?.blue_name || '---';
+const redName = state.ring?.red_name || '---';
+const blueClub = state.ring?.blue_club || '---';
+const redClub = state.ring?.red_club || '---';
+const nextBlueName = state.ring?.next_blue_name || '---';
+const nextRedName = state.ring?.next_red_name || '---';
+const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+const categoryName = state.ring?.category_name || 'No Match';
+const matchStage = state.ring?.match_stage || 'Scheduled';
+const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+setTxt('laptop-blue-name', blueName); setTxt('laptop-red-name', redName);
+setTxt('laptop-blue-club', blueClub); setTxt('laptop-red-club', redClub);
+setTxt('laptop-category-name', categoryName); setTxt('laptop-match-stage', matchStage);
+const categoryLinkContainer = document.getElementById('category-web-link-container');
+const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
+const catName = state.ring?.category_name || state.currentMatch?.category_name;
+const disc = state.ring?.discipline || state.currentMatch?.discipline || 'sparring';
+if (categoryLinkContainer && categoryLinkAnchor) {
+if (catName) {
+categoryLinkAnchor.href = '#';
+categoryLinkAnchor.onclick = (e) => { e.preventDefault(); openBracketModal(catName, disc); };
+categoryLinkAnchor.textContent = `📊 View/Edit Bracket: ${catName}`;
+categoryLinkContainer.classList.remove('hidden-view');
+} else {
+categoryLinkContainer.classList.add('hidden-view');
+}
+}
+const laptopDisc = document.getElementById('laptop-discipline-badge');
+if (laptopDisc) { laptopDisc.textContent = discipline.toUpperCase(); laptopDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
+setTxt('tv-blue-name', blueName); setTxt('tv-red-name', redName);
+setTxt('tv-blue-club', blueClub); setTxt('tv-red-club', redClub);
+setTxt('tv-next-blue', nextBlueName); setTxt('tv-next-red', nextRedName);
+setTxt('tv-category-name', categoryName); setTxt('tv-match-stage', matchStage);
+const tvDisc = document.getElementById('tv-discipline-badge');
+if (tvDisc) { tvDisc.textContent = discipline.toUpperCase(); tvDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
+setTxt('phone-blue-name', blueName); setTxt('phone-red-name', redName);
+const phoneMode = document.getElementById('phone-mode-badge');
+if (phoneMode) { phoneMode.textContent = discipline.toUpperCase(); phoneMode.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
+const sparringControls = document.getElementById('sparring-controls');
+const patternsControls = document.getElementById('patterns-controls');
+const declareWinnerEl = document.getElementById('laptop-declare-winner');
+if (discipline === 'patterns') {
+if (sparringControls) sparringControls.classList.add('hidden-view');
+if (patternsControls) patternsControls.classList.remove('hidden-view');
+if (declareWinnerEl) declareWinnerEl.classList.remove('hidden-view');
+} else {
+if (sparringControls) sparringControls.classList.remove('hidden-view');
+if (patternsControls) patternsControls.classList.add('hidden-view');
+if (declareWinnerEl) declareWinnerEl.classList.remove('hidden-view');
+}
+}
+async function loadMatchList() {
+if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
+const container = document.getElementById('match-list-container');
+if (!container) return;
+const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
+try {
+const { data: assignments, error } = await sb.from('ring_assignments')
+.select('*')
+.eq('ring_number', ringNum)
+.order('time_seconds', { ascending: true }); // FIRST fight at top
+if (error) throw error;
+if (!assignments || assignments.length === 0) {
+container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches assigned to this ring.</div>';
+} else {
+renderAssignmentListItems(assignments, container);
+}
+} catch (e) {
+container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load assignments.</div>';
+}
+}
+function renderAssignmentListItems(assignments, container) {
+let html = '';
+assignments.forEach((a, idx) => {
+const catName = a.category_name || 'Unknown';
+const discipline = a.discipline || 'sparring';
+const p1 = a.player1_name || 'TBD';
+const p2 = a.player2_name || 'TBD';
+const isActive = state.currentMatch && state.currentMatch.id === a.id;
+const cls = isActive ? 'active' : '';
+const matchNum = idx + 1;
+html += `<div class="match-list-item ${cls}" style="cursor:pointer;" onclick="openBracketModal('${catName.replace(/'/g, "\\'")}', '${discipline}')">
+<div class="ml-number"><span>#${matchNum} · ${discipline.toUpperCase()}</span></div>
+<div class="ml-names">${catName}</div>
+<div class="ml-category">⚔️ ${p1} vs ${p2}</div>
+</div>`;
+});
+container.innerHTML = html;
+}
+function getBracketSize(count) {
+if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4;
+if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64;
+}
+function generateSeedOrder(size) {
+if (size === 1) return [0];
+const half = size / 2;
+const left = generateSeedOrder(half);
+const right = left.map((x) => x + half);
+const result = [];
+for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); }
+return result;
+}
+function spreadTeams(list, bracketSize) {
+const slots = new Array(bracketSize).fill(null);
+const teams = {};
+list.forEach((p) => { if (!teams[p.team]) teams[p.team] = []; teams[p.team].push(p); });
+const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length);
+const positions = generateSeedOrder(bracketSize);
+let posIndex = 0;
+sortedTeams.forEach((teamArr) => {
+teamArr.forEach((player) => {
+if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; }
+});
+});
+return slots;
+}
+
+// Fetch all competitors for a given category+discipline
+async function fetchCategoryCompetitors(categoryName, discipline) {
+const { data: allRegs } = await sb.from('final_registrations').select('*');
+const compRegs = (allRegs || []).filter(r => {
+const t = (r.entry_type || r.type || r.role || '').toString().toLowerCase();
+return t === 'comp' || t === 'competitor' || t === 'c';
+});
+const compIds = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
+const { data: compDetails } = await sb.from('competitors').select('*').in('id', compIds);
+let allCompetitors = [];
+(compDetails || []).forEach(person => {
+const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
+personRegs.forEach(reg => {
+let entries = [];
+if (reg.entry_data?.entries_list && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
+else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
+else if (reg.entries_list && Array.isArray(reg.entries_list)) entries = reg.entries_list;
+else entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline }];
+entries.forEach(entry => {
+allCompetitors.push({
+name: person.name,
+team: person.team || 'N/A',
+_full_cat: entry.full_cat || entry.category || '',
+_discipline: (entry.discipline || 'sparring').toString().toLowerCase()
+});
+});
+});
+});
+const targetCatLower = categoryName.trim().toLowerCase();
+return allCompetitors.filter(c => c._discipline === discipline && c._full_cat.trim().toLowerCase() === targetCatLower);
+}
+
+// Fetch stored bracket winners from bracket_results table
+async function fetchBracketResults(categoryName, discipline) {
+try {
+const { data, error } = await sb.from('bracket_results')
+.select('*')
+.eq('category_name', categoryName)
+.eq('discipline', discipline);
+if (error) return {};
+const map = {};
+(data || []).forEach(r => {
+const key = `${r.round_index}-${r.match_index}`;
+map[key] = r.winner_name;
+});
+return map;
+} catch(e) {
+return {};
+}
+}
+
+// Save a bracket winner result
+async function saveBracketResult(categoryName, discipline, roundIndex, matchIndex, winnerName, p1Name, p2Name) {
+try {
+// Upsert: delete then insert
+await sb.from('bracket_results')
+.delete()
+.eq('category_name', categoryName)
+.eq('discipline', discipline)
+.eq('round_index', roundIndex)
+.eq('match_index', matchIndex);
+await sb.from('bracket_results')
+.insert({
+category_name: categoryName,
+discipline: discipline,
+round_index: roundIndex,
+match_index: matchIndex,
+winner_name: winnerName,
+player1_name: p1Name,
+player2_name: p2Name,
+updated_at: new Date().toISOString()
+});
+} catch(e) {
+console.error("Error saving bracket result:", e);
+}
+}
+
+// Delete bracket results from a specific round onwards (for cascade reset)
+async function deleteBracketResultsFromRound(categoryName, discipline, fromRound) {
+try {
+await sb.from('bracket_results')
+.delete()
+.eq('category_name', categoryName)
+.eq('discipline', discipline)
+.gte('round_index', fromRound);
+} catch(e) {
+console.error("Error deleting bracket results:", e);
+}
+}
+
+async function openBracketModal(categoryName, discipline) {
+const modal = document.getElementById('bracket-modal');
+const content = document.getElementById('bracket-modal-content');
+const title = document.getElementById('bracket-modal-title');
+title.textContent = `${categoryName} - ${discipline.toUpperCase()} Bracket`;
+content.innerHTML = '<div style="text-align:center; padding:20px;"><div style="width:30px;height:30px;border:3px solid #334155;border-top-color:#fbbf24;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px;"></div>Loading competitors...</div>';
+modal.classList.remove('hidden-view');
+
+try {
+const comps = await fetchCategoryCompetitors(categoryName, discipline);
+if (comps.length < 2) {
+content.innerHTML = `<div style="text-align:center;padding:30px;color:#94a3b8;">Not enough competitors found for this bracket. Found ${comps.length}.</div>`;
+return;
+}
+const size = getBracketSize(comps.length);
+const totalRounds = Math.log2(size);
+const shuffled = spreadTeams(comps, size);
+const slots = shuffled.map(p => p ? { name: p.name, team: p.team } : { name: "BYE", team: "" });
+
+// Fetch stored winners
+const winnersMap = await fetchBracketResults(categoryName, discipline);
+
+// Build rounds structure
+const rounds = [];
+const r1Matches = [];
+for (let i = 0; i < size; i += 2) r1Matches.push({ p1: slots[i], p2: slots[i + 1] });
+rounds.push(r1Matches);
+
+let matchCount = size / 2;
+for (let r = 1; r < totalRounds; r++) {
+matchCount = matchCount / 2;
+const currentMatches = [];
+for (let m = 0; m < matchCount; m++) currentMatches.push({ p1: { name: "", team: "" }, p2: { name: "", team: "" } });
+rounds.push(currentMatches);
+}
+
+// Propagate winners through rounds based on stored results
+for (let r = 0; r < totalRounds; r++) {
+for (let m = 0; m < rounds[r].length; m++) {
+const key = `${r}-${m}`;
+const winnerName = winnersMap[key];
+if (!winnerName) continue;
+const match = rounds[r][m];
+const p1Name = match.p1.name;
+const p2Name = match.p2.name;
+if (!p1Name && !p2Name) continue;
+
+// Determine which slot advances to next round
+if (r + 1 < totalRounds) {
+const nextMatchIdx = Math.floor(m / 2);
+const nextSlot = m % 2; // 0 = p1, 1 = p2
+const nextMatch = rounds[r + 1][nextMatchIdx];
+if (nextSlot === 0) {
+nextMatch.p1 = { name: winnerName, team: "" };
+} else {
+nextMatch.p2 = { name: winnerName, team: "" };
+}
+}
+}
+}
+
+// Cache bracket data for editing
+bracketDataCache = { categoryName, discipline, rounds, totalRounds, winnersMap };
+
+// Render bracket table
+let html = `<div style="overflow-x:auto;padding:10px; margin-bottom:20px;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem; min-width:700px;">`;
+html += `<thead><tr>`;
+for (let r = 1; r <= totalRounds; r++) {
+const roundLabel = r === totalRounds ? '🏆 Final' : (r === totalRounds - 1 ? '🥈 Semi-Final' : `Round ${r}`);
+html += `<th style="padding:10px;background:#1e293b;color:#fbbf24;border:1px solid #334155; text-align:center; min-width:180px;">${roundLabel}</th>`;
+}
+html += `</tr></thead><tbody>`;
+
+const maxRows = rounds[0].length;
+for (let i = 0; i < maxRows; i++) {
+html += `<tr>`;
+for (let r = 0; r < totalRounds; r++) {
+const matchIndex = Math.floor(i / Math.pow(2, r));
+const step = Math.pow(2, r);
+if (i % step === 0) {
+const match = rounds[r][matchIndex] || { p1: {name:""}, p2: {name:""} };
+const key = `${r}-${matchIndex}`;
+const storedWinner = winnersMap[key];
+const p1Name = match.p1.name || "TBD";
+const p2Name = match.p2.name || "TBD";
+const p1IsWinner = storedWinner && p1Name && storedWinner === p1Name;
+const p2IsWinner = storedWinner && p2Name && storedWinner === p2Name;
+const p1Class = storedWinner ? (p1IsWinner ? 'winner-row' : 'loser-row') : '';
+const p2Class = storedWinner ? (p2IsWinner ? 'winner-row' : 'loser-row') : '';
+
+html += `<td rowspan="${step}" style="vertical-align:middle;padding:6px;border:1px solid #334155;">`;
+html += `<div style="background:#0f172a; border:1px solid #fbbf24; border-radius:6px; overflow:hidden;">`;
+html += `<div class="bracket-player-row ${p1Class}" onclick="openBracketEditModal(${r}, ${matchIndex}, 'p1')" title="Click to set as winner">
+<span>${p1Name}</span>
+${storedWinner ? '' : '<span class="bracket-edit-btn">EDIT</span>'}
+</div>`;
+html += `<div class="bracket-player-row ${p2Class}" onclick="openBracketEditModal(${r}, ${matchIndex}, 'p2')" title="Click to set as winner">
+<span>${p2Name}</span>
+${storedWinner ? '' : '<span class="bracket-edit-btn">EDIT</span>'}
+</div>`;
+html += `</div></td>`;
+}
+}
+html += `</tr>`;
+}
+html += `</tbody></table></div>`;
+content.innerHTML = html;
+} catch (e) {
+console.error(e);
+content.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;">Error loading bracket data: ${e.message}</div>`;
+}
+}
+function closeBracketModal() { document.getElementById('bracket-modal').classList.add('hidden-view'); }
+
+// Open the edit modal for a specific match in the bracket
+function openBracketEditModal(roundIndex, matchIndex, clickedSlot) {
+if (!bracketDataCache) return;
+const { categoryName, discipline, rounds, totalRounds, winnersMap } = bracketDataCache;
+const match = rounds[roundIndex][matchIndex];
+const p1Name = match.p1.name || "TBD";
+const p2Name = match.p2.name || "TBD";
+const key = `${roundIndex}-${matchIndex}`;
+const currentWinner = winnersMap[key] || null;
+
+const roundLabel = roundIndex === totalRounds - 1 ? 'Final' : `Round ${roundIndex + 1}`;
+document.getElementById('bracket-edit-title').textContent = `Edit Match: ${roundLabel} - Match ${matchIndex + 1}`;
+document.getElementById('bracket-edit-subtitle').textContent = `${categoryName} · ${discipline.toUpperCase()}`;
+
+const playersDiv = document.getElementById('bracket-edit-players');
+playersDiv.innerHTML = '';
+
+const players = [
+{ name: p1Name, slot: 'p1' },
+{ name: p2Name, slot: 'p2' }
+];
+
+players.forEach(p => {
+const isWinner = currentWinner && currentWinner === p.name;
+const isBye = p.name === 'BYE' || p.name === 'TBD' || !p.name;
+const btn = document.createElement('button');
+btn.style.cssText = `
+padding: 15px 20px;
+border-radius: 10px;
+border: 2px solid ${isWinner ? '#10b981' : '#334155'};
+background: ${isWinner ? 'rgba(16,185,129,0.2)' : '#0f172a'};
+color: ${isWinner ? '#10b981' : (isBye ? '#64748b' : 'white')};
+font-weight: 800;
+font-size: 1.1rem;
+text-align: left;
+cursor: ${isBye ? 'not-allowed' : 'pointer'};
+transition: all 0.2s;
+display: flex;
+justify-content: space-between;
+align-items: center;
+`;
+if (!isBye) {
+btn.onmouseover = () => { if (!isWinner) btn.style.borderColor = '#fbbf24'; };
+btn.onmouseout = () => { if (!isWinner) btn.style.borderColor = '#334155'; };
+btn.onclick = () => selectBracketWinner(roundIndex, matchIndex, p.name, p.slot);
+}
+btn.innerHTML = `
+<span>${p.name === 'BYE' ? '— BYE —' : (p.name || 'TBD')}</span>
+<span style="font-size:0.8rem;">${isWinner ? '🏆 WINNER' : (isBye ? '' : '→ Set Winner')}</span>
+`;
+playersDiv.appendChild(btn);
 });
 
-async function endRound() {
-  if (timerState.finished) return;
-  timerState.paused = true; timerState.startTime = null; timerState.elapsed = 0;
-  await fetchMatchNow();
-  const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-  if (mode === 'patterns') { finishMatch(); return; }
-  if (timerState.round === 1) {
-    timerState.round = 2; timerState.isBreak = true; timerState.paused = false; timerState.startTime = Date.now();
-    saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick();
-    showToast('☕ Round 1 ended. Break time started!', 'success');
-  } else if (timerState.round === 2) {
-    const votes = judgeVoteCounts();
-    if (votes.blue === votes.red) {
-      timerState.round = 3; timerState.isBreak = true; timerState.paused = false; timerState.startTime = Date.now();
-      saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick();
-      showToast('☕ Round 2 tied! Break started before Round 3 tie-breaker.', 'warning');
-    } else { finishMatch(); }
-  } else if (timerState.round === 3) { finishMatch(); }
+// Add "Clear winner" option if there's a current winner
+if (currentWinner) {
+const clearBtn = document.createElement('button');
+clearBtn.style.cssText = `
+padding: 12px 20px;
+border-radius: 10px;
+border: 2px solid #ef4444;
+background: rgba(239,68,68,0.1);
+color: #ef4444;
+font-weight: 700;
+font-size: 0.95rem;
+cursor: pointer;
+margin-top: 5px;
+`;
+clearBtn.textContent = '✗ Clear Winner (Reset this match)';
+clearBtn.onclick = () => selectBracketWinner(roundIndex, matchIndex, null, null);
+playersDiv.appendChild(clearBtn);
 }
 
-function finishMatch() {
-  const mode = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-  if (mode === 'patterns') {
-    timerState.finished = true; timerState.paused = true; timerState.isBreak = false;
-    saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
-    if (state.role === 'laptop') showWinnerConfirmStep1(); return;
-  }
-  const votes = judgeVoteCounts();
-  timerState.finished = true; timerState.paused = true; timerState.isBreak = false;
-  if (votes.blue > votes.red) timerState.winner = 'blue';
-  else if (votes.red > votes.blue) timerState.winner = 'red';
-  else timerState.winner = 'draw';
-  saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
-  if (state.role === 'laptop') showWinnerConfirmStep1();
+bracketEditContext = { categoryName, discipline, roundIndex, matchIndex, players, currentWinner };
+document.getElementById('bracket-edit-modal').classList.remove('hidden-view');
 }
 
-function showWinnerConfirmStep1() {
-  const modal = document.getElementById('modal-winner');
-  const autoWinnerSpan = document.getElementById('auto-winner-name');
-  const btnBlueLabel = document.getElementById('override-blue-label');
-  const btnRedLabel = document.getElementById('override-red-label');
-  const denySection = document.getElementById('winner-deny-section');
-  
-  const blueName = state.ring?.blue_name || 'Blue';
-  const redName = state.ring?.red_name || 'Red';
-  
-  btnBlueLabel.textContent = blueName;
-  btnRedLabel.textContent = redName;
-  
-  let calcWinnerName = 'Draw';
-  if (timerState.winner === 'blue') calcWinnerName = `🔵 ${blueName} (Points: ${judgeVoteCounts().blue})`;
-  else if (timerState.winner === 'red') calcWinnerName = `🔴 ${redName} (Points: ${judgeVoteCounts().red})`;
-  
-  autoWinnerSpan.textContent = calcWinnerName;
-  denySection.classList.add('hidden-view');
-  modal.classList.remove('hidden-view');
-  
-  const confirmBtn = document.getElementById('btn-winner-confirm');
-  confirmBtn.onclick = () => confirmAndAdvance(timerState.winner);
-  
-  document.getElementById('btn-winner-deny').onclick = () => {
-    denySection.classList.remove('hidden-view');
-  };
+function closeBracketEditModal() {
+document.getElementById('bracket-edit-modal').classList.add('hidden-view');
+bracketEditContext = null;
 }
 
-function overrideWinner(side) {
-  timerState.winner = side;
-  const name = side === 'blue' ? (state.ring?.blue_name || 'Blue') : (state.ring?.red_name || 'Red');
-  showToast(`Winner overridden to: ${name.toUpperCase()}`, 'warning');
-  confirmAndAdvance(side);
+// When a winner is selected, save it and cascade through all subsequent rounds
+async function selectBracketWinner(roundIndex, matchIndex, winnerName, slot) {
+if (!bracketEditContext) return;
+const { categoryName, discipline, rounds, totalRounds } = bracketEditContext;
+
+closeBracketEditModal();
+
+// Save the winner
+const match = rounds[roundIndex][matchIndex];
+const p1Name = match.p1.name || '';
+const p2Name = match.p2.name || '';
+
+if (winnerName) {
+await saveBracketResult(categoryName, discipline, roundIndex, matchIndex, winnerName, p1Name, p2Name);
+} else {
+// Clear this match and all subsequent
+await deleteBracketResultsFromRound(categoryName, discipline, roundIndex);
 }
 
-async function confirmAndAdvance(winningSide) {
-  document.getElementById('modal-winner').classList.add('hidden-view');
-  if (!winningSide || winningSide === 'draw') {
-    showToast('Match recorded as Draw. No automatic bracket progression.', 'warning');
-    await resetMatch();
-    return;
-  }
+// Cascade: rebuild subsequent rounds from this point
+await cascadeBracketWinners(categoryName, discipline, roundIndex, matchIndex, winnerName);
 
-  const winnerName = winningSide === 'blue' ? (state.ring?.blue_name || 'BLUE') : (state.ring?.red_name || 'RED');
-  
-  // Advance winner 1 round up in database assignments
-  await advanceWinnerInDatabase(winnerName);
+showToast(winnerName ? `✓ Winner set: ${winnerName} — bracket updated` : '✓ Match cleared — bracket reset', 'success');
 
-  timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
-  saveTimerState(); broadcastTimerState();
-  const tvOverlay = document.getElementById('tv-winner-overlay'); if (tvOverlay) tvOverlay.classList.add('hidden-view');
-  
-  await refreshRingData(); 
-  await loadCurrentMatch(); 
-  await resetMatchScores();
-  renderTimer(); 
-  updateCompetitorDisplay(); 
-  showToast(`✓ ${winnerName} advanced to the next bracket round!`, 'success');
+// Refresh the bracket modal
+await openBracketModal(categoryName, discipline);
+
+// If this is the current active match on the ring, update the ring display
+if (state.role === 'laptop' && currentActiveMatchAssignment) {
+await loadCurrentMatch();
+}
 }
 
-async function advanceWinnerInDatabase(winnerName) {
-  try {
-    if (!currentActiveMatchAssignment) return;
-    const currentCat = currentActiveMatchAssignment.category_name;
-    const ringNum = currentActiveMatchAssignment.ring_number;
+// Cascade winners forward through the bracket after a change
+async function cascadeBracketWinners(categoryName, discipline, fromRound, fromMatchIndex, winnerName) {
+if (!bracketDataCache) return;
+const { rounds, totalRounds } = bracketDataCache;
 
-    const { data: catAssignments } = await sb.from('ring_assignments')
-      .select('*')
-      .eq('category_name', currentCat)
-      .order('time_seconds', { ascending: true });
+// First, clear all stored results from the round AFTER the changed one
+await deleteBracketResultsFromRound(categoryName, discipline, fromRound + 1);
 
-    if (catAssignments && catAssignments.length > 1) {
-      const currentIndex = catAssignments.findIndex(a => a.id === currentActiveMatchAssignment.id);
-      if (currentIndex !== -1 && currentIndex + 1 < catAssignments.length) {
-        const nextMatch = catAssignments[currentIndex + 1];
-        let updates = {};
-        if (!nextMatch.player1_name || nextMatch.player1_name === 'TBD') updates.player1_name = winnerName;
-        else if (!nextMatch.player2_name || nextMatch.player2_name === 'TBD') updates.player2_name = winnerName;
+// Now re-propagate winners forward starting from round 0
+// Re-fetch all stored winners
+const winnersMap = await fetchBracketResults(categoryName, discipline);
 
-        if (Object.keys(updates).length > 0) {
-          await sb.from('ring_assignments').update(updates).eq('id', nextMatch.id);
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Error auto-advancing bracket in database:", e);
-  }
+// Rebuild rounds from scratch
+const size = rounds[0].length * 2;
+// Re-propagate through all rounds
+for (let r = 0; r < totalRounds; r++) {
+for (let m = 0; m < rounds[r].length; m++) {
+const key = `${r}-${m}`;
+const wName = winnersMap[key];
+if (!wName) continue;
+if (r + 1 < totalRounds) {
+const nextMatchIdx = Math.floor(m / 2);
+const nextSlot = m % 2;
+const nextMatch = rounds[r + 1][nextMatchIdx];
+if (nextSlot === 0) {
+nextMatch.p1 = { name: wName, team: "" };
+} else {
+nextMatch.p2 = { name: wName, team: "" };
+}
+}
+}
+}
+
+// Now save the propagated results for rounds after fromRound
+// Actually, we only need to save the ones that had winners before
+// The cascade is automatic via the winnersMap - no need to save propagated results
+// because they're derived from earlier round winners
 }
 
 async function resetMatch() {
-  if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
-  await resetMatchScores();
-  timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
-  saveTimerState(); broadcastTimerState();
-  document.getElementById('modal-winner').classList.add('hidden-view');
-  const tvOverlay = document.getElementById('tv-winner-overlay'); if (tvOverlay) tvOverlay.classList.add('hidden-view');
-  stopTimerTick(); renderTimer(); fetchMatchNow();
+if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
+await resetMatchScores();
+timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+saveTimerState(); broadcastTimerState();
+document.getElementById('modal-winner').classList.add('hidden-view');
+const tvOverlay = document.getElementById('tv-winner-overlay'); if (tvOverlay) tvOverlay.classList.add('hidden-view');
+stopTimerTick(); renderTimer(); fetchMatchNow();
 }
 async function resetMatchScores() {
-  if (!state.ring || !state.ring.id) return;
-  try {
-    await sb.from("matches").update({
-      blue_score: 0, red_score: 0, blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0,
-      judge_blue: [0,0,0,0], judge_red: [0,0,0,0], updated_at: new Date().toISOString()
-    }).eq("ring_id", state.ring.id);
-  } catch(e) {}
+if (!state.ring || !state.ring.id) return;
+try {
+await sb.from("matches").update({
+blue_score: 0, red_score: 0, blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0,
+judge_blue: [0,0,0,0], judge_red: [0,0,0,0], updated_at: new Date().toISOString()
+}).eq("ring_id", state.ring.id);
+} catch(e) {}
 }
 async function declareWinner(side) {
-  if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
-  if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
-  timerState.finished = true; timerState.paused = true; timerState.isBreak = false; timerState.winner = side;
-  saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); showWinnerConfirmStep1();
+if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
+if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
+timerState.finished = true; timerState.paused = true; timerState.isBreak = false; timerState.winner = side;
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); showWinnerConfirmStep1();
 }
 async function refreshRingData() {
-  if (!state.ring || !state.ring.id) return;
-  try {
-    const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).maybeSingle();
-    if (data) { state.ring = data; sessionStorage.setItem('tkd_ring', JSON.stringify(data)); updateCompetitorDisplay(); }
-  } catch(e) {}
+if (!state.ring || !state.ring.id) return;
+try {
+const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).maybeSingle();
+if (data) { state.ring = data; sessionStorage.setItem('tkd_ring', JSON.stringify(data)); updateCompetitorDisplay(); }
+} catch(e) {}
 }
 async function updateMaxPhones(val) {
-  if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
-  const num = parseInt(val, 10);
-  try { await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id); } catch(e) {}
-  state.ring.max_phones = num; sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
-  const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
-  renderLaptopJudges(); renderVoteScores(); updateRingLayoutCornerStats(); showToast(`Ring set to ${num} judges`, 'success');
+if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
+const num = parseInt(val, 10);
+try { await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id); } catch(e) {}
+state.ring.max_phones = num; sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
+const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
+renderLaptopJudges(); renderVoteScores(); updateRingLayoutCornerStats(); showToast(`Ring set to ${num} judges`, 'success');
 }
-
-// Automatically pulls the FIRST uncompleted/active match and its first two names
 async function loadCurrentMatch() {
-  if (!state.ring || !state.ring.id) return;
-  const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
-  
-  try {
-    const { data: assignments } = await sb.from('ring_assignments')
-      .select('*')
-      .eq('ring_number', ringNum)
-      .order('time_seconds', { ascending: true }); // Ascending order to grab the very first fight
+if (!state.ring || !state.ring.id) return;
+const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
+try {
+const { data: assignments, error } = await sb.from('ring_assignments')
+.select('*')
+.eq('ring_number', ringNum)
+.order('time_seconds', { ascending: true });
 
-    if (assignments && assignments.length > 0) {
-      // Find the first assignment that still has active fighters (not both empty/completed)
-      const currentAssignment = assignments[0];
-      currentActiveMatchAssignment = currentAssignment;
-      state.currentMatch = currentAssignment;
+if (error) throw error;
+if (assignments && assignments.length > 0) {
+const firstAssignment = assignments[0];
+currentActiveMatchAssignment = firstAssignment;
+state.currentMatch = firstAssignment;
 
-      const p1 = currentAssignment.player1_name || currentAssignment.competitor1 || 'TBD';
-      const p2 = currentAssignment.player2_name || currentAssignment.competitor2 || 'TBD';
-      const p1Club = currentAssignment.player1_club || currentAssignment.club1 || 'Team A';
-      const p2Club = currentAssignment.player2_club || currentAssignment.club2 || 'Team B';
+const p1 = firstAssignment.player1_name || firstAssignment.competitor1 || 'Blue Competitor';
+const p2 = firstAssignment.player2_name || firstAssignment.competitor2 || 'Red Competitor';
+const p1Club = firstAssignment.player1_club || firstAssignment.club1 || 'Team A';
+const p2Club = firstAssignment.player2_club || firstAssignment.club2 || 'Team B';
 
-      state.ring.blue_name = p1;
-      state.ring.red_name = p2;
-      state.ring.blue_club = p1Club;
-      state.ring.red_club = p2Club;
-      state.ring.category_name = currentAssignment.category_name;
-      state.ring.discipline = currentAssignment.discipline || 'sparring';
-      state.ring.match_stage = currentAssignment.match_stage || 'Preliminary';
+state.ring.blue_name = p1;
+state.ring.red_name = p2;
+state.ring.blue_club = p1Club;
+state.ring.red_club = p2Club;
+state.ring.category_name = firstAssignment.category_name;
+state.ring.discipline = firstAssignment.discipline || 'sparring';
+state.ring.match_stage = firstAssignment.match_stage || 'Preliminary';
 
-      try {
-        await sb.from('rings').update({
-          blue_name: p1,
-          red_name: p2,
-          blue_club: p1Club,
-          red_club: p2Club,
-          category_name: currentAssignment.category_name,
-          discipline: currentAssignment.discipline,
-          match_stage: currentAssignment.match_stage || 'Preliminary',
-          category_id: currentAssignment.id
-        }).eq('id', state.ring.id);
-      } catch(e) {}
-      await refreshRingData();
-    } else {
-      state.currentMatch = null;
-      currentActiveMatchAssignment = null;
-      try { await sb.from('rings').update({ category_name: null, discipline: null, match_stage: 'No Assignments', category_id: null }).eq('id', state.ring.id); } catch(e) {}
-      await refreshRingData();
-    }
-  } catch (err) { console.error("loadCurrentMatch error:", err); }
-  
-  if (state.role === 'laptop') await loadMatchList();
+try {
+await sb.from('rings').update({
+blue_name: p1,
+red_name: p2,
+blue_club: p1Club,
+red_club: p2Club,
+category_name: firstAssignment.category_name,
+discipline: firstAssignment.discipline,
+match_stage: firstAssignment.match_stage || 'Preliminary',
+category_id: firstAssignment.id
+}).eq('id', state.ring.id);
+} catch(e) {}
+await refreshRingData();
+} else {
+state.currentMatch = null;
+currentActiveMatchAssignment = null;
+try { await sb.from('rings').update({ category_name: null, discipline: null, match_stage: 'No Assignments', category_id: null }).eq('id', state.ring.id); } catch(e) {}
+await refreshRingData();
 }
-
-async function loadNextMatch() {
-  if (!state.ring || !state.ring.id) return;
-  try {
-    const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
-    const { data: assignments } = await sb.from('ring_assignments').select('*').eq('ring_number', ringNum).order('time_seconds', { ascending: true }).limit(2);
-    if (assignments && assignments.length >= 2) {
-      await sb.from('rings').update({ next_blue_name: assignments[1].player1_name || 'TBD', next_red_name: assignments[1].player2_name || 'TBD' }).eq('id', state.ring.id);
-      await refreshRingData();
-    }
-  } catch(e) {}
+} catch (err) { console.error("loadCurrentMatch error:", err); }
+if (state.role === 'laptop') await loadMatchList();
 }
-
 function updateCompetitorDisplay() {
-  const blueName = state.ring?.blue_name || '---';
-  const redName = state.ring?.red_name || '---';
-  const blueClub = state.ring?.blue_club || '---';
-  const redClub = state.ring?.red_club || '---';
-  const nextBlueName = state.ring?.next_blue_name || '---';
-  const nextRedName = state.ring?.next_red_name || '---';
-  const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-  const categoryName = state.ring?.category_name || 'No Match';
-  const matchStage = state.ring?.match_stage || 'Scheduled';
-  
-  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setTxt('laptop-blue-name', blueName); setTxt('laptop-red-name', redName);
-  setTxt('laptop-blue-club', blueClub); setTxt('laptop-red-club', redClub);
-  setTxt('laptop-category-name', categoryName); setTxt('laptop-match-stage', matchStage);
-
-  const categoryLinkContainer = document.getElementById('category-web-link-container');
-  const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
-  const catName = state.ring?.category_name || state.currentMatch?.category_name;
-  const disc = state.ring?.discipline || state.currentMatch?.discipline || 'sparring';
-  
-  if (categoryLinkContainer && categoryLinkAnchor) {
-    if (catName) {
-      categoryLinkAnchor.href = '#';
-      categoryLinkAnchor.onclick = (e) => { e.preventDefault(); openBracketModal(catName, disc); };
-      categoryLinkAnchor.textContent = `📊 View & Edit Bracket for ${catName}`;
-      categoryLinkContainer.classList.remove('hidden-view');
-    } else {
-      categoryLinkContainer.classList.add('hidden-view');
-    }
-  }
-
-  const laptopDisc = document.getElementById('laptop-discipline-badge');
-  if (laptopDisc) { laptopDisc.textContent = discipline.toUpperCase(); laptopDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
-
-  setTxt('tv-blue-name', blueName); setTxt('tv-red-name', redName);
-  setTxt('tv-blue-club', blueClub); setTxt('tv-red-club', redClub);
-  setTxt('tv-next-blue', nextBlueName); setTxt('tv-next-red', nextRedName);
-  setTxt('tv-category-name', categoryName); setTxt('tv-match-stage', matchStage);
-  
-  const tvDisc = document.getElementById('tv-discipline-badge');
-  if (tvDisc) { tvDisc.textContent = discipline.toUpperCase(); tvDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
-
-  setTxt('phone-blue-name', blueName); setTxt('phone-red-name', redName);
-  const phoneMode = document.getElementById('phone-mode-badge');
-  if (phoneMode) { phoneMode.textContent = discipline.toUpperCase(); phoneMode.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
-
-  const sparringControls = document.getElementById('sparring-controls');
-  const patternsControls = document.getElementById('patterns-controls');
-  const declareWinner = document.getElementById('laptop-declare-winner');
-  
-  if (discipline === 'patterns') {
-    if (sparringControls) sparringControls.classList.add('hidden-view');
-    if (patternsControls) patternsControls.classList.remove('hidden-view');
-    if (declareWinner) declareWinner.classList.remove('hidden-view');
-  } else {
-    if (sparringControls) sparringControls.classList.remove('hidden-view');
-    if (patternsControls) patternsControls.classList.add('hidden-view');
-    if (declareWinner) declareWinner.classList.remove('hidden-view');
-  }
+const blueName = state.ring?.blue_name || '---';
+const redName = state.ring?.red_name || '---';
+const blueClub = state.ring?.blue_club || '---';
+const redClub = state.ring?.red_club || '---';
+const nextBlueName = state.ring?.next_blue_name || '---';
+const nextRedName = state.ring?.next_red_name || '---';
+const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+const categoryName = state.ring?.category_name || 'No Match';
+const matchStage = state.ring?.match_stage || 'Scheduled';
+const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+setTxt('laptop-blue-name', blueName); setTxt('laptop-red-name', redName);
+setTxt('laptop-blue-club', blueClub); setTxt('laptop-red-club', redClub);
+setTxt('laptop-category-name', categoryName); setTxt('laptop-match-stage', matchStage);
+const categoryLinkContainer = document.getElementById('category-web-link-container');
+const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
+const catName = state.ring?.category_name || state.currentMatch?.category_name;
+const disc = state.ring?.discipline || state.currentMatch?.discipline || 'sparring';
+if (categoryLinkContainer && categoryLinkAnchor) {
+if (catName) {
+categoryLinkAnchor.href = '#';
+categoryLinkAnchor.onclick = (e) => { e.preventDefault(); openBracketModal(catName, disc); };
+categoryLinkAnchor.textContent = `📊 View/Edit Bracket: ${catName}`;
+categoryLinkContainer.classList.remove('hidden-view');
+} else {
+categoryLinkContainer.classList.add('hidden-view');
 }
-
+}
+const laptopDisc = document.getElementById('laptop-discipline-badge');
+if (laptopDisc) { laptopDisc.textContent = discipline.toUpperCase(); laptopDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
+setTxt('tv-blue-name', blueName); setTxt('tv-red-name', redName);
+setTxt('tv-blue-club', blueClub); setTxt('tv-red-club', redClub);
+setTxt('tv-next-blue', nextBlueName); setTxt('tv-next-red', nextRedName);
+setTxt('tv-category-name', categoryName); setTxt('tv-match-stage', matchStage);
+const tvDisc = document.getElementById('tv-discipline-badge');
+if (tvDisc) { tvDisc.textContent = discipline.toUpperCase(); tvDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
+setTxt('phone-blue-name', blueName); setTxt('phone-red-name', redName);
+const phoneMode = document.getElementById('phone-mode-badge');
+if (phoneMode) { phoneMode.textContent = discipline.toUpperCase(); phoneMode.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
+const sparringControls = document.getElementById('sparring-controls');
+const patternsControls = document.getElementById('patterns-controls');
+const declareWinnerEl = document.getElementById('laptop-declare-winner');
+if (discipline === 'patterns') {
+if (sparringControls) sparringControls.classList.add('hidden-view');
+if (patternsControls) patternsControls.classList.remove('hidden-view');
+if (declareWinnerEl) declareWinnerEl.classList.remove('hidden-view');
+} else {
+if (sparringControls) sparringControls.classList.remove('hidden-view');
+if (patternsControls) patternsControls.classList.add('hidden-view');
+if (declareWinnerEl) declareWinnerEl.classList.remove('hidden-view');
+}
+}
 async function loadMatchList() {
-  if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
-  const container = document.getElementById('match-list-container');
-  if (!container) return;
-  const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
-  
-  try {
-    const { data: assignments, error } = await sb.from('ring_assignments')
-      .select('*')
-      .eq('ring_number', ringNum)
-      .order('time_seconds', { ascending: true });
-      
-    if (error) throw error;
-    if (!assignments || assignments.length === 0) {
-      container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches assigned to this ring.</div>';
-    } else {
-      renderAssignmentListItems(assignments, container);
-    }
-  } catch (e) {
-    container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load assignments.</div>';
-  }
+if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
+const container = document.getElementById('match-list-container');
+if (!container) return;
+const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
+try {
+const { data: assignments, error } = await sb.from('ring_assignments')
+.select('*')
+.eq('ring_number', ringNum)
+.order('time_seconds', { ascending: true });
+if (error) throw error;
+if (!assignments || assignments.length === 0) {
+container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches assigned to this ring.</div>';
+} else {
+renderAssignmentListItems(assignments, container);
 }
-
+} catch (e) {
+container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load assignments.</div>';
+}
+}
 function renderAssignmentListItems(assignments, container) {
-  let html = '';
-  assignments.forEach((a) => {
-    const catName = a.category_name || 'Unknown';
-    const discipline = a.discipline || 'sparring';
-    const p1 = a.player1_name || 'TBD';
-    const p2 = a.player2_name || 'TBD';
-    const isActive = state.currentMatch && state.currentMatch.id === a.id;
-    const cls = isActive ? 'active' : '';
-    
-    html += `<div class="match-list-item ${cls}" style="cursor:pointer;" onclick="openBracketModal('${catName.replace(/'/g, "\\'")}', '${discipline}')">
-      <div class="ml-number"><span>${discipline.toUpperCase()}</span></div>
-      <div class="ml-names">${catName}</div>
-      <div class="ml-category">⚔️ ${p1} vs ${p2}</div>
-    </div>`;
-  });
-  container.innerHTML = html;
+let html = '';
+assignments.forEach((a, idx) => {
+const catName = a.category_name || 'Unknown';
+const discipline = a.discipline || 'sparring';
+const p1 = a.player1_name || 'TBD';
+const p2 = a.player2_name || 'TBD';
+const isActive = state.currentMatch && state.currentMatch.id === a.id;
+const cls = isActive ? 'active' : '';
+const matchNum = idx + 1;
+html += `<div class="match-list-item ${cls}" style="cursor:pointer;" onclick="openBracketModal('${catName.replace(/'/g, "\\'")}', '${discipline}')">
+<div class="ml-number"><span>#${matchNum} · ${discipline.toUpperCase()}</span></div>
+<div class="ml-names">${catName}</div>
+<div class="ml-category">⚔️ ${p1} vs ${p2}</div>
+</div>`;
+});
+container.innerHTML = html;
 }
-
 function getBracketSize(count) {
-  if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4;
-  if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64;
+if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4;
+if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64;
 }
 function generateSeedOrder(size) {
-  if (size === 1) return [0];
-  const half = size / 2;
-  const left = generateSeedOrder(half);
-  const right = left.map((x) => x + half);
-  const result = [];
-  for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); }
-  return result;
+if (size === 1) return [0];
+const half = size / 2;
+const left = generateSeedOrder(half);
+const right = left.map((x) => x + half);
+const result = [];
+for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); }
+return result;
 }
 function spreadTeams(list, bracketSize) {
-  const slots = new Array(bracketSize).fill(null);
-  const teams = {};
-  list.forEach((p) => { if (!teams[p.team]) teams[p.team] = []; teams[p.team].push(p); });
-  const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length);
-  const positions = generateSeedOrder(bracketSize);
-  let posIndex = 0;
-  sortedTeams.forEach((teamArr) => { 
-    teamArr.forEach((player) => { 
-      if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; } 
-    }); 
-  });
-  return slots;
+const slots = new Array(bracketSize).fill(null);
+const teams = {};
+list.forEach((p) => { if (!teams[p.team]) teams[p.team] = []; teams[p.team].push(p); });
+const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length);
+const positions = generateSeedOrder(bracketSize);
+let posIndex = 0;
+sortedTeams.forEach((teamArr) => {
+teamArr.forEach((player) => {
+if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; }
+});
+});
+return slots;
 }
-
-// ===== BRACKET MODAL WITH EDITABLE WINNERS (LIKE MANAGE.HTML) =====
-async function openBracketModal(categoryName, discipline) {
-  currentBracketCategory = categoryName;
-  currentBracketDiscipline = discipline;
-  const modal = document.getElementById('bracket-modal');
-  const content = document.getElementById('bracket-modal-content');
-  const title = document.getElementById('bracket-modal-title');
-  
-  title.textContent = `${categoryName} - ${discipline.toUpperCase()} Bracket & Winners`;
-  content.innerHTML = '<div style="text-align:center; padding:20px;"><div style="width:30px;height:30px;border:3px solid #334155;border-top-color:#fbbf24;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px;"></div>Loading bracket tree...</div>';
-  modal.classList.remove('hidden-view');
-  
-  try {
-    // Pull existing assignments/matches from database to reflect live winner edits
-    const { data: assignments } = await sb.from('ring_assignments')
-      .select('*')
-      .eq('category_name', categoryName)
-      .order('time_seconds', { ascending: true });
-
-    const { data: allRegs } = await sb.from('final_registrations').select('*');
-    const compRegs = (allRegs || []).filter(r => {
-      const t = (r.entry_type || r.type || r.role || '').toString().toLowerCase();
-      return t === 'comp' || t === 'competitor' || t === 'c';
-    });
-    const compIds = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
-    const { data: compDetails } = await sb.from('competitors').select('*').in('id', compIds);
-    
-    let allCompetitors = [];
-    (compDetails || []).forEach(person => {
-      const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
-      personRegs.forEach(reg => {
-        let entries = [];
-        if (reg.entry_data?.entries_list && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
-        else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
-        else if (reg.entries_list && Array.isArray(reg.entries_list)) entries = reg.entries_list;
-        else entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline }];
-        
-        entries.forEach(entry => {
-          allCompetitors.push({
-            name: person.name,
-            team: person.team || 'N/A',
-            _full_cat: entry.full_cat || entry.category || '',
-            _discipline: (entry.discipline || 'sparring').toString().toLowerCase()
-          });
-        });
-      });
-    });
-    
-    const targetCatLower = categoryName.trim().toLowerCase();
-    const comps = allCompetitors.filter(c => c._discipline === discipline && c._full_cat.trim().toLowerCase() === targetCatLower);
-    
-    if (comps.length < 2) {
-      content.innerHTML = `<div style="text-align:center;padding:30px;color:#94a3b8;">Not enough competitors found for this bracket. Found ${comps.length}.</div>`;
-      return;
-    }
-    
-    const size = getBracketSize(comps.length);
-    const totalRounds = Math.log2(size);
-    const shuffled = spreadTeams(comps, size);
-    const slots = shuffled.map(p => p ? { name: p.name, team: p.team } : { name: "BYE", team: "" });
-    
-    const rounds = [];
-    const r1Matches = [];
-    for (let i = 0; i < size; i += 2) {
-      r1Matches.push({ 
-        id: `r1_m${i/2}`, 
-        p1: slots[i], 
-        p2: slots[i + 1],
-        winner: null
-      });
-    }
-    rounds.push(r1Matches);
-    
-    let matchCount = size / 2;
-    for (let r = 1; r < totalRounds; r++) {
-      matchCount = matchCount / 2;
-      const currentMatches = [];
-      for (let m = 0; m < matchCount; m++) {
-        currentMatches.push({ 
-          id: `r${r+1}_m${m}`, 
-          p1: { name: "TBD", team: "" }, 
-          p2: { name: "TBD", team: "" },
-          winner: null
-        });
-      }
-      rounds.push(currentMatches);
-    }
-
-    // Map database assignments onto rounds to preserve manual winner edits
-    if (assignments && assignments.length > 0) {
-      assignments.forEach((asg, idx) => {
-        // Find corresponding match slot and populate winners/names if edited in DB
-        if (asg.player1_name && asg.player1_name !== 'TBD') {
-          // Flatten search across rounds
-          rounds.forEach(rnd => {
-            rnd.forEach(m => {
-              if (m.p1.name === 'TBD' && (m.p1.name !== asg.player1_name)) {
-                // If match matches assignment data
-              }
-            });
-          });
-        }
-      });
-    }
-    
-    let html = `<div style="overflow-x:auto;padding:10px; margin-bottom:20px;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem; min-width:700px;">`;
-    html += `<thead><tr>`;
-    for (let r = 1; r <= totalRounds; r++) {
-      html += `<th style="padding:10px;background:#1e293b;color:#fbbf24;border:1px solid #334155; text-align:center;">${r === totalRounds ? '🏆 Final' : `Round ${r}`}</th>`;
-    }
-    html += `</tr></thead><tbody>`;
-    
-    const maxRows = rounds[0].length;
-    for (let i = 0; i < maxRows; i++) {
-      html += `<tr>`;
-      for (let r = 0; r < totalRounds; r++) {
-        const matchIndex = Math.floor(i / Math.pow(2, r));
-        const step = Math.pow(2, r);
-        if (i % step === 0) {
-          const match = rounds[r][matchIndex] || { id: `m_${r}_${matchIndex}`, p1: {name:""}, p2: {name:""} };
-          
-          html += `<td rowspan="${step}" style="vertical-align:middle;padding:8px;border:1px solid #334155;">`;
-          html += `<div style="background:#0f172a; border:1px solid #334155; border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.3);">`;
-          
-          // Competitor 1 Row (Clickable to select/edit winner)
-          html += `<div onclick="selectBracketWinner('${match.id}', '${match.p1.name || ''}', ${r}, ${matchIndex}, 'p1')" style="padding:8px 12px; border-bottom:1px solid #334155; cursor:pointer; background:${match.winner === match.p1.name ? '#065f46' : 'transparent'}; transition:background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='${match.winner === match.p1.name ? '#065f46' : 'transparent'}';">
-            <div style="font-weight:700; color:${match.p1.name && match.p1.name !== 'TBD' && match.p1.name !== 'BYE' ? '#f1f5f9' : '#64748b'}; display:flex; justify-content:space-between; align-items:center;">
-              <span>${match.p1.name || "TBD"}</span>
-              ${match.winner === match.p1.name ? '<span style="color:#34d399; font-size:0.75rem;">✓ Winner</span>' : ''}
-            </div>
-            <div style="font-size:0.7rem;color:#94a3b8;">${match.p1.team || ''}</div>
-          </div>`;
-
-          // Competitor 2 Row (Clickable to select/edit winner)
-          html += `<div onclick="selectBracketWinner('${match.id}', '${match.p2.name || ''}', ${r}, ${matchIndex}, 'p2')" style="padding:8px 12px; cursor:pointer; background:${match.winner === match.p2.name ? '#065f46' : 'transparent'}; transition:background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='${match.winner === match.p2.name ? '#065f46' : 'transparent'}';">
-            <div style="font-weight:700; color:${match.p2.name && match.p2.name !== 'TBD' && match.p2.name !== 'BYE' ? '#f1f5f9' : '#64748b'}; display:flex; justify-content:space-between; align-items:center;">
-              <span>${match.p2.name || "TBD"}</span>
-              ${match.winner === match.p2.name ? '<span style="color:#34d399; font-size:0.75rem;">✓ Winner</span>' : ''}
-            </div>
-            <div style="font-size:0.7rem;color:#94a3b8;">${match.p2.team || ''}</div>
-          </div>`;
-
-          html += `</div></td>`;
-        }
-      }
-      html += `</tr>`;
-    }
-    html += `</tbody></table></div>`;
-    content.innerHTML = html;
-  } catch (e) {
-    content.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;">Error loading bracket tree.</div>`;
-  }
-}
-
-// Allows user to click on competitors in the bracket tree to override or select winners and push to database
-async function selectBracketWinner(matchId, winnerName, roundNum, matchIdx, slotKey) {
-  if (!winnerName || winnerName === 'TBD' || winnerName === 'BYE') {
-    showToast('Cannot select an empty or BYE slot as winner.', 'error');
-    return;
-  }
-  
-  if (!confirm(`Manually set "${winnerName}" as the winner for this match? This will advance them to the next round in the database.`)) {
-    return;
-  }
-
-  showToast(`Winner updated: ${winnerName}`, 'success');
-  await advanceWinnerInDatabase(winnerName);
-  // Refresh modal view
-  openBracketModal(currentBracketCategory, currentBracketDiscipline);
-}
-
-function closeBracketModal() { document.getElementById('bracket-modal').classList.add('hidden-view'); }
 function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + (type || '');
-  setTimeout(() => { t.className = 'toast'; }, 3500);
+const t = document.getElementById('toast');
+t.textContent = msg; t.className = 'toast show ' + (type || '');
+setTimeout(() => { t.className = 'toast'; }, 3500);
 }
 function showView(name) {
-  ["landing","phone","laptop","tv"].forEach(v => { document.getElementById("view-" + v).classList.toggle("hidden-view", v !== name); });
+["landing","phone","laptop","tv"].forEach(v => { document.getElementById("view-" + v).classList.toggle("hidden-view", v !== name); });
 }
 function parseHash() {
-  const raw = location.hash.replace(/^#/, ""); const qIndex = raw.indexOf("?");
-  const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase();
-  const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : "");
-  return { name: path, code: (params.get("code") || "").trim(), slot: (params.get("slot") || "").trim() };
+const raw = location.hash.replace(/^#/, ""); const qIndex = raw.indexOf("?");
+const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase();
+const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : "");
+return { name: path, code: (params.get("code") || "").trim(), slot: (params.get("slot") || "").trim() };
 }
 async function route() {
-  const { name, code, slot } = parseHash();
-  if (name === "tv") {
-    if (code) { const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle(); if (data) { state.ring = data; sessionStorage.setItem("tkd_ring", JSON.stringify(data)); await enterTV(); return; } }
-    const cached = sessionStorage.getItem("tkd_ring"); if (cached) { try { state.ring = JSON.parse(cached); await enterTV(); return; } catch(e){} }
-    showView("landing"); return;
-  }
-  if (name === "phone" || slot) {
-    if (code) { const { data } = await sb.from("rings").select("*").eq("phone_password", code).maybeSingle(); if (data) { state.ring = data; sessionStorage.setItem("tkd_ring", JSON.stringify(data)); state.role = "phone"; await autoEnterPhone(parseInt(slot, 10) || 1); return; } }
-  }
-  if (name === "") { if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; } if (state.role === "laptop") { showView("laptop"); return; } }
-  showView("landing");
+const { name, code, slot } = parseHash();
+if (name === "tv") {
+if (code) { const { data } = await sb.from("rings").select("*").eq("tv_code", code).maybeSingle(); if (data) { state.ring = data; sessionStorage.setItem("tkd_ring", JSON.stringify(data)); await enterTV(); return; } }
+const cached = sessionStorage.getItem("tkd_ring"); if (cached) { try { state.ring = JSON.parse(cached); await enterTV(); return; } catch(e){} }
+showView("landing"); return;
+}
+if (name === "phone" || slot) {
+if (code) { const { data } = await sb.from("rings").select("*").eq("phone_password", code).maybeSingle(); if (data) { state.ring = data; sessionStorage.setItem("tkd_ring", JSON.stringify(data)); state.role = "phone"; await autoEnterPhone(parseInt(slot, 10) || 1); return; } }
+}
+if (name === "") { if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; } if (state.role === "laptop") { showView("laptop"); return; } }
+showView("landing");
 }
 document.getElementById("btn-enter").addEventListener("click", tryLogin);
 document.getElementById("inp-password").addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
 async function tryLogin() {
-  if (state.loggingIn) return;
-  const pwd = document.getElementById("inp-password").value.trim();
-  const errEl = document.getElementById("landing-error"); const btn = document.getElementById("btn-enter");
-  errEl.textContent = ""; if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
-  state.loggingIn = true; btn.disabled = true; btn.textContent = "Entering…";
-  try {
-    const { data, error } = await sb.from("rings").select("*").or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`).limit(1);
-    if (error || !data || data.length === 0) { errEl.textContent = "Invalid password or TV code."; return; }
-    const ring = data[0]; state.ring = ring; sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
-    if (pwd === ring.tv_code) { state.role = "tv"; await enterTV(); }
-    else if (pwd === ring.laptop_password) { state.role = "laptop"; await enterLaptop(); }
-    else if (pwd === ring.phone_password) { state.role = "phone"; await enterPhone(); }
-  } finally { state.loggingIn = false; btn.disabled = false; btn.textContent = "Enter Ring"; }
+if (state.loggingIn) return;
+const pwd = document.getElementById("inp-password").value.trim();
+const errEl = document.getElementById("landing-error"); const btn = document.getElementById("btn-enter");
+errEl.textContent = ""; if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
+state.loggingIn = true; btn.disabled = true; btn.textContent = "Entering…";
+try {
+const { data, error } = await sb.from("rings").select("*").or(`laptop_password.eq.${pwd},phone_password.eq.${pwd},tv_code.eq.${pwd}`).limit(1);
+if (error || !data || data.length === 0) { errEl.textContent = "Invalid password or TV code."; return; }
+const ring = data[0]; state.ring = ring; sessionStorage.setItem("tkd_ring", JSON.stringify(ring));
+if (pwd === ring.tv_code) { state.role = "tv"; await enterTV(); }
+else if (pwd === ring.laptop_password) { state.role = "laptop"; await enterLaptop(); }
+else if (pwd === ring.phone_password) { state.role = "phone"; await enterPhone(); }
+} finally { state.loggingIn = false; btn.disabled = false; btn.textContent = "Enter Ring"; }
 }
 async function ensureMatchRow() {
-  if (!state.ring || !state.ring.id || state.dbBroken) return;
-  const rid = state.ring.id;
-  try {
-    const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
-    if (selErr) { state.dbBroken = true; return; }
-    if (!rows || rows.length === 0) { await sb.from("matches").insert({ ring_id: rid }); }
-  } catch (e) { state.dbBroken = true; }
+if (!state.ring || !state.ring.id || state.dbBroken) return;
+const rid = state.ring.id;
+try {
+const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
+if (selErr) { state.dbBroken = true; return; }
+if (!rows || rows.length === 0) { await sb.from("matches").insert({ ring_id: rid }); }
+} catch (e) { state.dbBroken = true; }
 }
 async function readMatchRow() {
-  if (!state.ring || !state.ring.id) return { row: null, error: null };
-  try { const { data, error } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).limit(1); if (error) return { row: null, error }; return { row: (data && data[0]) || null, error: null }; }
-  catch (e) { return { row: null, error: e }; }
+if (!state.ring || !state.ring.id) return { row: null, error: null };
+try { const { data, error } = await sb.from("matches").select("*").eq("ring_id", state.ring.id).limit(1); if (error) return { row: null, error }; return { row: (data && data[0]) || null, error: null }; }
+catch (e) { return { row: null, error: e }; }
 }
 async function fetchMatchNow() { if (!state.ring || !state.ring.id || state.dbBroken) return; const { row } = await readMatchRow(); if (row) handleMatchUpdate({ new: row }); }
 function startMatchPolling() { if (state.matchPollInterval) clearInterval(state.matchPollInterval); fetchMatchNow(); state.matchPollInterval = setInterval(fetchMatchNow, 800); }
-function pad4(arr) { const out = [0,0,0,0]; if (Array.isArray(arr)) for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0
+function pad4(arr) { const out = [0,0,0,0]; if (Array.isArray(arr)) for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0; return out; }
+function judgeVoteCounts() {
+const jb = pad4(state.match ? state.match.judge_blue : null); const jr = pad4(state.match ? state.match.judge_red : null);
+const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+let blue = 0, red = 0; for (let i = 0; i < max; i++) { if (jb[i] > jr[i]) blue++; else if (jr[i] > jb[i]) red++; } return { blue, red };
+}
+function renderVoteScores() {
+const v = judgeVoteCounts(); const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+setEl("tv-blue-score", v.blue); setEl("tv-red-score", v.red); setEl("l-blue-score", v.blue); setEl("l-red-score", v.red);
+}
+function renderTVJudgeNets() {
+const jb = pad4(state.match ? state.match.judge_blue : null); const jr = pad4(state.match ? state.match.judge_red : null);
+const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+for (let i = 1; i <= 4; i++) {
+const cornerEl = document.getElementById(`tv-corner-${i}`); if (!cornerEl) continue;
+if (i > max) { cornerEl.classList.add('hidden-view'); continue; } else { cornerEl.classList.remove('hidden-view'); }
+const givenBlue = jb[i-1]; const givenRed = jr[i-1]; const net = givenBlue - givenRed;
+document.getElementById(`tv-net-${i}`).textContent = Math.abs(net);
+cornerEl.classList.remove('lead-blue', 'lead-red');
+if (net > 0) cornerEl.classList.add('lead-blue'); else if (net < 0) cornerEl.classList.add('lead-red');
+}
+}
+function updateRingLayoutCornerStats() {
+const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
+const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+for (let i = 1; i <= 4; i++) {
+const btn = document.getElementById(`qr-btn-${i}`); const stat = document.getElementById(`qr-stat-${i}`); if (!btn || !stat) continue;
+if (i > max) { btn.style.display = 'none'; continue; } else { btn.style.display = 'flex'; }
+const isOnline = onlineSlots.has(i);
+if (isOnline) { btn.classList.add('connected'); stat.textContent = 'Connected'; } else { btn.classList.remove('connected'); stat.textContent = 'Empty'; }
+}
+}
+function renderLaptopJudges() {
+const container = document.getElementById("laptop-judges-container"); if (!container) return;
+const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
+container.style.gridTemplateColumns = `repeat(${max}, 1fr)`;
+const jb = pad4(state.match ? state.match.judge_blue : null); const jr = pad4(state.match ? state.match.judge_red : null);
+const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
+let html = '';
+for (let i = 1; i <= max; i++) {
+const isOnline = onlineSlots.has(i); const givenBlue = jb[i-1]; const givenRed = jr[i-1]; const net = givenBlue - givenRed;
+let cls = ''; if (net > 0) cls = 'leading-blue'; else if (net < 0) cls = 'leading-red';
+html += `<div id="judge-laptop-${i}" class="judge-box ${cls}">
+<div class="judge-label">Judge ${i}</div>
+<div><span class="judge-status-badge ${isOnline ? 'online' : 'offline'}">${isOnline ? 'Connected' : 'Empty'}</span></div>
+<div class="judge-detail">Net: ${Math.abs(net)}</div>
+<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ${givenBlue} | R: ${givenRed}</div>
+<div class="judge-row-controls">
+<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span><button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'blue', 1)">+</button><button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'blue', -1)">−</button></div>
+<div class="judge-side-adj"><span style="color:#f87171;font-weight:700;">R</span><button class="judge-adj-btn plus" onclick="adjustSpecificJudge(${i}, 'red', 1)">+</button><button class="judge-adj-btn minus" onclick="adjustSpecificJudge(${i}, 'red', -1)">−</button></div>
+</div>
+</div>`;
+}
+container.innerHTML = html; updateRingLayoutCornerStats();
+}
+async function adjustSpecificJudge(judgeNum, side, delta) {
+if (state.role !== 'laptop' || !state.ring || !state.ring.id) return;
+const { row } = await readMatchRow(); if (!row && !state.match) return;
+const currentMatchRow = state.match || row;
+const jb = pad4(currentMatchRow.judge_blue); const jr = pad4(currentMatchRow.judge_red);
+const slotIdx = judgeNum - 1;
+if (side === 'blue') jb[slotIdx] = Math.max(0, jb[slotIdx] + delta); else jr[slotIdx] = Math.max(0, jr[slotIdx] + delta);
+if (!state.match) state.match = {}; state.match.judge_blue = jb; state.match.judge_red = jr;
+renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets();
+try { await sb.from("matches").update({ judge_blue: jb, judge_red: jr, updated_at: new Date().toISOString() }).eq("ring_id", state.ring.id); } catch(e) {}
+}
+function openAdminKickModal() { document.getElementById("inp-admin-pin").value = ""; document.getElementById("modal-admin-kick").classList.remove("hidden-view"); }
+function closeAdminKickModal() { document.getElementById("modal-admin-kick").classList.add("hidden-view"); }
+async function confirmAdminKick() {
+const pin = document.getElementById("inp-admin-pin").value.trim();
+if (pin !== "admina") { alert("Incorrect Admin PIN! (Hint: admina)"); return; }
+const slotToKick = parseInt(document.getElementById("sel-kick-slot").value, 10);
+closeAdminKickModal();
+const targetPhone = state.activePhones.find(p => Number(p.judge_slot) === slotToKick);
+if (targetPhone) { try { await sb.rpc("phone_unregister", { p_id: targetPhone.id }); } catch (e) {} }
+if (state.match || state.ring) {
+const { row } = await readMatchRow(); const targetMatch = state.match || row;
+if (targetMatch) {
+const jb = pad4(targetMatch.judge_blue); const jr = pad4(targetMatch.judge_red);
+jb[slotToKick - 1] = 0; jr[slotToKick - 1] = 0;
+state.match = targetMatch; state.match.judge_blue = jb; state.match.judge_red = jr;
+renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets();
+try { await sb.from("matches").update({ judge_blue: jb, judge_red: jr, updated_at: new Date().toISOString() }).eq("ring_id", state.ring.id); } catch(e) {}
+}
+}
+showToast(`Judge ${slotToKick} kicked and points reset to 0`, 'success'); fetchActivePhones();
+}
+async function fetchActivePhones() {
+if (!state.ring || !state.ring.id) return;
+try {
+const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
+if (!res.error && res.data) { state.activePhones = res.data; if (state.role === 'laptop') renderLaptopJudges(); }
+} catch (e) {}
+}
+function startPhoneListPolling() { if (state.pollInterval) clearInterval(state.pollInterval); fetchActivePhones(); state.pollInterval = setInterval(fetchActivePhones, 1500); }
+function openJudgeQR(slot) {
+const modal = document.getElementById("modal-qr"); const title = document.getElementById("modal-qr-title"); const container = document.getElementById("qrcode-container");
+container.innerHTML = ""; title.textContent = `Judge ${slot} Connection QR`;
+const password = state.ring.phone_password || "";
+const targetUrl = `${location.origin}${location.pathname}#phone?code=${encodeURIComponent(password)}&slot=${slot}`;
+new QRCode(container, { text: targetUrl, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+modal.classList.remove("hidden-view");
+}
+function closeQRModal() { document.getElementById("modal-qr").classList.add("hidden-view"); }
+async function autoEnterPhone(slot) {
+const maxJ = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4; if (slot > maxJ) slot = maxJ;
+const prevSession = localStorage.getItem("tkd_phone_session_" + state.ring.id);
+if (prevSession) { try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {} localStorage.removeItem("tkd_phone_session_" + state.ring.id); }
+state.judgeSlot = slot; const sessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+try { await sb.rpc("phone_register", { p_id: sessionId, p_ring_id: String(state.ring.id), p_slot: slot }); } catch (e) {}
+state.phoneSessionId = sessionId; localStorage.setItem("tkd_phone_session_" + state.ring.id, sessionId);
+document.getElementById("phone-ring-name").textContent = state.ring.ring_name; document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
+await ensureMatchRow();
+if (state.heartbeatInterval) clearInterval(state.heartbeatInterval); state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
+loadTimerState(); subscribeTimer(); renderTimer(); startTimerTick(); subscribeMatch(); subscribeRing(); updateCompetitorDisplay();
+showView("phone"); setPhoneStatus("Connected instantly as Judge " + slot, false);
+}
+async function enterPhone() { await autoEnterPhone(1); }
+async function phoneHeartbeatTick() {
+const sid = state.phoneSessionId; if (!sid || state.heartbeatBusy) return; state.heartbeatBusy = true;
+try {
+const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
+if (state.phoneSessionId !== sid) return;
+if (hbErr && /not registered|not found|kicked|removed/i.test(hbErr.message || "")) leavePhone("You were kicked by admin.");
+} finally { state.heartbeatBusy = false; }
+}
+async function leavePhone(msg) {
+if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+const sid = state.phoneSessionId; state.phoneSessionId = null; state.judgeSlot = null; state.role = null;
+if (sid) { try { await sb.rpc("phone_unregister", { p_id: sid }); } catch (e) {} }
+if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel); if (state.ringChannel) sb.removeChannel(state.ringChannel);
+stopTimerTick(); if (msg) alert(msg); location.hash = ""; showView("landing");
+}
+function setPhoneStatus(msg, isError) { const el = document.getElementById("phone-status"); if (el) { el.textContent = msg; el.style.color = isError ? "#ef4444" : "#94a3b8"; } }
+document.querySelectorAll(".judge-tap").forEach(btn => {
+btn.addEventListener("click", async () => {
+if (timerState.finished) { setPhoneStatus("Match finished", true); return; }
+const side = btn.dataset.side; const val = parseInt(btn.dataset.val, 10);
+if (navigator.vibrate) navigator.vibrate(20);
+btn.classList.remove("pulse", "scored-flash"); void btn.offsetWidth; btn.classList.add("pulse");
+if (!state.phoneSessionId || !state.judgeSlot || !state.ring) { setPhoneStatus("✗ Not connected", true); return; }
+btn.classList.add("scored-flash"); setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
+if (state.match) {
+const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red);
+if (side === 'blue') jb[state.judgeSlot - 1] += val; else jr[state.judgeSlot - 1] += val;
+renderVoteScores(); renderTVJudgeNets(); renderLaptopJudges();
+}
+try {
+sb.rpc("judge_score", { p_ring_id: String(state.ring.id), p_slot: state.judgeSlot, p_side: side, p_points: val, p_session: state.phoneSessionId }).then(({ error }) => {
+if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) leavePhone("Kicked from ring."); else fetchMatchNow();
+});
+} catch(e) {}
+});
+});
+document.querySelectorAll(".patterns-tap").forEach(btn => {
+btn.addEventListener("click", async () => {
+if (timerState.finished) { setPhoneStatus("✗ Match finished", true); return; }
+const winner = btn.dataset.winner; if (navigator.vibrate) navigator.vibrate(30);
+btn.classList.add("scored-flash"); setPhoneStatus("✓ Winner: " + winner.toUpperCase(), false);
+timerState.finished = true; timerState.paused = true; timerState.winner = winner;
+saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
+});
+});
+async function enterLaptop() {
+document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
+document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
+document.getElementById("laptop-tv-code").textContent = state.ring.tv_code || "—";
+const maxP = state.ring.max_phones || 4; const selMax = document.getElementById("sel-max-phones"); if (selMax) selMax.value = String(maxP);
+const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = maxP === 3 ? 'none' : 'flex';
+await ensureMatchRow(); await loadCurrentMatch();
+loadTimerState(); subscribeTimer(); renderTimer(); startTimerTick(); startBroadcastLoop();
+subscribeMatch(); subscribeRing(); startPhoneListPolling(); startMatchPolling(); startMatchListPolling();
+renderLaptopJudges(); renderVoteScores(); updateCompetitorDisplay(); showView("laptop");
+}
+function startMatchListPolling() { if (state.matchListInterval) clearInterval(state.matchListInterval); loadMatchList(); state.matchListInterval = setInterval(loadMatchList, 3000); }
+document.getElementById("btn-open-tv").addEventListener("click", () => {
+let tvUrl = location.origin + location.pathname + "#tv";
+if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code);
+window.open(tvUrl, "_blank");
+});
+document.getElementById("btn-reset-match").addEventListener("click", resetMatch);
+document.getElementById("btn-logout").addEventListener("click", () => {
+state.role = null; cleanup(); sessionStorage.removeItem("tkd_ring"); location.hash = ""; showView("landing"); document.getElementById("inp-password").value = "";
+});
+document.getElementById('btn-timer-start').addEventListener('click', startTimer);
+document.getElementById('btn-timer-pause').addEventListener('click', pauseTimer);
+document.getElementById('btn-timer-reset').addEventListener('click', resetRound);
+document.getElementById('btn-winner-reset').addEventListener('click', resetMatch);
+document.querySelectorAll(".penalty-btn").forEach(btn => {
+btn.addEventListener("click", async () => {
+const act = btn.dataset.act; if (!act) return;
+if (timerState.finished) { showToast("Match finished. Reset first.", 'warning'); return; }
+let column = null; let delta = 0;
+if (act.includes('blue-gj-plus')) { column = 'blue_gam_jeom'; delta = 1; }
+else if (act.includes('blue-gj-minus')) { column = 'blue_gam_jeom'; delta = -1; }
+else if (act.includes('red-gj-plus')) { column = 'red_gam_jeom'; delta = 1; }
+else if (act.includes('red-gj-minus')) { column = 'red_gam_jeom'; delta = -1; }
+else if (act.includes('blue-yc-plus')) { column = 'blue_yellow_cards'; delta = 1; }
+else if (act.includes('blue-yc-minus')) { column = 'blue_yellow_cards'; delta = -1; }
+else if (act.includes('red-yc-plus')) { column = 'red_yellow_cards'; delta = 1; }
+else if (act.includes('red-yc-minus')) { column = 'red_yellow_cards'; delta = -1; }
+if (column && state.match) {
+state.match[column] = Math.max(0, (state.match[column] || 0) + delta);
+handleMatchUpdate({ new: state.match });
+try { await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta }); } catch(e) {}
+fetchMatchNow();
+}
+});
+});
+async function enterTV() {
+document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
+await ensureMatchRow(); loadTimerState(); subscribeTimer(); renderTimer(); startTimerTick();
+subscribeMatch(); subscribeRing(); startMatchPolling(); renderVoteScores(); renderTVJudgeNets(); updateCompetitorDisplay();
+showView("tv"); document.body.style.cursor = "none";
+}
+function subscribeMatch() {
+if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+if (!state.ring || !state.ring.id) return;
+state.realtimeChannel = sb.channel("match-" + state.ring.id)
+.on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `ring_id=eq.${state.ring.id}` }, handleMatchUpdate)
+.subscribe((status) => { if (status === "SUBSCRIBED") fetchMatchNow(); });
+}
+function subscribeRing() {
+if (state.ringChannel) sb.removeChannel(state.ringChannel);
+if (!state.ring || !state.ring.id) return;
+state.ringChannel = sb.channel("ring-" + state.ring.id)
+.on("postgres_changes", { event: "UPDATE", schema: "public", table: "rings", filter: `id=eq.${state.ring.id}` }, payload => {
+if (!payload.new) return;
+state.ring = Object.assign({}, state.ring, payload.new);
+sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
+const selMax = document.getElementById("sel-max-phones"); if (selMax) selMax.value = String(state.ring.max_phones || 4);
+updateCompetitorDisplay(); renderLaptopJudges(); renderVoteScores(); renderTVJudgeNets();
+})
+.subscribe();
+}
+function handleMatchUpdate(payload) {
+const m = payload.new; if (!m) return; state.match = m;
+const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+set("l-blue-gj", m.blue_gam_jeom); set("l-red-gj", m.red_gam_jeom); set("l-blue-yc", m.blue_yellow_cards); set("l-red-yc", m.red_yellow_cards);
+set("tv-blue-gj", m.blue_gam_jeom); set("tv-red-gj", m.red_gam_jeom); set("tv-blue-yc", m.blue_yellow_cards); set("tv-red-yc", m.red_yellow_cards);
+renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets();
+if (state.role === 'laptop' && !timerState.paused && !timerState.finished && getRemaining() <= 0) endRound();
+}
+function cleanup() {
+if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
+if (state.ringChannel) sb.removeChannel(state.ringChannel);
+if (timerChannel) sb.removeChannel(timerChannel);
+if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
+if (state.pollInterval) clearInterval(state.pollInterval);
+if (state.matchPollInterval) clearInterval(state.matchPollInterval);
+if (state.matchListInterval) clearInterval(state.matchListInterval);
+stopTimerTick(); stopBroadcastLoop();
+state.realtimeChannel = null; state.ringChannel = null; timerChannel = null;
+}
+window.addEventListener("beforeunload", cleanup);
+window.addEventListener("pagehide", cleanup);
+route();
+window.addEventListener("hashchange", route);
+</script>
+</body>
+</html>
