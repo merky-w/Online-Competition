@@ -16,7 +16,6 @@ button { touch-action: manipulation; cursor: pointer; }
 button:disabled { opacity: .6; cursor: not-allowed; }
 .hidden-view { display: none !important; }
 @keyframes spin { to { transform: rotate(360deg); } }
-/* ===== TV DISPLAY STYLES ===== */
 .tv-container { width: 100vw; height: 100vh; background: #090d16; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .tv-top-bar { background: linear-gradient(90deg, #111827 0%, #1f2937 100%); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #fbbf24; z-index: 10; }
 .tv-top-info { display: flex; align-items: center; gap: 20px; color: white; font-size: 16px; }
@@ -59,7 +58,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tv-winner-name { font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 20px; }
 .tv-winner-sub { font-size: 1.5rem; color: #9ca3af; font-weight: 600; letter-spacing: 3px; }
 @keyframes timerBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-/* ===== LAPTOP VIEW STYLES ===== */
 .laptop-container { background: #1e293b; min-height: 100vh; padding: 20px; color: white; }
 .laptop-header { background: #0f172a; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
 .laptop-header-left h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
@@ -195,8 +193,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
 .scored-flash { animation: scoredFlash 0.25s ease; }
 @keyframes scoredFlash { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); } 100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); } }
-
-/* Bracket edit styles */
 .bracket-match-cell { cursor: pointer; transition: all 0.2s; }
 .bracket-match-cell:hover { background: #1e40af !important; }
 .bracket-player-row { padding: 8px 12px; border-bottom: 1px solid #334155; color: #f1f5f9; font-weight: 700; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; cursor: pointer; }
@@ -210,7 +206,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </style>
 </head>
 <body class="bg-slate-900">
-<!-- ===== LANDING VIEW ===== -->
 <div id="view-landing" class="landing-container">
 <div class="landing-box">
 <div class="landing-title">
@@ -229,7 +224,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== PHONE VIEW ===== -->
 <div id="view-phone" class="hidden-view phone-container">
 <div class="phone-header">
 <div style="display:flex;align-items:center;gap:10px;">
@@ -290,7 +284,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
 </div>
 
-<!-- ===== LAPTOP VIEW ===== -->
 <div id="view-laptop" class="hidden-view laptop-container">
 <div class="laptop-header">
 <div class="laptop-header-left">
@@ -327,14 +320,12 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 <div class="laptop-main-grid">
-<!-- 1. MATCH QUEUE SIDEBAR (LEFT) -->
 <div class="match-list-sidebar">
 <h3><i class="fas fa-ring"></i> Ring Assignments & Matches</h3>
 <div id="match-list-container">
 <div style="color:#64748b;text-align:center;padding:20px;">Loading assignments...</div>
 </div>
 </div>
-<!-- 2. MAIN CONTROL PANEL (RIGHT) -->
 <div class="laptop-main-content">
 <div class="current-match-card">
 <div class="current-match-header">
@@ -459,7 +450,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== TV VIEW ===== -->
 <div id="view-tv" class="hidden-view tv-container">
 <div class="tv-top-bar">
 <div class="tv-top-info">
@@ -520,7 +510,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== QR CODE MODAL ===== -->
 <div id="modal-qr" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
@@ -530,7 +519,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== ADMIN KICK MODAL ===== -->
 <div id="modal-admin-kick" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
@@ -551,7 +539,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== WINNER CONFIRMATION MODAL ===== -->
 <div id="modal-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:650px;">
 <h2 id="modal-winner-title" style="font-size:2.2rem;font-weight:900;margin-bottom:10px;">MATCH COMPLETE</h2>
@@ -574,7 +561,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== BRACKET MODAL (with edit capability) ===== -->
 <div id="bracket-modal" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width: 1100px; max-height: 92vh; overflow-y: auto; text-align: left;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:15px;">
@@ -588,7 +574,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== BRACKET EDIT MODAL ===== -->
 <div id="bracket-edit-modal" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:500px;">
 <h3 id="bracket-edit-title" style="margin-top:0;color:#fbbf24;font-size:1.3rem;">Edit Match Winner</h3>
@@ -619,8 +604,9 @@ const TIMER_CHANNEL_PREFIX = "timer-";
 let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
 let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
 let currentActiveMatchAssignment = null;
-let bracketEditContext = null; // { categoryName, discipline, roundIndex, matchIndex, players: [{name, team}], currentWinner }
-let bracketDataCache = null; // cached bracket for current category
+let bracketEditContext = null;
+let bracketDataCache = null;
+let bracketResultsTableExists = null; // null = unknown, true/false = cached result
 
 function getTimerKey() { return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`; }
 function loadTimerState() { try { const saved = localStorage.getItem(getTimerKey()); if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved)); } catch (e) {} }
@@ -827,7 +813,6 @@ async function advanceWinnerInDatabase(winnerName) {
 try {
 if (!currentActiveMatchAssignment) return;
 const currentCat = currentActiveMatchAssignment.category_name;
-const ringNum = currentActiveMatchAssignment.ring_number;
 const { data: catAssignments } = await sb.from('ring_assignments')
 .select('*')
 .eq('category_name', currentCat)
@@ -887,21 +872,17 @@ state.ring.max_phones = num; sessionStorage.setItem('tkd_ring', JSON.stringify(s
 const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
 renderLaptopJudges(); renderVoteScores(); updateRingLayoutCornerStats(); showToast(`Ring set to ${num} judges`, 'success');
 }
-// Pull the FIRST fight (earliest time_seconds) and its two names
 async function loadCurrentMatch() {
 if (!state.ring || !state.ring.id) return;
 const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
 try {
-// Get assignments for this ring - FIRST match = earliest time_seconds
 const { data: assignments, error } = await sb.from('ring_assignments')
 .select('*')
 .eq('ring_number', ringNum)
-.order('time_seconds', { ascending: true }); // ASCENDING to get FIRST fight
+.order('time_seconds', { ascending: true });
 
 if (error) throw error;
 if (assignments && assignments.length > 0) {
-// Find the first match that hasn't been completed yet (no winner recorded)
-// OR just take the very first one
 const firstAssignment = assignments[0];
 currentActiveMatchAssignment = firstAssignment;
 state.currentMatch = firstAssignment;
@@ -919,6 +900,7 @@ state.ring.category_name = firstAssignment.category_name;
 state.ring.discipline = firstAssignment.discipline || 'sparring';
 state.ring.match_stage = firstAssignment.match_stage || 'Preliminary';
 
+// Update rings table - only columns that are known to exist (skip category_id to avoid 400)
 try {
 await sb.from('rings').update({
 blue_name: p1,
@@ -927,15 +909,14 @@ blue_club: p1Club,
 red_club: p2Club,
 category_name: firstAssignment.category_name,
 discipline: firstAssignment.discipline,
-match_stage: firstAssignment.match_stage || 'Preliminary',
-category_id: firstAssignment.id
+match_stage: firstAssignment.match_stage || 'Preliminary'
 }).eq('id', state.ring.id);
-} catch(e) {}
+} catch(e) { console.warn("Rings update warning:", e); }
 await refreshRingData();
 } else {
 state.currentMatch = null;
 currentActiveMatchAssignment = null;
-try { await sb.from('rings').update({ category_name: null, discipline: null, match_stage: 'No Assignments', category_id: null }).eq('id', state.ring.id); } catch(e) {}
+try { await sb.from('rings').update({ category_name: null, discipline: null, match_stage: 'No Assignments' }).eq('id', state.ring.id); } catch(e) {}
 await refreshRingData();
 }
 } catch (err) { console.error("loadCurrentMatch error:", err); }
@@ -1013,7 +994,7 @@ try {
 const { data: assignments, error } = await sb.from('ring_assignments')
 .select('*')
 .eq('ring_number', ringNum)
-.order('time_seconds', { ascending: true }); // FIRST fight at top
+.order('time_seconds', { ascending: true });
 if (error) throw error;
 if (!assignments || assignments.length === 0) {
 container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches assigned to this ring.</div>';
@@ -1070,7 +1051,6 @@ if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex
 return slots;
 }
 
-// Fetch all competitors for a given category+discipline
 async function fetchCategoryCompetitors(categoryName, discipline) {
 const { data: allRegs } = await sb.from('final_registrations').select('*');
 const compRegs = (allRegs || []).filter(r => {
@@ -1102,8 +1082,26 @@ const targetCatLower = categoryName.trim().toLowerCase();
 return allCompetitors.filter(c => c._discipline === discipline && c._full_cat.trim().toLowerCase() === targetCatLower);
 }
 
-// Fetch stored bracket winners from bracket_results table
+// Check if bracket_results table exists (cached)
+async function checkBracketResultsTable() {
+if (bracketResultsTableExists !== null) return bracketResultsTableExists;
+try {
+const { error } = await sb.from('bracket_results').select('id').limit(1);
+// 404 / PGRST116 means table doesn't exist
+if (error && (error.code === 'PGRST116' || error.code === '42P01' || /does not exist|not found|404/i.test(error.message || ''))) {
+bracketResultsTableExists = false;
+} else {
+bracketResultsTableExists = true;
+}
+} catch(e) {
+bracketResultsTableExists = false;
+}
+return bracketResultsTableExists;
+}
+
 async function fetchBracketResults(categoryName, discipline) {
+const exists = await checkBracketResultsTable();
+if (!exists) return {};
 try {
 const { data, error } = await sb.from('bracket_results')
 .select('*')
@@ -1121,17 +1119,20 @@ return {};
 }
 }
 
-// Save a bracket winner result
 async function saveBracketResult(categoryName, discipline, roundIndex, matchIndex, winnerName, p1Name, p2Name) {
+const exists = await checkBracketResultsTable();
+if (!exists) {
+showToast('⚠️ bracket_results table missing in Supabase. Run the SQL setup first.', 'warning');
+return false;
+}
 try {
-// Upsert: delete then insert
 await sb.from('bracket_results')
 .delete()
 .eq('category_name', categoryName)
 .eq('discipline', discipline)
 .eq('round_index', roundIndex)
 .eq('match_index', matchIndex);
-await sb.from('bracket_results')
+const { error } = await sb.from('bracket_results')
 .insert({
 category_name: categoryName,
 discipline: discipline,
@@ -1142,13 +1143,20 @@ player1_name: p1Name,
 player2_name: p2Name,
 updated_at: new Date().toISOString()
 });
+if (error) {
+console.error("Insert error:", error);
+return false;
+}
+return true;
 } catch(e) {
 console.error("Error saving bracket result:", e);
+return false;
 }
 }
 
-// Delete bracket results from a specific round onwards (for cascade reset)
 async function deleteBracketResultsFromRound(categoryName, discipline, fromRound) {
+const exists = await checkBracketResultsTable();
+if (!exists) return;
 try {
 await sb.from('bracket_results')
 .delete()
@@ -1179,10 +1187,8 @@ const totalRounds = Math.log2(size);
 const shuffled = spreadTeams(comps, size);
 const slots = shuffled.map(p => p ? { name: p.name, team: p.team } : { name: "BYE", team: "" });
 
-// Fetch stored winners
 const winnersMap = await fetchBracketResults(categoryName, discipline);
 
-// Build rounds structure
 const rounds = [];
 const r1Matches = [];
 for (let i = 0; i < size; i += 2) r1Matches.push({ p1: slots[i], p2: slots[i + 1] });
@@ -1196,21 +1202,17 @@ for (let m = 0; m < matchCount; m++) currentMatches.push({ p1: { name: "", team:
 rounds.push(currentMatches);
 }
 
-// Propagate winners through rounds based on stored results
 for (let r = 0; r < totalRounds; r++) {
 for (let m = 0; m < rounds[r].length; m++) {
 const key = `${r}-${m}`;
 const winnerName = winnersMap[key];
 if (!winnerName) continue;
 const match = rounds[r][m];
-const p1Name = match.p1.name;
-const p2Name = match.p2.name;
-if (!p1Name && !p2Name) continue;
+if (!match.p1.name && !match.p2.name) continue;
 
-// Determine which slot advances to next round
 if (r + 1 < totalRounds) {
 const nextMatchIdx = Math.floor(m / 2);
-const nextSlot = m % 2; // 0 = p1, 1 = p2
+const nextSlot = m % 2;
 const nextMatch = rounds[r + 1][nextMatchIdx];
 if (nextSlot === 0) {
 nextMatch.p1 = { name: winnerName, team: "" };
@@ -1221,10 +1223,8 @@ nextMatch.p2 = { name: winnerName, team: "" };
 }
 }
 
-// Cache bracket data for editing
 bracketDataCache = { categoryName, discipline, rounds, totalRounds, winnersMap };
 
-// Render bracket table
 let html = `<div style="overflow-x:auto;padding:10px; margin-bottom:20px;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem; min-width:700px;">`;
 html += `<thead><tr>`;
 for (let r = 1; r <= totalRounds; r++) {
@@ -1274,10 +1274,16 @@ content.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;
 }
 function closeBracketModal() { document.getElementById('bracket-modal').classList.add('hidden-view'); }
 
-// Open the edit modal for a specific match in the bracket
 function openBracketEditModal(roundIndex, matchIndex, clickedSlot) {
 if (!bracketDataCache) return;
 const { categoryName, discipline, rounds, totalRounds, winnersMap } = bracketDataCache;
+
+// Safety check: ensure the round and match exist
+if (!rounds || !rounds[roundIndex] || !rounds[roundIndex][matchIndex]) {
+showToast('⚠️ Invalid bracket data. Please close and reopen.', 'error');
+return;
+}
+
 const match = rounds[roundIndex][matchIndex];
 const p1Name = match.p1.name || "TBD";
 const p2Name = match.p2.name || "TBD";
@@ -1327,7 +1333,6 @@ btn.innerHTML = `
 playersDiv.appendChild(btn);
 });
 
-// Add "Clear winner" option if there's a current winner
 if (currentWinner) {
 const clearBtn = document.createElement('button');
 clearBtn.style.cssText = `
@@ -1346,7 +1351,8 @@ clearBtn.onclick = () => selectBracketWinner(roundIndex, matchIndex, null, null)
 playersDiv.appendChild(clearBtn);
 }
 
-bracketEditContext = { categoryName, discipline, roundIndex, matchIndex, players, currentWinner };
+// FIX: include rounds and totalRounds in bracketEditContext
+bracketEditContext = { categoryName, discipline, roundIndex, matchIndex, players, currentWinner, rounds, totalRounds };
 document.getElementById('bracket-edit-modal').classList.remove('hidden-view');
 }
 
@@ -1355,55 +1361,55 @@ document.getElementById('bracket-edit-modal').classList.add('hidden-view');
 bracketEditContext = null;
 }
 
-// When a winner is selected, save it and cascade through all subsequent rounds
 async function selectBracketWinner(roundIndex, matchIndex, winnerName, slot) {
+// FIX: read from bracketEditContext BEFORE closing (which nulls it)
 if (!bracketEditContext) return;
-const { categoryName, discipline, rounds, totalRounds } = bracketEditContext;
+const ctx = bracketEditContext;
+const { categoryName, discipline, rounds, totalRounds } = ctx;
+
+// Safety check
+if (!rounds || !rounds[roundIndex] || !rounds[roundIndex][matchIndex]) {
+showToast('⚠️ Invalid bracket data.', 'error');
+closeBracketEditModal();
+return;
+}
 
 closeBracketEditModal();
 
-// Save the winner
 const match = rounds[roundIndex][matchIndex];
 const p1Name = match.p1.name || '';
 const p2Name = match.p2.name || '';
 
 if (winnerName) {
-await saveBracketResult(categoryName, discipline, roundIndex, matchIndex, winnerName, p1Name, p2Name);
+const ok = await saveBracketResult(categoryName, discipline, roundIndex, matchIndex, winnerName, p1Name, p2Name);
+if (!ok) {
+showToast('⚠️ Could not save. Check Supabase bracket_results table.', 'error');
+}
 } else {
-// Clear this match and all subsequent
 await deleteBracketResultsFromRound(categoryName, discipline, roundIndex);
 }
 
-// Cascade: rebuild subsequent rounds from this point
 await cascadeBracketWinners(categoryName, discipline, roundIndex, matchIndex, winnerName);
 
 showToast(winnerName ? `✓ Winner set: ${winnerName} — bracket updated` : '✓ Match cleared — bracket reset', 'success');
 
-// Refresh the bracket modal
 await openBracketModal(categoryName, discipline);
 
-// If this is the current active match on the ring, update the ring display
 if (state.role === 'laptop' && currentActiveMatchAssignment) {
 await loadCurrentMatch();
 }
 }
 
-// Cascade winners forward through the bracket after a change
 async function cascadeBracketWinners(categoryName, discipline, fromRound, fromMatchIndex, winnerName) {
 if (!bracketDataCache) return;
 const { rounds, totalRounds } = bracketDataCache;
 
-// First, clear all stored results from the round AFTER the changed one
 await deleteBracketResultsFromRound(categoryName, discipline, fromRound + 1);
 
-// Now re-propagate winners forward starting from round 0
-// Re-fetch all stored winners
 const winnersMap = await fetchBracketResults(categoryName, discipline);
 
-// Rebuild rounds from scratch
-const size = rounds[0].length * 2;
-// Re-propagate through all rounds
 for (let r = 0; r < totalRounds; r++) {
+if (!rounds[r]) continue;
 for (let m = 0; m < rounds[r].length; m++) {
 const key = `${r}-${m}`;
 const wName = winnersMap[key];
@@ -1411,6 +1417,7 @@ if (!wName) continue;
 if (r + 1 < totalRounds) {
 const nextMatchIdx = Math.floor(m / 2);
 const nextSlot = m % 2;
+if (!rounds[r + 1] || !rounds[r + 1][nextMatchIdx]) continue;
 const nextMatch = rounds[r + 1][nextMatchIdx];
 if (nextSlot === 0) {
 nextMatch.p1 = { name: wName, team: "" };
@@ -1420,220 +1427,9 @@ nextMatch.p2 = { name: wName, team: "" };
 }
 }
 }
-
-// Now save the propagated results for rounds after fromRound
-// Actually, we only need to save the ones that had winners before
-// The cascade is automatic via the winnersMap - no need to save propagated results
-// because they're derived from earlier round winners
 }
 
-async function resetMatch() {
-if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
-await resetMatchScores();
-timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
-saveTimerState(); broadcastTimerState();
-document.getElementById('modal-winner').classList.add('hidden-view');
-const tvOverlay = document.getElementById('tv-winner-overlay'); if (tvOverlay) tvOverlay.classList.add('hidden-view');
-stopTimerTick(); renderTimer(); fetchMatchNow();
-}
-async function resetMatchScores() {
-if (!state.ring || !state.ring.id) return;
-try {
-await sb.from("matches").update({
-blue_score: 0, red_score: 0, blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0,
-judge_blue: [0,0,0,0], judge_red: [0,0,0,0], updated_at: new Date().toISOString()
-}).eq("ring_id", state.ring.id);
-} catch(e) {}
-}
-async function declareWinner(side) {
-if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
-if (!confirm(`Declare ${side.toUpperCase()} as the winner?`)) return;
-timerState.finished = true; timerState.paused = true; timerState.isBreak = false; timerState.winner = side;
-saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); showWinnerConfirmStep1();
-}
-async function refreshRingData() {
-if (!state.ring || !state.ring.id) return;
-try {
-const { data } = await sb.from('rings').select('*').eq('id', state.ring.id).maybeSingle();
-if (data) { state.ring = data; sessionStorage.setItem('tkd_ring', JSON.stringify(data)); updateCompetitorDisplay(); }
-} catch(e) {}
-}
-async function updateMaxPhones(val) {
-if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
-const num = parseInt(val, 10);
-try { await sb.from('rings').update({ max_phones: num }).eq('id', state.ring.id); } catch(e) {}
-state.ring.max_phones = num; sessionStorage.setItem('tkd_ring', JSON.stringify(state.ring));
-const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
-renderLaptopJudges(); renderVoteScores(); updateRingLayoutCornerStats(); showToast(`Ring set to ${num} judges`, 'success');
-}
-async function loadCurrentMatch() {
-if (!state.ring || !state.ring.id) return;
-const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
-try {
-const { data: assignments, error } = await sb.from('ring_assignments')
-.select('*')
-.eq('ring_number', ringNum)
-.order('time_seconds', { ascending: true });
-
-if (error) throw error;
-if (assignments && assignments.length > 0) {
-const firstAssignment = assignments[0];
-currentActiveMatchAssignment = firstAssignment;
-state.currentMatch = firstAssignment;
-
-const p1 = firstAssignment.player1_name || firstAssignment.competitor1 || 'Blue Competitor';
-const p2 = firstAssignment.player2_name || firstAssignment.competitor2 || 'Red Competitor';
-const p1Club = firstAssignment.player1_club || firstAssignment.club1 || 'Team A';
-const p2Club = firstAssignment.player2_club || firstAssignment.club2 || 'Team B';
-
-state.ring.blue_name = p1;
-state.ring.red_name = p2;
-state.ring.blue_club = p1Club;
-state.ring.red_club = p2Club;
-state.ring.category_name = firstAssignment.category_name;
-state.ring.discipline = firstAssignment.discipline || 'sparring';
-state.ring.match_stage = firstAssignment.match_stage || 'Preliminary';
-
-try {
-await sb.from('rings').update({
-blue_name: p1,
-red_name: p2,
-blue_club: p1Club,
-red_club: p2Club,
-category_name: firstAssignment.category_name,
-discipline: firstAssignment.discipline,
-match_stage: firstAssignment.match_stage || 'Preliminary',
-category_id: firstAssignment.id
-}).eq('id', state.ring.id);
-} catch(e) {}
-await refreshRingData();
-} else {
-state.currentMatch = null;
-currentActiveMatchAssignment = null;
-try { await sb.from('rings').update({ category_name: null, discipline: null, match_stage: 'No Assignments', category_id: null }).eq('id', state.ring.id); } catch(e) {}
-await refreshRingData();
-}
-} catch (err) { console.error("loadCurrentMatch error:", err); }
-if (state.role === 'laptop') await loadMatchList();
-}
-function updateCompetitorDisplay() {
-const blueName = state.ring?.blue_name || '---';
-const redName = state.ring?.red_name || '---';
-const blueClub = state.ring?.blue_club || '---';
-const redClub = state.ring?.red_club || '---';
-const nextBlueName = state.ring?.next_blue_name || '---';
-const nextRedName = state.ring?.next_red_name || '---';
-const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
-const categoryName = state.ring?.category_name || 'No Match';
-const matchStage = state.ring?.match_stage || 'Scheduled';
-const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-setTxt('laptop-blue-name', blueName); setTxt('laptop-red-name', redName);
-setTxt('laptop-blue-club', blueClub); setTxt('laptop-red-club', redClub);
-setTxt('laptop-category-name', categoryName); setTxt('laptop-match-stage', matchStage);
-const categoryLinkContainer = document.getElementById('category-web-link-container');
-const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
-const catName = state.ring?.category_name || state.currentMatch?.category_name;
-const disc = state.ring?.discipline || state.currentMatch?.discipline || 'sparring';
-if (categoryLinkContainer && categoryLinkAnchor) {
-if (catName) {
-categoryLinkAnchor.href = '#';
-categoryLinkAnchor.onclick = (e) => { e.preventDefault(); openBracketModal(catName, disc); };
-categoryLinkAnchor.textContent = `📊 View/Edit Bracket: ${catName}`;
-categoryLinkContainer.classList.remove('hidden-view');
-} else {
-categoryLinkContainer.classList.add('hidden-view');
-}
-}
-const laptopDisc = document.getElementById('laptop-discipline-badge');
-if (laptopDisc) { laptopDisc.textContent = discipline.toUpperCase(); laptopDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
-setTxt('tv-blue-name', blueName); setTxt('tv-red-name', redName);
-setTxt('tv-blue-club', blueClub); setTxt('tv-red-club', redClub);
-setTxt('tv-next-blue', nextBlueName); setTxt('tv-next-red', nextRedName);
-setTxt('tv-category-name', categoryName); setTxt('tv-match-stage', matchStage);
-const tvDisc = document.getElementById('tv-discipline-badge');
-if (tvDisc) { tvDisc.textContent = discipline.toUpperCase(); tvDisc.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
-setTxt('phone-blue-name', blueName); setTxt('phone-red-name', redName);
-const phoneMode = document.getElementById('phone-mode-badge');
-if (phoneMode) { phoneMode.textContent = discipline.toUpperCase(); phoneMode.style.background = discipline === 'patterns' ? '#1e40af' : '#dc2626'; }
-const sparringControls = document.getElementById('sparring-controls');
-const patternsControls = document.getElementById('patterns-controls');
-const declareWinnerEl = document.getElementById('laptop-declare-winner');
-if (discipline === 'patterns') {
-if (sparringControls) sparringControls.classList.add('hidden-view');
-if (patternsControls) patternsControls.classList.remove('hidden-view');
-if (declareWinnerEl) declareWinnerEl.classList.remove('hidden-view');
-} else {
-if (sparringControls) sparringControls.classList.remove('hidden-view');
-if (patternsControls) patternsControls.classList.add('hidden-view');
-if (declareWinnerEl) declareWinnerEl.classList.remove('hidden-view');
-}
-}
-async function loadMatchList() {
-if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
-const container = document.getElementById('match-list-container');
-if (!container) return;
-const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
-try {
-const { data: assignments, error } = await sb.from('ring_assignments')
-.select('*')
-.eq('ring_number', ringNum)
-.order('time_seconds', { ascending: true });
-if (error) throw error;
-if (!assignments || assignments.length === 0) {
-container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches assigned to this ring.</div>';
-} else {
-renderAssignmentListItems(assignments, container);
-}
-} catch (e) {
-container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load assignments.</div>';
-}
-}
-function renderAssignmentListItems(assignments, container) {
-let html = '';
-assignments.forEach((a, idx) => {
-const catName = a.category_name || 'Unknown';
-const discipline = a.discipline || 'sparring';
-const p1 = a.player1_name || 'TBD';
-const p2 = a.player2_name || 'TBD';
-const isActive = state.currentMatch && state.currentMatch.id === a.id;
-const cls = isActive ? 'active' : '';
-const matchNum = idx + 1;
-html += `<div class="match-list-item ${cls}" style="cursor:pointer;" onclick="openBracketModal('${catName.replace(/'/g, "\\'")}', '${discipline}')">
-<div class="ml-number"><span>#${matchNum} · ${discipline.toUpperCase()}</span></div>
-<div class="ml-names">${catName}</div>
-<div class="ml-category">⚔️ ${p1} vs ${p2}</div>
-</div>`;
-});
-container.innerHTML = html;
-}
-function getBracketSize(count) {
-if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4;
-if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64;
-}
-function generateSeedOrder(size) {
-if (size === 1) return [0];
-const half = size / 2;
-const left = generateSeedOrder(half);
-const right = left.map((x) => x + half);
-const result = [];
-for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); }
-return result;
-}
-function spreadTeams(list, bracketSize) {
-const slots = new Array(bracketSize).fill(null);
-const teams = {};
-list.forEach((p) => { if (!teams[p.team]) teams[p.team] = []; teams[p.team].push(p); });
-const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length);
-const positions = generateSeedOrder(bracketSize);
-let posIndex = 0;
-sortedTeams.forEach((teamArr) => {
-teamArr.forEach((player) => {
-if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; }
-});
-});
-return slots;
-}
-function showToast(msg, type) {
+async function showToast(msg, type) {
 const t = document.getElementById('toast');
 t.textContent = msg; t.className = 'toast show ' + (type || '');
 setTimeout(() => { t.className = 'toast'; }, 3500);
@@ -1954,3 +1750,4 @@ window.addEventListener("hashchange", route);
 </script>
 </body>
 </html>
+
