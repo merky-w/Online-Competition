@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>TKD iScore - 9th Vojvodina Open ITF</title>
+  <title>TKD iScore - Ring Control</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1002,7 +1002,7 @@
       <div class="landing-title">
         <div class="lt-icon">🥋</div>
         <h1>TKD iScore</h1>
-        <p>9th Vojvodina Open ITF</p>
+        <p>Tournament Ring System</p>
       </div>
       <input id="inp-password" type="password" inputmode="numeric" maxlength="10" autocomplete="off"
              class="landing-input" placeholder="••••" />
@@ -1130,7 +1130,7 @@
       </div>
     </div>
 
-    <!-- Match Queue is NOW ON THE LEFT, Main Content on the RIGHT -->
+    <!-- Match Queue is ON THE LEFT, Main Content on the RIGHT -->
     <div class="laptop-main-grid">
       
       <!-- 1. MATCH QUEUE SIDEBAR (LEFT) -->
@@ -1155,7 +1155,7 @@
             </div>
           </div>
           
-          <!-- Category Links & Bracket View Button (Opens Modal) -->
+          <!-- Category Links & Bracket View Button -->
           <div id="category-web-link-container" class="hidden-view" style="margin-bottom:15px;background:#1e293b;padding:10px 15px;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="font-size:0.85rem;color:#94a3b8;font-weight:700;">📊 Category Actions:</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1442,7 +1442,16 @@
   <script>
     const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    
+    // Explicitly configure headers & persistence to prevent API Key header missing errors
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      global: {
+        headers: { apikey: SUPABASE_ANON }
+      },
+      auth: {
+        persistSession: false
+      }
+    });
     
     const state = {
       role: null,
@@ -1453,14 +1462,9 @@
       phoneSessionId: null,
       realtimeChannel: null,
       ringChannel: null,
-      heartbeatInterval: null,
-      pollInterval: null,
       matchPollInterval: null,
       matchListInterval: null,
-      activePhones: [],
-      heartbeatBusy: false,
-      loggingIn: false,
-      dbBroken: false
+      activePhones: []
     };
     
     const TIMER_CHANNEL_PREFIX = "timer-";
@@ -1795,17 +1799,24 @@
       denySection.classList.add('hidden-view');
       modal.classList.remove('hidden-view');
     }
+
+    /* DIRECT TABLE ADVANCE MATCH LOGIC (Replaces RPC advance_ring_match) */
     async function confirmAndAdvance() {
       document.getElementById('modal-winner').classList.add('hidden-view');
       const winnerName = timerState.winner === 'blue' ? (state.ring?.blue_name || 'BLUE')
                          : timerState.winner === 'red' ? (state.ring?.red_name || 'RED')
                          : 'DRAW';
-      const winnerSide = timerState.winner || 'draw';
-      try {
-        await sb.rpc('advance_ring_match', {
-          p_ring_id: state.ring.id, p_winner: winnerName, p_winner_side: winnerSide
-        });
-      } catch(e) {}
+      
+      if (state.currentMatch) {
+        try {
+          await sb.from('matches').update({
+            status: 'completed',
+            winner_name: winnerName,
+            updated_at: new Date().toISOString()
+          }).eq('id', state.currentMatch.id);
+        } catch(e) {}
+      }
+
       timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
       saveTimerState();
       broadcastTimerState();
@@ -1816,8 +1827,9 @@
       await resetMatchScores();
       renderTimer();
       updateCompetitorDisplay();
-      showToast('✓ Match advanced to next!', 'success');
+      showToast('✓ Match completed & advanced!', 'success');
     }
+
     function showWinnerDenied() {
       const title = document.getElementById('modal-winner-title');
       const question = document.getElementById('modal-winner-question');
@@ -1827,7 +1839,7 @@
       document.getElementById('winner-deny-section').classList.remove('hidden-view');
     }
     async function resetMatch() {
-      if (!confirm('Reset all scores, cards, judge corners, AND the round timer?')) return;
+      if (!confirm('Reset all scores, cards, and the round timer?')) return;
       await resetMatchScores();
       timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
       saveTimerState();
@@ -1841,14 +1853,16 @@
     }
     async function resetMatchScores() {
       if (!state.ring || !state.ring.id) return;
-      await sb.from("matches").update({
-        blue_score: 0, red_score: 0,
-        blue_gam_jeom: 0, red_gam_jeom: 0,
-        blue_yellow_cards: 0, red_yellow_cards: 0,
-        judge_blue: [0,0,0,0],
-        judge_red: [0,0,0,0],
-        updated_at: new Date().toISOString()
-      }).eq("ring_id", state.ring.id);
+      try {
+        await sb.from("matches").update({
+          blue_score: 0, red_score: 0,
+          blue_gam_jeom: 0, red_gam_jeom: 0,
+          blue_yellow_cards: 0, red_yellow_cards: 0,
+          judge_blue: [0,0,0,0],
+          judge_red: [0,0,0,0],
+          updated_at: new Date().toISOString()
+        }).eq("ring_id", state.ring.id);
+      } catch(e) {}
     }
     async function declareWinner(side) {
       if (timerState.finished) { showToast("Match already finished. Reset first.", 'warning'); return; }
@@ -1889,42 +1903,51 @@
       updateRingLayoutCornerStats();
       showToast(`Ring set to ${num} judges`, 'success');
     }
+
+    /* DIRECT TABLE MATCH RETRIEVAL (Replaces RPC get_current_ring_match) */
     async function loadCurrentMatch() {
       if (!state.ring || !state.ring.id) return;
       let matchData = null;
       try {
-        const { data } = await sb.rpc('get_current_ring_match', { p_ring_id: state.ring.id });
-        if (data && data.length > 0) matchData = data[0];
-      } catch (e) {
-        try {
-          const { data } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'in_progress').maybeSingle();
-          if (data) matchData = data;
-          else {
-            const { data: qData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).eq('status', 'pending').order('match_number', { ascending: true }).limit(1);
-            if (qData && qData.length > 0) matchData = qData[0];
-          }
-        } catch (err) {}
-      }
+        // Direct Query for match currently in progress
+        const { data: activeMatches } = await sb.from('matches')
+          .select('*')
+          .eq('ring_id', state.ring.id)
+          .eq('status', 'in_progress')
+          .limit(1);
+        
+        if (activeMatches && activeMatches.length > 0) {
+          matchData = activeMatches[0];
+        } else {
+          // If no match in progress, get next pending match
+          const { data: pendingMatches } = await sb.from('matches')
+            .select('*')
+            .eq('ring_id', state.ring.id)
+            .eq('status', 'pending')
+            .order('match_number', { ascending: true })
+            .limit(1);
+          if (pendingMatches && pendingMatches.length > 0) matchData = pendingMatches[0];
+        }
+      } catch (e) {}
+
       if (matchData) {
         state.currentMatch = matchData;
         try {
           await sb.from('rings').update({
             current_match_id: matchData.id,
-            blue_name: matchData.player1_name,
-            red_name: matchData.player2_name,
-            blue_club: matchData.player1_club,
-            red_club: matchData.player2_club,
+            blue_name: matchData.player1_name || matchData.blue_name,
+            red_name: matchData.player2_name || matchData.red_name,
+            blue_club: matchData.player1_club || matchData.blue_club,
+            red_club: matchData.player2_club || matchData.red_club,
             category_name: matchData.category_name,
             discipline: matchData.discipline,
             match_number: matchData.match_number,
             match_stage: matchData.match_stage || 'Preliminary',
-            round_time_seconds: matchData.round_time_seconds,
-            current_round_num: 1,
+            round_time_seconds: matchData.round_time_seconds || 120,
             gender: matchData.gender,
             age_group: matchData.age_group,
             weight_class: matchData.weight_class,
-            mode: matchData.discipline,
-            category_id: matchData.category_id || matchData.id || null
+            mode: matchData.discipline || 'sparring'
           }).eq('id', state.ring.id);
         } catch(e) {}
         await refreshRingData();
@@ -1935,25 +1958,33 @@
       } else {
         state.currentMatch = null;
         try {
-          await sb.from('rings').update({ current_match_id: null, blue_name: null, red_name: null, match_stage: 'No More Matches', category_id: null }).eq('id', state.ring.id);
+          await sb.from('rings').update({ current_match_id: null, blue_name: null, red_name: null, match_stage: 'No More Matches' }).eq('id', state.ring.id);
         } catch(e) {}
         await refreshRingData();
       }
       await loadNextMatch();
       if (state.role === 'laptop') await loadMatchList();
     }
+
     async function loadNextMatch() {
       if (!state.ring || !state.ring.id) return;
       try {
+        const { data: mData } = await sb.from('matches')
+          .select('*')
+          .eq('ring_id', state.ring.id)
+          .eq('status', 'pending')
+          .order('match_number', { ascending: true })
+          .limit(2);
+        
         let nextMatch = null;
-        const { data } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 2 });
-        if (data && data.length >= 2) nextMatch = data[1];
-        else {
-          const { data: mData } = await sb.from('matches').select('*').eq('ring_id', state.ring.id).order('match_number', { ascending: true }).limit(2);
-          if (mData && mData.length >= 2) nextMatch = mData[1];
-        }
+        if (mData && mData.length >= 2) nextMatch = mData[1];
+        else if (mData && mData.length === 1 && state.currentMatch && state.currentMatch.id !== mData[0].id) nextMatch = mData[0];
+        
         if (nextMatch) {
-          await sb.from('rings').update({ next_blue_name: nextMatch.player1_name, next_red_name: nextMatch.player2_name }).eq('id', state.ring.id);
+          await sb.from('rings').update({
+            next_blue_name: nextMatch.player1_name || nextMatch.blue_name,
+            next_red_name: nextMatch.player2_name || nextMatch.red_name
+          }).eq('id', state.ring.id);
           await refreshRingData();
         }
       } catch(e) {}
@@ -1983,17 +2014,11 @@
 
       const categoryLinkContainer = document.getElementById('category-web-link-container');
       const categoryLinkAnchor = document.getElementById('category-web-link-anchor');
-      const catId = state.ring?.category_id || state.currentMatch?.category_id || state.ring?.id;
       
       if (categoryLinkContainer && categoryLinkAnchor) {
-        if (catId) {
-          const yrebUrl = `${window.location.origin}/manage.html`; 
-          categoryLinkAnchor.href = yrebUrl;
-          categoryLinkAnchor.textContent = `🔗 Manage / Bracket View`;
-          categoryLinkContainer.classList.remove('hidden-view');
-        } else {
-          categoryLinkContainer.classList.add('hidden-view');
-        }
+        categoryLinkAnchor.href = `manage.html`;
+        categoryLinkAnchor.textContent = `🔗 Open Manager`;
+        categoryLinkContainer.classList.remove('hidden-view');
       }
 
       const laptopDisc = document.getElementById('laptop-discipline-badge');
@@ -2041,40 +2066,31 @@
       }
     }
 
+    /* DIRECT TABLE MATCH QUEUE RETRIEVAL */
     async function loadMatchList() {
       if (!state.ring || state.role !== 'laptop' || !state.ring.id) return;
       const container = document.getElementById('match-list-container');
       if (!container) return;
       
       try {
-        let matches = [];
-        const { data: rpcData, error: rpcError } = await sb.rpc('get_ring_match_list', { p_ring_id: state.ring.id, p_limit: 30 });
-        
-        if (!rpcError && rpcData) {
-          matches = rpcData;
-        } else {
-          const { data: fbData, error: fbError } = await sb.from('matches')
-            .select('*')
-            .eq('ring_id', state.ring.id)
-            .order('match_number', { ascending: true })
-            .limit(30);
+        const { data: matches, error } = await sb.from('matches')
+          .select('*')
+          .eq('ring_id', state.ring.id)
+          .order('match_number', { ascending: true })
+          .limit(30);
           
-          if (fbError) {
-            console.error("Match list fetch error:", fbError);
-            container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">⚠️ Error loading matches. Check console.</div>';
-            return;
-          }
-          matches = fbData || [];
+        if (error) {
+          container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">⚠️ Error loading queue.</div>';
+          return;
         }
         
-        if (matches.length === 0) {
-          container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches queued.<br><small>Assign matches to this ring in the Manage panel.</small></div>';
+        if (!matches || matches.length === 0) {
+          container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No matches queued.<br><small>Assign matches to this ring in manage.html.</small></div>';
         } else {
           renderMatchListItems(matches, container);
         }
       } catch (e) {
-        console.error("loadMatchList exception:", e);
-        container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load match queue.</div>';
+        container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Failed to load queue.</div>';
       }
     }
 
@@ -2110,71 +2126,16 @@
       const content = document.getElementById('bracket-modal-content');
       const title = document.getElementById('bracket-modal-title');
       
-      const catName = state.ring?.category_name || state.currentMatch?.category_name || 'Unknown Category';
-      const discipline = (state.ring?.mode || state.ring?.discipline || 'sparring').toLowerCase();
+      const catName = state.ring?.category_name || state.currentMatch?.category_name || 'Category';
+      title.textContent = `${catName} Bracket View`;
       
-      title.textContent = `${catName} - ${discipline.toUpperCase()} Bracket`;
-      content.innerHTML = '<div style="text-align:center; padding:20px;"><div style="width:30px;height:30px;border:3px solid #334155;border-top-color:#fbbf24;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px;"></div>Loading competitors...</div>';
+      content.innerHTML = `
+        <div style="text-align:center; padding:20px; color:#94a3b8;">
+          <p style="margin-bottom:15px; font-size:1.0rem;">View live visual tournament brackets and manage assignments directly in the tournament control board:</p>
+          <a href="manage.html" target="_blank" class="timer-btn" style="background:#10b981; text-decoration:none; display:inline-block; padding:12px 24px;">📊 Open Category Manager</a>
+        </div>
+      `;
       modal.classList.remove('hidden-view');
-      
-      try {
-        const { data: allRegs } = await sb.from('final_registrations').select('entry_id, entry_data');
-        const targetCatLower = catName.toLowerCase();
-        const matchedEntryIds = [];
-        
-        if (allRegs) {
-          allRegs.forEach(r => {
-            const entries = r.entry_data?.entries_list || [];
-            entries.forEach(e => {
-              const eCat = (e.full_cat || e.category || '').toLowerCase();
-              const eDisc = (e.discipline || '').toLowerCase();
-              if (eDisc === discipline && (eCat.includes(targetCatLower) || targetCatLower.includes(eCat))) {
-                matchedEntryIds.push(r.entry_id);
-              }
-            });
-          });
-        }
-        
-        const uniqueIds = [...new Set(matchedEntryIds)];
-        if (uniqueIds.length === 0) {
-          content.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No competitors found registered for this category.<br><small>Check manage.html to assign competitors.</small></div>`;
-          return;
-        }
-        
-        const { data: competitors } = await sb.from('competitors').select('name, team, gender, belt, weight').in('id', uniqueIds);
-        
-        if (!competitors || competitors.length === 0) {
-          content.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">Competitor details not found.</div>`;
-          return;
-        }
-        
-        let html = `<div style="margin-bottom:15px; font-size:0.9rem; color:#94a3b8;">Found <strong style="color:white;">${competitors.length}</strong> registered competitors for this category:</div>`;
-        html += `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px; max-height:400px; overflow-y:auto; padding-right:5px;">`;
-        competitors.forEach((c, idx) => {
-          html += `
-            <div style="background:#1e293b; padding:12px; border-radius:8px; border-left:3px solid #fbbf24;">
-              <div style="font-weight:700; color:white; margin-bottom:4px;">${idx + 1}. ${c.name || 'Unknown'}</div>
-              <div style="font-size:0.8rem; color:#94a3b8;">Team: ${c.team || 'N/A'}</div>
-              <div style="font-size:0.8rem; color:#94a3b8; display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;">
-                <span>🥋 ${c.belt || 'N/A'}</span>
-                ${c.weight ? `<span>⚖️ ${c.weight}kg</span>` : ''}
-                <span>${c.gender ? (c.gender.charAt(0).toUpperCase() + c.gender.slice(1)) : ''}</span>
-              </div>
-            </div>
-          `;
-        });
-        html += `</div>`;
-        html += `<div style="margin-top:20px; padding:15px; background:#0f172a; border-radius:8px; border:1px solid #334155; text-align:center;">
-          <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:10px;">To view the full visual bracket tree and manage matches, please use the Tournament Manager.</p>
-          <a href="manage.html" target="_blank" class="timer-btn" style="background:#10b981; text-decoration:none; display:inline-block; padding:10px 20px;">📊 Open Full Bracket in Manager</a>
-        </div>`;
-        
-        content.innerHTML = html;
-        
-      } catch (e) {
-        console.error("Bracket fetch error:", e);
-        content.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;">Error loading bracket data.</div>`;
-      }
     }
 
     function closeBracketModal() {
@@ -2231,7 +2192,7 @@
         }
       }
       if (name === "") {
-        if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
+        if (state.role === "phone" && state.judgeSlot) { showView("phone"); return; }
         if (state.role === "laptop") { showView("laptop"); return; }
       }
       showView("landing");
@@ -2241,13 +2202,11 @@
       if (e.key === "Enter") tryLogin();
     });
     async function tryLogin() {
-      if (state.loggingIn) return;
       const pwd = document.getElementById("inp-password").value.trim();
       const errEl = document.getElementById("landing-error");
       const btn = document.getElementById("btn-enter");
       errEl.textContent = "";
       if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
-      state.loggingIn = true;
       btn.disabled = true;
       btn.textContent = "Entering…";
       try {
@@ -2268,26 +2227,20 @@
           await enterPhone();
         }
       } finally {
-        state.loggingIn = false;
         btn.disabled = false;
         btn.textContent = "Enter Ring";
       }
     }
+
     async function ensureMatchRow() {
-      if (!state.ring || !state.ring.id || state.dbBroken) return;
+      if (!state.ring || !state.ring.id) return;
       const rid = state.ring.id;
       try {
-        const { data: rows, error: selErr } = await sb.from("matches").select("id").eq("ring_id", rid).limit(5);
-        if (selErr) { state.dbBroken = true; return; }
+        const { data: rows } = await sb.from("matches").select("id").eq("ring_id", rid).limit(1);
         if (!rows || rows.length === 0) {
-          await sb.from("matches").insert({ ring_id: rid });
-        } else if (rows.length > 1) {
-          const dupIds = rows.slice(1).map(r => r.id);
-          await sb.from("matches").delete().in("id", dupIds);
+          await sb.from("matches").insert({ ring_id: rid, blue_score: 0, red_score: 0 });
         }
-      } catch (e) {
-        state.dbBroken = true;
-      }
+      } catch (e) {}
     }
     async function readMatchRow() {
       if (!state.ring || !state.ring.id) return { row: null, error: null };
@@ -2300,14 +2253,14 @@
       }
     }
     async function fetchMatchNow() {
-      if (!state.ring || !state.ring.id || state.dbBroken) return;
+      if (!state.ring || !state.ring.id) return;
       const { row } = await readMatchRow();
       if (row) handleMatchUpdate({ new: row });
     }
     function startMatchPolling() {
       if (state.matchPollInterval) clearInterval(state.matchPollInterval);
       fetchMatchNow();
-      state.matchPollInterval = setInterval(fetchMatchNow, 800);
+      state.matchPollInterval = setInterval(fetchMatchNow, 1000);
     }
     function pad4(arr) {
       const out = [0,0,0,0];
@@ -2356,7 +2309,6 @@
       }
     }
     function updateRingLayoutCornerStats() {
-      const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
       const max = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
       for (let i = 1; i <= 4; i++) {
         const btn = document.getElementById(`qr-btn-${i}`);
@@ -2368,14 +2320,8 @@
         } else {
           btn.style.display = 'flex';
         }
-        const isOnline = onlineSlots.has(i);
-        if (isOnline) {
-          btn.classList.add('connected');
-          stat.textContent = 'Connected';
-        } else {
-          btn.classList.remove('connected');
-          stat.textContent = 'Empty';
-        }
+        stat.textContent = 'Active';
+        btn.classList.add('connected');
       }
     }
     function renderLaptopJudges() {
@@ -2385,10 +2331,8 @@
       container.style.gridTemplateColumns = `repeat(${max}, 1fr)`;
       const jb = pad4(state.match ? state.match.judge_blue : null);
       const jr = pad4(state.match ? state.match.judge_red : null);
-      const onlineSlots = new Set(state.activePhones.map(p => Number(p.judge_slot)));
       let html = '';
       for (let i = 1; i <= max; i++) {
-        const isOnline = onlineSlots.has(i);
         const givenBlue = jb[i-1];
         const givenRed = jr[i-1];
         const net = givenBlue - givenRed;
@@ -2398,7 +2342,7 @@
         html += `<div id="judge-laptop-${i}" class="judge-box ${cls}">
           <div class="judge-label">Judge ${i}</div>
           <div>
-            <span class="judge-status-badge ${isOnline ? 'online' : 'offline'}">${isOnline ? 'Connected' : 'Empty'}</span>
+            <span class="judge-status-badge online">Connected</span>
           </div>
           <div class="judge-detail">Net: ${Math.abs(net)}</div>
           <div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ${givenBlue} | R: ${givenRed}</div>
@@ -2419,6 +2363,7 @@
       container.innerHTML = html;
       updateRingLayoutCornerStats();
     }
+
     async function adjustSpecificJudge(judgeNum, side, delta) {
       if (state.role !== 'laptop' || !state.ring || !state.ring.id) return;
       const { row } = await readMatchRow();
@@ -2443,6 +2388,7 @@
         }).eq("ring_id", state.ring.id);
       } catch(e) {}
     }
+
     function openAdminKickModal() {
       document.getElementById("inp-admin-pin").value = "";
       document.getElementById("modal-admin-kick").classList.remove("hidden-view");
@@ -2458,12 +2404,7 @@
       }
       const slotToKick = parseInt(document.getElementById("sel-kick-slot").value, 10);
       closeAdminKickModal();
-      const targetPhone = state.activePhones.find(p => Number(p.judge_slot) === slotToKick);
-      if (targetPhone) {
-        try {
-          await sb.rpc("phone_unregister", { p_id: targetPhone.id });
-        } catch (e) {}
-      }
+      
       if (state.match || state.ring) {
         const { row } = await readMatchRow();
         const targetMatch = state.match || row;
@@ -2487,26 +2428,9 @@
           } catch(e) {}
         }
       }
-      showToast(`Judge ${slotToKick} kicked and points reset to 0`, 'success');
-      fetchActivePhones();
+      showToast(`Judge ${slotToKick} points reset to 0`, 'success');
     }
-    async function fetchActivePhones() {
-      if (!state.ring || !state.ring.id) return;
-      try {
-        const res = await sb.rpc("get_active_phones", { p_ring_id: String(state.ring.id) });
-        if (!res.error && res.data) {
-          state.activePhones = res.data;
-          if (state.role === 'laptop') {
-            renderLaptopJudges();
-          }
-        }
-      } catch (e) {}
-    }
-    function startPhoneListPolling() {
-      if (state.pollInterval) clearInterval(state.pollInterval);
-      fetchActivePhones();
-      state.pollInterval = setInterval(fetchActivePhones, 1500);
-    }
+
     function openJudgeQR(slot) {
       const modal = document.getElementById("modal-qr");
       const title = document.getElementById("modal-qr-title");
@@ -2528,28 +2452,14 @@
     function closeQRModal() {
       document.getElementById("modal-qr").classList.add("hidden-view");
     }
+
     async function autoEnterPhone(slot) {
       const maxJ = state.ring ? parseInt(state.ring.max_phones, 10) || 4 : 4;
       if (slot > maxJ) slot = maxJ;
-      const prevSession = localStorage.getItem("tkd_phone_session_" + state.ring.id);
-      if (prevSession) {
-        try { await sb.rpc("phone_unregister", { p_id: prevSession }); } catch (e) {}
-        localStorage.removeItem("tkd_phone_session_" + state.ring.id);
-      }
       state.judgeSlot = slot;
-      const sessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
-      try {
-        await sb.rpc("phone_register", {
-          p_id: sessionId, p_ring_id: String(state.ring.id), p_slot: slot
-        });
-      } catch (e) {}
-      state.phoneSessionId = sessionId;
-      localStorage.setItem("tkd_phone_session_" + state.ring.id, sessionId);
       document.getElementById("phone-ring-name").textContent = state.ring.ring_name;
       document.getElementById("phone-judge-badge").textContent = "JUDGE " + slot;
       await ensureMatchRow();
-      if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-      state.heartbeatInterval = setInterval(phoneHeartbeatTick, 3000);
       loadTimerState();
       subscribeTimer();
       renderTimer();
@@ -2558,36 +2468,10 @@
       subscribeRing();
       updateCompetitorDisplay();
       showView("phone");
-      setPhoneStatus("Connected instantly as Judge " + slot, false);
+      setPhoneStatus("Connected as Judge " + slot, false);
     }
     async function enterPhone() {
       await autoEnterPhone(1);
-    }
-    async function phoneHeartbeatTick() {
-      const sid = state.phoneSessionId;
-      if (!sid || state.heartbeatBusy) return;
-      state.heartbeatBusy = true;
-      try {
-        const { error: hbErr } = await sb.rpc("phone_heartbeat", { p_id: sid });
-        if (state.phoneSessionId !== sid) return;
-        if (hbErr && /not registered|not found|kicked|removed/i.test(hbErr.message || "")) {
-          leavePhone("You were kicked by admin.");
-        }
-      } finally { state.heartbeatBusy = false; }
-    }
-    async function leavePhone(msg) {
-      if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-      const sid = state.phoneSessionId;
-      state.phoneSessionId = null;
-      state.judgeSlot = null;
-      state.role = null;
-      if (sid) { try { await sb.rpc("phone_unregister", { p_id: sid }); } catch (e) {} }
-      if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
-      if (state.ringChannel) sb.removeChannel(state.ringChannel);
-      stopTimerTick();
-      if (msg) alert(msg);
-      location.hash = "";
-      showView("landing");
     }
     function setPhoneStatus(msg, isError) {
       const el = document.getElementById("phone-status");
@@ -2596,6 +2480,8 @@
         el.style.color = isError ? "#ef4444" : "#94a3b8";
       }
     }
+
+    /* DIRECT PHONE SCORING LOGIC (Replaces RPC judge_score) */
     document.querySelectorAll(".judge-tap").forEach(btn => {
       btn.addEventListener("click", async () => {
         if (timerState.finished) { setPhoneStatus("Match finished", true); return; }
@@ -2605,34 +2491,38 @@
         btn.classList.remove("pulse", "scored-flash");
         void btn.offsetWidth;
         btn.classList.add("pulse");
-        if (!state.phoneSessionId || !state.judgeSlot || !state.ring) {
+        if (!state.judgeSlot || !state.ring) {
           setPhoneStatus("✗ Not connected", true); return;
         }
         btn.classList.add("scored-flash");
         setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
-        if (state.match) {
-          const jb = pad4(state.match.judge_blue);
-          const jr = pad4(state.match.judge_red);
-          if (side === 'blue') jb[state.judgeSlot - 1] += val;
-          else jr[state.judgeSlot - 1] += val;
+        
+        const { row } = await readMatchRow();
+        if (row) {
+          const jb = pad4(row.judge_blue);
+          const jr = pad4(row.judge_red);
+          const idx = state.judgeSlot - 1;
+          if (side === 'blue') jb[idx] += val;
+          else jr[idx] += val;
+          
+          state.match = row;
+          state.match.judge_blue = jb;
+          state.match.judge_red = jr;
           renderVoteScores();
           renderTVJudgeNets();
           renderLaptopJudges();
+
+          try {
+            await sb.from("matches").update({
+              judge_blue: jb,
+              judge_red: jr,
+              updated_at: new Date().toISOString()
+            }).eq("ring_id", state.ring.id);
+          } catch(e) {}
         }
-        try {
-          sb.rpc("judge_score", {
-            p_ring_id: String(state.ring.id), p_slot: state.judgeSlot,
-            p_side: side, p_points: val, p_session: state.phoneSessionId
-          }).then(({ error }) => {
-            if (error && /not registered|not found|kicked|removed/i.test(error.message || "")) {
-              leavePhone("Kicked from ring.");
-            } else {
-              fetchMatchNow();
-            }
-          });
-        } catch(e) {}
       });
     });
+
     document.querySelectorAll(".patterns-tap").forEach(btn => {
       btn.addEventListener("click", async () => {
         if (timerState.finished) { setPhoneStatus("✗ Match finished", true); return; }
@@ -2649,6 +2539,7 @@
         stopTimerTick();
       });
     });
+
     async function enterLaptop() {
       document.getElementById("laptop-ring-name").textContent = state.ring.ring_name;
       document.getElementById("laptop-ring-id").textContent = "Ring " + state.ring.ring_code;
@@ -2667,7 +2558,6 @@
       startBroadcastLoop();
       subscribeMatch();
       subscribeRing();
-      startPhoneListPolling();
       startMatchPolling();
       startMatchListPolling();
       renderLaptopJudges();
@@ -2698,6 +2588,8 @@
     document.getElementById('btn-timer-pause').addEventListener('click', pauseTimer);
     document.getElementById('btn-timer-reset').addEventListener('click', resetRound);
     document.getElementById('btn-winner-reset').addEventListener('click', resetMatch);
+
+    /* DIRECT PENALTY / CARD ADJUSTMENT LOGIC (Replaces RPC adjust_card) */
     document.querySelectorAll(".penalty-btn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const act = btn.dataset.act;
@@ -2713,16 +2605,25 @@
         else if (act.includes('blue-yc-minus')) { column = 'blue_yellow_cards'; delta = -1; }
         else if (act.includes('red-yc-plus')) { column = 'red_yellow_cards'; delta = 1; }
         else if (act.includes('red-yc-minus')) { column = 'red_yellow_cards'; delta = -1; }
-        if (column && state.match) {
-          state.match[column] = Math.max(0, (state.match[column] || 0) + delta);
-          handleMatchUpdate({ new: state.match });
-          try {
-            await sb.rpc("adjust_card", { p_ring_id: String(state.ring.id), p_column: column, p_delta: delta });
-          } catch(e) {}
-          fetchMatchNow();
+        
+        if (column && state.ring && state.ring.id) {
+          const { row } = await readMatchRow();
+          if (row) {
+            const newVal = Math.max(0, (row[column] || 0) + delta);
+            row[column] = newVal;
+            handleMatchUpdate({ new: row });
+            
+            try {
+              const updateData = {};
+              updateData[column] = newVal;
+              updateData.updated_at = new Date().toISOString();
+              await sb.from("matches").update(updateData).eq("ring_id", state.ring.id);
+            } catch(e) {}
+          }
         }
       });
     });
+
     async function enterTV() {
       document.getElementById("tv-ring-name").textContent = state.ring.ring_name;
       await ensureMatchRow();
@@ -2739,6 +2640,7 @@
       showView("tv");
       document.body.style.cursor = "none";
     }
+
     function subscribeMatch() {
       if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
       if (!state.ring || !state.ring.id) return;
@@ -2768,14 +2670,14 @@
       if (!m) return;
       state.match = m;
       const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-      set("l-blue-gj", m.blue_gam_jeom);
-      set("l-red-gj", m.red_gam_jeom);
-      set("l-blue-yc", m.blue_yellow_cards);
-      set("l-red-yc", m.red_yellow_cards);
-      set("tv-blue-gj", m.blue_gam_jeom);
-      set("tv-red-gj", m.red_gam_jeom);
-      set("tv-blue-yc", m.blue_yellow_cards);
-      set("tv-red-yc", m.red_yellow_cards);
+      set("l-blue-gj", m.blue_gam_jeom || 0);
+      set("l-red-gj", m.red_gam_jeom || 0);
+      set("l-blue-yc", m.blue_yellow_cards || 0);
+      set("l-red-yc", m.red_yellow_cards || 0);
+      set("tv-blue-gj", m.blue_gam_jeom || 0);
+      set("tv-red-gj", m.red_gam_jeom || 0);
+      set("tv-blue-yc", m.blue_yellow_cards || 0);
+      set("tv-red-yc", m.red_yellow_cards || 0);
       renderVoteScores();
       renderLaptopJudges();
       renderTVJudgeNets();
@@ -2787,8 +2689,6 @@
       if (state.realtimeChannel) sb.removeChannel(state.realtimeChannel);
       if (state.ringChannel) sb.removeChannel(state.ringChannel);
       if (timerChannel) sb.removeChannel(timerChannel);
-      if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-      if (state.pollInterval) clearInterval(state.pollInterval);
       if (state.matchPollInterval) clearInterval(state.matchPollInterval);
       if (state.matchListInterval) clearInterval(state.matchListInterval);
       stopTimerTick();
