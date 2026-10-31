@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>TKD iScore - Ring View & Brackets</title>
+<title>TKD iScore - 9th Vojvodina Open ITF</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -16,6 +16,7 @@ button { touch-action: manipulation; cursor: pointer; }
 button:disabled { opacity: .6; cursor: not-allowed; }
 .hidden-view { display: none !important; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 30px; height: 30px; border: 3px solid #334155; border-top-color: #fbbf24; border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto 10px; }
 
 /* ===== TV DISPLAY STYLES ===== */
 .tv-container { width: 100vw; height: 100vh; background: #090d16; position: relative; overflow: hidden; display: flex; flex-direction: column; }
@@ -228,6 +229,24 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .bracket-slot.won { background: rgba(16,185,129,0.16); color: #6ee7b7; }
 .bracket-slot.lost { opacity: 0.5; text-decoration: line-through; }
 .bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
+
+/* ✅ NEW: Drag & Drop Styles for Bracket Editing */
+.bracket-slot[draggable="true"] {
+  cursor: grab;
+  transition: background 0.2s, transform 0.2s, border 0.2s;
+}
+.bracket-slot[draggable="true"]:active {
+  cursor: grabbing;
+}
+.bracket-slot.dragging {
+  opacity: 0.5;
+  background: #334155 !important;
+}
+.bracket-slot.drop-hover {
+  background: #064e3b !important;
+  border: 2px dashed #10b981 !important;
+  transform: scale(1.02);
+}
 </style>
 </head>
 <body class="bg-slate-900">
@@ -636,12 +655,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 
 <script>
 /* =========================================================================
-   TKD iScore - ring.html (ULTIMATE COMBINED VERSION)
-   DATA SOURCE (identical tables to manage.html):
-     • rings                -> login codes, live display names
-     • ring_assignments     -> which categories fight on which ring + bracket_state
-     • final_registrations  -> entries per person
-     • competitors          -> person details (name / team / gender)
+   TKD iScore - ring.html (ULTIMATE COMBINED VERSION + DRAG/DROP + AUTO-ADVANCE)
    ========================================================================= */
 
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
@@ -666,6 +680,10 @@ const state = {
   heartbeatInterval: null, presenceInterval: null, queueInterval: null
 };
 
+// ✅ NEW: Global state for Drag & Drop and Auto-Advance
+let dragSource = null;
+let autoAdvanceTimeout = null;
+
 function freshMatchObject() {
   return { judge_blue: [0, 0, 0, 0], judge_red: [0, 0, 0, 0], pattern_votes: [null, null, null, null], blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0 };
 }
@@ -679,7 +697,6 @@ let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
 /* ============================ SMALL HELPERS ============================ */
 function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val === null || val === undefined || val === "") ? "-" : val; }
 function escapeHtml(str) { return String(str === null || str === undefined ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
-function jsStr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
 function getRingNumber() { const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1"; const n = parseInt(String(raw).replace(/\D/g, ""), 10); return isNaN(n) || n < 1 ? 1 : n; }
 function maxJudges() { return state.ring ? (parseInt(state.ring.max_phones, 10) || 4) : 4; }
@@ -934,20 +951,51 @@ async function pushRingUpdate(fields) {
 }
 
 async function loadCurrentFight(manual) {
+  // ✅ Cancel auto-advance if user manually interacts
+  if (autoAdvanceTimeout && manual) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
+
   const a = activeAssignment(); if (!a) { showToast("No category assigned to this ring.", "warning"); return; }
   if (!state.bracket) await loadOrCreateBracket(false);
   if (!state.bracket) { showToast("No competitors found for this category.", "warning"); renderQueue(); return; }
   autoResolveByes(state.bracket);
   const next = findNextPending(state.bracket);
+  
   if (!next) {
-    state.bracket.currentRound = null; state.bracket.currentMatch = null; await saveBracket();
+    state.bracket.currentRound = null;
+    state.bracket.currentMatch = null;
+    await saveBracket();
     const champ = state.bracket.champion;
-    await pushRingUpdate({ blue_name: champ ? champ.name : null, red_name: null, blue_club: champ ? champ.team : null, red_club: null, next_blue_name: null, next_red_name: null, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: champ ? "🏆 Category Complete" : "No Fight Available", match_number: 0 });
-    resetMatchScores(); resetTimerForNewFight(); renderQueue();
-    if (champ) showToast("🏆 " + champ.name + " wins the category!", "success"); else showToast("No more fights available in this category.", "warning");
+    await pushRingUpdate({
+      blue_name: champ ? champ.name : null, red_name: null,
+      blue_club: champ ? champ.team : null, red_club: null,
+      next_blue_name: null, next_red_name: null,
+      category_name: a.category_name,
+      discipline: String(a.discipline || "sparring").toLowerCase(),
+      match_stage: champ ? "🏆 Category Complete" : "No Fight Available",
+      match_number: 0
+    });
+    resetMatchScores();
+    resetTimerForNewFight();
+    renderQueue();
+    
+    if (champ) {
+      showToast("🏆 " + champ.name + " wins the category!", "success");
+      
+      // ✅ AUTO-ADVANCE LOGIC
+      if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+      autoAdvanceTimeout = setTimeout(async () => {
+        await advanceToNextCategory();
+        autoAdvanceTimeout = null;
+      }, 2500);
+    } else {
+      showToast("No more fights available in this category.", "warning");
+    }
     return;
   }
-  state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; await saveBracket();
+  
+  state.bracket.currentRound = next.round;
+  state.bracket.currentMatch = next.match;
+  await saveBracket();
   const fight = state.bracket.rounds[next.round][next.match];
   const fightNo = globalFightNumber(state.bracket, next.round, next.match);
   const stage = stageName(next.round, state.bracket.totalRounds);
@@ -956,7 +1004,14 @@ async function loadCurrentFight(manual) {
   const following = findFollowingPending(state.bracket, next.round, next.match);
   if (following) { const f = state.bracket.rounds[following.round][following.match]; nextBlue = isRealName(f.p1.name) ? f.p1.name : null; nextRed = isRealName(f.p2.name) ? f.p2.name : null; }
   state.bracket.currentRound = saveR; state.bracket.currentMatch = saveM;
-  await pushRingUpdate({ blue_name: fight.p1.name, red_name: fight.p2.name, blue_club: fight.p1.team || "", red_club: fight.p2.team || "", next_blue_name: nextBlue, next_red_name: nextRed, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: stage, match_number: fightNo });
+  await pushRingUpdate({
+    blue_name: fight.p1.name, red_name: fight.p2.name,
+    blue_club: fight.p1.team || "", red_club: fight.p2.team || "",
+    next_blue_name: nextBlue, next_red_name: nextRed,
+    category_name: a.category_name,
+    discipline: String(a.discipline || "sparring").toLowerCase(),
+    match_stage: stage, match_number: fightNo
+  });
   resetMatchScores(); resetTimerForNewFight(); renderQueue(); renderLaptopJudges();
   if (manual) showToast("▶ Loaded fight #" + fightNo + ": " + fight.p1.name + " vs " + fight.p2.name, "success");
 }
@@ -1021,10 +1076,62 @@ async function confirmAndAdvance() {
 }
 
 async function resetCategoryBracket() {
+  if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
   const a = activeAssignment(); if (!a) return;
   if (!confirm("Rebuild the bracket for '" + a.category_name + "'? All recorded results for this category will be cleared.")) return;
   try { localStorage.removeItem(bracketLocalKey(a.id)); } catch (e) {}
   await loadOrCreateBracket(true); await loadCurrentFight(true); renderQueue(); renderBracketIfOpen();
+}
+
+/* ==================== AUTO-ADVANCE TO NEXT CATEGORY ==================== */
+async function advanceToNextCategory() {
+  if (!state.assignments || state.assignments.length === 0) return;
+  
+  const currentIdx = state.assignments.findIndex(a => String(a.id) === String(state.activeAssignmentId));
+  let nextIdx = -1;
+  
+  for (let i = 1; i <= state.assignments.length; i++) {
+    const idx = (currentIdx + i) % state.assignments.length;
+    if (idx === currentIdx) break;
+    
+    const assignment = state.assignments[idx];
+    let hasChampion = false;
+    
+    if (assignment.bracket_state && assignment.bracket_state.champion) {
+      hasChampion = true;
+    } else {
+      try {
+        const raw = localStorage.getItem(bracketLocalKey(assignment.id));
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.champion) hasChampion = true;
+        }
+      } catch(e) {}
+    }
+    
+    if (!hasChampion) {
+      nextIdx = idx;
+      break;
+    }
+  }
+  
+  if (nextIdx !== -1) {
+    showToast("⏭️ Moving to: " + state.assignments[nextIdx].category_name, "success");
+    state.activeAssignmentId = state.assignments[nextIdx].id;
+    state.bracket = null;
+    renderCategoryPicker();
+    await loadOrCreateBracket(false);
+    
+    if (!state.bracket) {
+      showToast("⚠️ No competitors for next category. Please select manually.", "warning");
+      return;
+    }
+    
+    await loadCurrentFight(true);
+    renderQueue();
+  } else {
+    showToast("✅ All categories on this ring are complete!", "warning");
+  }
 }
 
 /* ==================== DISPLAY SYNC ==================== */
@@ -1055,7 +1162,15 @@ function renderCategoryPicker() {
   sel.innerHTML = state.assignments.map(a => { const label = (a.category_name || "Category") + " · " + String(a.discipline || "sparring").toUpperCase(); const selected = String(a.id) === String(state.activeAssignmentId) ? " selected" : ""; return '<option value="' + escapeHtml(a.id) + '"' + selected + ">" + escapeHtml(label) + "</option>"; }).join("");
 }
 
-async function onCategoryPick(assignmentId) { if (!assignmentId) return; state.activeAssignmentId = assignmentId; state.bracket = null; await loadOrCreateBracket(false); await loadCurrentFight(true); renderQueue(); }
+async function onCategoryPick(assignmentId) {
+  if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
+  if (!assignmentId) return;
+  state.activeAssignmentId = assignmentId;
+  state.bracket = null;
+  await loadOrCreateBracket(false);
+  await loadCurrentFight(true);
+  renderQueue();
+}
 
 function renderQueue() {
   const container = document.getElementById("match-list-container"); if (!container) return;
@@ -1088,19 +1203,86 @@ function renderQueue() {
   container.innerHTML = html;
 }
 
-/* ==================== BRACKET MODAL ==================== */
+/* ==================== BRACKET MODAL + DRAG & DROP ==================== */
 function renderBracketIfOpen() { const modal = document.getElementById("modal-bracket"); if (modal && !modal.classList.contains("hidden-view")) renderBracketModalContent(); }
 function openBracketModal() { const modal = document.getElementById("modal-bracket"); if (!modal) return; modal.classList.remove("hidden-view"); renderBracketModalContent(); }
 function closeBracketModal() { const modal = document.getElementById("modal-bracket"); if (modal) modal.classList.add("hidden-view"); }
 
+// ✅ NEW: Drag & Drop Handlers for Bracket Editing
+function bracketDragStart(e, round, match, slot) {
+  dragSource = { round, match, slot };
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.classList.add('dragging');
+}
+function bracketDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drop-hover');
+}
+function bracketDragLeave(e) {
+  e.currentTarget.classList.remove('drop-hover');
+}
+function bracketDrop(e, targetRound, targetMatch, targetSlot) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-hover');
+  if (!dragSource || !state.bracket) return;
+  
+  const src = dragSource;
+  const tgt = { round: targetRound, match: targetMatch, slot: targetSlot };
+  
+  if (src.round === tgt.round && src.match === tgt.match && src.slot === tgt.slot) {
+    dragSource = null;
+    return;
+  }
+  
+  const srcMatch = state.bracket.rounds[src.round][src.match];
+  const tgtMatch = state.bracket.rounds[tgt.round][tgt.match];
+  
+  const srcPlayer = srcMatch[src.slot];
+  const tgtPlayer = tgtMatch[tgt.slot];
+  
+  // Swap them
+  srcMatch[src.slot] = tgtPlayer;
+  tgtMatch[tgt.slot] = srcPlayer;
+  
+  // Save and re-render
+  saveBracket();
+  renderBracketModalContent();
+  renderQueue();
+  
+  // If the swapped players are in the current live fight, update the main display
+  const isCurrentFightAffected = 
+    (src.round === state.bracket.currentRound && src.match === state.bracket.currentMatch) ||
+    (tgt.round === state.bracket.currentRound && tgt.match === state.bracket.currentMatch);
+    
+  if (isCurrentFightAffected) {
+    loadCurrentFight(false);
+  }
+  
+  showToast("Players swapped in bracket", "success");
+  dragSource = null;
+}
+function bracketDragEnd(e) {
+  if (e.target) e.target.classList.remove('dragging');
+  document.querySelectorAll('.bracket-slot.drop-hover').forEach(el => el.classList.remove('drop-hover'));
+  dragSource = null;
+}
+
 function renderBracketModalContent() {
-  const content = document.getElementById("bracket-modal-content"); const title = document.getElementById("bracket-modal-title"); if (!content) return;
-  const a = activeAssignment(); const b = state.bracket;
+  const content = document.getElementById("bracket-modal-content");
+  const title = document.getElementById("bracket-modal-title");
+  if (!content) return;
+  const a = activeAssignment();
+  const b = state.bracket;
   if (!a) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">No category selected.</div>'; return; }
   if (title) title.textContent = a.category_name + " · " + String(a.discipline || "sparring").toUpperCase();
   if (!b) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No bracket available (not enough registered competitors).</div>'; return; }
+  
   let html = "";
   if (b.champion) html += '<div style="background:#064e3b;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;color:#6ee7b7;font-weight:800;">🏆 Category Champion: ' + escapeHtml(b.champion.name) + " (" + escapeHtml(b.champion.team || "") + ")</div>";
+  
+  html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Drag & Drop</strong> any competitor to swap them with another slot (e.g. to fix a wrong promotion).</div>';
+  
   html += '<div style="overflow-x:auto;padding:4px;margin-bottom:20px;"><table class="bracket-table"><thead><tr>';
   for (let r = 0; r < b.totalRounds; r++) html += "<th>" + (r === b.totalRounds - 1 ? "🏆 " : "") + escapeHtml(stageName(r, b.totalRounds)) + "</th>";
   html += "</tr></thead><tbody>";
@@ -1115,15 +1297,20 @@ function renderBracketModalContent() {
       let c1 = "bracket-slot first"; let c2 = "bracket-slot";
       if (n1 === BYE) c1 += " bye"; if (n2 === BYE) c2 += " bye";
       if (match.winner === "p1") { c1 += " won"; c2 += " lost"; } if (match.winner === "p2") { c2 += " won"; c1 += " lost"; }
+      
       html += '<td rowspan="' + step + '">';
       html += '<div class="bracket-match' + (isCurrent ? " live" : "") + '">';
-      html += '<div class="' + c1 + '">' + escapeHtml(n1) + '<div class="bracket-team">' + escapeHtml(match.p1.team || "") + "</div></div>";
-      html += '<div class="' + c2 + '">' + escapeHtml(n2) + '<div class="bracket-team">' + escapeHtml(match.p2.team || "") + "</div></div>";
+      
+      // ✅ Added draggable attributes to slots
+      html += '<div class="' + c1 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n1) + '<div class="bracket-team">' + escapeHtml(match.p1.team || "") + "</div></div>";
+      html += '<div class="' + c2 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n2) + '<div class="bracket-team">' + escapeHtml(match.p2.team || "") + "</div></div>";
+      
       html += "</div></td>";
     }
     html += "</tr>";
   }
   html += "</tbody></table></div>";
+  
   const list = competitorsFor(a.category_name, a.discipline);
   html += '<div style="padding:18px;background:#1e293b;border-radius:12px;border:1px solid #334155;">';
   html += '<h4 style="color:#fbbf24;margin:0 0 12px;display:flex;align-items:center;gap:8px;"><i class="fas fa-list"></i> Registered Competitors (' + list.length + ")</h4>";
@@ -1219,7 +1406,19 @@ async function tryLogin() {
   } catch (e) { console.error(e); errEl.textContent = "Connection error. Check console."; } finally { state.loggingIn = false; btn.disabled = false; btn.textContent = "Enter Ring"; }
 }
 
-async function refreshAllData(silent) { await fetchAssignments(); await fetchAllCompetitors(); await loadOrCreateBracket(false); await loadCurrentFight(false); renderQueue(); renderLaptopJudges(); renderVoteScores(); renderPenalties(); updateCompetitorDisplay(); if (!silent) showToast("Data refreshed from the tournament manager.", "success"); }
+async function refreshAllData(silent) {
+  if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
+  await fetchAssignments();
+  await fetchAllCompetitors();
+  await loadOrCreateBracket(false);
+  await loadCurrentFight(false);
+  renderQueue();
+  renderLaptopJudges();
+  renderVoteScores();
+  renderPenalties();
+  updateCompetitorDisplay();
+  if (!silent) showToast("Data refreshed from the tournament manager.", "success");
+}
 
 async function enterLaptop() {
   setTxt("laptop-ring-name", state.ring.ring_name); setTxt("laptop-ring-id", "Ring " + (state.ring.ring_code || getRingNumber())); setTxt("laptop-tv-code", state.ring.tv_code || "—");
@@ -1233,7 +1432,11 @@ async function enterTV() { setTxt("tv-ring-name", state.ring.ring_name); loadTim
 
 function subscribeRing() {
   if (state.ringChannel) sb.removeChannel(state.ringChannel); if (!state.ring || !state.ring.id) return;
-  state.ringChannel = sb.channel("ring-" + state.ring.id).on("postgres_changes", { event: "UPDATE", schema: "public", table: RING_TABLE, filter: "id=eq." + state.ring.id }, payload => { if (!payload.new) return; state.ring = Object.assign({}, state.ring, payload.new); try { sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring)); } catch (e) {} const selMax = document.getElementById("sel-max-phones"); if (selMax && state.role === "laptop") selMax.value = String(state.ring.max_phones || 4); updateCompetitorDisplay(); renderLaptopJudges(); renderVoteScores(); renderTVJudgeNets(); }).subscribe();
+  state.ringChannel = sb.channel("ring-" + state.ring.id).on("postgres_changes", { event: "UPDATE", schema: "public", table: RING_TABLE, filter: "id=eq." + state.ring.id }, payload => {
+    if (!payload.new) return; state.ring = Object.assign({}, state.ring, payload.new); try { sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring)); } catch (e) {}
+    const selMax = document.getElementById("sel-max-phones"); if (selMax && state.role === "laptop") selMax.value = String(state.ring.max_phones || 4);
+    updateCompetitorDisplay(); renderLaptopJudges(); renderVoteScores(); renderTVJudgeNets();
+  }).subscribe();
 }
 
 /* ==================== BUTTON WIRING ==================== */
@@ -1262,7 +1465,13 @@ document.querySelectorAll(".penalty-btn").forEach(btn => {
 });
 
 /* ==================== CLEANUP / BOOT ==================== */
-function cleanupChannels() { if (state.ringChannel) sb.removeChannel(state.ringChannel); if (state.scoreChannel) sb.removeChannel(state.scoreChannel); if (timerChannel) sb.removeChannel(timerChannel); state.ringChannel = null; state.scoreChannel = null; timerChannel = null; if (state.heartbeatInterval) clearInterval(state.heartbeatInterval); if (state.presenceInterval) clearInterval(state.presenceInterval); if (state.queueInterval) clearInterval(state.queueInterval); state.heartbeatInterval = null; state.presenceInterval = null; state.queueInterval = null; stopTimerTick(); stopBroadcastLoop(); }
+function cleanupChannels() {
+  if (state.ringChannel) sb.removeChannel(state.ringChannel); if (state.scoreChannel) sb.removeChannel(state.scoreChannel); if (timerChannel) sb.removeChannel(timerChannel);
+  state.ringChannel = null; state.scoreChannel = null; timerChannel = null;
+  if (state.heartbeatInterval) clearInterval(state.heartbeatInterval); if (state.presenceInterval) clearInterval(state.presenceInterval); if (state.queueInterval) clearInterval(state.queueInterval);
+  state.heartbeatInterval = null; state.presenceInterval = null; state.queueInterval = null;
+  stopTimerTick(); stopBroadcastLoop();
+}
 window.addEventListener("beforeunload", cleanupChannels); window.addEventListener("pagehide", cleanupChannels); window.addEventListener("hashchange", route);
 renderLaptopJudges(); renderPenalties(); renderVoteScores(); route();
 </script>
