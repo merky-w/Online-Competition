@@ -3,1068 +3,231 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>TKD iScore - 9th Vojvodina Open ITF</title>
+<title>TKD iScore - Ring View & Brackets</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 <style>
-* {
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  box-sizing: border-box;
-}
-input, textarea, select {
-  user-select: text;
-}
-body {
-  font-family: 'Segoe UI', Roboto, sans-serif;
-  overscroll-behavior: none;
-  margin: 0;
-  padding: 0;
-}
-button {
-  touch-action: manipulation;
-  cursor: pointer;
-}
-button:disabled {
-  opacity: .6;
-  cursor: not-allowed;
-}
-.hidden-view {
-  display: none !important;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid #334155;
-  border-top-color: #fbbf24;
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
-  margin: 0 auto 10px;
-}
+* { -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
+input, textarea, select { user-select: text; }
+body { font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior: none; margin: 0; padding: 0; }
+button { touch-action: manipulation; cursor: pointer; }
+button:disabled { opacity: .6; cursor: not-allowed; }
+.hidden-view { display: none !important; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===== TV DISPLAY STYLES ===== */
-.tv-container {
-  width: 100vw;
-  height: 100vh;
-  background: #090d16;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.tv-top-bar {
-  background: linear-gradient(90deg, #111827 0%, #1f2937 100%);
-  padding: 12px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 3px solid #fbbf24;
-  z-index: 10;
-}
-.tv-top-info {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  color: white;
-  font-size: 16px;
-}
-.tv-top-info .stage-badge {
-  background: #dc2626;
-  color: white;
-  padding: 5px 14px;
-  border-radius: 6px;
-  font-weight: 800;
-  font-size: 14px;
-}
-.tv-top-info .category-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #fbbf24;
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-.tv-main-area {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  position: relative;
-}
-.tv-side {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 40px;
-  position: relative;
-}
-.tv-side.blue-side {
-  background: linear-gradient(135deg, rgba(30,58,138,0.85) 0%, rgba(37,99,235,0.75) 100%);
-  border-right: 2px solid rgba(255,255,255,0.1);
-}
-.tv-side.red-side {
-  background: linear-gradient(135deg, rgba(127,29,29,0.85) 0%, rgba(220,38,38,0.75) 100%);
-  border-left: 2px solid rgba(255,255,255,0.1);
-}
-.tv-competitor-name {
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
-  font-weight: 900;
-  color: white;
-  text-shadow: 0 4px 16px rgba(0,0,0,0.6);
-  margin-bottom: 10px;
-  line-height: 1.1;
-}
-.tv-competitor-club {
-  font-size: clamp(1.2rem, 2.5vw, 2rem);
-  color: rgba(255,255,255,0.9);
-  font-weight: 700;
-  margin-bottom: 25px;
-}
-.tv-big-score {
-  font-size: clamp(5rem, 12vw, 10rem);
-  font-weight: 900;
-  color: white;
-  text-shadow: 0 8px 24px rgba(0,0,0,0.7);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.tv-center-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(15, 23, 42, 0.95);
-  border: 4px solid #fbbf24;
-  border-radius: 24px;
-  padding: 25px 50px;
-  text-align: center;
-  z-index: 20;
-  box-shadow: 0 15px 50px rgba(0,0,0,0.8);
-  min-width: 340px;
-}
-.tv-round-info {
-  color: #fbbf24;
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: 3px;
-  margin-bottom: 6px;
-}
-.tv-timer-display {
-  color: white;
-  font-size: clamp(3.5rem, 7vw, 6rem);
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  margin-bottom: 15px;
-}
-.tv-timer-display.warning {
-  color: #ef4444;
-  animation: timerBlink 0.8s infinite;
-}
-.tv-timer-display.break-mode {
-  color: #38bdf8;
-}
-.tv-penalties {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-  color: white;
-  font-size: 1.4rem;
-  font-weight: 800;
-}
-.tv-penalty-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.tv-penalty-label {
-  color: #fbbf24;
-}
-.tv-judge-corner {
-  position: absolute;
-  background: rgba(15, 23, 42, 0.85);
-  border: 2px solid #334155;
-  border-radius: 12px;
-  padding: 10px 18px;
-  text-align: center;
-  z-index: 25;
-  min-width: 90px;
-}
+.tv-container { width: 100vw; height: 100vh; background: #090d16; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.tv-top-bar { background: linear-gradient(90deg, #111827 0%, #1f2937 100%); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #fbbf24; z-index: 10; }
+.tv-top-info { display: flex; align-items: center; gap: 20px; color: white; font-size: 16px; }
+.tv-top-info .stage-badge { background: #dc2626; color: white; padding: 5px 14px; border-radius: 6px; font-weight: 800; font-size: 14px; }
+.tv-top-info .category-info { display: flex; align-items: center; gap: 10px; color: #fbbf24; font-weight: 700; font-size: 1.1rem; }
+.tv-main-area { flex: 1; display: grid; grid-template-columns: 1fr 1fr; position: relative; }
+.tv-side { display: flex; flex-direction: column; justify-content: center; padding: 40px; position: relative; }
+.tv-side.blue-side { background: linear-gradient(135deg, rgba(30,58,138,0.85) 0%, rgba(37,99,235,0.75) 100%); border-right: 2px solid rgba(255,255,255,0.1); }
+.tv-side.red-side { background: linear-gradient(135deg, rgba(127,29,29,0.85) 0%, rgba(220,38,38,0.75) 100%); border-left: 2px solid rgba(255,255,255,0.1); }
+.tv-competitor-name { font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 900; color: white; text-shadow: 0 4px 16px rgba(0,0,0,0.6); margin-bottom: 10px; line-height: 1.1; }
+.tv-competitor-club { font-size: clamp(1.2rem, 2.5vw, 2rem); color: rgba(255,255,255,0.9); font-weight: 700; margin-bottom: 25px; }
+.tv-big-score { font-size: clamp(5rem, 12vw, 10rem); font-weight: 900; color: white; text-shadow: 0 8px 24px rgba(0,0,0,0.7); line-height: 1; font-variant-numeric: tabular-nums; }
+.tv-center-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.95); border: 4px solid #fbbf24; border-radius: 24px; padding: 25px 50px; text-align: center; z-index: 20; box-shadow: 0 15px 50px rgba(0,0,0,0.8); min-width: 340px; }
+.tv-round-info { color: #fbbf24; font-size: 1.3rem; font-weight: 800; letter-spacing: 3px; margin-bottom: 6px; }
+.tv-timer-display { color: white; font-size: clamp(3.5rem, 7vw, 6rem); font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 15px; }
+.tv-timer-display.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
+.tv-timer-display.break-mode { color: #38bdf8; }
+.tv-penalties { display: flex; align-items: center; justify-content: center; gap: 25px; color: white; font-size: 1.4rem; font-weight: 800; }
+.tv-penalty-item { display: flex; align-items: center; gap: 8px; }
+.tv-penalty-label { color: #fbbf24; }
+.tv-judge-corner { position: absolute; background: rgba(15, 23, 42, 0.85); border: 2px solid #334155; border-radius: 12px; padding: 10px 18px; text-align: center; z-index: 25; min-width: 90px; }
 .tv-judge-corner.tl { top: 80px; left: 30px; }
 .tv-judge-corner.tr { top: 80px; right: 30px; }
 .tv-judge-corner.br { bottom: 80px; right: 30px; }
 .tv-judge-corner.bl { bottom: 80px; left: 30px; }
-.tv-jc-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.tv-jc-score {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: white;
-  font-variant-numeric: tabular-nums;
-}
-.tv-judge-corner.lead-blue {
-  border-color: #2563eb;
-  background: rgba(30,58,138,0.7);
-}
-.tv-judge-corner.lead-red {
-  border-color: #dc2626;
-  background: rgba(127,29,29,0.7);
-}
-.tv-bottom-bar {
-  background: linear-gradient(90deg, #111827 0%, #030712 100%);
-  border-top: 3px solid #fbbf24;
-  padding: 15px 35px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  z-index: 10;
-}
-.tv-next-match {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-.tv-next-label {
-  color: #9ca3af;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.tv-next-name {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 800;
-}
+.tv-jc-label { font-size: 0.75rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
+.tv-jc-score { font-size: 1.8rem; font-weight: 900; color: white; font-variant-numeric: tabular-nums; }
+.tv-judge-corner.lead-blue { border-color: #2563eb; background: rgba(30,58,138,0.7); }
+.tv-judge-corner.lead-red { border-color: #dc2626; background: rgba(127,29,29,0.7); }
+.tv-bottom-bar { background: linear-gradient(90deg, #111827 0%, #030712 100%); border-top: 3px solid #fbbf24; padding: 15px 35px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; z-index: 10; }
+.tv-next-match { display: flex; align-items: center; gap: 15px; }
+.tv-next-label { color: #9ca3af; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.tv-next-name { color: white; font-size: 1.5rem; font-weight: 800; }
 .tv-next-name.blue-next { color: #60a5fa; }
 .tv-next-name.red-next { color: #f87171; }
-.tv-winner-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.92);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.tv-winner-box {
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  border: 4px solid #fbbf24;
-  border-radius: 24px;
-  padding: 60px 80px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-}
-.tv-winner-trophy {
-  font-size: 6rem;
-  margin-bottom: 20px;
-}
-.tv-winner-text {
-  font-size: 4rem;
-  font-weight: 900;
-  color: #fbbf24;
-  margin-bottom: 10px;
-}
-.tv-winner-name {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 20px;
-}
-.tv-winner-sub {
-  font-size: 1.5rem;
-  color: #9ca3af;
-  font-weight: 600;
-  letter-spacing: 3px;
-}
-@keyframes timerBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+.tv-winner-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.tv-winner-box { background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border: 4px solid #fbbf24; border-radius: 24px; padding: 60px 80px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+.tv-winner-trophy { font-size: 6rem; margin-bottom: 20px; }
+.tv-winner-text { font-size: 4rem; font-weight: 900; color: #fbbf24; margin-bottom: 10px; }
+.tv-winner-name { font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 20px; }
+.tv-winner-sub { font-size: 1.5rem; color: #9ca3af; font-weight: 600; letter-spacing: 3px; }
+@keyframes timerBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 /* ===== LAPTOP VIEW STYLES ===== */
-.laptop-container {
-  background: #1e293b;
-  min-height: 100vh;
-  padding: 20px;
-  color: white;
-}
-.laptop-header {
-  background: #0f172a;
-  border-radius: 12px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-.laptop-header-left h1 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin: 0;
-}
-.laptop-header-left p {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin: 5px 0 0 0;
-}
-.laptop-header-right {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.laptop-main-grid {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 20px;
-}
-@media (max-width: 1200px) {
-  .laptop-main-grid { grid-template-columns: 1fr; }
-}
-.current-match-card {
-  background: #0f172a;
-  border-radius: 16px;
-  padding: 25px;
-  border: 2px solid #334155;
-}
-.current-match-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #334155;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.match-stage-badge {
-  background: #dc2626;
-  color: white;
-  padding: 6px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-.match-number-badge {
-  background: #1e40af;
-  color: white;
-  padding: 6px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-.competitors-display {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 20px;
-  align-items: center;
-  margin-bottom: 25px;
-}
-.competitor-box {
-  background: #1e293b;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  border: 3px solid;
-}
+.laptop-container { background: #1e293b; min-height: 100vh; padding: 20px; color: white; }
+.laptop-header { background: #0f172a; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+.laptop-header-left h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+.laptop-header-left p { color: #94a3b8; font-size: 0.9rem; margin: 5px 0 0 0; }
+.laptop-header-right { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.laptop-main-grid { display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+@media (max-width: 1200px) { .laptop-main-grid { grid-template-columns: 1fr; } }
+.current-match-card { background: #0f172a; border-radius: 16px; padding: 25px; border: 2px solid #334155; }
+.current-match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #334155; flex-wrap: wrap; gap: 10px; }
+.match-stage-badge { background: #dc2626; color: white; padding: 6px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+.match-number-badge { background: #1e40af; color: white; padding: 6px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+.competitors-display { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin-bottom: 25px; }
+.competitor-box { background: #1e293b; border-radius: 12px; padding: 20px; text-align: center; border: 3px solid; }
 .competitor-box.blue-box { border-color: #2563eb; }
 .competitor-box.red-box { border-color: #dc2626; }
-.competitor-box .comp-name {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
+.competitor-box .comp-name { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
 .competitor-box.blue-box .comp-name { color: #60a5fa; }
 .competitor-box.red-box .comp-name { color: #f87171; }
-.competitor-box .comp-club {
-  color: #94a3b8;
-  font-size: 1rem;
-  font-weight: 600;
-}
-.vs-divider {
-  font-size: 2rem;
-  font-weight: 900;
-  color: #fbbf24;
-}
-.timer-section {
-  background: #1e293b;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-.timer-display-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.timer-round-badge {
-  background: #334155;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-}
-.timer-time {
-  font-size: 3rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  color: white;
-}
+.competitor-box .comp-club { color: #94a3b8; font-size: 1rem; font-weight: 600; }
+.vs-divider { font-size: 2rem; font-weight: 900; color: #fbbf24; }
+.timer-section { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.timer-display-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+.timer-round-badge { background: #334155; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 700; }
+.timer-time { font-size: 3rem; font-weight: 900; font-variant-numeric: tabular-nums; color: white; }
 .timer-time.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
 .timer-time.break-mode { color: #38bdf8; }
-.timer-controls {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-}
-.timer-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 700;
-  border: none;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-}
+.timer-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.timer-btn { padding: 10px 20px; border-radius: 8px; font-weight: 700; border: none; font-size: 0.95rem; transition: all 0.2s; }
 .timer-btn.start { background: #10b981; color: white; }
 .timer-btn.start:hover { background: #059669; }
 .timer-btn.pause { background: #f59e0b; color: white; }
 .timer-btn.pause:hover { background: #d97706; }
 .timer-btn.reset { background: #ef4444; color: white; }
 .timer-btn.reset:hover { background: #dc2626; }
-.score-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-.score-box {
-  background: #1e293b;
-  border-radius: 12px;
-  padding: 25px;
-  text-align: center;
-  border: 2px solid;
-}
+.score-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+.score-box { background: #1e293b; border-radius: 12px; padding: 25px; text-align: center; border: 2px solid; }
 .score-box.blue-score { border-color: #2563eb; }
 .score-box.red-score { border-color: #dc2626; }
-.score-box .score-label {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-}
-.score-box .score-value {
-  font-size: 4.5rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
+.score-box .score-label { font-size: 0.85rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.score-box .score-value { font-size: 4.5rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 .score-box.blue-score .score-value { color: #60a5fa; }
 .score-box.red-score .score-value { color: #f87171; }
-.judges-section {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.judge-box {
-  background: #1e293b;
-  border-radius: 10px;
-  padding: 15px;
-  text-align: center;
-  border: 2px solid #334155;
-  transition: all 0.3s;
-}
-.judge-box.leading-blue {
-  border-color: #2563eb;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
-}
-.judge-box.leading-red {
-  border-color: #dc2626;
-  background: linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%);
-}
-.judge-box .judge-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-.judge-box .judge-status-badge {
-  display: inline-block;
-  font-size: 0.65rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 800;
-  margin-bottom: 6px;
-}
+.judges-section { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.judge-box { background: #1e293b; border-radius: 10px; padding: 15px; text-align: center; border: 2px solid #334155; transition: all 0.3s; }
+.judge-box.leading-blue { border-color: #2563eb; background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); }
+.judge-box.leading-red { border-color: #dc2626; background: linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%); }
+.judge-box .judge-label { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+.judge-box .judge-status-badge { display: inline-block; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-bottom: 6px; }
 .judge-status-badge.online { background: #065f46; color: #34d399; }
 .judge-status-badge.offline { background: #7f1d1d; color: #fca5a5; }
-.judge-box .judge-detail {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  margin-top: 4px;
-  font-weight: 600;
-}
-.judge-row-controls {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
-  font-size: 0.75rem;
-}
-.judge-side-adj {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-.judge-adj-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  border: none;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: white;
-}
+.judge-box .judge-detail { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; font-weight: 600; }
+.judge-row-controls { display: flex; justify-content: center; gap: 10px; margin-top: 8px; font-size: 0.75rem; }
+.judge-side-adj { display: flex; align-items: center; gap: 3px; }
+.judge-adj-btn { width: 22px; height: 22px; border-radius: 4px; border: none; font-size: 0.8rem; font-weight: 800; color: white; }
 .judge-adj-btn.plus { background: #10b981; }
 .judge-adj-btn.minus { background: #ef4444; }
-.penalties-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-.penalty-box {
-  background: #1e293b;
-  border-radius: 10px;
-  padding: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.penalty-box .penalty-info {
-  display: flex;
-  flex-direction: column;
-}
-.penalty-box .penalty-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.penalty-box .penalty-value {
-  font-size: 1.8rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
-.penalty-box .penalty-controls {
-  display: flex;
-  gap: 5px;
-}
-.penalty-btn {
-  width: 35px;
-  height: 35px;
-  border-radius: 6px;
-  border: none;
-  font-size: 1.2rem;
-  font-weight: 900;
-  background: #334155;
-  color: white;
-  transition: all 0.15s;
-}
+.penalties-section { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+.penalty-box { background: #1e293b; border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+.penalty-box .penalty-info { display: flex; flex-direction: column; }
+.penalty-box .penalty-label { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+.penalty-box .penalty-value { font-size: 1.8rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.penalty-box .penalty-controls { display: flex; gap: 5px; }
+.penalty-btn { width: 35px; height: 35px; border-radius: 6px; border: none; font-size: 1.2rem; font-weight: 900; background: #334155; color: white; transition: all 0.15s; }
 .penalty-btn:active { transform: scale(0.95); }
 .penalty-btn.plus { background: #10b981; }
 .penalty-btn.minus { background: #ef4444; }
-.settings-panel {
-  background: #0f172a;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 2px solid #334155;
-  position: relative;
-}
-.ring-layout-box {
-  position: relative;
-  width: 100%;
-  max-width: 340px;
-  height: 200px;
-  margin: 20px auto;
-  background: #1e293b;
-  border: 2px dashed #475569;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ring-center-label {
-  color: #64748b;
-  font-weight: 800;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-.ring-corner-btn {
-  position: absolute;
-  background: #334155;
-  color: white;
-  border: 2px solid #fbbf24;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-weight: 800;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
+.settings-panel { background: #0f172a; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 2px solid #334155; position: relative; }
+.ring-layout-box { position: relative; width: 100%; max-width: 340px; height: 200px; margin: 20px auto; background: #1e293b; border: 2px dashed #475569; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.ring-center-label { color: #64748b; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; }
+.ring-corner-btn { position: absolute; background: #334155; color: white; border: 2px solid #fbbf24; padding: 8px 12px; border-radius: 8px; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .ring-corner-btn:hover { background: #2563eb; transform: scale(1.05); }
 .ring-corner-btn.connected { border-color: #10b981; background: #064e3b; }
 .ring-corner-btn.tl { top: -15px; left: -15px; }
 .ring-corner-btn.tr { top: -15px; right: -15px; }
 .ring-corner-btn.br { bottom: -15px; right: -15px; }
 .ring-corner-btn.bl { bottom: -15px; left: -15px; }
-.admin-kick-corner-box {
-  position: absolute;
-  bottom: 12px;
-  right: 15px;
-}
-.admin-kick-panel-btn {
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-  border: 1px solid #ef4444;
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 0.8rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.admin-kick-panel-btn:hover {
-  background: #ef4444;
-  color: white;
-}
-.match-list-sidebar {
-  background: #0f172a;
-  border-radius: 12px;
-  padding: 20px;
-  border: 2px solid #334155;
-  max-height: calc(100vh - 140px);
-  overflow-y: auto;
-}
-.match-list-sidebar h3 {
-  font-size: 1.1rem;
-  font-weight: 800;
-  margin-bottom: 15px;
-  color: #fbbf24;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.category-picker {
-  width: 100%;
-  background: #1e293b;
-  color: white;
-  border: 1px solid #475569;
-  border-radius: 8px;
-  padding: 10px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  margin-bottom: 15px;
-}
-.queue-group-title {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #64748b;
-  font-weight: 800;
-  margin: 14px 0 8px;
-  border-bottom: 1px solid #1e293b;
-  padding-bottom: 4px;
-}
-.match-list-item {
-  background: #1e293b;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
-  border-left: 4px solid #334155;
-  transition: all 0.2s;
-  cursor: pointer;
-}
+.admin-kick-corner-box { position: absolute; bottom: 12px; right: 15px; }
+.admin-kick-panel-btn { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid #ef4444; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+.admin-kick-panel-btn:hover { background: #ef4444; color: white; }
+
+/* Match list sidebar */
+.match-list-sidebar { background: #0f172a; border-radius: 12px; padding: 20px; border: 2px solid #334155; max-height: calc(100vh - 140px); overflow-y: auto; }
+.match-list-sidebar h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; color: #fbbf24; display: flex; align-items: center; gap: 8px; }
+.category-picker { width: 100%; background: #1e293b; color: white; border: 1px solid #475569; border-radius: 8px; padding: 10px; font-weight: 700; font-size: 0.85rem; margin-bottom: 15px; }
+.queue-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 800; margin: 14px 0 8px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; }
+.match-list-item { background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #334155; transition: all 0.2s; cursor: pointer; }
 .match-list-item:hover { background: #273549; }
-.match-list-item.active {
-  border-left-color: #10b981;
-  background: #064e3b;
-}
-.match-list-item.completed {
-  border-left-color: #6b7280;
-  opacity: 0.65;
-}
-.match-list-item.bye {
-  border-left-color: #475569;
-  opacity: 0.45;
-}
-.match-list-item .ml-number {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  font-weight: 700;
-  margin-bottom: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-}
-.match-list-item .ml-names {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 4px;
-  line-height: 1.35;
-}
-.match-list-item .ml-category {
-  font-size: 0.72rem;
-  color: #94a3b8;
-}
-.match-list-item .ml-winner {
-  font-size: 0.78rem;
-  color: #10b981;
-  font-weight: 700;
-  margin-top: 4px;
-}
-.ml-pill {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.65rem;
-  font-weight: 800;
-}
+.match-list-item.active { border-left-color: #10b981; background: #064e3b; }
+.match-list-item.completed { border-left-color: #6b7280; opacity: 0.65; }
+.match-list-item.bye { border-left-color: #475569; opacity: 0.45; }
+.match-list-item .ml-number { font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.match-list-item .ml-names { font-size: 0.9rem; font-weight: 700; color: white; margin-bottom: 4px; line-height: 1.35; }
+.match-list-item .ml-category { font-size: 0.72rem; color: #94a3b8; }
+.match-list-item .ml-winner { font-size: 0.78rem; color: #10b981; font-weight: 700; margin-top: 4px; }
+.ml-pill { padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: 800; }
 .ml-pill.live { background: #10b981; color: #04231a; }
 .ml-pill.done { background: #475569; color: #e2e8f0; }
 .ml-pill.next { background: #fbbf24; color: #1f2937; }
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.88);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-.modal-box {
-  background: #1e293b;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 450px;
-  width: 100%;
-  border: 3px solid #fbbf24;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.phone-container {
-  background: #0f172a;
-  min-height: 100vh;
-  color: white;
-  display: flex;
-  flex-direction: column;
-}
-.phone-header {
-  background: #1e293b;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #334155;
-}
-.phone-competitors-bar {
-  background: #000;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #334155;
-}
-.phone-competitor {
-  flex: 1;
-  text-align: center;
-}
-.phone-competitor .pc-label {
-  font-size: 0.7rem;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
+
+/* Modals */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal-box { background: #1e293b; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; border: 3px solid #fbbf24; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+
+/* Phone view styles */
+.phone-container { background: #0f172a; min-height: 100vh; color: white; display: flex; flex-direction: column; }
+.phone-header { background: #1e293b; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; }
+.phone-competitors-bar { background: #000; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; }
+.phone-competitor { flex: 1; text-align: center; }
+.phone-competitor .pc-label { font-size: 0.7rem; font-weight: 800; margin-bottom: 4px; }
 .phone-competitor.blue .pc-label { color: #60a5fa; }
 .phone-competitor.red .pc-label { color: #f87171; }
-.phone-competitor .pc-name {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: white;
-}
-.phone-vs {
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: #fbbf24;
-  padding: 0 15px;
-}
-.phone-timer-bar {
-  background: #000;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #334155;
-  font-size: 0.9rem;
-}
+.phone-competitor .pc-name { font-size: 1.2rem; font-weight: 800; color: white; }
+.phone-vs { font-size: 1.5rem; font-weight: 900; color: #fbbf24; padding: 0 15px; }
+.phone-timer-bar { background: #000; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; font-size: 0.9rem; }
 .phone-timer-bar .pt-round { font-weight: 700; }
-.phone-timer-bar .pt-time {
-  font-size: 1.5rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
+.phone-timer-bar .pt-time { font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 .phone-timer-bar .pt-status { color: #94a3b8; font-size: 0.8rem; }
-.phone-scoring-area {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 10px;
-}
-.phone-side {
-  border-radius: 16px;
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-}
-.phone-side.blue-side {
-  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-}
-.phone-side.red-side {
-  background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
-}
-.phone-side-title {
-  text-align: center;
-  font-weight: 800;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-}
-.phone-buttons {
-  flex: 1;
-  display: grid;
-  grid-template-rows: repeat(5, 1fr);
-  gap: 8px;
-}
-.phone-btn {
-  background: rgba(255,255,255,0.15);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.05s;
-  color: white;
-}
-.phone-btn:active {
-  transform: scale(0.94);
-  background: rgba(255,255,255,0.3);
-}
-.phone-btn .pb-value {
-  font-size: 2.5rem;
-  font-weight: 900;
-  line-height: 1;
-}
-.phone-btn .pb-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  opacity: 0.8;
-  margin-top: 3px;
-}
-.phone-status-bar {
-  padding: 12px 20px;
-  text-align: center;
-  font-size: 0.85rem;
-  background: #1e293b;
-  border-top: 2px solid #334155;
-}
-.landing-container {
-  min-height: 100vh;
-  background: #0f172a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.landing-box {
-  background: #1e293b;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 450px;
-  width: 100%;
-  border: 2px solid #334155;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.landing-title {
-  text-align: center;
-  margin-bottom: 30px;
-}
+.phone-scoring-area { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+.phone-side { border-radius: 16px; padding: 15px; display: flex; flex-direction: column; }
+.phone-side.blue-side { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
+.phone-side.red-side { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%); }
+.phone-side-title { text-align: center; font-weight: 800; font-size: 0.9rem; margin-bottom: 10px; letter-spacing: 1px; }
+.phone-buttons { flex: 1; display: grid; grid-template-rows: repeat(5, 1fr); gap: 8px; }
+.phone-btn { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.05s; color: white; }
+.phone-btn:active { transform: scale(0.94); background: rgba(255,255,255,0.3); }
+.phone-btn .pb-value { font-size: 2.5rem; font-weight: 900; line-height: 1; }
+.phone-btn .pb-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; opacity: 0.8; margin-top: 3px; }
+.phone-status-bar { padding: 12px 20px; text-align: center; font-size: 0.85rem; background: #1e293b; border-top: 2px solid #334155; }
+
+/* Landing page */
+.landing-container { min-height: 100vh; background: #0f172a; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.landing-box { background: #1e293b; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; border: 2px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.landing-title { text-align: center; margin-bottom: 30px; }
 .landing-title .lt-icon { font-size: 4rem; margin-bottom: 10px; }
-.landing-title h1 {
-  font-size: 2rem;
-  font-weight: 900;
-  margin: 0 0 10px 0;
-  color: white;
-}
-.landing-title p {
-  color: #94a3b8;
-  margin: 0;
-  font-size: 0.95rem;
-}
-.landing-input {
-  width: 100%;
-  padding: 15px;
-  background: #0f172a;
-  border: 2px solid #334155;
-  border-radius: 12px;
-  color: white;
-  font-size: 1.5rem;
-  text-align: center;
-  letter-spacing: 3px;
-  margin-bottom: 20px;
-  font-family: monospace;
-}
-.landing-input:focus {
-  outline: none;
-  border-color: #2563eb;
-}
-.landing-btn {
-  width: 100%;
-  padding: 18px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.2rem;
-  font-weight: 800;
-  transition: all 0.2s;
-}
+.landing-title h1 { font-size: 2rem; font-weight: 900; margin: 0 0 10px 0; color: white; }
+.landing-title p { color: #94a3b8; margin: 0; font-size: 0.95rem; }
+.landing-input { width: 100%; padding: 15px; background: #0f172a; border: 2px solid #334155; border-radius: 12px; color: white; font-size: 1.5rem; text-align: center; letter-spacing: 3px; margin-bottom: 20px; font-family: monospace; }
+.landing-input:focus { outline: none; border-color: #2563eb; }
+.landing-btn { width: 100%; padding: 18px; background: #2563eb; color: white; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: 800; transition: all 0.2s; }
 .landing-btn:hover { background: #1d4ed8; }
 .landing-btn:active { transform: scale(0.98); }
-.landing-error {
-  color: #ef4444;
-  text-align: center;
-  margin-top: 15px;
-  font-size: 0.9rem;
-  min-height: 20px;
-}
-.landing-hints {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #334155;
-  text-align: center;
-  color: #64748b;
-  font-size: 0.85rem;
-  line-height: 1.8;
-}
-.toast {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: #1e293b;
-  color: white;
-  padding: 15px 25px;
-  border-radius: 12px;
-  font-weight: 700;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  z-index: 2000;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.3s;
-  pointer-events: none;
-  border-left: 4px solid #10b981;
-  max-width: 380px;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateY(0);
-}
+.landing-error { color: #ef4444; text-align: center; margin-top: 15px; font-size: 0.9rem; min-height: 20px; }
+.landing-hints { margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; text-align: center; color: #64748b; font-size: 0.85rem; line-height: 1.8; }
+
+/* Toast */
+.toast { position: fixed; bottom: 30px; right: 30px; background: #1e293b; color: white; padding: 15px 25px; border-radius: 12px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 2000; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; border-left: 4px solid #10b981; max-width: 380px; }
+.toast.show { opacity: 1; transform: translateY(0); }
 .toast.error { border-left-color: #ef4444; }
 .toast.warning { border-left-color: #f59e0b; }
 .pulse { animation: pulse 0.3s ease; }
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
 .scored-flash { animation: scoredFlash 0.25s ease; }
-@keyframes scoredFlash {
-  0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); }
-  100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); }
-}
-.bracket-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 620px;
-  font-size: 0.85rem;
-}
-.bracket-table th {
-  padding: 10px;
-  background: #1e293b;
-  color: #fbbf24;
-  border: 1px solid #334155;
-  text-align: center;
-}
-.bracket-table td {
-  vertical-align: middle;
-  padding: 6px;
-  border: 1px solid #334155;
-}
-.bracket-match {
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #475569;
-  background: #0f172a;
-}
-.bracket-match.live {
-  border-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16,185,129,0.35);
-}
-.bracket-slot {
-  padding: 6px 10px;
-  color: #f1f5f9;
-  font-weight: 700;
-}
+@keyframes scoredFlash { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); } 100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); } }
+
+/* Bracket Table Styles */
+.bracket-table { width: 100%; border-collapse: collapse; min-width: 620px; font-size: 0.85rem; }
+.bracket-table th { padding: 10px; background: #1e293b; color: #fbbf24; border: 1px solid #334155; text-align: center; }
+.bracket-table td { vertical-align: middle; padding: 6px; border: 1px solid #334155; }
+.bracket-match { border-radius: 6px; overflow: hidden; border: 1px solid #475569; background: #0f172a; }
+.bracket-match.live { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.35); }
+.bracket-slot { padding: 6px 10px; color: #f1f5f9; font-weight: 700; }
 .bracket-slot.first { border-bottom: 1px solid #334155; }
 .bracket-slot.bye { color: #64748b; font-weight: 400; font-style: italic; }
 .bracket-slot.won { background: rgba(16,185,129,0.16); color: #6ee7b7; }
 .bracket-slot.lost { opacity: 0.5; text-decoration: line-through; }
-.bracket-team {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  font-weight: 600;
-}
+.bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
 </style>
 </head>
 <body class="bg-slate-900">
@@ -1164,7 +327,7 @@ button:disabled {
           <option value="4">4 Judges</option>
         </select>
       </div>
-      <button id="btn-refresh-data" class="timer-btn" style="background:#3b82f6;color:white;"><i class="fas fa-sync"></i> Refresh</button>
+      <button id="btn-refresh-data" class="timer-btn" style="background:#3b82f6;color:white; display:flex; align-items:center; gap:6px;"><i class="fas fa-sync"></i> Refresh</button>
       <button id="btn-open-tv" class="timer-btn" style="background:#334155;color:white;">📺 Open TV</button>
       <button id="btn-reset-match" class="timer-btn reset">⟲ Reset Match</button>
       <button id="btn-logout" class="timer-btn" style="background:#475569;color:white;">Logout</button>
@@ -1473,15 +636,12 @@ button:disabled {
 
 <script>
 /* =========================================================================
-   TKD iScore - ring.html
+   TKD iScore - ring.html (ULTIMATE COMBINED VERSION)
    DATA SOURCE (identical tables to manage.html):
      • rings                -> login codes, live display names
-     • ring_assignments     -> which categories fight on which ring
+     • ring_assignments     -> which categories fight on which ring + bracket_state
      • final_registrations  -> entries per person
      • competitors          -> person details (name / team / gender)
-   No "matches" table and no get_ring_match_list / get_current_ring_match RPC.
-   Bracket progress is stored in ring_assignments.bracket_state (jsonb).
-   If that column does not exist yet, localStorage is used as a fallback.
    ========================================================================= */
 
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
@@ -1497,796 +657,194 @@ const BYE = "BYE";
 const EMPTY_SLOT = "";
 
 const state = {
-  role: null,
-  ring: null,
-  loggingIn: false,
-
-  /* schedule + people (straight from manage.html tables) */
-  assignments: [],
-  competitors: [],
-  activeAssignmentId: null,
-
-  /* bracket / fight progression */
-  bracket: null,
-  bracketColumnMissing: false,
-
-  /* live scoring (in-memory, mirrored over realtime broadcast) */
+  role: null, ring: null, loggingIn: false,
+  assignments: [], competitors: [], activeAssignmentId: null,
+  bracket: null, bracketColumnMissing: false,
   match: null,
-
-  /* judge devices */
-  judgeSlot: null,
-  phoneSessionId: null,
-  judgeLastSeen: {},
-
-  /* channels + timers */
-  ringChannel: null,
-  scoreChannel: null,
-  heartbeatInterval: null,
-  presenceInterval: null,
-  queueInterval: null
+  judgeSlot: null, phoneSessionId: null, judgeLastSeen: {},
+  ringChannel: null, scoreChannel: null,
+  heartbeatInterval: null, presenceInterval: null, queueInterval: null
 };
 
 function freshMatchObject() {
-  return {
-    judge_blue: [0, 0, 0, 0],
-    judge_red: [0, 0, 0, 0],
-    pattern_votes: [null, null, null, null],
-    blue_gam_jeom: 0,
-    red_gam_jeom: 0,
-    blue_yellow_cards: 0,
-    red_yellow_cards: 0
-  };
+  return { judge_blue: [0, 0, 0, 0], judge_red: [0, 0, 0, 0], pattern_votes: [null, null, null, null], blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0 };
 }
 state.match = freshMatchObject();
 
 const TIMER_CHANNEL_PREFIX = "timer-";
 const SCORE_CHANNEL_PREFIX = "scores-";
-let timerState = {
-  round: 1,
-  roundTime: 120,
-  breakTime: 30,
-  startTime: null,
-  elapsed: 0,
-  paused: true,
-  finished: false,
-  winner: null,
-  isBreak: false
-};
-let timerChannel = null;
-let timerTickInterval = null;
-let broadcastInterval = null;
+let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
+let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
 
 /* ============================ SMALL HELPERS ============================ */
-
-function setTxt(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = (val === null || val === undefined || val === "") ? "-" : val;
-}
-
-function escapeHtml(str) {
-  return String(str === null || str === undefined ? "" : str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function jsStr(str) {
-  return String(str === null || str === undefined ? "" : str)
-    .replace(/\\/g, "\\\\")
-    .replace(/'/g, "\\'");
-}
-
-function norm(str) {
-  return String(str === null || str === undefined ? "" : str).trim().toLowerCase();
-}
-
-function getRingNumber() {
-  const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1";
-  const n = parseInt(String(raw).replace(/\D/g, ""), 10);
-  return isNaN(n) || n < 1 ? 1 : n;
-}
-
-function maxJudges() {
-  return state.ring ? (parseInt(state.ring.max_phones, 10) || 4) : 4;
-}
-
-function currentDiscipline() {
-  const a = activeAssignment();
-  return String((a && a.discipline) || (state.ring && (state.ring.mode || state.ring.discipline)) || "sparring").toLowerCase();
-}
-
-function activeAssignment() {
-  if (!state.assignments || state.assignments.length === 0) return null;
-  const found = state.assignments.find(a => String(a.id) === String(state.activeAssignmentId));
-  return found || state.assignments[0];
-}
-
-function showToast(msg, type) {
-  const t = document.getElementById("toast");
-  if (!t) return;
-  t.textContent = msg;
-  t.className = "toast show " + (type || "");
-  setTimeout(() => { t.className = "toast"; }, 3800);
-}
-
-function showView(name) {
-  ["landing", "phone", "laptop", "tv"].forEach(v => {
-    const el = document.getElementById("view-" + v);
-    if (el) el.classList.toggle("hidden-view", v !== name);
-  });
-}
-
-function pad4(arr) {
-  const out = [0, 0, 0, 0];
-  if (Array.isArray(arr)) {
-    for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0;
-  }
-  return out;
-}
-
-function pad4Any(arr) {
-  const out = [null, null, null, null];
-  if (Array.isArray(arr)) {
-    for (let i = 0; i < 4; i++) out[i] = arr[i] || null;
-  }
-  return out;
-}
+function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val === null || val === undefined || val === "") ? "-" : val; }
+function escapeHtml(str) { return String(str === null || str === undefined ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+function jsStr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'"); }
+function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
+function getRingNumber() { const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1"; const n = parseInt(String(raw).replace(/\D/g, ""), 10); return isNaN(n) || n < 1 ? 1 : n; }
+function maxJudges() { return state.ring ? (parseInt(state.ring.max_phones, 10) || 4) : 4; }
+function currentDiscipline() { const a = activeAssignment(); return String((a && a.discipline) || (state.ring && (state.ring.mode || state.ring.discipline)) || "sparring").toLowerCase(); }
+function activeAssignment() { if (!state.assignments || state.assignments.length === 0) return null; const found = state.assignments.find(a => String(a.id) === String(state.activeAssignmentId)); return found || state.assignments[0]; }
+function showToast(msg, type) { const t = document.getElementById("toast"); if (!t) return; t.textContent = msg; t.className = "toast show " + (type || ""); setTimeout(() => { t.className = "toast"; }, 3800); }
+function showView(name) { ["landing", "phone", "laptop", "tv"].forEach(v => { const el = document.getElementById("view-" + v); if (el) el.classList.toggle("hidden-view", v !== name); }); }
+function pad4(arr) { const out = [0, 0, 0, 0]; if (Array.isArray(arr)) { for (let i = 0; i < 4; i++) out[i] = Number(arr[i]) || 0; } return out; }
+function pad4Any(arr) { const out = [null, null, null, null]; if (Array.isArray(arr)) { for (let i = 0; i < 4; i++) out[i] = arr[i] || null; } return out; }
 
 /* ============================ TIMER CORE ============================ */
-
-function getTimerKey() {
-  return "tkd_timer_" + (state.ring ? state.ring.id : "unknown");
-}
-
-function loadTimerState() {
-  try {
-    const saved = localStorage.getItem(getTimerKey());
-    if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved));
-  } catch (e) {}
-}
-
-function saveTimerState() {
-  try {
-    localStorage.setItem(getTimerKey(), JSON.stringify(timerState));
-  } catch (e) {}
-}
-
-function broadcastTimerState() {
-  if (timerChannel && state.role === "laptop") {
-    try {
-      timerChannel.send({ type: "broadcast", event: "timer-update", payload: timerState });
-    } catch (e) {}
-  }
-}
-
+function getTimerKey() { return "tkd_timer_" + (state.ring ? state.ring.id : "unknown"); }
+function loadTimerState() { try { const saved = localStorage.getItem(getTimerKey()); if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved)); } catch (e) {} }
+function saveTimerState() { try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch (e) {} }
+function broadcastTimerState() { if (timerChannel && state.role === "laptop") { try { timerChannel.send({ type: "broadcast", event: "timer-update", payload: timerState }); } catch (e) {} } }
 function subscribeTimer() {
   if (timerChannel) sb.removeChannel(timerChannel);
   if (!state.ring) return;
   timerChannel = sb.channel(TIMER_CHANNEL_PREFIX + state.ring.id)
-    .on("broadcast", { event: "timer-update" }, (msg) => {
-      const s = msg && msg.payload;
-      if (s) {
-        timerState = Object.assign({}, timerState, s);
-        saveTimerState();
-        renderTimer();
-      }
-    })
-    .on("broadcast", { event: "timer-request" }, () => {
-      if (state.role === "laptop") broadcastTimerState();
-    })
-    .subscribe((status) => {
-      if (status === "SUBSCRIBED" && state.role !== "laptop") {
-        try { timerChannel.send({ type: "broadcast", event: "timer-request" }); } catch (e) {}
-      }
-    });
+    .on("broadcast", { event: "timer-update" }, (msg) => { const s = msg && msg.payload; if (s) { timerState = Object.assign({}, timerState, s); saveTimerState(); renderTimer(); } })
+    .on("broadcast", { event: "timer-request" }, () => { if (state.role === "laptop") broadcastTimerState(); })
+    .subscribe((status) => { if (status === "SUBSCRIBED" && state.role !== "laptop") { try { timerChannel.send({ type: "broadcast", event: "timer-request" }); } catch (e) {} } });
 }
-
-function getRemaining() {
-  if (timerState.finished) return 0;
-  let total = timerState.elapsed;
-  if (timerState.startTime) total += (Date.now() - timerState.startTime) / 1000;
-  const limit = timerState.isBreak ? timerState.breakTime : timerState.roundTime;
-  return Math.max(0, limit - total);
-}
-
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return m + ":" + String(s).padStart(2, "0");
-}
-
-function formatTimeDecimal(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return m + ":" + s.toFixed(1).padStart(4, "0");
-}
+function getRemaining() { if (timerState.finished) return 0; let total = timerState.elapsed; if (timerState.startTime) total += (Date.now() - timerState.startTime) / 1000; const limit = timerState.isBreak ? timerState.breakTime : timerState.roundTime; return Math.max(0, limit - total); }
+function formatTime(seconds) { const m = Math.floor(seconds / 60); const s = Math.floor(seconds % 60); return m + ":" + String(s).padStart(2, "0"); }
+function formatTimeDecimal(seconds) { const m = Math.floor(seconds / 60); const s = seconds % 60; return m + ":" + s.toFixed(1).padStart(4, "0"); }
 
 function renderTimer() {
   const remaining = getRemaining();
   const timeStr = formatTime(remaining);
   const timeStrDecimal = formatTimeDecimal(remaining);
   const warn = remaining <= 10 && remaining > 0 && !timerState.paused && !timerState.finished && !timerState.isBreak;
-
-  setTxt("l-timer-round", timerState.round);
-  setTxt("tv-timer-round", timerState.round);
-  setTxt("phone-timer-round", timerState.round);
-
+  setTxt("l-timer-round", timerState.round); setTxt("tv-timer-round", timerState.round); setTxt("phone-timer-round", timerState.round);
   const tvTimerLabelTop = document.getElementById("tv-timer-label-top");
-  if (tvTimerLabelTop) {
-    if (timerState.isBreak) {
-      tvTimerLabelTop.innerHTML = '<span style="color:#38bdf8;">☕ BREAK TIME</span>';
-    } else {
-      tvTimerLabelTop.innerHTML = 'ROUND <span id="tv-timer-round">' + timerState.round + "</span>";
-    }
-  }
-
-  ["l-timer-time", "tv-timer-time", "phone-timer-time"].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = id === "tv-timer-time" ? timeStrDecimal : timeStr;
-    el.classList.toggle("warning", warn);
-    el.classList.toggle("break-mode", timerState.isBreak);
-  });
-
+  if (tvTimerLabelTop) { if (timerState.isBreak) tvTimerLabelTop.innerHTML = '<span style="color:#38bdf8;">☕ BREAK TIME</span>'; else tvTimerLabelTop.innerHTML = 'ROUND <span id="tv-timer-round">' + timerState.round + "</span>"; }
+  ["l-timer-time", "tv-timer-time", "phone-timer-time"].forEach(id => { const el = document.getElementById(id); if (!el) return; el.textContent = id === "tv-timer-time" ? timeStrDecimal : timeStr; el.classList.toggle("warning", warn); el.classList.toggle("break-mode", timerState.isBreak); });
   let status;
-  if (timerState.finished) {
-    status = timerState.winner === "draw"
-      ? "Match Complete · DRAW"
-      : (timerState.winner ? "Match Complete · " + timerState.winner.toUpperCase() + " wins" : "Match Complete");
-  } else if (timerState.isBreak) {
-    status = timerState.paused ? "☕ Break · Paused (SPACE for next round)" : "☕ Break in Progress";
-  } else if (timerState.paused) {
-    status = "Round " + timerState.round + " · Paused (Press SPACE)";
-  } else {
-    status = "Round " + timerState.round + " · Running (SPACE to Pause)";
-  }
-  const statusEl = document.getElementById("l-timer-status");
-  if (statusEl) statusEl.textContent = status;
-  const phoneStatusEl = document.getElementById("phone-timer-status");
-  if (phoneStatusEl) {
-    phoneStatusEl.textContent = timerState.finished ? "Finished" : (timerState.isBreak ? "Break" : (timerState.paused ? "Paused" : "Running"));
-  }
-
-  const btnStart = document.getElementById("btn-timer-start");
-  const btnPause = document.getElementById("btn-timer-pause");
+  if (timerState.finished) status = timerState.winner === "draw" ? "Match Complete · DRAW" : (timerState.winner ? "Match Complete · " + timerState.winner.toUpperCase() + " wins" : "Match Complete");
+  else if (timerState.isBreak) status = timerState.paused ? "☕ Break · Paused (SPACE for next round)" : "☕ Break in Progress";
+  else if (timerState.paused) status = "Round " + timerState.round + " · Paused (Press SPACE)";
+  else status = "Round " + timerState.round + " · Running (SPACE to Pause)";
+  const statusEl = document.getElementById("l-timer-status"); if (statusEl) statusEl.textContent = status;
+  const phoneStatusEl = document.getElementById("phone-timer-status"); if (phoneStatusEl) phoneStatusEl.textContent = timerState.finished ? "Finished" : (timerState.isBreak ? "Break" : (timerState.paused ? "Paused" : "Running"));
+  const btnStart = document.getElementById("btn-timer-start"); const btnPause = document.getElementById("btn-timer-pause");
   if (btnStart && btnPause) {
-    if (timerState.finished) {
-      btnStart.classList.remove("hidden-view");
-      btnPause.classList.add("hidden-view");
-      btnStart.disabled = true;
-      btnStart.textContent = "▶ Start Round";
-    } else if (timerState.isBreak) {
-      btnStart.classList.remove("hidden-view");
-      btnPause.classList.add("hidden-view");
-      btnStart.disabled = false;
-      btnStart.textContent = "▶ Start Next Round Now";
-    } else if (timerState.paused) {
-      btnStart.classList.remove("hidden-view");
-      btnPause.classList.add("hidden-view");
-      btnStart.disabled = false;
-      btnStart.textContent = "▶ Start Round";
-    } else {
-      btnStart.classList.add("hidden-view");
-      btnPause.classList.remove("hidden-view");
-    }
+    if (timerState.finished) { btnStart.classList.remove("hidden-view"); btnPause.classList.add("hidden-view"); btnStart.disabled = true; btnStart.textContent = "▶ Start Round"; }
+    else if (timerState.isBreak) { btnStart.classList.remove("hidden-view"); btnPause.classList.add("hidden-view"); btnStart.disabled = false; btnStart.textContent = "▶ Start Next Round Now"; }
+    else if (timerState.paused) { btnStart.classList.remove("hidden-view"); btnPause.classList.add("hidden-view"); btnStart.disabled = false; btnStart.textContent = "▶ Start Round"; }
+    else { btnStart.classList.add("hidden-view"); btnPause.classList.remove("hidden-view"); }
   }
-
-  const r3note = document.getElementById("timer-round3-note");
-  if (r3note) r3note.classList.toggle("hidden-view", timerState.round !== 3 || timerState.isBreak);
-
-  const tvOverlay = document.getElementById("tv-winner-overlay");
-  const tvText = document.getElementById("tv-winner-text");
-  const tvWinnerName = document.getElementById("tv-winner-name");
+  const r3note = document.getElementById("timer-round3-note"); if (r3note) r3note.classList.toggle("hidden-view", timerState.round !== 3 || timerState.isBreak);
+  const tvOverlay = document.getElementById("tv-winner-overlay"); const tvText = document.getElementById("tv-winner-text"); const tvWinnerName = document.getElementById("tv-winner-name");
   if (tvOverlay && tvText) {
     if (timerState.finished && timerState.winner) {
-      if (timerState.winner === "draw") {
-        tvText.textContent = "DRAW!";
-        if (tvWinnerName) tvWinnerName.textContent = "";
-      } else {
-        tvText.textContent = timerState.winner.toUpperCase() + " WINS!";
-        const winnerName = timerState.winner === "blue"
-          ? ((state.ring && state.ring.blue_name) || "BLUE")
-          : ((state.ring && state.ring.red_name) || "RED");
-        if (tvWinnerName) tvWinnerName.textContent = winnerName;
-      }
+      if (timerState.winner === "draw") { tvText.textContent = "DRAW!"; if (tvWinnerName) tvWinnerName.textContent = ""; }
+      else { tvText.textContent = timerState.winner.toUpperCase() + " WINS!"; const winnerName = timerState.winner === "blue" ? ((state.ring && state.ring.blue_name) || "BLUE") : ((state.ring && state.ring.red_name) || "RED"); if (tvWinnerName) tvWinnerName.textContent = winnerName; }
       tvOverlay.classList.remove("hidden-view");
-    } else {
-      tvOverlay.classList.add("hidden-view");
-    }
+    } else { tvOverlay.classList.add("hidden-view"); }
   }
 }
 
-function tickTimer() {
-  if (timerState.finished) return;
-  renderTimer();
-  if (state.role === "laptop" && !timerState.paused && getRemaining() <= 0) {
-    if (timerState.isBreak) {
-      timerState.isBreak = false;
-      timerState.paused = true;
-      timerState.elapsed = 0;
-      timerState.startTime = null;
-      saveTimerState();
-      broadcastTimerState();
-      renderTimer();
-      stopTimerTick();
-      showToast("☕ Break finished! Press Start or SPACE for the next round.", "success");
-    } else {
-      endRound();
-    }
-  }
-}
-
-function startTimerTick() {
-  if (timerTickInterval) clearInterval(timerTickInterval);
-  timerTickInterval = setInterval(tickTimer, 100);
-}
-
-function stopTimerTick() {
-  if (timerTickInterval) clearInterval(timerTickInterval);
-  timerTickInterval = null;
-}
-
-function startBroadcastLoop() {
-  if (broadcastInterval) clearInterval(broadcastInterval);
-  broadcastInterval = setInterval(() => {
-    if (state.role !== "laptop") return;
-    if (!timerState.paused && !timerState.finished) broadcastTimerState();
-    broadcastScoreState();
-  }, 1000);
-}
-
-function stopBroadcastLoop() {
-  if (broadcastInterval) clearInterval(broadcastInterval);
-  broadcastInterval = null;
-}
+function tickTimer() { if (timerState.finished) return; renderTimer(); if (state.role === "laptop" && !timerState.paused && getRemaining() <= 0) { if (timerState.isBreak) { timerState.isBreak = false; timerState.paused = true; timerState.elapsed = 0; timerState.startTime = null; saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); showToast("☕ Break finished! Press Start or SPACE for the next round.", "success"); } else { endRound(); } } }
+function startTimerTick() { if (timerTickInterval) clearInterval(timerTickInterval); timerTickInterval = setInterval(tickTimer, 100); }
+function stopTimerTick() { if (timerTickInterval) clearInterval(timerTickInterval); timerTickInterval = null; }
+function startBroadcastLoop() { if (broadcastInterval) clearInterval(broadcastInterval); broadcastInterval = setInterval(() => { if (state.role !== "laptop") return; if (!timerState.paused && !timerState.finished) broadcastTimerState(); broadcastScoreState(); }, 1000); }
+function stopBroadcastLoop() { if (broadcastInterval) clearInterval(broadcastInterval); broadcastInterval = null; }
 
 function startTimer() {
   if (timerState.finished || state.role !== "laptop") return;
-  if (!currentFight()) {
-    showToast("No fight loaded. Pick a category first.", "warning");
-    return;
-  }
-  if (timerState.isBreak) {
-    timerState.isBreak = false;
-    timerState.paused = true;
-    timerState.elapsed = 0;
-    timerState.startTime = null;
-    saveTimerState();
-    broadcastTimerState();
-    renderTimer();
-    stopTimerTick();
-    showToast("Break skipped. Ready for round " + timerState.round, "success");
-    return;
-  }
-  timerState.paused = false;
-  timerState.startTime = Date.now();
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  startTimerTick();
+  if (!currentFight()) { showToast("No fight loaded. Pick a category first.", "warning"); return; }
+  if (timerState.isBreak) { timerState.isBreak = false; timerState.paused = true; timerState.elapsed = 0; timerState.startTime = null; saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); showToast("Break skipped. Ready for round " + timerState.round, "success"); return; }
+  timerState.paused = false; timerState.startTime = Date.now(); saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick();
 }
+function pauseTimer() { if (timerState.finished || timerState.paused || state.role !== "laptop") return; if (timerState.startTime) timerState.elapsed += (Date.now() - timerState.startTime) / 1000; timerState.startTime = null; timerState.paused = true; saveTimerState(); broadcastTimerState(); renderTimer(); }
+function resetRound() { if (state.role !== "laptop") return; if (!confirm("Reset the current round timer?")) return; timerState.elapsed = 0; timerState.startTime = null; timerState.paused = true; saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); }
+function resetTimerForNewFight() { timerState = { round: 1, roundTime: timerState.roundTime, breakTime: timerState.breakTime, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false }; saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); const tvOverlay = document.getElementById("tv-winner-overlay"); if (tvOverlay) tvOverlay.classList.add("hidden-view"); }
 
-function pauseTimer() {
-  if (timerState.finished || timerState.paused || state.role !== "laptop") return;
-  if (timerState.startTime) timerState.elapsed += (Date.now() - timerState.startTime) / 1000;
-  timerState.startTime = null;
-  timerState.paused = true;
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-}
-
-function resetRound() {
-  if (state.role !== "laptop") return;
-  if (!confirm("Reset the current round timer?")) return;
-  timerState.elapsed = 0;
-  timerState.startTime = null;
-  timerState.paused = true;
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  stopTimerTick();
-}
-
-function resetTimerForNewFight() {
-  timerState = {
-    round: 1,
-    roundTime: timerState.roundTime,
-    breakTime: timerState.breakTime,
-    startTime: null,
-    elapsed: 0,
-    paused: true,
-    finished: false,
-    winner: null,
-    isBreak: false
-  };
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  stopTimerTick();
-  const tvOverlay = document.getElementById("tv-winner-overlay");
-  if (tvOverlay) tvOverlay.classList.add("hidden-view");
-}
-
-window.addEventListener("keydown", (e) => {
-  if (e.code === "Space" && state.role === "laptop") {
-    if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
-    e.preventDefault();
-    if (timerState.paused) startTimer();
-    else pauseTimer();
-  }
-});
+window.addEventListener("keydown", (e) => { if (e.code === "Space" && state.role === "laptop") { if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return; e.preventDefault(); if (timerState.paused) startTimer(); else pauseTimer(); } });
 
 function endRound() {
   if (timerState.finished) return;
-  timerState.paused = true;
-  timerState.startTime = null;
-  timerState.elapsed = 0;
-
-  if (currentDiscipline() === "patterns") {
-    finishMatch();
-    return;
-  }
-
-  if (timerState.round === 1) {
-    timerState.round = 2;
-    timerState.isBreak = true;
-    timerState.paused = false;
-    timerState.startTime = Date.now();
-    saveTimerState();
-    broadcastTimerState();
-    renderTimer();
-    startTimerTick();
-    showToast("☕ Round 1 ended. Break time started!", "success");
-  } else if (timerState.round === 2) {
-    const votes = judgeVoteCounts();
-    if (votes.blue === votes.red) {
-      timerState.round = 3;
-      timerState.isBreak = true;
-      timerState.paused = false;
-      timerState.startTime = Date.now();
-      saveTimerState();
-      broadcastTimerState();
-      renderTimer();
-      startTimerTick();
-      showToast("☕ Round 2 tied! Break before Round 3 tie-breaker.", "warning");
-    } else {
-      finishMatch();
-    }
-  } else {
-    finishMatch();
-  }
+  timerState.paused = true; timerState.startTime = null; timerState.elapsed = 0;
+  if (currentDiscipline() === "patterns") { finishMatch(); return; }
+  if (timerState.round === 1) { timerState.round = 2; timerState.isBreak = true; timerState.paused = false; timerState.startTime = Date.now(); saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick(); showToast("☕ Round 1 ended. Break time started!", "success"); }
+  else if (timerState.round === 2) { const votes = judgeVoteCounts(); if (votes.blue === votes.red) { timerState.round = 3; timerState.isBreak = true; timerState.paused = false; timerState.startTime = Date.now(); saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick(); showToast("☕ Round 2 tied! Break before Round 3 tie-breaker.", "warning"); } else { finishMatch(); } }
+  else { finishMatch(); }
 }
 
 /* ==================== SCORING (broadcast, no DB table) ==================== */
-
 function subscribeScores() {
   if (state.scoreChannel) sb.removeChannel(state.scoreChannel);
   if (!state.ring) return;
-
   state.scoreChannel = sb.channel(SCORE_CHANNEL_PREFIX + state.ring.id)
-    .on("broadcast", { event: "judge-tap" }, (msg) => {
-      if (state.role !== "laptop") return;
-      const p = msg && msg.payload;
-      if (!p) return;
-      applyJudgePoints(p.slot, p.side, p.points);
-    })
-    .on("broadcast", { event: "judge-patterns" }, (msg) => {
-      if (state.role !== "laptop") return;
-      const p = msg && msg.payload;
-      if (!p) return;
-      const votes = pad4Any(state.match.pattern_votes);
-      votes[(p.slot || 1) - 1] = p.winner;
-      state.match.pattern_votes = votes;
-      state.judgeLastSeen[p.slot] = Date.now();
-      renderLaptopJudges();
-      broadcastScoreState();
-    })
-    .on("broadcast", { event: "score-state" }, (msg) => {
-      if (state.role === "laptop") return;
-      const p = msg && msg.payload;
-      if (!p) return;
-      if (p.match) {
-        state.match = Object.assign(freshMatchObject(), p.match);
-        state.match.judge_blue = pad4(state.match.judge_blue);
-        state.match.judge_red = pad4(state.match.judge_red);
-        state.match.pattern_votes = pad4Any(state.match.pattern_votes);
-      }
-      if (p.ring) {
-        state.ring = Object.assign({}, state.ring, p.ring);
-        updateCompetitorDisplay();
-      }
-      renderVoteScores();
-      renderTVJudgeNets();
-      renderPenalties();
-    })
-    .on("broadcast", { event: "score-request" }, () => {
-      if (state.role === "laptop") broadcastScoreState();
-    })
-    .on("broadcast", { event: "judge-ping" }, (msg) => {
-      if (state.role !== "laptop") return;
-      const p = msg && msg.payload;
-      if (!p || !p.slot) return;
-      state.judgeLastSeen[p.slot] = Date.now();
-      updateRingLayoutCornerStats();
-      renderLaptopJudges();
-    })
-    .on("broadcast", { event: "judge-kick" }, (msg) => {
-      const p = msg && msg.payload;
-      if (!p) return;
-      if (state.role === "phone" && Number(state.judgeSlot) === Number(p.slot)) {
-        leavePhone("You were removed by the ring admin.");
-      }
-    })
-    .subscribe((status) => {
-      if (status === "SUBSCRIBED" && state.role !== "laptop") {
-        try { state.scoreChannel.send({ type: "broadcast", event: "score-request" }); } catch (e) {}
-      }
-    });
+    .on("broadcast", { event: "judge-tap" }, (msg) => { if (state.role !== "laptop") return; const p = msg && msg.payload; if (!p) return; applyJudgePoints(p.slot, p.side, p.points); })
+    .on("broadcast", { event: "judge-patterns" }, (msg) => { if (state.role !== "laptop") return; const p = msg && msg.payload; if (!p) return; const votes = pad4Any(state.match.pattern_votes); votes[(p.slot || 1) - 1] = p.winner; state.match.pattern_votes = votes; state.judgeLastSeen[p.slot] = Date.now(); renderLaptopJudges(); broadcastScoreState(); })
+    .on("broadcast", { event: "score-state" }, (msg) => { if (state.role === "laptop") return; const p = msg && msg.payload; if (!p) return; if (p.match) { state.match = Object.assign(freshMatchObject(), p.match); state.match.judge_blue = pad4(state.match.judge_blue); state.match.judge_red = pad4(state.match.judge_red); state.match.pattern_votes = pad4Any(state.match.pattern_votes); } if (p.ring) { state.ring = Object.assign({}, state.ring, p.ring); updateCompetitorDisplay(); } renderVoteScores(); renderTVJudgeNets(); renderPenalties(); })
+    .on("broadcast", { event: "score-request" }, () => { if (state.role === "laptop") broadcastScoreState(); })
+    .on("broadcast", { event: "judge-ping" }, (msg) => { if (state.role !== "laptop") return; const p = msg && msg.payload; if (!p || !p.slot) return; state.judgeLastSeen[p.slot] = Date.now(); updateRingLayoutCornerStats(); renderLaptopJudges(); })
+    .on("broadcast", { event: "judge-kick" }, (msg) => { const p = msg && msg.payload; if (!p) return; if (state.role === "phone" && Number(state.judgeSlot) === Number(p.slot)) { leavePhone("You were removed by the ring admin."); } })
+    .subscribe((status) => { if (status === "SUBSCRIBED" && state.role !== "laptop") { try { state.scoreChannel.send({ type: "broadcast", event: "score-request" }); } catch (e) {} } });
 }
 
 function broadcastScoreState() {
   if (state.role !== "laptop" || !state.scoreChannel) return;
-  try {
-    state.scoreChannel.send({
-      type: "broadcast",
-      event: "score-state",
-      payload: {
-        match: state.match,
-        ring: {
-          blue_name: state.ring ? state.ring.blue_name : null,
-          red_name: state.ring ? state.ring.red_name : null,
-          blue_club: state.ring ? state.ring.blue_club : null,
-          red_club: state.ring ? state.ring.red_club : null,
-          next_blue_name: state.ring ? state.ring.next_blue_name : null,
-          next_red_name: state.ring ? state.ring.next_red_name : null,
-          category_name: state.ring ? state.ring.category_name : null,
-          discipline: state.ring ? state.ring.discipline : null,
-          match_stage: state.ring ? state.ring.match_stage : null,
-          match_number: state.ring ? state.ring.match_number : null,
-          max_phones: state.ring ? state.ring.max_phones : 4
-        }
-      }
-    });
-  } catch (e) {}
+  try { state.scoreChannel.send({ type: "broadcast", event: "score-state", payload: { match: state.match, ring: { blue_name: state.ring ? state.ring.blue_name : null, red_name: state.ring ? state.ring.red_name : null, blue_club: state.ring ? state.ring.blue_club : null, red_club: state.ring ? state.ring.red_club : null, next_blue_name: state.ring ? state.ring.next_blue_name : null, next_red_name: state.ring ? state.ring.next_red_name : null, category_name: state.ring ? state.ring.category_name : null, discipline: state.ring ? state.ring.discipline : null, match_stage: state.ring ? state.ring.match_stage : null, match_number: state.ring ? state.ring.match_number : null, max_phones: state.ring ? state.ring.max_phones : 4 } } }); } catch (e) {}
 }
 
 function applyJudgePoints(slot, side, points) {
-  const idx = (parseInt(slot, 10) || 1) - 1;
-  if (idx < 0 || idx > 3) return;
-  if (timerState.finished) return;
-  const jb = pad4(state.match.judge_blue);
-  const jr = pad4(state.match.judge_red);
-  if (side === "blue") jb[idx] += Number(points) || 0;
-  else jr[idx] += Number(points) || 0;
-  state.match.judge_blue = jb;
-  state.match.judge_red = jr;
-  state.judgeLastSeen[slot] = Date.now();
-  renderVoteScores();
-  renderLaptopJudges();
-  renderTVJudgeNets();
-  broadcastScoreState();
+  const idx = (parseInt(slot, 10) || 1) - 1; if (idx < 0 || idx > 3) return; if (timerState.finished) return;
+  const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red);
+  if (side === "blue") jb[idx] += Number(points) || 0; else jr[idx] += Number(points) || 0;
+  state.match.judge_blue = jb; state.match.judge_red = jr; state.judgeLastSeen[slot] = Date.now();
+  renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); broadcastScoreState();
 }
 
-function judgeVoteCounts() {
-  const jb = pad4(state.match.judge_blue);
-  const jr = pad4(state.match.judge_red);
-  const max = maxJudges();
-  let blue = 0, red = 0;
-  for (let i = 0; i < max; i++) {
-    if (jb[i] > jr[i]) blue++;
-    else if (jr[i] > jb[i]) red++;
-  }
-  return { blue, red };
-}
+function judgeVoteCounts() { const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); const max = maxJudges(); let blue = 0, red = 0; for (let i = 0; i < max; i++) { if (jb[i] > jr[i]) blue++; else if (jr[i] > jb[i]) red++; } return { blue, red }; }
+function patternVoteCounts() { const votes = pad4Any(state.match.pattern_votes); const max = maxJudges(); let blue = 0, red = 0, draw = 0; for (let i = 0; i < max; i++) { if (votes[i] === "blue") blue++; else if (votes[i] === "red") red++; else if (votes[i] === "draw") draw++; } return { blue, red, draw }; }
 
-function patternVoteCounts() {
-  const votes = pad4Any(state.match.pattern_votes);
-  const max = maxJudges();
-  let blue = 0, red = 0, draw = 0;
-  for (let i = 0; i < max; i++) {
-    if (votes[i] === "blue") blue++;
-    else if (votes[i] === "red") red++;
-    else if (votes[i] === "draw") draw++;
-  }
-  return { blue, red, draw };
-}
-
-function renderVoteScores() {
-  const isPatterns = currentDiscipline() === "patterns";
-  const v = isPatterns ? patternVoteCounts() : judgeVoteCounts();
-  setTxt("tv-blue-score", v.blue);
-  setTxt("tv-red-score", v.red);
-  setTxt("l-blue-score", v.blue);
-  setTxt("l-red-score", v.red);
-}
-
-function renderPenalties() {
-  const m = state.match || freshMatchObject();
-  setTxt("l-blue-gj", m.blue_gam_jeom || 0);
-  setTxt("l-red-gj", m.red_gam_jeom || 0);
-  setTxt("l-blue-yc", m.blue_yellow_cards || 0);
-  setTxt("l-red-yc", m.red_yellow_cards || 0);
-  setTxt("tv-blue-gj", m.blue_gam_jeom || 0);
-  setTxt("tv-red-gj", m.red_gam_jeom || 0);
-  setTxt("tv-blue-yc", m.blue_yellow_cards || 0);
-  setTxt("tv-red-yc", m.red_yellow_cards || 0);
-}
+function renderVoteScores() { const isPatterns = currentDiscipline() === "patterns"; const v = isPatterns ? patternVoteCounts() : judgeVoteCounts(); setTxt("tv-blue-score", v.blue); setTxt("tv-red-score", v.red); setTxt("l-blue-score", v.blue); setTxt("l-red-score", v.red); }
+function renderPenalties() { const m = state.match || freshMatchObject(); setTxt("l-blue-gj", m.blue_gam_jeom || 0); setTxt("l-red-gj", m.red_gam_jeom || 0); setTxt("l-blue-yc", m.blue_yellow_cards || 0); setTxt("l-red-yc", m.red_yellow_cards || 0); setTxt("tv-blue-gj", m.blue_gam_jeom || 0); setTxt("tv-red-gj", m.red_gam_jeom || 0); setTxt("tv-blue-yc", m.blue_yellow_cards || 0); setTxt("tv-red-yc", m.red_yellow_cards || 0); }
 
 function renderTVJudgeNets() {
-  const jb = pad4(state.match.judge_blue);
-  const jr = pad4(state.match.judge_red);
-  const max = maxJudges();
-  for (let i = 1; i <= 4; i++) {
-    const cornerEl = document.getElementById("tv-corner-" + i);
-    const netEl = document.getElementById("tv-net-" + i);
-    if (!cornerEl || !netEl) continue;
-    if (i > max) {
-      cornerEl.classList.add("hidden-view");
-      continue;
-    }
-    cornerEl.classList.remove("hidden-view");
-    const net = jb[i - 1] - jr[i - 1];
-    netEl.textContent = Math.abs(net);
-    cornerEl.classList.remove("lead-blue", "lead-red");
-    if (net > 0) cornerEl.classList.add("lead-blue");
-    else if (net < 0) cornerEl.classList.add("lead-red");
-  }
+  const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); const max = maxJudges();
+  for (let i = 1; i <= 4; i++) { const cornerEl = document.getElementById("tv-corner-" + i); const netEl = document.getElementById("tv-net-" + i); if (!cornerEl || !netEl) continue; if (i > max) { cornerEl.classList.add("hidden-view"); continue; } cornerEl.classList.remove("hidden-view"); const net = jb[i - 1] - jr[i - 1]; netEl.textContent = Math.abs(net); cornerEl.classList.remove("lead-blue", "lead-red"); if (net > 0) cornerEl.classList.add("lead-blue"); else if (net < 0) cornerEl.classList.add("lead-red"); }
 }
 
-function onlineJudgeSlots() {
-  const now = Date.now();
-  const set = new Set();
-  Object.keys(state.judgeLastSeen).forEach(k => {
-    if (now - state.judgeLastSeen[k] < 9000) set.add(Number(k));
-  });
-  return set;
-}
-
-function updateRingLayoutCornerStats() {
-  const online = onlineJudgeSlots();
-  const max = maxJudges();
-  for (let i = 1; i <= 4; i++) {
-    const btn = document.getElementById("qr-btn-" + i);
-    const stat = document.getElementById("qr-stat-" + i);
-    if (!btn || !stat) continue;
-    if (i > max) {
-      btn.style.display = "none";
-      continue;
-    }
-    btn.style.display = "flex";
-    if (online.has(i)) {
-      btn.classList.add("connected");
-      stat.textContent = "Connected";
-    } else {
-      btn.classList.remove("connected");
-      stat.textContent = "Empty";
-    }
-  }
-}
+function onlineJudgeSlots() { const now = Date.now(); const set = new Set(); Object.keys(state.judgeLastSeen).forEach(k => { if (now - state.judgeLastSeen[k] < 9000) set.add(Number(k)); }); return set; }
+function updateRingLayoutCornerStats() { const online = onlineJudgeSlots(); const max = maxJudges(); for (let i = 1; i <= 4; i++) { const btn = document.getElementById("qr-btn-" + i); const stat = document.getElementById("qr-stat-" + i); if (!btn || !stat) continue; if (i > max) { btn.style.display = "none"; continue; } btn.style.display = "flex"; if (online.has(i)) { btn.classList.add("connected"); stat.textContent = "Connected"; } else { btn.classList.remove("connected"); stat.textContent = "Empty"; } } }
 
 function renderLaptopJudges() {
-  const container = document.getElementById("laptop-judges-container");
-  if (!container) return;
-  const max = maxJudges();
-  container.style.gridTemplateColumns = "repeat(" + max + ", 1fr)";
-  const jb = pad4(state.match.judge_blue);
-  const jr = pad4(state.match.judge_red);
-  const votes = pad4Any(state.match.pattern_votes);
-  const online = onlineJudgeSlots();
-  const isPatterns = currentDiscipline() === "patterns";
-
+  const container = document.getElementById("laptop-judges-container"); if (!container) return;
+  const max = maxJudges(); container.style.gridTemplateColumns = "repeat(" + max + ", 1fr)";
+  const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); const votes = pad4Any(state.match.pattern_votes); const online = onlineJudgeSlots(); const isPatterns = currentDiscipline() === "patterns";
   let html = "";
   for (let i = 1; i <= max; i++) {
-    const isOnline = online.has(i);
-    const givenBlue = jb[i - 1];
-    const givenRed = jr[i - 1];
-    const net = givenBlue - givenRed;
-    let cls = "";
-    if (net > 0) cls = "leading-blue";
-    else if (net < 0) cls = "leading-red";
-
+    const isOnline = online.has(i); const givenBlue = jb[i - 1]; const givenRed = jr[i - 1]; const net = givenBlue - givenRed; let cls = ""; if (net > 0) cls = "leading-blue"; else if (net < 0) cls = "leading-red";
     html += '<div id="judge-laptop-' + i + '" class="judge-box ' + cls + '">';
     html += '<div class="judge-label">Judge ' + i + "</div>";
     html += '<div><span class="judge-status-badge ' + (isOnline ? "online" : "offline") + '">' + (isOnline ? "Connected" : "Empty") + "</span></div>";
-    if (isPatterns) {
-      const v = votes[i - 1];
-      html += '<div class="judge-detail">Vote: ' + (v ? v.toUpperCase() : "—") + "</div>";
-    } else {
-      html += '<div class="judge-detail">Net: ' + Math.abs(net) + "</div>";
-      html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + " | R: " + givenRed + "</div>";
-      html += '<div class="judge-row-controls">';
-      html += '<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span>';
-      html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'blue',1)\">+</button>";
-      html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'blue',-1)\">−</button></div>";
-      html += '<div class="judge-side-adj"><span style="color:#f87171;font-weight:700;">R</span>';
-      html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'red',1)\">+</button>";
-      html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'red',-1)\">−</button></div>";
-      html += "</div>";
-    }
+    if (isPatterns) { const v = votes[i - 1]; html += '<div class="judge-detail">Vote: ' + (v ? v.toUpperCase() : "—") + "</div>"; }
+    else { html += '<div class="judge-detail">Net: ' + Math.abs(net) + "</div>"; html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + " | R: " + givenRed + "</div>"; html += '<div class="judge-row-controls">'; html += '<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span>'; html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'blue',1)\">+</button>"; html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'blue',-1)\">−</button></div>"; html += '<div class="judge-side-adj"><span style="color:#f87171;font-weight:700;">R</span>"; html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'red',1)\">+</button>"; html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'red',-1)\">−</button></div>"; html += "</div>"; }
     html += "</div>";
   }
-  container.innerHTML = html;
-  updateRingLayoutCornerStats();
+  container.innerHTML = html; updateRingLayoutCornerStats();
 }
 
-function adjustSpecificJudge(judgeNum, side, delta) {
-  if (state.role !== "laptop") return;
-  const idx = judgeNum - 1;
-  const jb = pad4(state.match.judge_blue);
-  const jr = pad4(state.match.judge_red);
-  if (side === "blue") jb[idx] = Math.max(0, jb[idx] + delta);
-  else jr[idx] = Math.max(0, jr[idx] + delta);
-  state.match.judge_blue = jb;
-  state.match.judge_red = jr;
-  renderVoteScores();
-  renderLaptopJudges();
-  renderTVJudgeNets();
-  broadcastScoreState();
-}
-
-function resetMatchScores() {
-  state.match = freshMatchObject();
-  renderVoteScores();
-  renderLaptopJudges();
-  renderTVJudgeNets();
-  renderPenalties();
-  broadcastScoreState();
-}
-
-async function resetMatch() {
-  if (!confirm("Reset all scores, cards, judge corners AND the round timer for this fight?")) return;
-  resetMatchScores();
-  resetTimerForNewFight();
-  const modal = document.getElementById("modal-winner");
-  if (modal) modal.classList.add("hidden-view");
-  showToast("Fight reset.", "success");
-}
+function adjustSpecificJudge(judgeNum, side, delta) { if (state.role !== "laptop") return; const idx = judgeNum - 1; const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); if (side === "blue") jb[idx] = Math.max(0, jb[idx] + delta); else jr[idx] = Math.max(0, jr[idx] + delta); state.match.judge_blue = jb; state.match.judge_red = jr; renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); broadcastScoreState(); }
+function resetMatchScores() { state.match = freshMatchObject(); renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); renderPenalties(); broadcastScoreState(); }
+async function resetMatch() { if (!confirm("Reset all scores, cards, judge corners AND the round timer for this fight?")) return; resetMatchScores(); resetTimerForNewFight(); const modal = document.getElementById("modal-winner"); if (modal) modal.classList.add("hidden-view"); showToast("Fight reset.", "success"); }
 
 /* ==================== DATA: manage.html tables only ==================== */
-
 async function fetchAssignments() {
   const ringNum = getRingNumber();
-  try {
-    const { data, error } = await sb.from(ASSIGN_TABLE)
-      .select("*")
-      .eq("ring_number", ringNum)
-      .order("id", { ascending: true });
-    if (error) throw error;
-    state.assignments = data || [];
-  } catch (e) {
-    console.error("fetchAssignments error:", e);
-    state.assignments = [];
-  }
-  if (state.assignments.length > 0) {
-    const stillThere = state.assignments.some(a => String(a.id) === String(state.activeAssignmentId));
-    if (!stillThere) state.activeAssignmentId = state.assignments[0].id;
-  } else {
-    state.activeAssignmentId = null;
-  }
+  try { const { data, error } = await sb.from(ASSIGN_TABLE).select("*").eq("ring_number", ringNum).order("id", { ascending: true }); if (error) throw error; state.assignments = data || []; } catch (e) { console.error("fetchAssignments error:", e); state.assignments = []; }
+  if (state.assignments.length > 0) { const stillThere = state.assignments.some(a => String(a.id) === String(state.activeAssignmentId)); if (!stillThere) state.activeAssignmentId = state.assignments[0].id; } else { state.activeAssignmentId = null; }
   renderCategoryPicker();
 }
 
 async function fetchAllCompetitors() {
   try {
-    const { data: allRegs, error: regErr } = await sb.from(REG_TABLE).select("*");
-    if (regErr) throw regErr;
-
-    const compRegs = (allRegs || []).filter(r => {
-      const t = String(r.entry_type || r.type || r.role || "").toLowerCase();
-      return t === "comp" || t === "competitor" || t === "c";
-    });
+    const { data: allRegs, error: regErr } = await sb.from(REG_TABLE).select("*"); if (regErr) throw regErr;
+    const compRegs = (allRegs || []).filter(r => { const t = String(r.entry_type || r.type || r.role || "").toLowerCase(); return t === "comp" || t === "competitor" || t === "c"; });
     const compIds = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
-    if (compIds.length === 0) {
-      state.competitors = [];
-      return;
-    }
-
-    const { data: compDetails, error: compErr } = await sb.from(COMP_TABLE).select("*").in("id", compIds);
-    if (compErr) throw compErr;
-
+    if (compIds.length === 0) { state.competitors = []; return; }
+    const { data: compDetails, error: compErr } = await sb.from(COMP_TABLE).select("*").in("id", compIds); if (compErr) throw compErr;
     const out = [];
     (compDetails || []).forEach(person => {
       const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
@@ -2295,851 +853,268 @@ async function fetchAllCompetitors() {
         if (reg.entry_data && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
         else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
         else if (Array.isArray(reg.entries_list)) entries = reg.entries_list;
-        else if (reg.full_cat || reg.category || reg.discipline) {
-          entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline }];
-        }
+        else if (reg.full_cat || reg.category || reg.discipline) entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline }];
         entries.forEach(entry => {
           const fullCat = entry.full_cat || entry.category || entry.fullCat || "";
           const disc = String(entry.discipline || entry.type || "sparring").toLowerCase();
-          out.push({
-            id: person.id,
-            name: person.name || "Unknown",
-            team: person.team || "N/A",
-            gender: person.gender || "",
-            belt: person.belt || "",
-            _full_cat: fullCat,
-            _discipline: disc
-          });
+          out.push({ id: person.id, name: person.name || "Unknown", team: person.team || "N/A", gender: person.gender || "", belt: person.belt || "", _full_cat: fullCat, _discipline: disc });
         });
       });
     });
     state.competitors = out;
-  } catch (e) {
-    console.error("fetchAllCompetitors error:", e);
-  }
+  } catch (e) { console.error("fetchAllCompetitors error:", e); }
 }
 
 function competitorsFor(categoryName, discipline) {
-  const target = norm(categoryName);
-  const disc = norm(discipline);
-  const seen = new Set();
-  const list = [];
-  state.competitors.forEach(c => {
-    if (norm(c._discipline) !== disc) return;
-    if (norm(c._full_cat) !== target) return;
-    const key = String(c.id) + "|" + norm(c.name);
-    if (seen.has(key)) return;
-    seen.add(key);
-    list.push({ name: c.name, team: c.team, gender: c.gender, belt: c.belt });
-  });
+  const target = norm(categoryName); const disc = norm(discipline); const seen = new Set(); const list = [];
+  state.competitors.forEach(c => { if (norm(c._discipline) !== disc) return; if (norm(c._full_cat) !== target) return; const key = String(c.id) + "|" + norm(c.name); if (seen.has(key)) return; seen.add(key); list.push({ name: c.name, team: c.team, gender: c.gender, belt: c.belt }); });
   return list;
 }
 
 /* ==================== BRACKET BUILD (same seeding as manage.html) ==================== */
-
-function getBracketSize(count) {
-  if (count <= 1) return 1;
-  if (count === 2) return 2;
-  if (count <= 4) return 4;
-  if (count <= 8) return 8;
-  if (count <= 16) return 16;
-  if (count <= 32) return 32;
-  return 64;
-}
-
-function generateSeedOrder(size) {
-  if (size === 1) return [0];
-  const half = size / 2;
-  const left = generateSeedOrder(half);
-  const right = left.map(x => x + half);
-  const result = [];
-  for (let i = 0; i < half; i++) {
-    result.push(left[i]);
-    result.push(right[i]);
-  }
-  return result;
-}
-
-function spreadTeams(list, bracketSize) {
-  const slots = new Array(bracketSize).fill(null);
-  const teams = {};
-  list.forEach(p => {
-    const key = p.team || "N/A";
-    if (!teams[key]) teams[key] = [];
-    teams[key].push(p);
-  });
-  const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length);
-  const positions = generateSeedOrder(bracketSize);
-  let posIndex = 0;
-  sortedTeams.forEach(teamArr => {
-    teamArr.forEach(player => {
-      if (posIndex < positions.length) {
-        slots[positions[posIndex]] = player;
-        posIndex++;
-      }
-    });
-  });
-  return slots;
-}
-
-function slotObj(p) {
-  return p ? { name: p.name, team: p.team || "" } : { name: BYE, team: "" };
-}
-
-function emptySlot() {
-  return { name: EMPTY_SLOT, team: "" };
-}
+function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
+function generateSeedOrder(size) { if (size === 1) return [0]; const half = size / 2; const left = generateSeedOrder(half); const right = left.map(x => x + half); const result = []; for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); } return result; }
+function spreadTeams(list, bracketSize) { const slots = new Array(bracketSize).fill(null); const teams = {}; list.forEach(p => { const key = p.team || "N/A"; if (!teams[key]) teams[key] = []; teams[key].push(p); }); const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length); const positions = generateSeedOrder(bracketSize); let posIndex = 0; sortedTeams.forEach(teamArr => { teamArr.forEach(player => { if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; } }); }); return slots; }
+function slotObj(p) { return p ? { name: p.name, team: p.team || "" } : { name: BYE, team: "" }; }
+function emptySlot() { return { name: EMPTY_SLOT, team: "" }; }
 
 function buildBracket(list, categoryName, discipline) {
-  const size = Math.max(2, getBracketSize(list.length));
-  const totalRounds = Math.max(1, Math.log2(size));
-  const seeded = spreadTeams(list, size);
-  const slots = seeded.map(slotObj);
-
-  const rounds = [];
-  const r1 = [];
-  for (let i = 0; i < size; i += 2) {
-    r1.push({ p1: slots[i], p2: slots[i + 1], winner: null, blue_score: 0, red_score: 0 });
-  }
+  const size = Math.max(2, getBracketSize(list.length)); const totalRounds = Math.max(1, Math.log2(size));
+  const seeded = spreadTeams(list, size); const slots = seeded.map(slotObj);
+  const rounds = []; const r1 = [];
+  for (let i = 0; i < size; i += 2) r1.push({ p1: slots[i], p2: slots[i + 1], winner: null, blue_score: 0, red_score: 0 });
   rounds.push(r1);
-
   let matchCount = size / 2;
-  for (let r = 1; r < totalRounds; r++) {
-    matchCount = matchCount / 2;
-    const arr = [];
-    for (let m = 0; m < matchCount; m++) {
-      arr.push({ p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 });
-    }
-    rounds.push(arr);
-  }
-
-  return {
-    version: 1,
-    category_name: categoryName,
-    discipline: discipline,
-    competitor_count: list.length,
-    size: size,
-    totalRounds: totalRounds,
-    rounds: rounds,
-    currentRound: 0,
-    currentMatch: 0,
-    champion: null,
-    updated_at: new Date().toISOString()
-  };
+  for (let r = 1; r < totalRounds; r++) { matchCount = matchCount / 2; const arr = []; for (let m = 0; m < matchCount; m++) arr.push({ p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 }); rounds.push(arr); }
+  return { version: 1, category_name: categoryName, discipline: discipline, competitor_count: list.length, size: size, totalRounds: totalRounds, rounds: rounds, currentRound: 0, currentMatch: 0, champion: null, updated_at: new Date().toISOString() };
 }
 
-function isRealName(n) {
-  return !!n && n !== BYE && n !== EMPTY_SLOT;
-}
-
-function autoResolveByes(bracket) {
-  if (!bracket) return;
-  let changed = true;
-  let guard = 0;
-  while (changed && guard < 12) {
-    changed = false;
-    guard++;
-    for (let r = 0; r < bracket.rounds.length; r++) {
-      for (let m = 0; m < bracket.rounds[r].length; m++) {
-        const match = bracket.rounds[r][m];
-        if (match.winner) continue;
-        const n1 = match.p1.name;
-        const n2 = match.p2.name;
-        if (n1 === EMPTY_SLOT || n2 === EMPTY_SLOT) continue;
-        if (n1 === BYE && n2 === BYE) {
-          match.winner = "bye";
-          promote(bracket, r, m, { name: BYE, team: "" });
-          changed = true;
-        } else if (n1 === BYE && isRealName(n2)) {
-          match.winner = "p2";
-          promote(bracket, r, m, match.p2);
-          changed = true;
-        } else if (n2 === BYE && isRealName(n1)) {
-          match.winner = "p1";
-          promote(bracket, r, m, match.p1);
-          changed = true;
-        }
-      }
-    }
-  }
-}
-
-function promote(bracket, roundIdx, matchIdx, winnerObj) {
-  const nextRound = roundIdx + 1;
-  if (nextRound >= bracket.rounds.length) {
-    bracket.champion = winnerObj && isRealName(winnerObj.name) ? winnerObj : null;
-    return;
-  }
-  const nextMatchIdx = Math.floor(matchIdx / 2);
-  const slotKey = (matchIdx % 2 === 0) ? "p1" : "p2";
-  const target = bracket.rounds[nextRound][nextMatchIdx];
-  if (!target) return;
-  target[slotKey] = { name: winnerObj.name, team: winnerObj.team || "" };
-}
-
-function findNextPending(bracket) {
-  if (!bracket) return null;
-  for (let r = 0; r < bracket.rounds.length; r++) {
-    for (let m = 0; m < bracket.rounds[r].length; m++) {
-      const match = bracket.rounds[r][m];
-      if (match.winner) continue;
-      if (isRealName(match.p1.name) && isRealName(match.p2.name)) {
-        return { round: r, match: m };
-      }
-    }
-  }
-  return null;
-}
-
-function currentFight() {
-  const b = state.bracket;
-  if (!b) return null;
-  const r = b.currentRound;
-  const m = b.currentMatch;
-  if (r === null || r === undefined || m === null || m === undefined) return null;
-  if (!b.rounds[r] || !b.rounds[r][m]) return null;
-  const match = b.rounds[r][m];
-  if (match.winner) return null;
-  if (!isRealName(match.p1.name) || !isRealName(match.p2.name)) return null;
-  return match;
-}
-
-function stageName(roundIdx, totalRounds) {
-  const remaining = totalRounds - roundIdx;
-  if (remaining === 1) return "Final";
-  if (remaining === 2) return "Semi-Final";
-  if (remaining === 3) return "Quarter-Final";
-  if (remaining === 4) return "Round of 16";
-  if (remaining === 5) return "Round of 32";
-  return "Round " + (roundIdx + 1);
-}
-
-function globalFightNumber(bracket, roundIdx, matchIdx) {
-  let n = 0;
-  for (let r = 0; r < roundIdx; r++) n += bracket.rounds[r].length;
-  return n + matchIdx + 1;
-}
+function isRealName(n) { return !!n && n !== BYE && n !== EMPTY_SLOT; }
+function autoResolveByes(bracket) { if (!bracket) return; let changed = true; let guard = 0; while (changed && guard < 12) { changed = false; guard++; for (let r = 0; r < bracket.rounds.length; r++) { for (let m = 0; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; const n1 = match.p1.name; const n2 = match.p2.name; if (n1 === EMPTY_SLOT || n2 === EMPTY_SLOT) continue; if (n1 === BYE && n2 === BYE) { match.winner = "bye"; promote(bracket, r, m, { name: BYE, team: "" }); changed = true; } else if (n1 === BYE && isRealName(n2)) { match.winner = "p2"; promote(bracket, r, m, match.p2); changed = true; } else if (n2 === BYE && isRealName(n1)) { match.winner = "p1"; promote(bracket, r, m, match.p1); changed = true; } } } } }
+function promote(bracket, roundIdx, matchIdx, winnerObj) { const nextRound = roundIdx + 1; if (nextRound >= bracket.rounds.length) { bracket.champion = winnerObj && isRealName(winnerObj.name) ? winnerObj : null; return; } const nextMatchIdx = Math.floor(matchIdx / 2); const slotKey = (matchIdx % 2 === 0) ? "p1" : "p2"; const target = bracket.rounds[nextRound][nextMatchIdx]; if (!target) return; target[slotKey] = { name: winnerObj.name, team: winnerObj.team || "" }; }
+function findNextPending(bracket) { if (!bracket) return null; for (let r = 0; r < bracket.rounds.length; r++) { for (let m = 0; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; if (isRealName(match.p1.name) && isRealName(match.p2.name)) return { round: r, match: m }; } } return null; }
+function currentFight() { const b = state.bracket; if (!b) return null; const r = b.currentRound; const m = b.currentMatch; if (r === null || r === undefined || m === null || m === undefined) return null; if (!b.rounds[r] || !b.rounds[r][m]) return null; const match = b.rounds[r][m]; if (match.winner) return null; if (!isRealName(match.p1.name) || !isRealName(match.p2.name)) return null; return match; }
+function stageName(roundIdx, totalRounds) { const remaining = totalRounds - roundIdx; if (remaining === 1) return "Final"; if (remaining === 2) return "Semi-Final"; if (remaining === 3) return "Quarter-Final"; if (remaining === 4) return "Round of 16"; if (remaining === 5) return "Round of 32"; return "Round " + (roundIdx + 1); }
+function globalFightNumber(bracket, roundIdx, matchIdx) { let n = 0; for (let r = 0; r < roundIdx; r++) n += bracket.rounds[r].length; return n + matchIdx + 1; }
 
 /* ==================== BRACKET PERSISTENCE ==================== */
-
-function bracketLocalKey(assignmentId) {
-  return "tkd_bracket_" + (state.ring ? state.ring.id : "ring") + "_" + assignmentId;
-}
-
+function bracketLocalKey(assignmentId) { return "tkd_bracket_" + (state.ring ? state.ring.id : "ring") + "_" + assignmentId; }
 async function saveBracket() {
-  const b = state.bracket;
-  const a = activeAssignment();
-  if (!b || !a) return;
-  b.updated_at = new Date().toISOString();
-
-  try {
-    localStorage.setItem(bracketLocalKey(a.id), JSON.stringify(b));
-  } catch (e) {}
-
+  const b = state.bracket; const a = activeAssignment(); if (!b || !a) return; b.updated_at = new Date().toISOString();
+  try { localStorage.setItem(bracketLocalKey(a.id), JSON.stringify(b)); } catch (e) {}
   if (state.bracketColumnMissing) return;
-
-  try {
-    const { error } = await sb.from(ASSIGN_TABLE)
-      .update({ bracket_state: b })
-      .eq("id", a.id);
-    if (error) {
-      const msg = String(error.message || "");
-      if (/bracket_state|column|schema cache/i.test(msg)) {
-        state.bracketColumnMissing = true;
-        console.warn("bracket_state column missing - using localStorage only. Add the column to sync across devices.");
-      } else {
-        console.warn("saveBracket warning:", msg);
-      }
-    } else {
-      a.bracket_state = b;
-    }
-  } catch (e) {
-    state.bracketColumnMissing = true;
-  }
+  try { const { error } = await sb.from(ASSIGN_TABLE).update({ bracket_state: b }).eq("id", a.id); if (error) { const msg = String(error.message || ""); if (/bracket_state|column|schema cache/i.test(msg)) { state.bracketColumnMissing = true; console.warn("bracket_state column missing - using localStorage only."); } } else { a.bracket_state = b; } } catch (e) { state.bracketColumnMissing = true; }
 }
 
 async function loadOrCreateBracket(force) {
-  const a = activeAssignment();
-  if (!a) {
-    state.bracket = null;
-    return;
-  }
-
-  const catName = a.category_name || "";
-  const disc = String(a.discipline || "sparring").toLowerCase();
-
+  const a = activeAssignment(); if (!a) { state.bracket = null; return; }
+  const catName = a.category_name || ""; const disc = String(a.discipline || "sparring").toLowerCase();
   if (!force) {
     let candidate = null;
     if (a.bracket_state && a.bracket_state.rounds) candidate = a.bracket_state;
-    if (!candidate) {
-      try {
-        const raw = localStorage.getItem(bracketLocalKey(a.id));
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.rounds) candidate = parsed;
-        }
-      } catch (e) {}
-    }
-    if (candidate && norm(candidate.category_name) === norm(catName)) {
-      state.bracket = candidate;
-      state.bracket.totalRounds = state.bracket.rounds.length;
-      autoResolveByes(state.bracket);
-      const next = findNextPending(state.bracket);
-      if (next) {
-        state.bracket.currentRound = next.round;
-        state.bracket.currentMatch = next.match;
-      }
-      return;
-    }
+    if (!candidate) { try { const raw = localStorage.getItem(bracketLocalKey(a.id)); if (raw) { const parsed = JSON.parse(raw); if (parsed && parsed.rounds) candidate = parsed; } } catch (e) {} }
+    if (candidate && norm(candidate.category_name) === norm(catName)) { state.bracket = candidate; state.bracket.totalRounds = state.bracket.rounds.length; autoResolveByes(state.bracket); const next = findNextPending(state.bracket); if (next) { state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; } return; }
   }
-
   const list = competitorsFor(catName, disc);
-  if (list.length < 1) {
-    state.bracket = null;
-    return;
-  }
+  if (list.length < 1) { state.bracket = null; return; }
   state.bracket = buildBracket(list, catName, disc);
   autoResolveByes(state.bracket);
   const next = findNextPending(state.bracket);
-  if (next) {
-    state.bracket.currentRound = next.round;
-    state.bracket.currentMatch = next.match;
-  } else {
-    state.bracket.currentRound = 0;
-    state.bracket.currentMatch = 0;
-  }
+  if (next) { state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; } else { state.bracket.currentRound = 0; state.bracket.currentMatch = 0; }
   await saveBracket();
 }
 
 /* ==================== PUSH CURRENT FIGHT TO RING ==================== */
-
 async function pushRingUpdate(fields) {
   if (!state.ring || !state.ring.id) return;
   state.ring = Object.assign({}, state.ring, fields);
-  try {
-    sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring));
-  } catch (e) {}
-
-  try {
-    const { error } = await sb.from(RING_TABLE).update(fields).eq("id", state.ring.id);
-    if (error) {
-      const minimal = {
-        blue_name: fields.blue_name !== undefined ? fields.blue_name : state.ring.blue_name,
-        red_name: fields.red_name !== undefined ? fields.red_name : state.ring.red_name,
-        category_name: fields.category_name !== undefined ? fields.category_name : state.ring.category_name
-      };
-      await sb.from(RING_TABLE).update(minimal).eq("id", state.ring.id);
-    }
-  } catch (e) {
-    console.warn("pushRingUpdate failed (display still updated locally):", e);
-  }
-  updateCompetitorDisplay();
-  broadcastScoreState();
+  try { sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring)); } catch (e) {}
+  try { const { error } = await sb.from(RING_TABLE).update(fields).eq("id", state.ring.id); if (error) { const minimal = { blue_name: fields.blue_name !== undefined ? fields.blue_name : state.ring.blue_name, red_name: fields.red_name !== undefined ? fields.red_name : state.ring.red_name, category_name: fields.category_name !== undefined ? fields.category_name : state.ring.category_name }; await sb.from(RING_TABLE).update(minimal).eq("id", state.ring.id); } } catch (e) { console.warn("pushRingUpdate failed:", e); }
+  updateCompetitorDisplay(); broadcastScoreState();
 }
 
 async function loadCurrentFight(manual) {
-  const a = activeAssignment();
-  if (!a) {
-    showToast("No category assigned to this ring.", "warning");
-    return;
-  }
+  const a = activeAssignment(); if (!a) { showToast("No category assigned to this ring.", "warning"); return; }
   if (!state.bracket) await loadOrCreateBracket(false);
-  if (!state.bracket) {
-    showToast("No competitors found for this category.", "warning");
-    renderQueue();
-    return;
-  }
-
+  if (!state.bracket) { showToast("No competitors found for this category.", "warning"); renderQueue(); return; }
   autoResolveByes(state.bracket);
   const next = findNextPending(state.bracket);
-
   if (!next) {
-    state.bracket.currentRound = null;
-    state.bracket.currentMatch = null;
-    await saveBracket();
+    state.bracket.currentRound = null; state.bracket.currentMatch = null; await saveBracket();
     const champ = state.bracket.champion;
-    await pushRingUpdate({
-      blue_name: champ ? champ.name : null,
-      red_name: null,
-      blue_club: champ ? champ.team : null,
-      red_club: null,
-      next_blue_name: null,
-      next_red_name: null,
-      category_name: a.category_name,
-      discipline: String(a.discipline || "sparring").toLowerCase(),
-      match_stage: champ ? "🏆 Category Complete" : "No Fight Available",
-      match_number: 0
-    });
-    resetMatchScores();
-    resetTimerForNewFight();
-    renderQueue();
-    if (champ) showToast("🏆 " + champ.name + " wins the category!", "success");
-    else showToast("No more fights available in this category.", "warning");
+    await pushRingUpdate({ blue_name: champ ? champ.name : null, red_name: null, blue_club: champ ? champ.team : null, red_club: null, next_blue_name: null, next_red_name: null, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: champ ? "🏆 Category Complete" : "No Fight Available", match_number: 0 });
+    resetMatchScores(); resetTimerForNewFight(); renderQueue();
+    if (champ) showToast("🏆 " + champ.name + " wins the category!", "success"); else showToast("No more fights available in this category.", "warning");
     return;
   }
-
-  state.bracket.currentRound = next.round;
-  state.bracket.currentMatch = next.match;
-  await saveBracket();
-
+  state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; await saveBracket();
   const fight = state.bracket.rounds[next.round][next.match];
   const fightNo = globalFightNumber(state.bracket, next.round, next.match);
   const stage = stageName(next.round, state.bracket.totalRounds);
-
-  /* peek at the following fight for the TV "next" bar */
   let nextBlue = null, nextRed = null;
   const saveR = state.bracket.currentRound, saveM = state.bracket.currentMatch;
   const following = findFollowingPending(state.bracket, next.round, next.match);
-  if (following) {
-    const f = state.bracket.rounds[following.round][following.match];
-    nextBlue = isRealName(f.p1.name) ? f.p1.name : null;
-    nextRed = isRealName(f.p2.name) ? f.p2.name : null;
-  }
-  state.bracket.currentRound = saveR;
-  state.bracket.currentMatch = saveM;
-
-  await pushRingUpdate({
-    blue_name: fight.p1.name,
-    red_name: fight.p2.name,
-    blue_club: fight.p1.team || "",
-    red_club: fight.p2.team || "",
-    next_blue_name: nextBlue,
-    next_red_name: nextRed,
-    category_name: a.category_name,
-    discipline: String(a.discipline || "sparring").toLowerCase(),
-    match_stage: stage,
-    match_number: fightNo
-  });
-
-  resetMatchScores();
-  resetTimerForNewFight();
-  renderQueue();
-  renderLaptopJudges();
+  if (following) { const f = state.bracket.rounds[following.round][following.match]; nextBlue = isRealName(f.p1.name) ? f.p1.name : null; nextRed = isRealName(f.p2.name) ? f.p2.name : null; }
+  state.bracket.currentRound = saveR; state.bracket.currentMatch = saveM;
+  await pushRingUpdate({ blue_name: fight.p1.name, red_name: fight.p2.name, blue_club: fight.p1.team || "", red_club: fight.p2.team || "", next_blue_name: nextBlue, next_red_name: nextRed, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: stage, match_number: fightNo });
+  resetMatchScores(); resetTimerForNewFight(); renderQueue(); renderLaptopJudges();
   if (manual) showToast("▶ Loaded fight #" + fightNo + ": " + fight.p1.name + " vs " + fight.p2.name, "success");
 }
 
-function findFollowingPending(bracket, fromRound, fromMatch) {
-  for (let r = fromRound; r < bracket.rounds.length; r++) {
-    const startM = (r === fromRound) ? fromMatch + 1 : 0;
-    for (let m = startM; m < bracket.rounds[r].length; m++) {
-      const match = bracket.rounds[r][m];
-      if (match.winner) continue;
-      if (isRealName(match.p1.name) && isRealName(match.p2.name)) return { round: r, match: m };
-    }
-  }
-  return null;
-}
+function findFollowingPending(bracket, fromRound, fromMatch) { for (let r = fromRound; r < bracket.rounds.length; r++) { const startM = (r === fromRound) ? fromMatch + 1 : 0; for (let m = startM; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; if (isRealName(match.p1.name) && isRealName(match.p2.name)) return { round: r, match: m }; } } return null; }
 
 /* ==================== WINNER → ADVANCE → NEXT TWO ==================== */
-
 function finishMatch() {
-  const isPatterns = currentDiscipline() === "patterns";
-  let winner;
-  if (isPatterns) {
-    const v = patternVoteCounts();
-    if (v.blue > v.red) winner = "blue";
-    else if (v.red > v.blue) winner = "red";
-    else winner = "draw";
-  } else {
-    const v = judgeVoteCounts();
-    if (v.blue > v.red) winner = "blue";
-    else if (v.red > v.blue) winner = "red";
-    else winner = "draw";
-  }
-  timerState.finished = true;
-  timerState.paused = true;
-  timerState.isBreak = false;
-  timerState.winner = winner;
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  stopTimerTick();
+  const isPatterns = currentDiscipline() === "patterns"; let winner;
+  if (isPatterns) { const v = patternVoteCounts(); if (v.blue > v.red) winner = "blue"; else if (v.red > v.blue) winner = "red"; else winner = "draw"; }
+  else { const v = judgeVoteCounts(); if (v.blue > v.red) winner = "blue"; else if (v.red > v.blue) winner = "red"; else winner = "draw"; }
+  timerState.finished = true; timerState.paused = true; timerState.isBreak = false; timerState.winner = winner;
+  saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick();
   if (state.role === "laptop") showWinnerConfirmStep1();
 }
 
 function declareWinner(side) {
-  if (!currentFight()) {
-    showToast("No active fight to declare a winner for.", "warning");
-    return;
-  }
+  if (!currentFight()) { showToast("No active fight to declare a winner for.", "warning"); return; }
   const label = side === "draw" ? "a DRAW" : side.toUpperCase() + " as the winner";
   if (!confirm("Declare " + label + "?")) return;
-  timerState.finished = true;
-  timerState.paused = true;
-  timerState.isBreak = false;
-  timerState.winner = side;
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  stopTimerTick();
-  showWinnerConfirmStep1();
+  timerState.finished = true; timerState.paused = true; timerState.isBreak = false; timerState.winner = side;
+  saveTimerState(); broadcastTimerState(); renderTimer(); stopTimerTick(); showWinnerConfirmStep1();
 }
 
 function showWinnerConfirmStep1() {
-  const modal = document.getElementById("modal-winner");
-  const title = document.getElementById("modal-winner-title");
-  const winnerNameEl = document.getElementById("modal-winner-name");
-  const question = document.getElementById("modal-winner-question");
-  const btnContainer = document.getElementById("winner-btn-container");
-  const denySection = document.getElementById("winner-deny-section");
+  const modal = document.getElementById("modal-winner"); const title = document.getElementById("modal-winner-title"); const winnerNameEl = document.getElementById("modal-winner-name"); const question = document.getElementById("modal-winner-question"); const btnContainer = document.getElementById("winner-btn-container"); const denySection = document.getElementById("winner-deny-section");
   if (!modal) return;
-
   let winnerName;
-  if (timerState.winner === "draw") {
-    title.textContent = "DRAW!";
-    title.style.color = "#e2e8f0";
-    winnerName = "No winner yet";
-  } else {
-    title.textContent = timerState.winner.toUpperCase() + " WINS!";
-    title.style.color = timerState.winner === "blue" ? "#60a5fa" : "#f87171";
-    winnerName = timerState.winner === "blue"
-      ? ((state.ring && state.ring.blue_name) || "BLUE")
-      : ((state.ring && state.ring.red_name) || "RED");
-  }
+  if (timerState.winner === "draw") { title.textContent = "DRAW!"; title.style.color = "#e2e8f0"; winnerName = "No winner yet"; }
+  else { title.textContent = timerState.winner.toUpperCase() + " WINS!"; title.style.color = timerState.winner === "blue" ? "#60a5fa" : "#f87171"; winnerName = timerState.winner === "blue" ? ((state.ring && state.ring.blue_name) || "BLUE") : ((state.ring && state.ring.red_name) || "RED"); }
   if (winnerNameEl) winnerNameEl.textContent = winnerName;
-
   if (timerState.winner === "draw") {
     question.textContent = "A draw cannot advance in a bracket. Pick the winner (golden point / referee decision).";
+    btnContainer.innerHTML = '<button id="btn-draw-blue" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1rem;font-weight:800;background:#2563eb;color:white;">🔵 Blue Advances</button><button id="btn-draw-red" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1rem;font-weight:800;background:#dc2626;color:white;">🔴 Red Advances</button>';
+    document.getElementById("btn-draw-blue").addEventListener("click", () => { timerState.winner = "blue"; saveTimerState(); broadcastTimerState(); confirmAndAdvance(); });
+    document.getElementById("btn-draw-red").addEventListener("click", () => { timerState.winner = "red"; saveTimerState(); broadcastTimerState(); confirmAndAdvance(); });
   } else {
     question.textContent = "Confirm to promote this competitor and load the next two fighters.";
-  }
-
-  if (timerState.winner === "draw") {
-    btnContainer.innerHTML =
-      '<button id="btn-draw-blue" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1rem;font-weight:800;background:#2563eb;color:white;">🔵 Blue Advances</button>' +
-      '<button id="btn-draw-red" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1rem;font-weight:800;background:#dc2626;color:white;">🔴 Red Advances</button>';
-    document.getElementById("btn-draw-blue").addEventListener("click", () => {
-      timerState.winner = "blue";
-      saveTimerState();
-      broadcastTimerState();
-      confirmAndAdvance();
-    });
-    document.getElementById("btn-draw-red").addEventListener("click", () => {
-      timerState.winner = "red";
-      saveTimerState();
-      broadcastTimerState();
-      confirmAndAdvance();
-    });
-  } else {
-    btnContainer.innerHTML =
-      '<button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm &amp; Next</button>' +
-      '<button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>';
+    btnContainer.innerHTML = '<button id="btn-winner-confirm" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#10b981;color:white;">✓ Confirm &amp; Next</button><button id="btn-winner-deny" style="flex:1;padding:15px;border-radius:12px;border:none;font-size:1.1rem;font-weight:800;background:#ef4444;color:white;">✗ Deny</button>';
     document.getElementById("btn-winner-confirm").addEventListener("click", confirmAndAdvance);
     document.getElementById("btn-winner-deny").addEventListener("click", showWinnerDenied);
   }
-
-  denySection.classList.add("hidden-view");
-  modal.classList.remove("hidden-view");
+  denySection.classList.add("hidden-view"); modal.classList.remove("hidden-view");
 }
 
-function showWinnerDenied() {
-  const title = document.getElementById("modal-winner-title");
-  const question = document.getElementById("modal-winner-question");
-  title.textContent = "RESULT DENIED";
-  title.style.color = "#ef4444";
-  question.textContent = "Nothing was saved. Reset the fight and score it again.";
-  document.getElementById("winner-btn-container").innerHTML = "";
-  document.getElementById("winner-deny-section").classList.remove("hidden-view");
-}
+function showWinnerDenied() { const title = document.getElementById("modal-winner-title"); const question = document.getElementById("modal-winner-question"); title.textContent = "RESULT DENIED"; title.style.color = "#ef4444"; question.textContent = "Nothing was saved. Reset the fight and score it again."; document.getElementById("winner-btn-container").innerHTML = ""; document.getElementById("winner-deny-section").classList.remove("hidden-view"); }
 
 async function confirmAndAdvance() {
-  const modal = document.getElementById("modal-winner");
-  if (modal) modal.classList.add("hidden-view");
-
+  const modal = document.getElementById("modal-winner"); if (modal) modal.classList.add("hidden-view");
   const side = timerState.winner;
-  if (side !== "blue" && side !== "red") {
-    showToast("Pick blue or red to advance the bracket.", "warning");
-    showWinnerConfirmStep1();
-    return;
-  }
-
-  const b = state.bracket;
-  const fight = currentFight();
-  if (!b || !fight) {
-    showToast("No active fight found in the bracket.", "error");
-    return;
-  }
-
-  const r = b.currentRound;
-  const m = b.currentMatch;
-  const match = b.rounds[r][m];
-
-  /* 1) store result on this fight */
+  if (side !== "blue" && side !== "red") { showToast("Pick blue or red to advance the bracket.", "warning"); showWinnerConfirmStep1(); return; }
+  const b = state.bracket; const fight = currentFight();
+  if (!b || !fight) { showToast("No active fight found in the bracket.", "error"); return; }
+  const r = b.currentRound; const m = b.currentMatch; const match = b.rounds[r][m];
   const v = currentDiscipline() === "patterns" ? patternVoteCounts() : judgeVoteCounts();
-  match.blue_score = v.blue;
-  match.red_score = v.red;
-  match.winner = side === "blue" ? "p1" : "p2";
-  match.finished_at = new Date().toISOString();
-
+  match.blue_score = v.blue; match.red_score = v.red; match.winner = side === "blue" ? "p1" : "p2"; match.finished_at = new Date().toISOString();
   const winnerObj = side === "blue" ? match.p1 : match.p2;
-
-  /* 2) promote winner into the next round slot */
-  promote(b, r, m, winnerObj);
-  autoResolveByes(b);
-
-  /* 3) write progress to the database (ring_assignments.bracket_state) */
+  promote(b, r, m, winnerObj); autoResolveByes(b);
   await saveBracket();
-
   showToast("✓ " + winnerObj.name + " advances to the next round.", "success");
-
-  /* 4) pull the next two names, reset scores + timer, push to TV/phones */
-  await loadCurrentFight(false);
-  renderQueue();
-  renderBracketIfOpen();
+  await loadCurrentFight(false); renderQueue(); renderBracketIfOpen();
 }
 
 async function resetCategoryBracket() {
-  const a = activeAssignment();
-  if (!a) return;
+  const a = activeAssignment(); if (!a) return;
   if (!confirm("Rebuild the bracket for '" + a.category_name + "'? All recorded results for this category will be cleared.")) return;
   try { localStorage.removeItem(bracketLocalKey(a.id)); } catch (e) {}
-  await loadOrCreateBracket(true);
-  await loadCurrentFight(true);
-  renderQueue();
-  renderBracketIfOpen();
+  await loadOrCreateBracket(true); await loadCurrentFight(true); renderQueue(); renderBracketIfOpen();
 }
 
 /* ==================== DISPLAY SYNC ==================== */
-
 function updateCompetitorDisplay() {
   const ring = state.ring || {};
-  const blueName = ring.blue_name || "---";
-  const redName = ring.red_name || "---";
-  const blueClub = ring.blue_club || "---";
-  const redClub = ring.red_club || "---";
-  const nextBlueName = ring.next_blue_name || "---";
-  const nextRedName = ring.next_red_name || "---";
+  const blueName = ring.blue_name || "---"; const redName = ring.red_name || "---"; const blueClub = ring.blue_club || "---"; const redClub = ring.red_club || "---";
+  const nextBlueName = ring.next_blue_name || "---"; const nextRedName = ring.next_red_name || "---";
   const discipline = String(ring.mode || ring.discipline || currentDiscipline() || "sparring").toLowerCase();
-  const categoryName = ring.category_name || "No Category";
-  const matchNumber = ring.match_number || 0;
-  const matchStage = ring.match_stage || "Scheduled";
-
-  setTxt("laptop-blue-name", blueName);
-  setTxt("laptop-red-name", redName);
-  setTxt("laptop-blue-club", blueClub);
-  setTxt("laptop-red-club", redClub);
-  setTxt("laptop-category-name", categoryName);
-  setTxt("laptop-match-stage", matchStage);
-  setTxt("laptop-match-number", matchNumber || "-");
-
+  const categoryName = ring.category_name || "No Category"; const matchNumber = ring.match_number || 0; const matchStage = ring.match_stage || "Scheduled";
+  setTxt("laptop-blue-name", blueName); setTxt("laptop-red-name", redName); setTxt("laptop-blue-club", blueClub); setTxt("laptop-red-club", redClub);
+  setTxt("laptop-category-name", categoryName); setTxt("laptop-match-stage", matchStage); setTxt("laptop-match-number", matchNumber || "-");
   const linkContainer = document.getElementById("category-web-link-container");
-  if (linkContainer) {
-    if (categoryName && categoryName !== "No Category") linkContainer.classList.remove("hidden-view");
-    else linkContainer.classList.add("hidden-view");
-  }
-
-  const laptopDisc = document.getElementById("laptop-discipline-badge");
-  if (laptopDisc) {
-    laptopDisc.textContent = discipline.toUpperCase();
-    laptopDisc.style.background = discipline === "patterns" ? "#1e40af" : "#dc2626";
-  }
-
-  setTxt("tv-blue-name", blueName);
-  setTxt("tv-red-name", redName);
-  setTxt("tv-blue-club", blueClub);
-  setTxt("tv-red-club", redClub);
-  setTxt("tv-next-blue", nextBlueName);
-  setTxt("tv-next-red", nextRedName);
-  setTxt("tv-category-name", categoryName);
-  setTxt("tv-match-stage", matchStage);
-  setTxt("tv-match-number-display", "Fight #" + (matchNumber || "-"));
-
-  const tvDisc = document.getElementById("tv-discipline-badge");
-  if (tvDisc) {
-    tvDisc.textContent = discipline.toUpperCase();
-    tvDisc.style.background = discipline === "patterns" ? "#1e40af" : "#dc2626";
-  }
-
-  setTxt("phone-blue-name", blueName);
-  setTxt("phone-red-name", redName);
-  const phoneMode = document.getElementById("phone-mode-badge");
-  if (phoneMode) {
-    phoneMode.textContent = discipline.toUpperCase();
-    phoneMode.style.background = discipline === "patterns" ? "#1e40af" : "#dc2626";
-  }
-
-  const sparringControls = document.getElementById("sparring-controls");
-  const patternsControls = document.getElementById("patterns-controls");
-  if (discipline === "patterns") {
-    if (sparringControls) sparringControls.classList.add("hidden-view");
-    if (patternsControls) patternsControls.classList.remove("hidden-view");
-  } else {
-    if (sparringControls) sparringControls.classList.remove("hidden-view");
-    if (patternsControls) patternsControls.classList.add("hidden-view");
-  }
+  if (linkContainer) { if (categoryName && categoryName !== "No Category") linkContainer.classList.remove("hidden-view"); else linkContainer.classList.add("hidden-view"); }
+  const laptopDisc = document.getElementById("laptop-discipline-badge"); if (laptopDisc) { laptopDisc.textContent = discipline.toUpperCase(); laptopDisc.style.background = discipline === "patterns" ? "#1e40af" : "#dc2626"; }
+  setTxt("tv-blue-name", blueName); setTxt("tv-red-name", redName); setTxt("tv-blue-club", blueClub); setTxt("tv-red-club", redClub);
+  setTxt("tv-next-blue", nextBlueName); setTxt("tv-next-red", nextRedName); setTxt("tv-category-name", categoryName); setTxt("tv-match-stage", matchStage); setTxt("tv-match-number-display", "Fight #" + (matchNumber || "-"));
+  const tvDisc = document.getElementById("tv-discipline-badge"); if (tvDisc) { tvDisc.textContent = discipline.toUpperCase(); tvDisc.style.background = discipline === "patterns" ? "#1e40af" : "#dc2626"; }
+  setTxt("phone-blue-name", blueName); setTxt("phone-red-name", redName);
+  const phoneMode = document.getElementById("phone-mode-badge"); if (phoneMode) { phoneMode.textContent = discipline.toUpperCase(); phoneMode.style.background = discipline === "patterns" ? "#1e40af" : "#dc2626"; }
+  const sparringControls = document.getElementById("sparring-controls"); const patternsControls = document.getElementById("patterns-controls");
+  if (discipline === "patterns") { if (sparringControls) sparringControls.classList.add("hidden-view"); if (patternsControls) patternsControls.classList.remove("hidden-view"); }
+  else { if (sparringControls) sparringControls.classList.remove("hidden-view"); if (patternsControls) patternsControls.classList.add("hidden-view"); }
 }
 
 function renderCategoryPicker() {
-  const sel = document.getElementById("sel-category");
-  if (!sel) return;
-  if (!state.assignments || state.assignments.length === 0) {
-    sel.innerHTML = '<option value="">No categories assigned</option>';
-    return;
-  }
-  sel.innerHTML = state.assignments.map(a => {
-    const label = (a.category_name || "Category") + " · " + String(a.discipline || "sparring").toUpperCase();
-    const selected = String(a.id) === String(state.activeAssignmentId) ? " selected" : "";
-    return '<option value="' + escapeHtml(a.id) + '"' + selected + ">" + escapeHtml(label) + "</option>";
-  }).join("");
+  const sel = document.getElementById("sel-category"); if (!sel) return;
+  if (!state.assignments || state.assignments.length === 0) { sel.innerHTML = '<option value="">No categories assigned</option>'; return; }
+  sel.innerHTML = state.assignments.map(a => { const label = (a.category_name || "Category") + " · " + String(a.discipline || "sparring").toUpperCase(); const selected = String(a.id) === String(state.activeAssignmentId) ? " selected" : ""; return '<option value="' + escapeHtml(a.id) + '"' + selected + ">" + escapeHtml(label) + "</option>"; }).join("");
 }
 
-async function onCategoryPick(assignmentId) {
-  if (!assignmentId) return;
-  state.activeAssignmentId = assignmentId;
-  state.bracket = null;
-  await loadOrCreateBracket(false);
-  await loadCurrentFight(true);
-  renderQueue();
-}
+async function onCategoryPick(assignmentId) { if (!assignmentId) return; state.activeAssignmentId = assignmentId; state.bracket = null; await loadOrCreateBracket(false); await loadCurrentFight(true); renderQueue(); }
 
 function renderQueue() {
-  const container = document.getElementById("match-list-container");
-  if (!container) return;
-
-  if (!state.assignments || state.assignments.length === 0) {
-    container.innerHTML =
-      '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">' +
-      '<i class="fas fa-exclamation-circle" style="font-size:1.8rem;display:block;margin-bottom:10px;"></i>' +
-      "No categories assigned to this ring.<br><small>Assign them in the Manage panel.</small></div>";
-    return;
-  }
-
-  const a = activeAssignment();
-  const b = state.bracket;
-
-  if (!a) {
-    container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;">Pick a category above.</div>';
-    return;
-  }
-
-  if (!b) {
-    const list = competitorsFor(a.category_name, a.discipline);
-    container.innerHTML =
-      '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">' +
-      "No bracket could be built.<br><small>" + list.length + " competitor(s) registered for<br>" + escapeHtml(a.category_name) + "</small></div>";
-    return;
-  }
-
-  const disc = String(a.discipline || "sparring").toLowerCase();
-  const discColor = disc === "sparring" ? "#c2185b" : "#1565c0";
-  const discIcon = disc === "sparring" ? "fa-fist-raised" : "fa-chess-board";
-
+  const container = document.getElementById("match-list-container"); if (!container) return;
+  if (!state.assignments || state.assignments.length === 0) { container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;"><i class="fas fa-exclamation-circle" style="font-size:1.8rem;display:block;margin-bottom:10px;"></i>No categories assigned to this ring.<br><small>Assign them in the Manage panel.</small></div>'; return; }
+  const a = activeAssignment(); const b = state.bracket;
+  if (!a) { container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;">Pick a category above.</div>'; return; }
+  if (!b) { const list = competitorsFor(a.category_name, a.discipline); container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;font-size:0.9rem;">No bracket could be built.<br><small>' + list.length + " competitor(s) registered for<br>" + escapeHtml(a.category_name) + "</small></div>"; return; }
+  const disc = String(a.discipline || "sparring").toLowerCase(); const discColor = disc === "sparring" ? "#c2185b" : "#1565c0"; const discIcon = disc === "sparring" ? "fa-fist-raised" : "fa-chess-board";
   let html = "";
   html += '<div style="background:#1e293b;border-left:4px solid ' + discColor + ';border-radius:8px;padding:10px;margin-bottom:10px;">';
   html += '<div style="font-weight:800;color:#fbbf24;font-size:0.9rem;"><i class="fas ' + discIcon + '" style="color:' + discColor + ';margin-right:6px;"></i>' + escapeHtml(a.category_name) + "</div>";
   html += '<div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">' + b.competitor_count + " competitors · " + (a.num_matches || 0) + " scheduled matches · " + Math.floor((a.time_seconds || 0) / 60) + " min</div>";
-  if (b.champion) {
-    html += '<div style="font-size:0.8rem;color:#10b981;font-weight:800;margin-top:6px;">🏆 Champion: ' + escapeHtml(b.champion.name) + "</div>";
-  }
+  if (b.champion) html += '<div style="font-size:0.8rem;color:#10b981;font-weight:800;margin-top:6px;">🏆 Champion: ' + escapeHtml(b.champion.name) + "</div>";
   html += "</div>";
-
   for (let r = 0; r < b.rounds.length; r++) {
     html += '<div class="queue-group-title">' + escapeHtml(stageName(r, b.totalRounds)) + "</div>";
     for (let m = 0; m < b.rounds[r].length; m++) {
-      const match = b.rounds[r][m];
-      const isCurrent = (b.currentRound === r && b.currentMatch === m && !match.winner);
-      const isByeMatch = (match.p1.name === BYE || match.p2.name === BYE);
-      const isDone = !!match.winner;
-      const fightNo = globalFightNumber(b, r, m);
-
-      let cls = "";
-      if (isCurrent) cls = "active";
-      else if (isByeMatch) cls = "bye";
-      else if (isDone) cls = "completed";
-
-      let pill = "";
-      if (isCurrent) pill = '<span class="ml-pill live">LIVE</span>';
-      else if (isDone && !isByeMatch) pill = '<span class="ml-pill done">DONE</span>';
-      else if (!isDone && isRealName(match.p1.name) && isRealName(match.p2.name)) pill = '<span class="ml-pill next">NEXT</span>';
-
-      const p1 = match.p1.name === EMPTY_SLOT ? "TBD" : match.p1.name;
-      const p2 = match.p2.name === EMPTY_SLOT ? "TBD" : match.p2.name;
-
+      const match = b.rounds[r][m]; const isCurrent = (b.currentRound === r && b.currentMatch === m && !match.winner); const isByeMatch = (match.p1.name === BYE || match.p2.name === BYE); const isDone = !!match.winner; const fightNo = globalFightNumber(b, r, m);
+      let cls = ""; if (isCurrent) cls = "active"; else if (isByeMatch) cls = "bye"; else if (isDone) cls = "completed";
+      let pill = ""; if (isCurrent) pill = '<span class="ml-pill live">LIVE</span>'; else if (isDone && !isByeMatch) pill = '<span class="ml-pill done">DONE</span>'; else if (!isDone && isRealName(match.p1.name) && isRealName(match.p2.name)) pill = '<span class="ml-pill next">NEXT</span>';
+      const p1 = match.p1.name === EMPTY_SLOT ? "TBD" : match.p1.name; const p2 = match.p2.name === EMPTY_SLOT ? "TBD" : match.p2.name;
       html += '<div class="match-list-item ' + cls + '" onclick="openBracketModal()">';
       html += '<div class="ml-number"><span>#' + fightNo + " · " + escapeHtml(stageName(r, b.totalRounds)) + "</span>" + pill + "</div>";
       html += '<div class="ml-names">🔵 ' + escapeHtml(p1) + "<br>🔴 " + escapeHtml(p2) + "</div>";
-      if (isDone && !isByeMatch) {
-        const wName = match.winner === "p1" ? match.p1.name : (match.winner === "p2" ? match.p2.name : "—");
-        html += '<div class="ml-winner">✓ ' + escapeHtml(wName) + " (" + (match.blue_score || 0) + "–" + (match.red_score || 0) + ")</div>";
-      } else if (isByeMatch) {
-        html += '<div class="ml-category">BYE · auto-advanced</div>';
-      }
+      if (isDone && !isByeMatch) { const wName = match.winner === "p1" ? match.p1.name : (match.winner === "p2" ? match.p2.name : "—"); html += '<div class="ml-winner">✓ ' + escapeHtml(wName) + " (" + (match.blue_score || 0) + "–" + (match.red_score || 0) + ")</div>"; }
+      else if (isByeMatch) html += '<div class="ml-category">BYE · auto-advanced</div>';
       html += "</div>";
     }
   }
-
   container.innerHTML = html;
 }
 
 /* ==================== BRACKET MODAL ==================== */
-
-function renderBracketIfOpen() {
-  const modal = document.getElementById("modal-bracket");
-  if (modal && !modal.classList.contains("hidden-view")) renderBracketModalContent();
-}
-
-function openBracketModal() {
-  const modal = document.getElementById("modal-bracket");
-  if (!modal) return;
-  modal.classList.remove("hidden-view");
-  renderBracketModalContent();
-}
-
-function closeBracketModal() {
-  const modal = document.getElementById("modal-bracket");
-  if (modal) modal.classList.add("hidden-view");
-}
+function renderBracketIfOpen() { const modal = document.getElementById("modal-bracket"); if (modal && !modal.classList.contains("hidden-view")) renderBracketModalContent(); }
+function openBracketModal() { const modal = document.getElementById("modal-bracket"); if (!modal) return; modal.classList.remove("hidden-view"); renderBracketModalContent(); }
+function closeBracketModal() { const modal = document.getElementById("modal-bracket"); if (modal) modal.classList.add("hidden-view"); }
 
 function renderBracketModalContent() {
-  const content = document.getElementById("bracket-modal-content");
-  const title = document.getElementById("bracket-modal-title");
-  if (!content) return;
-
-  const a = activeAssignment();
-  const b = state.bracket;
-
-  if (!a) {
-    content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">No category selected.</div>';
-    return;
-  }
+  const content = document.getElementById("bracket-modal-content"); const title = document.getElementById("bracket-modal-title"); if (!content) return;
+  const a = activeAssignment(); const b = state.bracket;
+  if (!a) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">No category selected.</div>'; return; }
   if (title) title.textContent = a.category_name + " · " + String(a.discipline || "sparring").toUpperCase();
-
-  if (!b) {
-    content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No bracket available (not enough registered competitors).</div>';
-    return;
-  }
-
+  if (!b) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No bracket available (not enough registered competitors).</div>'; return; }
   let html = "";
-  if (b.champion) {
-    html += '<div style="background:#064e3b;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;color:#6ee7b7;font-weight:800;">🏆 Category Champion: ' + escapeHtml(b.champion.name) + " (" + escapeHtml(b.champion.team || "") + ")</div>";
-  }
-
+  if (b.champion) html += '<div style="background:#064e3b;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;color:#6ee7b7;font-weight:800;">🏆 Category Champion: ' + escapeHtml(b.champion.name) + " (" + escapeHtml(b.champion.team || "") + ")</div>";
   html += '<div style="overflow-x:auto;padding:4px;margin-bottom:20px;"><table class="bracket-table"><thead><tr>';
-  for (let r = 0; r < b.totalRounds; r++) {
-    html += "<th>" + (r === b.totalRounds - 1 ? "🏆 " : "") + escapeHtml(stageName(r, b.totalRounds)) + "</th>";
-  }
+  for (let r = 0; r < b.totalRounds; r++) html += "<th>" + (r === b.totalRounds - 1 ? "🏆 " : "") + escapeHtml(stageName(r, b.totalRounds)) + "</th>";
   html += "</tr></thead><tbody>";
-
   const maxRows = b.rounds[0].length;
   for (let i = 0; i < maxRows; i++) {
     html += "<tr>";
     for (let r = 0; r < b.totalRounds; r++) {
-      const step = Math.pow(2, r);
-      if (i % step !== 0) continue;
-      const matchIdx = Math.floor(i / step);
-      const match = b.rounds[r][matchIdx];
-      if (!match) continue;
+      const step = Math.pow(2, r); if (i % step !== 0) continue;
+      const matchIdx = Math.floor(i / step); const match = b.rounds[r][matchIdx]; if (!match) continue;
       const isCurrent = (b.currentRound === r && b.currentMatch === matchIdx && !match.winner);
-
-      const n1 = match.p1.name === EMPTY_SLOT ? "TBD" : match.p1.name;
-      const n2 = match.p2.name === EMPTY_SLOT ? "TBD" : match.p2.name;
-      let c1 = "bracket-slot first";
-      let c2 = "bracket-slot";
-      if (n1 === BYE) c1 += " bye";
-      if (n2 === BYE) c2 += " bye";
-      if (match.winner === "p1") { c1 += " won"; c2 += " lost"; }
-      if (match.winner === "p2") { c2 += " won"; c1 += " lost"; }
-
+      const n1 = match.p1.name === EMPTY_SLOT ? "TBD" : match.p1.name; const n2 = match.p2.name === EMPTY_SLOT ? "TBD" : match.p2.name;
+      let c1 = "bracket-slot first"; let c2 = "bracket-slot";
+      if (n1 === BYE) c1 += " bye"; if (n2 === BYE) c2 += " bye";
+      if (match.winner === "p1") { c1 += " won"; c2 += " lost"; } if (match.winner === "p2") { c2 += " won"; c1 += " lost"; }
       html += '<td rowspan="' + step + '">';
       html += '<div class="bracket-match' + (isCurrent ? " live" : "") + '">';
       html += '<div class="' + c1 + '">' + escapeHtml(n1) + '<div class="bracket-team">' + escapeHtml(match.p1.team || "") + "</div></div>";
@@ -3149,509 +1124,147 @@ function renderBracketModalContent() {
     html += "</tr>";
   }
   html += "</tbody></table></div>";
-
   const list = competitorsFor(a.category_name, a.discipline);
   html += '<div style="padding:18px;background:#1e293b;border-radius:12px;border:1px solid #334155;">';
   html += '<h4 style="color:#fbbf24;margin:0 0 12px;display:flex;align-items:center;gap:8px;"><i class="fas fa-list"></i> Registered Competitors (' + list.length + ")</h4>";
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;">';
-  list.forEach((c, idx) => {
-    html += '<div style="background:#0f172a;padding:10px;border-radius:8px;border-left:3px solid #3b82f6;">';
-    html += '<div style="font-weight:700;color:#f1f5f9;margin-bottom:3px;">' + (idx + 1) + ". " + escapeHtml(c.name) + "</div>";
-    html += '<div style="font-size:0.72rem;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap;">';
-    html += '<span><i class="fas fa-users"></i> ' + escapeHtml(c.team) + "</span>";
-    if (c.gender) html += '<span><i class="fas fa-venus-mars"></i> ' + escapeHtml(c.gender) + "</span>";
-    if (c.belt) html += '<span><i class="fas fa-certificate"></i> ' + escapeHtml(c.belt) + "</span>";
-    html += "</div></div>";
-  });
+  list.forEach((c, idx) => { html += '<div style="background:#0f172a;padding:10px;border-radius:8px;border-left:3px solid #3b82f6;"><div style="font-weight:700;color:#f1f5f9;margin-bottom:3px;">' + (idx + 1) + ". " + escapeHtml(c.name) + "</div>"; html += '<div style="font-size:0.72rem;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap;"><span><i class="fas fa-users"></i> ' + escapeHtml(c.team) + "</span>"; if (c.gender) html += '<span><i class="fas fa-venus-mars"></i> ' + escapeHtml(c.gender) + "</span>"; if (c.belt) html += '<span><i class="fas fa-certificate"></i> ' + escapeHtml(c.belt) + "</span>"; html += "</div></div>"; });
   html += "</div></div>";
-
-  if (state.bracketColumnMissing) {
-    html += '<div style="margin-top:15px;padding:12px;background:#78350f;border:1px solid #f59e0b;border-radius:8px;color:#fde68a;font-size:0.8rem;">';
-    html += "⚠️ Bracket results are being saved on this laptop only. Add a <code>bracket_state</code> jsonb column to <code>ring_assignments</code> to sync results across all devices.";
-    html += "</div>";
-  }
-
+  if (state.bracketColumnMissing) html += '<div style="margin-top:15px;padding:12px;background:#78350f;border:1px solid #f59e0b;border-radius:8px;color:#fde68a;font-size:0.8rem;">⚠️ Bracket results are being saved on this laptop only. Add a <code>bracket_state</code> jsonb column to <code>ring_assignments</code> to sync results across all devices.</div>';
   content.innerHTML = html;
 }
 
 /* ==================== QR / ADMIN KICK ==================== */
-
-function openJudgeQR(slot) {
-  const modal = document.getElementById("modal-qr");
-  const title = document.getElementById("modal-qr-title");
-  const container = document.getElementById("qrcode-container");
-  if (!modal || !container || !state.ring) return;
-  container.innerHTML = "";
-  title.textContent = "Judge " + slot + " Connection QR";
-  const password = state.ring.phone_password || "";
-  const targetUrl = location.origin + location.pathname + "#phone?code=" + encodeURIComponent(password) + "&slot=" + slot;
-  new QRCode(container, {
-    text: targetUrl,
-    width: 200,
-    height: 200,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H
-  });
-  modal.classList.remove("hidden-view");
-}
-
-function closeQRModal() {
-  const modal = document.getElementById("modal-qr");
-  if (modal) modal.classList.add("hidden-view");
-}
-
-function openAdminKickModal() {
-  document.getElementById("inp-admin-pin").value = "";
-  document.getElementById("modal-admin-kick").classList.remove("hidden-view");
-}
-
-function closeAdminKickModal() {
-  document.getElementById("modal-admin-kick").classList.add("hidden-view");
-}
+function openJudgeQR(slot) { const modal = document.getElementById("modal-qr"); const title = document.getElementById("modal-qr-title"); const container = document.getElementById("qrcode-container"); if (!modal || !container || !state.ring) return; container.innerHTML = ""; title.textContent = "Judge " + slot + " Connection QR"; const password = state.ring.phone_password || ""; const targetUrl = location.origin + location.pathname + "#phone?code=" + encodeURIComponent(password) + "&slot=" + slot; new QRCode(container, { text: targetUrl, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); modal.classList.remove("hidden-view"); }
+function closeQRModal() { const modal = document.getElementById("modal-qr"); if (modal) modal.classList.add("hidden-view"); }
+function openAdminKickModal() { document.getElementById("inp-admin-pin").value = ""; document.getElementById("modal-admin-kick").classList.remove("hidden-view"); }
+function closeAdminKickModal() { document.getElementById("modal-admin-kick").classList.add("hidden-view"); }
 
 function confirmAdminKick() {
-  const pin = document.getElementById("inp-admin-pin").value.trim();
-  if (pin !== ADMIN_PIN) {
-    alert("Incorrect Admin PIN!");
-    return;
-  }
-  const slot = parseInt(document.getElementById("sel-kick-slot").value, 10);
-  closeAdminKickModal();
-
-  try {
-    state.scoreChannel.send({ type: "broadcast", event: "judge-kick", payload: { slot: slot } });
-  } catch (e) {}
-
+  const pin = document.getElementById("inp-admin-pin").value.trim(); if (pin !== ADMIN_PIN) { alert("Incorrect Admin PIN!"); return; }
+  const slot = parseInt(document.getElementById("sel-kick-slot").value, 10); closeAdminKickModal();
+  try { state.scoreChannel.send({ type: "broadcast", event: "judge-kick", payload: { slot: slot } }); } catch (e) {}
   delete state.judgeLastSeen[slot];
-  const jb = pad4(state.match.judge_blue);
-  const jr = pad4(state.match.judge_red);
-  const votes = pad4Any(state.match.pattern_votes);
-  jb[slot - 1] = 0;
-  jr[slot - 1] = 0;
-  votes[slot - 1] = null;
-  state.match.judge_blue = jb;
-  state.match.judge_red = jr;
-  state.match.pattern_votes = votes;
-  renderVoteScores();
-  renderLaptopJudges();
-  renderTVJudgeNets();
-  broadcastScoreState();
+  const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); const votes = pad4Any(state.match.pattern_votes);
+  jb[slot - 1] = 0; jr[slot - 1] = 0; votes[slot - 1] = null;
+  state.match.judge_blue = jb; state.match.judge_red = jr; state.match.pattern_votes = votes;
+  renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); broadcastScoreState();
   showToast("Judge " + slot + " kicked and their points reset.", "success");
 }
 
-async function updateMaxPhones(val) {
-  if (!state.ring || state.role !== "laptop") return;
-  const num = parseInt(val, 10) || 4;
-  state.ring.max_phones = num;
-  try {
-    await sb.from(RING_TABLE).update({ max_phones: num }).eq("id", state.ring.id);
-  } catch (e) {}
-  const btn4 = document.getElementById("qr-btn-4");
-  if (btn4) btn4.style.display = num === 3 ? "none" : "flex";
-  renderLaptopJudges();
-  renderVoteScores();
-  renderTVJudgeNets();
-  updateRingLayoutCornerStats();
-  broadcastScoreState();
-  showToast("Ring set to " + num + " judges", "success");
-}
+async function updateMaxPhones(val) { if (!state.ring || state.role !== "laptop") return; const num = parseInt(val, 10) || 4; state.ring.max_phones = num; try { await sb.from(RING_TABLE).update({ max_phones: num }).eq("id", state.ring.id); } catch (e) {} const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = num === 3 ? "none" : "flex"; renderLaptopJudges(); renderVoteScores(); renderTVJudgeNets(); updateRingLayoutCornerStats(); broadcastScoreState(); showToast("Ring set to " + num + " judges", "success"); }
 
 /* ==================== PHONE JUDGE ==================== */
-
-function setPhoneStatus(msg, isError) {
-  const el = document.getElementById("phone-status");
-  if (el) {
-    el.textContent = msg;
-    el.style.color = isError ? "#ef4444" : "#94a3b8";
-  }
-}
+function setPhoneStatus(msg, isError) { const el = document.getElementById("phone-status"); if (el) { el.textContent = msg; el.style.color = isError ? "#ef4444" : "#94a3b8"; } }
 
 async function autoEnterPhone(slot) {
-  const maxJ = maxJudges();
-  if (slot > maxJ) slot = maxJ;
-  state.judgeSlot = slot;
-  state.phoneSessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
-  try {
-    localStorage.setItem("tkd_phone_session_" + state.ring.id, state.phoneSessionId);
-  } catch (e) {}
-
-  setTxt("phone-ring-name", state.ring.ring_name);
-  setTxt("phone-judge-badge", "JUDGE " + slot);
-
-  loadTimerState();
-  subscribeTimer();
-  subscribeScores();
-  subscribeRing();
-  renderTimer();
-  startTimerTick();
-  updateCompetitorDisplay();
-  showView("phone");
-  setPhoneStatus("Connected as Judge " + slot, false);
-
-  const ping = () => {
-    try {
-      state.scoreChannel.send({
-        type: "broadcast",
-        event: "judge-ping",
-        payload: { slot: state.judgeSlot, sessionId: state.phoneSessionId }
-      });
-    } catch (e) {}
-  };
-  ping();
-  if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-  state.heartbeatInterval = setInterval(ping, 3000);
+  const maxJ = maxJudges(); if (slot > maxJ) slot = maxJ;
+  state.judgeSlot = slot; state.phoneSessionId = "sess-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  try { localStorage.setItem("tkd_phone_session_" + state.ring.id, state.phoneSessionId); } catch (e) {}
+  setTxt("phone-ring-name", state.ring.ring_name); setTxt("phone-judge-badge", "JUDGE " + slot);
+  loadTimerState(); subscribeTimer(); subscribeScores(); subscribeRing(); renderTimer(); startTimerTick(); updateCompetitorDisplay(); showView("phone"); setPhoneStatus("Connected as Judge " + slot, false);
+  const ping = () => { try { state.scoreChannel.send({ type: "broadcast", event: "judge-ping", payload: { slot: state.judgeSlot, sessionId: state.phoneSessionId } }); } catch (e) {} };
+  ping(); if (state.heartbeatInterval) clearInterval(state.heartbeatInterval); state.heartbeatInterval = setInterval(ping, 3000);
 }
-
-async function enterPhone() {
-  await autoEnterPhone(1);
-}
-
-function leavePhone(msg) {
-  if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-  state.phoneSessionId = null;
-  state.judgeSlot = null;
-  state.role = null;
-  cleanupChannels();
-  stopTimerTick();
-  if (msg) alert(msg);
-  location.hash = "";
-  showView("landing");
-}
+async function enterPhone() { await autoEnterPhone(1); }
+function leavePhone(msg) { if (state.heartbeatInterval) clearInterval(state.heartbeatInterval); state.phoneSessionId = null; state.judgeSlot = null; state.role = null; cleanupChannels(); stopTimerTick(); if (msg) alert(msg); location.hash = ""; showView("landing"); }
 
 document.querySelectorAll(".judge-tap").forEach(btn => {
   btn.addEventListener("click", () => {
-    if (timerState.finished) {
-      setPhoneStatus("Fight finished — waiting for the next one", true);
-      return;
-    }
-    const side = btn.dataset.side;
-    const val = parseInt(btn.dataset.val, 10);
+    if (timerState.finished) { setPhoneStatus("Fight finished — waiting for the next one", true); return; }
+    const side = btn.dataset.side; const val = parseInt(btn.dataset.val, 10);
     if (navigator.vibrate) navigator.vibrate(20);
-    btn.classList.remove("pulse", "scored-flash");
-    void btn.offsetWidth;
-    btn.classList.add("pulse", "scored-flash");
-    if (!state.judgeSlot || !state.scoreChannel) {
-      setPhoneStatus("✗ Not connected", true);
-      return;
-    }
+    btn.classList.remove("pulse", "scored-flash"); void btn.offsetWidth; btn.classList.add("pulse", "scored-flash");
+    if (!state.judgeSlot || !state.scoreChannel) { setPhoneStatus("✗ Not connected", true); return; }
     setPhoneStatus("✓ +" + val + " " + side.toUpperCase(), false);
-    try {
-      state.scoreChannel.send({
-        type: "broadcast",
-        event: "judge-tap",
-        payload: { slot: state.judgeSlot, side: side, points: val }
-      });
-    } catch (e) {
-      setPhoneStatus("✗ Send failed", true);
-    }
+    try { state.scoreChannel.send({ type: "broadcast", event: "judge-tap", payload: { slot: state.judgeSlot, side: side, points: val } }); } catch (e) { setPhoneStatus("✗ Send failed", true); }
   });
 });
 
 document.querySelectorAll(".patterns-tap").forEach(btn => {
   btn.addEventListener("click", () => {
-    if (timerState.finished) {
-      setPhoneStatus("✗ Fight already finished", true);
-      return;
-    }
-    const winner = btn.dataset.winner;
-    if (navigator.vibrate) navigator.vibrate(30);
-    btn.classList.add("scored-flash");
-    setPhoneStatus("✓ Vote: " + winner.toUpperCase(), false);
-    try {
-      state.scoreChannel.send({
-        type: "broadcast",
-        event: "judge-patterns",
-        payload: { slot: state.judgeSlot, winner: winner }
-      });
-    } catch (e) {}
+    if (timerState.finished) { setPhoneStatus("✗ Fight already finished", true); return; }
+    const winner = btn.dataset.winner; if (navigator.vibrate) navigator.vibrate(30);
+    btn.classList.add("scored-flash"); setPhoneStatus("✓ Vote: " + winner.toUpperCase(), false);
+    try { state.scoreChannel.send({ type: "broadcast", event: "judge-patterns", payload: { slot: state.judgeSlot, winner: winner } }); } catch (e) {}
   });
 });
 
 /* ==================== AUTH / ROUTING ==================== */
-
-function parseHash() {
-  const raw = location.hash.replace(/^#/, "");
-  const qIndex = raw.indexOf("?");
-  const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase();
-  const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : "");
-  return {
-    name: path,
-    code: (params.get("code") || "").trim(),
-    slot: (params.get("slot") || "").trim()
-  };
-}
+function parseHash() { const raw = location.hash.replace(/^#/, ""); const qIndex = raw.indexOf("?"); const path = (qIndex >= 0 ? raw.slice(0, qIndex) : raw).toLowerCase(); const params = new URLSearchParams(qIndex >= 0 ? raw.slice(qIndex + 1) : ""); return { name: path, code: (params.get("code") || "").trim(), slot: (params.get("slot") || "").trim() }; }
 
 async function route() {
   const { name, code, slot } = parseHash();
-
-  if (name === "tv") {
-    if (code) {
-      const { data } = await sb.from(RING_TABLE).select("*").eq("tv_code", code).maybeSingle();
-      if (data) {
-        state.ring = data;
-        try { sessionStorage.setItem("tkd_ring", JSON.stringify(data)); } catch (e) {}
-        await enterTV();
-        return;
-      }
-    }
-    const cached = sessionStorage.getItem("tkd_ring");
-    if (cached) {
-      try {
-        state.ring = JSON.parse(cached);
-        state.role = "tv";
-        await enterTV();
-        return;
-      } catch (e) {}
-    }
-    showView("landing");
-    return;
-  }
-
-  if (name === "phone" || slot) {
-    if (code) {
-      const { data } = await sb.from(RING_TABLE).select("*").eq("phone_password", code).maybeSingle();
-      if (data) {
-        state.ring = data;
-        state.role = "phone";
-        try { sessionStorage.setItem("tkd_ring", JSON.stringify(data)); } catch (e) {}
-        await autoEnterPhone(parseInt(slot, 10) || 1);
-        return;
-      }
-    }
-  }
-
-  if (name === "") {
-    if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; }
-    if (state.role === "laptop") { showView("laptop"); return; }
-    if (state.role === "tv") { showView("tv"); return; }
-  }
+  if (name === "tv") { if (code) { const { data } = await sb.from(RING_TABLE).select("*").eq("tv_code", code).maybeSingle(); if (data) { state.ring = data; try { sessionStorage.setItem("tkd_ring", JSON.stringify(data)); } catch (e) {} await enterTV(); return; } } const cached = sessionStorage.getItem("tkd_ring"); if (cached) { try { state.ring = JSON.parse(cached); state.role = "tv"; await enterTV(); return; } catch (e) {} } showView("landing"); return; }
+  if (name === "phone" || slot) { if (code) { const { data } = await sb.from(RING_TABLE).select("*").eq("phone_password", code).maybeSingle(); if (data) { state.ring = data; state.role = "phone"; try { sessionStorage.setItem("tkd_ring", JSON.stringify(data)); } catch (e) {} await autoEnterPhone(parseInt(slot, 10) || 1); return; } } }
+  if (name === "") { if (state.role === "phone" && state.phoneSessionId) { showView("phone"); return; } if (state.role === "laptop") { showView("laptop"); return; } if (state.role === "tv") { showView("tv"); return; } }
   showView("landing");
 }
 
 document.getElementById("btn-enter").addEventListener("click", tryLogin);
-document.getElementById("inp-password").addEventListener("keydown", e => {
-  if (e.key === "Enter") tryLogin();
-});
+document.getElementById("inp-password").addEventListener("keydown", e => { if (e.key === "Enter") tryLogin(); });
 
 async function tryLogin() {
   if (state.loggingIn) return;
-  const pwd = document.getElementById("inp-password").value.trim();
-  const errEl = document.getElementById("landing-error");
-  const btn = document.getElementById("btn-enter");
-  errEl.textContent = "";
-  if (!pwd) {
-    errEl.textContent = "Please enter a password or TV code.";
-    return;
-  }
-  state.loggingIn = true;
-  btn.disabled = true;
-  btn.textContent = "Entering…";
+  const pwd = document.getElementById("inp-password").value.trim(); const errEl = document.getElementById("landing-error"); const btn = document.getElementById("btn-enter");
+  errEl.textContent = ""; if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
+  state.loggingIn = true; btn.disabled = true; btn.textContent = "Entering…";
   try {
-    const { data, error } = await sb.from(RING_TABLE).select("*")
-      .or("laptop_password.eq." + pwd + ",phone_password.eq." + pwd + ",tv_code.eq." + pwd)
-      .limit(1);
-    if (error || !data || data.length === 0) {
-      errEl.textContent = "Invalid password or TV code.";
-      return;
-    }
-    const ring = data[0];
-    state.ring = ring;
-    try { sessionStorage.setItem("tkd_ring", JSON.stringify(ring)); } catch (e) {}
-
-    if (pwd === ring.tv_code) {
-      state.role = "tv";
-      await enterTV();
-    } else if (pwd === ring.laptop_password) {
-      state.role = "laptop";
-      await enterLaptop();
-    } else if (pwd === ring.phone_password) {
-      state.role = "phone";
-      await enterPhone();
-    }
-  } catch (e) {
-    console.error(e);
-    errEl.textContent = "Connection error. Check console.";
-  } finally {
-    state.loggingIn = false;
-    btn.disabled = false;
-    btn.textContent = "Enter Ring";
-  }
+    const { data, error } = await sb.from(RING_TABLE).select("*").or("laptop_password.eq." + pwd + ",phone_password.eq." + pwd + ",tv_code.eq." + pwd).limit(1);
+    if (error || !data || data.length === 0) { errEl.textContent = "Invalid password or TV code."; return; }
+    const ring = data[0]; state.ring = ring; try { sessionStorage.setItem("tkd_ring", JSON.stringify(ring)); } catch (e) {}
+    if (pwd === ring.tv_code) { state.role = "tv"; await enterTV(); }
+    else if (pwd === ring.laptop_password) { state.role = "laptop"; await enterLaptop(); }
+    else if (pwd === ring.phone_password) { state.role = "phone"; await enterPhone(); }
+  } catch (e) { console.error(e); errEl.textContent = "Connection error. Check console."; } finally { state.loggingIn = false; btn.disabled = false; btn.textContent = "Enter Ring"; }
 }
 
-async function refreshAllData(silent) {
-  await fetchAssignments();
-  await fetchAllCompetitors();
-  await loadOrCreateBracket(false);
-  await loadCurrentFight(false);
-  renderQueue();
-  renderLaptopJudges();
-  renderVoteScores();
-  renderPenalties();
-  updateCompetitorDisplay();
-  if (!silent) showToast("Data refreshed from the tournament manager.", "success");
-}
+async function refreshAllData(silent) { await fetchAssignments(); await fetchAllCompetitors(); await loadOrCreateBracket(false); await loadCurrentFight(false); renderQueue(); renderLaptopJudges(); renderVoteScores(); renderPenalties(); updateCompetitorDisplay(); if (!silent) showToast("Data refreshed from the tournament manager.", "success"); }
 
 async function enterLaptop() {
-  setTxt("laptop-ring-name", state.ring.ring_name);
-  setTxt("laptop-ring-id", "Ring " + (state.ring.ring_code || getRingNumber()));
-  setTxt("laptop-tv-code", state.ring.tv_code || "—");
-
-  const maxP = maxJudges();
-  const selMax = document.getElementById("sel-max-phones");
-  if (selMax) selMax.value = String(maxP);
-  const btn4 = document.getElementById("qr-btn-4");
-  if (btn4) btn4.style.display = maxP === 3 ? "none" : "flex";
-
-  loadTimerState();
-  subscribeTimer();
-  subscribeScores();
-  subscribeRing();
-  renderTimer();
-  startTimerTick();
-  startBroadcastLoop();
-
-  if (state.presenceInterval) clearInterval(state.presenceInterval);
-  state.presenceInterval = setInterval(() => {
-    updateRingLayoutCornerStats();
-    renderLaptopJudges();
-  }, 4000);
-
-  showView("laptop");
-  await refreshAllData(true);
-  showToast("Welcome to " + (state.ring.ring_name || "the ring"), "success");
+  setTxt("laptop-ring-name", state.ring.ring_name); setTxt("laptop-ring-id", "Ring " + (state.ring.ring_code || getRingNumber())); setTxt("laptop-tv-code", state.ring.tv_code || "—");
+  const maxP = maxJudges(); const selMax = document.getElementById("sel-max-phones"); if (selMax) selMax.value = String(maxP); const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = maxP === 3 ? "none" : "flex";
+  loadTimerState(); subscribeTimer(); subscribeScores(); subscribeRing(); renderTimer(); startTimerTick(); startBroadcastLoop();
+  if (state.presenceInterval) clearInterval(state.presenceInterval); state.presenceInterval = setInterval(() => { updateRingLayoutCornerStats(); renderLaptopJudges(); }, 4000);
+  showView("laptop"); await refreshAllData(true); showToast("Welcome to " + (state.ring.ring_name || "the ring"), "success");
 }
 
-async function enterTV() {
-  setTxt("tv-ring-name", state.ring.ring_name);
-  loadTimerState();
-  subscribeTimer();
-  subscribeScores();
-  subscribeRing();
-  renderTimer();
-  startTimerTick();
-  renderVoteScores();
-  renderTVJudgeNets();
-  renderPenalties();
-  updateCompetitorDisplay();
-  showView("tv");
-  document.body.style.cursor = "none";
-}
+async function enterTV() { setTxt("tv-ring-name", state.ring.ring_name); loadTimerState(); subscribeTimer(); subscribeScores(); subscribeRing(); renderTimer(); startTimerTick(); renderVoteScores(); renderTVJudgeNets(); renderPenalties(); updateCompetitorDisplay(); showView("tv"); document.body.style.cursor = "none"; }
 
 function subscribeRing() {
-  if (state.ringChannel) sb.removeChannel(state.ringChannel);
-  if (!state.ring || !state.ring.id) return;
-  state.ringChannel = sb.channel("ring-" + state.ring.id)
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: RING_TABLE, filter: "id=eq." + state.ring.id }, payload => {
-      if (!payload.new) return;
-      state.ring = Object.assign({}, state.ring, payload.new);
-      try { sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring)); } catch (e) {}
-      const selMax = document.getElementById("sel-max-phones");
-      if (selMax && state.role === "laptop") selMax.value = String(state.ring.max_phones || 4);
-      updateCompetitorDisplay();
-      renderLaptopJudges();
-      renderVoteScores();
-      renderTVJudgeNets();
-    })
-    .subscribe();
+  if (state.ringChannel) sb.removeChannel(state.ringChannel); if (!state.ring || !state.ring.id) return;
+  state.ringChannel = sb.channel("ring-" + state.ring.id).on("postgres_changes", { event: "UPDATE", schema: "public", table: RING_TABLE, filter: "id=eq." + state.ring.id }, payload => { if (!payload.new) return; state.ring = Object.assign({}, state.ring, payload.new); try { sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring)); } catch (e) {} const selMax = document.getElementById("sel-max-phones"); if (selMax && state.role === "laptop") selMax.value = String(state.ring.max_phones || 4); updateCompetitorDisplay(); renderLaptopJudges(); renderVoteScores(); renderTVJudgeNets(); }).subscribe();
 }
 
 /* ==================== BUTTON WIRING ==================== */
-
-document.getElementById("btn-open-tv").addEventListener("click", () => {
-  let tvUrl = location.origin + location.pathname + "#tv";
-  if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code);
-  window.open(tvUrl, "_blank");
-});
-
+document.getElementById("btn-open-tv").addEventListener("click", () => { let tvUrl = location.origin + location.pathname + "#tv"; if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code); window.open(tvUrl, "_blank"); });
 document.getElementById("btn-refresh-data").addEventListener("click", () => refreshAllData(false));
 document.getElementById("btn-reset-match").addEventListener("click", resetMatch);
 document.getElementById("btn-timer-start").addEventListener("click", startTimer);
 document.getElementById("btn-timer-pause").addEventListener("click", pauseTimer);
 document.getElementById("btn-timer-reset").addEventListener("click", resetRound);
 document.getElementById("btn-winner-reset").addEventListener("click", resetMatch);
-
-document.getElementById("btn-logout").addEventListener("click", () => {
-  state.role = null;
-  cleanupChannels();
-  try { sessionStorage.removeItem("tkd_ring"); } catch (e) {}
-  location.hash = "";
-  showView("landing");
-  document.getElementById("inp-password").value = "";
-  document.body.style.cursor = "";
-});
-
-document.getElementById("btn-set-time").addEventListener("click", () => {
-  if (state.role !== "laptop") return;
-  const mins = parseInt(document.getElementById("inp-timer-min").value, 10) || 0;
-  const secs = parseInt(document.getElementById("inp-timer-sec").value, 10) || 0;
-  const breakSecs = parseInt(document.getElementById("inp-break-sec").value, 10) || 30;
-  timerState.roundTime = (mins * 60) + secs;
-  timerState.breakTime = breakSecs;
-  if (!timerState.isBreak) {
-    timerState.elapsed = 0;
-    timerState.startTime = null;
-    timerState.paused = true;
-  }
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  showToast("Timer set: " + mins + ":" + String(secs).padStart(2, "0") + " | Break " + breakSecs + "s", "success");
-});
+document.getElementById("btn-logout").addEventListener("click", () => { state.role = null; cleanupChannels(); try { sessionStorage.removeItem("tkd_ring"); } catch (e) {} location.hash = ""; showView("landing"); document.getElementById("inp-password").value = ""; document.body.style.cursor = ""; });
+document.getElementById("btn-set-time").addEventListener("click", () => { if (state.role !== "laptop") return; const mins = parseInt(document.getElementById("inp-timer-min").value, 10) || 0; const secs = parseInt(document.getElementById("inp-timer-sec").value, 10) || 0; const breakSecs = parseInt(document.getElementById("inp-break-sec").value, 10) || 30; timerState.roundTime = (mins * 60) + secs; timerState.breakTime = breakSecs; if (!timerState.isBreak) { timerState.elapsed = 0; timerState.startTime = null; timerState.paused = true; } saveTimerState(); broadcastTimerState(); renderTimer(); showToast("Timer set: " + mins + ":" + String(secs).padStart(2, "0") + " | Break " + breakSecs + "s", "success"); });
 
 document.querySelectorAll(".penalty-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    if (state.role !== "laptop") return;
-    const act = btn.dataset.act;
-    if (!act) return;
-    if (timerState.finished) {
-      showToast("Fight finished. Reset first.", "warning");
-      return;
-    }
-    let column = null;
-    let delta = 0;
-    if (act === "blue-gj-plus") { column = "blue_gam_jeom"; delta = 1; }
-    else if (act === "blue-gj-minus") { column = "blue_gam_jeom"; delta = -1; }
-    else if (act === "red-gj-plus") { column = "red_gam_jeom"; delta = 1; }
-    else if (act === "red-gj-minus") { column = "red_gam_jeom"; delta = -1; }
-    else if (act === "blue-yc-plus") { column = "blue_yellow_cards"; delta = 1; }
-    else if (act === "blue-yc-minus") { column = "blue_yellow_cards"; delta = -1; }
-    else if (act === "red-yc-plus") { column = "red_yellow_cards"; delta = 1; }
-    else if (act === "red-yc-minus") { column = "red_yellow_cards"; delta = -1; }
+    if (state.role !== "laptop") return; const act = btn.dataset.act; if (!act) return;
+    if (timerState.finished) { showToast("Fight finished. Reset first.", "warning"); return; }
+    let column = null; let delta = 0;
+    if (act === "blue-gj-plus") { column = "blue_gam_jeom"; delta = 1; } else if (act === "blue-gj-minus") { column = "blue_gam_jeom"; delta = -1; }
+    else if (act === "red-gj-plus") { column = "red_gam_jeom"; delta = 1; } else if (act === "red-gj-minus") { column = "red_gam_jeom"; delta = -1; }
+    else if (act === "blue-yc-plus") { column = "blue_yellow_cards"; delta = 1; } else if (act === "blue-yc-minus") { column = "blue_yellow_cards"; delta = -1; }
+    else if (act === "red-yc-plus") { column = "red_yellow_cards"; delta = 1; } else if (act === "red-yc-minus") { column = "red_yellow_cards"; delta = -1; }
     if (!column) return;
-    state.match[column] = Math.max(0, (state.match[column] || 0) + delta);
-    renderPenalties();
-    broadcastScoreState();
+    state.match[column] = Math.max(0, (state.match[column] || 0) + delta); renderPenalties(); broadcastScoreState();
   });
 });
 
 /* ==================== CLEANUP / BOOT ==================== */
-
-function cleanupChannels() {
-  if (state.ringChannel) sb.removeChannel(state.ringChannel);
-  if (state.scoreChannel) sb.removeChannel(state.scoreChannel);
-  if (timerChannel) sb.removeChannel(timerChannel);
-  state.ringChannel = null;
-  state.scoreChannel = null;
-  timerChannel = null;
-  if (state.heartbeatInterval) clearInterval(state.heartbeatInterval);
-  if (state.presenceInterval) clearInterval(state.presenceInterval);
-  if (state.queueInterval) clearInterval(state.queueInterval);
-  state.heartbeatInterval = null;
-  state.presenceInterval = null;
-  state.queueInterval = null;
-  stopTimerTick();
-  stopBroadcastLoop();
-}
-
-window.addEventListener("beforeunload", cleanupChannels);
-window.addEventListener("pagehide", cleanupChannels);
-window.addEventListener("hashchange", route);
-
-renderLaptopJudges();
-renderPenalties();
-renderVoteScores();
-route();
+function cleanupChannels() { if (state.ringChannel) sb.removeChannel(state.ringChannel); if (state.scoreChannel) sb.removeChannel(state.scoreChannel); if (timerChannel) sb.removeChannel(timerChannel); state.ringChannel = null; state.scoreChannel = null; timerChannel = null; if (state.heartbeatInterval) clearInterval(state.heartbeatInterval); if (state.presenceInterval) clearInterval(state.presenceInterval); if (state.queueInterval) clearInterval(state.queueInterval); state.heartbeatInterval = null; state.presenceInterval = null; state.queueInterval = null; stopTimerTick(); stopBroadcastLoop(); }
+window.addEventListener("beforeunload", cleanupChannels); window.addEventListener("pagehide", cleanupChannels); window.addEventListener("hashchange", route);
+renderLaptopJudges(); renderPenalties(); renderVoteScores(); route();
 </script>
 </body>
 </html>
