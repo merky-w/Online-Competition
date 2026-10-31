@@ -230,7 +230,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .bracket-slot.lost { opacity: 0.5; text-decoration: line-through; }
 .bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
 
-/* ✅ NEW: Drag & Drop Styles for Bracket Editing */
+/* ✅ Drag & Drop Styles for Bracket Editing */
 .bracket-slot[draggable="true"] {
   cursor: grab;
   transition: background 0.2s, transform 0.2s, border 0.2s;
@@ -680,7 +680,6 @@ const state = {
   heartbeatInterval: null, presenceInterval: null, queueInterval: null
 };
 
-// ✅ NEW: Global state for Drag & Drop and Auto-Advance
 let dragSource = null;
 let autoAdvanceTimeout = null;
 
@@ -785,7 +784,7 @@ function endRound() {
   else { finishMatch(); }
 }
 
-/* ==================== SCORING (broadcast, no DB table) ==================== */
+/* ==================== SCORING ==================== */
 function subscribeScores() {
   if (state.scoreChannel) sb.removeChannel(state.scoreChannel);
   if (!state.ring) return;
@@ -837,7 +836,18 @@ function renderLaptopJudges() {
     html += '<div class="judge-label">Judge ' + i + "</div>";
     html += '<div><span class="judge-status-badge ' + (isOnline ? "online" : "offline") + '">' + (isOnline ? "Connected" : "Empty") + "</span></div>";
     if (isPatterns) { const v = votes[i - 1]; html += '<div class="judge-detail">Vote: ' + (v ? v.toUpperCase() : "—") + "</div>"; }
-    else { html += '<div class="judge-detail">Net: ' + Math.abs(net) + "</div>"; html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + " | R: " + givenRed + "</div>"; html += '<div class="judge-row-controls">'; html += '<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span>'; html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'blue',1)\">+</button>"; html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'blue',-1)\">−</button></div>"; html += '<div class="judge-side-adj"><span style="color:#f87171;font-weight:700;">R</span>"; html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'red',1)\">+</button>"; html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'red',-1)\">−</button></div>"; html += "</div>"; }
+    else { 
+      html += '<div class="judge-detail">Net: ' + Math.abs(net) + "</div>"; 
+      html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + " | R: " + givenRed + "</div>"; 
+      html += '<div class="judge-row-controls">'; 
+      html += '<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span>'; 
+      html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'blue',1)\">+</button>"; 
+      html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'blue',-1)\">−</button></div>"; 
+      html += '<div class="judge-side-adj"><span style="color:#f87171;font-weight:700;">R</span>'; 
+      html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'red',1)\">+</button>"; 
+      html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'red',-1)\">−</button></div>"; 
+      html += "</div>"; 
+    }
     html += "</div>";
   }
   container.innerHTML = html; updateRingLayoutCornerStats();
@@ -847,7 +857,7 @@ function adjustSpecificJudge(judgeNum, side, delta) { if (state.role !== "laptop
 function resetMatchScores() { state.match = freshMatchObject(); renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); renderPenalties(); broadcastScoreState(); }
 async function resetMatch() { if (!confirm("Reset all scores, cards, judge corners AND the round timer for this fight?")) return; resetMatchScores(); resetTimerForNewFight(); const modal = document.getElementById("modal-winner"); if (modal) modal.classList.add("hidden-view"); showToast("Fight reset.", "success"); }
 
-/* ==================== DATA: manage.html tables only ==================== */
+/* ==================== DATA ==================== */
 async function fetchAssignments() {
   const ringNum = getRingNumber();
   try { const { data, error } = await sb.from(ASSIGN_TABLE).select("*").eq("ring_number", ringNum).order("id", { ascending: true }); if (error) throw error; state.assignments = data || []; } catch (e) { console.error("fetchAssignments error:", e); state.assignments = []; }
@@ -888,7 +898,7 @@ function competitorsFor(categoryName, discipline) {
   return list;
 }
 
-/* ==================== BRACKET BUILD (same seeding as manage.html) ==================== */
+/* ==================== BRACKET BUILD ==================== */
 function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
 function generateSeedOrder(size) { if (size === 1) return [0]; const half = size / 2; const left = generateSeedOrder(half); const right = left.map(x => x + half); const result = []; for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); } return result; }
 function spreadTeams(list, bracketSize) { const slots = new Array(bracketSize).fill(null); const teams = {}; list.forEach(p => { const key = p.team || "N/A"; if (!teams[key]) teams[key] = []; teams[key].push(p); }); const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length); const positions = generateSeedOrder(bracketSize); let posIndex = 0; sortedTeams.forEach(teamArr => { teamArr.forEach(player => { if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; } }); }); return slots; }
@@ -951,7 +961,6 @@ async function pushRingUpdate(fields) {
 }
 
 async function loadCurrentFight(manual) {
-  // ✅ Cancel auto-advance if user manually interacts
   if (autoAdvanceTimeout && manual) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
 
   const a = activeAssignment(); if (!a) { showToast("No category assigned to this ring.", "warning"); return; }
@@ -981,7 +990,6 @@ async function loadCurrentFight(manual) {
     if (champ) {
       showToast("🏆 " + champ.name + " wins the category!", "success");
       
-      // ✅ AUTO-ADVANCE LOGIC
       if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
       autoAdvanceTimeout = setTimeout(async () => {
         await advanceToNextCategory();
@@ -1018,7 +1026,7 @@ async function loadCurrentFight(manual) {
 
 function findFollowingPending(bracket, fromRound, fromMatch) { for (let r = fromRound; r < bracket.rounds.length; r++) { const startM = (r === fromRound) ? fromMatch + 1 : 0; for (let m = startM; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; if (isRealName(match.p1.name) && isRealName(match.p2.name)) return { round: r, match: m }; } } return null; }
 
-/* ==================== WINNER → ADVANCE → NEXT TWO ==================== */
+/* ==================== WINNER & ADVANCE ==================== */
 function finishMatch() {
   const isPatterns = currentDiscipline() === "patterns"; let winner;
   if (isPatterns) { const v = patternVoteCounts(); if (v.blue > v.red) winner = "blue"; else if (v.red > v.blue) winner = "red"; else winner = "draw"; }
@@ -1083,7 +1091,6 @@ async function resetCategoryBracket() {
   await loadOrCreateBracket(true); await loadCurrentFight(true); renderQueue(); renderBracketIfOpen();
 }
 
-/* ==================== AUTO-ADVANCE TO NEXT CATEGORY ==================== */
 async function advanceToNextCategory() {
   if (!state.assignments || state.assignments.length === 0) return;
   
@@ -1203,12 +1210,11 @@ function renderQueue() {
   container.innerHTML = html;
 }
 
-/* ==================== BRACKET MODAL + DRAG & DROP ==================== */
+/* ==================== BRACKET MODAL & DRAG/DROP ==================== */
 function renderBracketIfOpen() { const modal = document.getElementById("modal-bracket"); if (modal && !modal.classList.contains("hidden-view")) renderBracketModalContent(); }
 function openBracketModal() { const modal = document.getElementById("modal-bracket"); if (!modal) return; modal.classList.remove("hidden-view"); renderBracketModalContent(); }
 function closeBracketModal() { const modal = document.getElementById("modal-bracket"); if (modal) modal.classList.add("hidden-view"); }
 
-// ✅ NEW: Drag & Drop Handlers for Bracket Editing
 function bracketDragStart(e, round, match, slot) {
   dragSource = { round, match, slot };
   e.dataTransfer.effectAllowed = 'move';
@@ -1241,16 +1247,13 @@ function bracketDrop(e, targetRound, targetMatch, targetSlot) {
   const srcPlayer = srcMatch[src.slot];
   const tgtPlayer = tgtMatch[tgt.slot];
   
-  // Swap them
   srcMatch[src.slot] = tgtPlayer;
   tgtMatch[tgt.slot] = srcPlayer;
   
-  // Save and re-render
   saveBracket();
   renderBracketModalContent();
   renderQueue();
   
-  // If the swapped players are in the current live fight, update the main display
   const isCurrentFightAffected = 
     (src.round === state.bracket.currentRound && src.match === state.bracket.currentMatch) ||
     (tgt.round === state.bracket.currentRound && tgt.match === state.bracket.currentMatch);
@@ -1301,7 +1304,6 @@ function renderBracketModalContent() {
       html += '<td rowspan="' + step + '">';
       html += '<div class="bracket-match' + (isCurrent ? " live" : "") + '">';
       
-      // ✅ Added draggable attributes to slots
       html += '<div class="' + c1 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n1) + '<div class="bracket-team">' + escapeHtml(match.p1.team || "") + "</div></div>";
       html += '<div class="' + c2 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n2) + '<div class="bracket-team">' + escapeHtml(match.p2.team || "") + "</div></div>";
       
@@ -1321,7 +1323,7 @@ function renderBracketModalContent() {
   content.innerHTML = html;
 }
 
-/* ==================== QR / ADMIN KICK ==================== */
+/* ==================== QR & ADMIN KICK ==================== */
 function openJudgeQR(slot) { const modal = document.getElementById("modal-qr"); const title = document.getElementById("modal-qr-title"); const container = document.getElementById("qrcode-container"); if (!modal || !container || !state.ring) return; container.innerHTML = ""; title.textContent = "Judge " + slot + " Connection QR"; const password = state.ring.phone_password || ""; const targetUrl = location.origin + location.pathname + "#phone?code=" + encodeURIComponent(password) + "&slot=" + slot; new QRCode(container, { text: targetUrl, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); modal.classList.remove("hidden-view"); }
 function closeQRModal() { const modal = document.getElementById("modal-qr"); if (modal) modal.classList.add("hidden-view"); }
 function openAdminKickModal() { document.getElementById("inp-admin-pin").value = ""; document.getElementById("modal-admin-kick").classList.remove("hidden-view"); }
@@ -1464,7 +1466,7 @@ document.querySelectorAll(".penalty-btn").forEach(btn => {
   });
 });
 
-/* ==================== CLEANUP / BOOT ==================== */
+/* ==================== CLEANUP & BOOTSTRAP ==================== */
 function cleanupChannels() {
   if (state.ringChannel) sb.removeChannel(state.ringChannel); if (state.scoreChannel) sb.removeChannel(state.scoreChannel); if (timerChannel) sb.removeChannel(timerChannel);
   state.ringChannel = null; state.scoreChannel = null; timerChannel = null;
