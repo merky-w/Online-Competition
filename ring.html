@@ -1,19 +1,4 @@
-
-                        <!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body {
-                  background-color: white; /* Ensure the iframe has a white background */
-                }
-
-                
-              </style>
-                        </head>
-                        <body>
-                            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -83,7 +68,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .current-match-card { background: #0f172a; border-radius: 16px; padding: 25px; border: 2px solid #334155; }
 .current-match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #334155; }
 .match-stage-badge { background: #dc2626; color: white; padding: 6px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
-.match-number-badge { background: #1e40af; color: white; padding: 6px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
 .competitors-display { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin-bottom: 25px; }
 .competitor-box { background: #1e293b; border-radius: 12px; padding: 20px; text-align: center; border: 3px solid; }
 .competitor-box.blue-box { border-color: #2563eb; }
@@ -123,7 +107,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .judge-box .judge-status-badge { display: inline-block; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-bottom: 6px; }
 .judge-status-badge.online { background: #065f46; color: #34d399; }
 .judge-status-badge.offline { background: #7f1d1d; color: #fca5a5; }
-.judge-box .judge-score { font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 .judge-box .judge-detail { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; font-weight: 600; }
 .judge-row-controls { display: flex; justify-content: center; gap: 10px; margin-top: 8px; font-size: 0.75rem; }
 .judge-side-adj { display: flex; align-items: center; gap: 3px; }
@@ -157,11 +140,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .match-list-sidebar h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; color: #fbbf24; display: flex; align-items: center; gap: 8px; }
 .match-list-item { background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #334155; transition: all 0.2s; }
 .match-list-item.active { border-left-color: #10b981; background: #064e3b; }
-.match-list-item.completed { border-left-color: #6b7280; opacity: 0.6; }
 .match-list-item .ml-number { font-size: 0.75rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
 .match-list-item .ml-names { font-size: 0.95rem; font-weight: 700; color: white; margin-bottom: 4px; }
 .match-list-item .ml-category { font-size: 0.75rem; color: #64748b; }
-.match-list-item .ml-winner { font-size: 0.8rem; color: #10b981; font-weight: 700; margin-top: 4px; }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
 .modal-box { background: #1e293b; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; border: 3px solid #fbbf24; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .phone-container { background: #0f172a; min-height: 100vh; color: white; display: flex; flex-direction: column; }
@@ -219,7 +200,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </style>
 </head>
 <body class="bg-slate-900">
-<!-- ===== LANDING VIEW ===== -->
 <div id="view-landing" class="landing-container">
 <div class="landing-box">
 <div class="landing-title">
@@ -238,7 +218,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== PHONE VIEW ===== -->
 <div id="view-phone" class="hidden-view phone-container">
 <div class="phone-header">
 <div style="display:flex;align-items:center;gap:10px;">
@@ -299,7 +278,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
 </div>
 
-<!-- ===== LAPTOP VIEW ===== -->
 <div id="view-laptop" class="hidden-view laptop-container">
 <div class="laptop-header">
 <div class="laptop-header-left">
@@ -466,7 +444,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== TV VIEW ===== -->
 <div id="view-tv" class="hidden-view tv-container">
 <div class="tv-top-bar">
 <div class="tv-top-info">
@@ -527,7 +504,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== QR CODE MODAL ===== -->
 <div id="modal-qr" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
@@ -537,7 +513,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== ADMIN KICK MODAL ===== -->
 <div id="modal-admin-kick" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
@@ -558,7 +533,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== WINNER CONFIRMATION MODAL ===== -->
 <div id="modal-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:650px;">
 <h2 id="modal-winner-title" style="font-size:2.2rem;font-weight:900;margin-bottom:10px;">MATCH COMPLETE</h2>
@@ -581,7 +555,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== BRACKET MODAL (with edit capability) ===== -->
 <div id="bracket-modal" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width: 1100px; max-height: 92vh; overflow-y: auto; text-align: left;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:15px;">
@@ -595,7 +568,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 
-<!-- ===== BRACKET EDIT MODAL ===== -->
 <div id="bracket-edit-modal" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:500px;">
 <h3 id="bracket-edit-title" style="margin-top:0;color:#fbbf24;font-size:1.3rem;">Edit Match Winner</h3>
@@ -629,6 +601,11 @@ let currentActiveMatchAssignment = null;
 let bracketEditContext = null;
 let bracketDataCache = null;
 let bracketResultsTableExists = null;
+
+// Cached bracket slots for the current category (used to pull first 4 names)
+let currentCategoryBracketSlots = []; // array of {name, team} or null
+let currentCategoryName = null;
+let currentCategoryDiscipline = null;
 
 function getTimerKey() { return `tkd_timer_${state.ring ? state.ring.id : 'unknown'}`; }
 function loadTimerState() { try { const saved = localStorage.getItem(getTimerKey()); if (saved) timerState = Object.assign({}, timerState, JSON.parse(saved)); } catch (e) {} }
@@ -837,16 +814,16 @@ if (!currentActiveMatchAssignment) return;
 const currentCat = currentActiveMatchAssignment.category_name;
 const currentDisc = currentActiveMatchAssignment.discipline || 'sparring';
 
-// 1. Save winner to bracket_results table (for bracket editing)
+// Save winner to bracket_results table
 const matchIdx = currentActiveMatchAssignment.bracket_match_index || 0;
 const roundIdx = currentActiveMatchAssignment.bracket_round_index || 0;
 await saveBracketResult(currentCat, currentDisc, roundIdx, matchIdx, winnerName,
   currentActiveMatchAssignment.player1_name || '', currentActiveMatchAssignment.player2_name || '');
 
-// 2. Cascade winners forward in bracket_results
+// Cascade winners forward in bracket_results
 await cascadeBracketWinners(currentCat, currentDisc, roundIdx, matchIdx, winnerName);
 
-// 3. Also update ring_assignments for the next match (TBD slot filling)
+// Also update ring_assignments for the next match (TBD slot filling)
 const { data: catAssignments } = await sb.from('ring_assignments')
 .select('*')
 .eq('category_name', currentCat)
@@ -906,7 +883,24 @@ state.ring.max_phones = num; sessionStorage.setItem('tkd_ring', JSON.stringify(s
 const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = num === 3 ? 'none' : 'flex';
 renderLaptopJudges(); renderVoteScores(); updateRingLayoutCornerStats(); showToast(`Ring set to ${num} judges`, 'success');
 }
-// Pull the FIRST fight (earliest time_seconds) and its two names
+
+// ====================================================================
+// BUILD BRACKET SLOTS FOR A CATEGORY (used by loadCurrentMatch + modal)
+// Returns array of {name, team} or null, size = bracket size
+// ====================================================================
+async function buildBracketSlotsForCategory(categoryName, discipline) {
+const comps = await fetchCategoryCompetitors(categoryName, discipline);
+if (comps.length < 2) return [];
+const size = getBracketSize(comps.length);
+const shuffled = spreadTeams(comps, size);
+return shuffled.map(p => p ? { name: p.name, team: p.team } : null);
+}
+
+// ====================================================================
+// UPDATED: loadCurrentMatch pulls names from the BRACKET
+// - First 2 bracket slots (Round 1, Match 1) → current match Blue/Red
+// - Next 2 bracket slots (Round 1, Match 2) → next match Blue/Red
+// ====================================================================
 async function loadCurrentMatch() {
 if (!state.ring || !state.ring.id) return;
 const ringNum = parseInt((state.ring.ring_name || state.ring.ring_code || '1').replace(/\D/g, '')) || 1;
@@ -922,54 +916,91 @@ const firstAssignment = assignments[0];
 currentActiveMatchAssignment = firstAssignment;
 state.currentMatch = firstAssignment;
 
-const p1 = firstAssignment.player1_name || firstAssignment.competitor1 || 'Blue Competitor';
-const p2 = firstAssignment.player2_name || firstAssignment.competitor2 || 'Red Competitor';
-// FIX: Use competitor names as fallback instead of "Team A" / "Team B"
-const p1Club = firstAssignment.player1_club || firstAssignment.club1 || p1;
-const p2Club = firstAssignment.player2_club || firstAssignment.club2 || p2;
+const catName = firstAssignment.category_name;
+const discipline = firstAssignment.discipline || 'sparring';
+
+// Build the bracket for this category to pull competitor names
+let slots = [];
+if (catName) {
+try {
+slots = await buildBracketSlotsForCategory(catName, discipline);
+currentCategoryBracketSlots = slots;
+currentCategoryName = catName;
+currentCategoryDiscipline = discipline;
+} catch (e) {
+console.warn("Could not build bracket slots:", e);
+slots = [];
+}
+}
+
+// --- CURRENT MATCH: first 2 bracket slots (Round 1, Match 1) ---
+let p1 = 'Blue Competitor';
+let p2 = 'Red Competitor';
+let p1Team = '';
+let p2Team = '';
+
+if (slots.length >= 2 && slots[0] && slots[1]) {
+p1 = slots[0].name || firstAssignment.player1_name || 'Blue Competitor';
+p2 = slots[1].name || firstAssignment.player2_name || 'Red Competitor';
+p1Team = slots[0].team || '';
+p2Team = slots[1].team || '';
+} else {
+// Fallback to ring_assignments if bracket is empty
+p1 = firstAssignment.player1_name || firstAssignment.competitor1 || 'Blue Competitor';
+p2 = firstAssignment.player2_name || firstAssignment.competitor2 || 'Red Competitor';
+p1Team = firstAssignment.player1_club || firstAssignment.club1 || p1;
+p2Team = firstAssignment.player2_club || firstAssignment.club2 || p2;
+}
+
+// --- NEXT MATCH: next 2 bracket slots (Round 1, Match 2) ---
+let nextBlue = '---';
+let nextRed = '---';
+if (slots.length >= 4 && slots[2] && slots[3]) {
+nextBlue = slots[2].name || 'TBD';
+nextRed = slots[3].name || 'TBD';
+} else if (assignments.length >= 2) {
+// Fallback to ring_assignments
+const nextAssignment = assignments[1];
+nextBlue = nextAssignment.player1_name || 'TBD';
+nextRed = nextAssignment.player2_name || 'TBD';
+}
 
 state.ring.blue_name = p1;
 state.ring.red_name = p2;
-state.ring.blue_club = p1Club;
-state.ring.red_club = p2Club;
-state.ring.category_name = firstAssignment.category_name;
-state.ring.discipline = firstAssignment.discipline || 'sparring';
+state.ring.blue_club = p1Team || p1;
+state.ring.red_club = p2Team || p2;
+state.ring.category_name = catName;
+state.ring.discipline = discipline;
 state.ring.match_stage = firstAssignment.match_stage || 'Preliminary';
+state.ring.next_blue_name = nextBlue;
+state.ring.next_red_name = nextRed;
 
 // Update rings table (without category_id to avoid 400 error)
 try {
 await sb.from('rings').update({
 blue_name: p1,
 red_name: p2,
-blue_club: p1Club,
-red_club: p2Club,
-category_name: firstAssignment.category_name,
-discipline: firstAssignment.discipline,
-match_stage: firstAssignment.match_stage || 'Preliminary'
+blue_club: p1Team || p1,
+red_club: p2Team || p2,
+category_name: catName,
+discipline: discipline,
+match_stage: firstAssignment.match_stage || 'Preliminary',
+next_blue_name: nextBlue,
+next_red_name: nextRed
 }).eq('id', state.ring.id);
 } catch(e) { console.warn("Rings update warning:", e); }
 await refreshRingData();
-
-// Load next match info for TV display
-if (assignments.length >= 2) {
-const nextMatch = assignments[1];
-try {
-await sb.from('rings').update({
-next_blue_name: nextMatch.player1_name || 'TBD',
-next_red_name: nextMatch.player2_name || 'TBD'
-}).eq('id', state.ring.id);
-await refreshRingData();
-} catch(e) {}
-}
 } else {
 state.currentMatch = null;
 currentActiveMatchAssignment = null;
+currentCategoryBracketSlots = [];
 try { await sb.from('rings').update({ category_name: null, discipline: null, match_stage: 'No Assignments' }).eq('id', state.ring.id); } catch(e) {}
 await refreshRingData();
 }
 } catch (err) { console.error("loadCurrentMatch error:", err); }
 if (state.role === 'laptop') await loadMatchList();
 }
+
 function updateCompetitorDisplay() {
 const blueName = state.ring?.blue_name || '---';
 const redName = state.ring?.red_name || '---';
@@ -1237,7 +1268,6 @@ for (let m = 0; m < matchCount; m++) currentMatches.push({ p1: { name: "", team:
 rounds.push(currentMatches);
 }
 
-// Propagate winners through rounds based on stored results
 for (let r = 0; r < totalRounds; r++) {
 for (let m = 0; m < rounds[r].length; m++) {
 const key = `${r}-${m}`;
@@ -1782,14 +1812,3 @@ window.addEventListener("hashchange", route);
 </script>
 </body>
 </html>
-
-
-              <script>
-                              const p1Club = firstAssignment.player1_club || firstAssignment.club1 || p1;  // was 'Team A'
-const p2Club = firstAssignment.player2_club || firstAssignment.club2 || p2;  // was 'Team B'
-
-
-              </script>
-                        </body>
-                        </html>
-                    
