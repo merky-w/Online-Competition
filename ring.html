@@ -230,23 +230,28 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .bracket-slot.lost { opacity: 0.5; text-decoration: line-through; }
 .bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
 
-/* ✅ Drag & Drop Styles for Bracket Editing */
-.bracket-slot[draggable="true"] {
-  cursor: grab;
-  transition: background 0.2s, transform 0.2s, border 0.2s;
-}
-.bracket-slot[draggable="true"]:active {
-  cursor: grabbing;
-}
-.bracket-slot.dragging {
-  opacity: 0.5;
-  background: #334155 !important;
-}
-.bracket-slot.drop-hover {
-  background: #064e3b !important;
-  border: 2px dashed #10b981 !important;
-  transform: scale(1.02);
-}
+/* Winner/Placement Drop Zones */
+.winner-section { margin-top: 10px; text-align: center; width: 100%; }
+.winner-label { font-size: 0.75rem; color: #fbbf24; font-weight: 800; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.winner-drop-zone { border: 2px dashed #475569; border-radius: 8px; padding: 8px 12px; min-height: 30px; margin-bottom: 8px; background: #1e293b; transition: all 0.2s; cursor: pointer; font-size: 0.9rem; font-weight: 700; color: #94a3b8; position: relative; display: flex; align-items: center; justify-content: center; }
+.winner-drop-zone.empty-zone { background: #0f172a; color: #64748b; font-style: italic; font-weight: 400; }
+.winner-drop-zone.drop-hover { background: #064e3b !important; border: 2px dashed #10b981 !important; transform: scale(1.02); }
+.winner-drop-zone.has-value { background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); border: 2px solid #10b981; color: #6ee7b7; font-weight: 800; }
+.winner-drop-zone .clear-winner { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.winner-drop-zone.has-value:hover .clear-winner { display: flex; }
+
+.placements-list { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; margin-top: 10px; }
+.placement-row { display: flex; align-items: center; gap: 8px; }
+.placement-rank { width: 30px; font-weight: 800; color: #94a3b8; flex-shrink: 0; font-size: 0.8rem; text-align: center; }
+.placement-rank.gold { color: #fbbf24; }
+.placement-rank.silver { color: #94a3b8; }
+.placement-rank.bronze { color: #b45309; }
+.placement-drop-zone { flex: 1; border: 2px dashed #475569; border-radius: 8px; padding: 6px 10px; min-height: 26px; background: #1e293b; transition: all 0.2s; cursor: pointer; font-size: 0.85rem; color: #94a3b8; position: relative; display: flex; align-items: center; justify-content: center; }
+.placement-drop-zone.empty-zone { color: #64748b; font-style: italic; }
+.placement-drop-zone.drop-hover { background: #064e3b !important; border: 2px dashed #10b981 !important; }
+.placement-drop-zone.has-value { background: #0f172a; border: 2px solid #3b82f6; color: #60a5fa; font-weight: 700; }
+.placement-drop-zone .clear-placement { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 8px; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; }
+.placement-drop-zone.has-value:hover .clear-placement { display: flex; }
 </style>
 </head>
 <body class="bg-slate-900">
@@ -680,6 +685,7 @@ const state = {
   heartbeatInterval: null, presenceInterval: null, queueInterval: null
 };
 
+// ✅ Global state for Drag & Drop and Auto-Advance
 let dragSource = null;
 let autoAdvanceTimeout = null;
 
@@ -696,6 +702,7 @@ let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
 /* ============================ SMALL HELPERS ============================ */
 function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val === null || val === undefined || val === "") ? "-" : val; }
 function escapeHtml(str) { return String(str === null || str === undefined ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+function jsStr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
 function getRingNumber() { const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1"; const n = parseInt(String(raw).replace(/\D/g, ""), 10); return isNaN(n) || n < 1 ? 1 : n; }
 function maxJudges() { return state.ring ? (parseInt(state.ring.max_phones, 10) || 4) : 4; }
@@ -784,7 +791,7 @@ function endRound() {
   else { finishMatch(); }
 }
 
-/* ==================== SCORING ==================== */
+/* ==================== SCORING (broadcast, no DB table) ==================== */
 function subscribeScores() {
   if (state.scoreChannel) sb.removeChannel(state.scoreChannel);
   if (!state.ring) return;
@@ -836,18 +843,7 @@ function renderLaptopJudges() {
     html += '<div class="judge-label">Judge ' + i + "</div>";
     html += '<div><span class="judge-status-badge ' + (isOnline ? "online" : "offline") + '">' + (isOnline ? "Connected" : "Empty") + "</span></div>";
     if (isPatterns) { const v = votes[i - 1]; html += '<div class="judge-detail">Vote: ' + (v ? v.toUpperCase() : "—") + "</div>"; }
-    else { 
-      html += '<div class="judge-detail">Net: ' + Math.abs(net) + "</div>"; 
-      html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + " | R: " + givenRed + "</div>"; 
-      html += '<div class="judge-row-controls">'; 
-      html += '<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span>'; 
-      html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'blue',1)\">+</button>"; 
-      html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'blue',-1)\">−</button></div>"; 
-      html += '<div class="judge-side-adj"><span style="color:#f87171;font-weight:700;">R</span>'; 
-      html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'red',1)\">+</button>"; 
-      html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'red',-1)\">−</button></div>"; 
-      html += "</div>"; 
-    }
+    else { html += '<div class="judge-detail">Net: ' + Math.abs(net) + "</div>"; html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + " | R: " + givenRed + "</div>"; html += '<div class="judge-row-controls">'; html += '<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span>'; html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'blue',1)\">+</button>"; html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'blue',-1)\">−</button></div>"; html += '<div class="judge-side-adj"><span style="color:#f87171;font-weight:700;">R</span>"; html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ",'red',1)\">+</button>"; html += '<button class="judge-adj-btn minus" onclick="adjustSpecificJudge(' + i + ",'red',-1)\">−</button></div>"; html += "</div>"; }
     html += "</div>";
   }
   container.innerHTML = html; updateRingLayoutCornerStats();
@@ -857,7 +853,7 @@ function adjustSpecificJudge(judgeNum, side, delta) { if (state.role !== "laptop
 function resetMatchScores() { state.match = freshMatchObject(); renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); renderPenalties(); broadcastScoreState(); }
 async function resetMatch() { if (!confirm("Reset all scores, cards, judge corners AND the round timer for this fight?")) return; resetMatchScores(); resetTimerForNewFight(); const modal = document.getElementById("modal-winner"); if (modal) modal.classList.add("hidden-view"); showToast("Fight reset.", "success"); }
 
-/* ==================== DATA ==================== */
+/* ==================== DATA: manage.html tables only ==================== */
 async function fetchAssignments() {
   const ringNum = getRingNumber();
   try { const { data, error } = await sb.from(ASSIGN_TABLE).select("*").eq("ring_number", ringNum).order("id", { ascending: true }); if (error) throw error; state.assignments = data || []; } catch (e) { console.error("fetchAssignments error:", e); state.assignments = []; }
@@ -898,7 +894,7 @@ function competitorsFor(categoryName, discipline) {
   return list;
 }
 
-/* ==================== BRACKET BUILD ==================== */
+/* ==================== BRACKET BUILD (same seeding as manage.html) ==================== */
 function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
 function generateSeedOrder(size) { if (size === 1) return [0]; const half = size / 2; const left = generateSeedOrder(half); const right = left.map(x => x + half); const result = []; for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); } return result; }
 function spreadTeams(list, bracketSize) { const slots = new Array(bracketSize).fill(null); const teams = {}; list.forEach(p => { const key = p.team || "N/A"; if (!teams[key]) teams[key] = []; teams[key].push(p); }); const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length); const positions = generateSeedOrder(bracketSize); let posIndex = 0; sortedTeams.forEach(teamArr => { teamArr.forEach(player => { if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; } }); }); return slots; }
@@ -930,7 +926,7 @@ async function saveBracket() {
   const b = state.bracket; const a = activeAssignment(); if (!b || !a) return; b.updated_at = new Date().toISOString();
   try { localStorage.setItem(bracketLocalKey(a.id), JSON.stringify(b)); } catch (e) {}
   if (state.bracketColumnMissing) return;
-  try { const { error } = await sb.from(ASSIGN_TABLE).update({ bracket_state: b }).eq("id", a.id); if (error) { const msg = String(error.message || ""); if (/bracket_state|column|schema cache/i.test(msg)) { state.bracketColumnMissing = true; console.warn("bracket_state column missing - using localStorage only."); } } else { a.bracket_state = b; } } catch (e) { state.bracketColumnMissing = true; }
+  try { const { error } = await sb.from(ASSIGN_TABLE).update({ bracket_state: b }).eq("id", a.id); if (error) { const msg = String(error.message || ""); if (/bracket_state|column|schema cache/i.test(msg)) { state.bracketColumnMissing = true; console.warn("bracket_state column missing - using localStorage only. Add the column to sync across devices."); } } else { a.bracket_state = b; } } catch (e) { state.bracketColumnMissing = true; }
 }
 
 async function loadOrCreateBracket(force) {
@@ -956,13 +952,12 @@ async function pushRingUpdate(fields) {
   if (!state.ring || !state.ring.id) return;
   state.ring = Object.assign({}, state.ring, fields);
   try { sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring)); } catch (e) {}
-  try { const { error } = await sb.from(RING_TABLE).update(fields).eq("id", state.ring.id); if (error) { const minimal = { blue_name: fields.blue_name !== undefined ? fields.blue_name : state.ring.blue_name, red_name: fields.red_name !== undefined ? fields.red_name : state.ring.red_name, category_name: fields.category_name !== undefined ? fields.category_name : state.ring.category_name }; await sb.from(RING_TABLE).update(minimal).eq("id", state.ring.id); } } catch (e) { console.warn("pushRingUpdate failed:", e); }
+  try { const { error } = await sb.from(RING_TABLE).update(fields).eq("id", state.ring.id); if (error) { const minimal = { blue_name: fields.blue_name !== undefined ? fields.blue_name : state.ring.blue_name, red_name: fields.red_name !== undefined ? fields.red_name : state.ring.red_name, category_name: fields.category_name !== undefined ? fields.category_name : state.ring.category_name }; await sb.from(RING_TABLE).update(minimal).eq("id", state.ring.id); } } catch (e) { console.warn("pushRingUpdate failed (display still updated locally):", e); }
   updateCompetitorDisplay(); broadcastScoreState();
 }
 
 async function loadCurrentFight(manual) {
   if (autoAdvanceTimeout && manual) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
-
   const a = activeAssignment(); if (!a) { showToast("No category assigned to this ring.", "warning"); return; }
   if (!state.bracket) await loadOrCreateBracket(false);
   if (!state.bracket) { showToast("No competitors found for this category.", "warning"); renderQueue(); return; }
@@ -970,40 +965,19 @@ async function loadCurrentFight(manual) {
   const next = findNextPending(state.bracket);
   
   if (!next) {
-    state.bracket.currentRound = null;
-    state.bracket.currentMatch = null;
-    await saveBracket();
+    state.bracket.currentRound = null; state.bracket.currentMatch = null; await saveBracket();
     const champ = state.bracket.champion;
-    await pushRingUpdate({
-      blue_name: champ ? champ.name : null, red_name: null,
-      blue_club: champ ? champ.team : null, red_club: null,
-      next_blue_name: null, next_red_name: null,
-      category_name: a.category_name,
-      discipline: String(a.discipline || "sparring").toLowerCase(),
-      match_stage: champ ? "🏆 Category Complete" : "No Fight Available",
-      match_number: 0
-    });
-    resetMatchScores();
-    resetTimerForNewFight();
-    renderQueue();
-    
+    await pushRingUpdate({ blue_name: champ ? champ.name : null, red_name: null, blue_club: champ ? champ.team : null, red_club: null, next_blue_name: null, next_red_name: null, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: champ ? "🏆 Category Complete" : "No Fight Available", match_number: 0 });
+    resetMatchScores(); resetTimerForNewFight(); renderQueue();
     if (champ) {
       showToast("🏆 " + champ.name + " wins the category!", "success");
-      
       if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
-      autoAdvanceTimeout = setTimeout(async () => {
-        await advanceToNextCategory();
-        autoAdvanceTimeout = null;
-      }, 2500);
-    } else {
-      showToast("No more fights available in this category.", "warning");
-    }
+      autoAdvanceTimeout = setTimeout(async () => { await advanceToNextCategory(); autoAdvanceTimeout = null; }, 2500);
+    } else { showToast("No more fights available in this category.", "warning"); }
     return;
   }
   
-  state.bracket.currentRound = next.round;
-  state.bracket.currentMatch = next.match;
-  await saveBracket();
+  state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; await saveBracket();
   const fight = state.bracket.rounds[next.round][next.match];
   const fightNo = globalFightNumber(state.bracket, next.round, next.match);
   const stage = stageName(next.round, state.bracket.totalRounds);
@@ -1012,21 +986,14 @@ async function loadCurrentFight(manual) {
   const following = findFollowingPending(state.bracket, next.round, next.match);
   if (following) { const f = state.bracket.rounds[following.round][following.match]; nextBlue = isRealName(f.p1.name) ? f.p1.name : null; nextRed = isRealName(f.p2.name) ? f.p2.name : null; }
   state.bracket.currentRound = saveR; state.bracket.currentMatch = saveM;
-  await pushRingUpdate({
-    blue_name: fight.p1.name, red_name: fight.p2.name,
-    blue_club: fight.p1.team || "", red_club: fight.p2.team || "",
-    next_blue_name: nextBlue, next_red_name: nextRed,
-    category_name: a.category_name,
-    discipline: String(a.discipline || "sparring").toLowerCase(),
-    match_stage: stage, match_number: fightNo
-  });
+  await pushRingUpdate({ blue_name: fight.p1.name, red_name: fight.p2.name, blue_club: fight.p1.team || "", red_club: fight.p2.team || "", next_blue_name: nextBlue, next_red_name: nextRed, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: stage, match_number: fightNo });
   resetMatchScores(); resetTimerForNewFight(); renderQueue(); renderLaptopJudges();
   if (manual) showToast("▶ Loaded fight #" + fightNo + ": " + fight.p1.name + " vs " + fight.p2.name, "success");
 }
 
 function findFollowingPending(bracket, fromRound, fromMatch) { for (let r = fromRound; r < bracket.rounds.length; r++) { const startM = (r === fromRound) ? fromMatch + 1 : 0; for (let m = startM; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; if (isRealName(match.p1.name) && isRealName(match.p2.name)) return { round: r, match: m }; } } return null; }
 
-/* ==================== WINNER & ADVANCE ==================== */
+/* ==================== WINNER → ADVANCE → NEXT TWO ==================== */
 function finishMatch() {
   const isPatterns = currentDiscipline() === "patterns"; let winner;
   if (isPatterns) { const v = patternVoteCounts(); if (v.blue > v.red) winner = "blue"; else if (v.red > v.blue) winner = "red"; else winner = "draw"; }
@@ -1091,49 +1058,27 @@ async function resetCategoryBracket() {
   await loadOrCreateBracket(true); await loadCurrentFight(true); renderQueue(); renderBracketIfOpen();
 }
 
+/* ==================== AUTO-ADVANCE TO NEXT CATEGORY ==================== */
 async function advanceToNextCategory() {
   if (!state.assignments || state.assignments.length === 0) return;
-  
   const currentIdx = state.assignments.findIndex(a => String(a.id) === String(state.activeAssignmentId));
   let nextIdx = -1;
-  
   for (let i = 1; i <= state.assignments.length; i++) {
     const idx = (currentIdx + i) % state.assignments.length;
     if (idx === currentIdx) break;
-    
     const assignment = state.assignments[idx];
     let hasChampion = false;
-    
-    if (assignment.bracket_state && assignment.bracket_state.champion) {
-      hasChampion = true;
-    } else {
-      try {
-        const raw = localStorage.getItem(bracketLocalKey(assignment.id));
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.champion) hasChampion = true;
-        }
-      } catch(e) {}
-    }
-    
-    if (!hasChampion) {
-      nextIdx = idx;
-      break;
-    }
+    if (assignment.bracket_state && assignment.bracket_state.champion) hasChampion = true;
+    else { try { const raw = localStorage.getItem(bracketLocalKey(assignment.id)); if (raw) { const parsed = JSON.parse(raw); if (parsed && parsed.champion) hasChampion = true; } } catch(e) {} }
+    if (!hasChampion) { nextIdx = idx; break; }
   }
-  
   if (nextIdx !== -1) {
     showToast("⏭️ Moving to: " + state.assignments[nextIdx].category_name, "success");
     state.activeAssignmentId = state.assignments[nextIdx].id;
     state.bracket = null;
     renderCategoryPicker();
     await loadOrCreateBracket(false);
-    
-    if (!state.bracket) {
-      showToast("⚠️ No competitors for next category. Please select manually.", "warning");
-      return;
-    }
-    
+    if (!state.bracket) { showToast("⚠️ No competitors for next category. Please select manually.", "warning"); return; }
     await loadCurrentFight(true);
     renderQueue();
   } else {
@@ -1210,11 +1155,12 @@ function renderQueue() {
   container.innerHTML = html;
 }
 
-/* ==================== BRACKET MODAL & DRAG/DROP ==================== */
+/* ==================== BRACKET MODAL + DRAG & DROP ==================== */
 function renderBracketIfOpen() { const modal = document.getElementById("modal-bracket"); if (modal && !modal.classList.contains("hidden-view")) renderBracketModalContent(); }
 function openBracketModal() { const modal = document.getElementById("modal-bracket"); if (!modal) return; modal.classList.remove("hidden-view"); renderBracketModalContent(); }
 function closeBracketModal() { const modal = document.getElementById("modal-bracket"); if (modal) modal.classList.add("hidden-view"); }
 
+// ✅ Drag & Drop Handlers for Bracket Editing
 function bracketDragStart(e, round, match, slot) {
   dragSource = { round, match, slot };
   e.dataTransfer.effectAllowed = 'move';
@@ -1247,13 +1193,16 @@ function bracketDrop(e, targetRound, targetMatch, targetSlot) {
   const srcPlayer = srcMatch[src.slot];
   const tgtPlayer = tgtMatch[tgt.slot];
   
+  // Swap them
   srcMatch[src.slot] = tgtPlayer;
   tgtMatch[tgt.slot] = srcPlayer;
   
+  // Save and re-render
   saveBracket();
   renderBracketModalContent();
   renderQueue();
   
+  // If the swapped players are in the current live fight, update the main display
   const isCurrentFightAffected = 
     (src.round === state.bracket.currentRound && src.match === state.bracket.currentMatch) ||
     (tgt.round === state.bracket.currentRound && tgt.match === state.bracket.currentMatch);
@@ -1284,7 +1233,7 @@ function renderBracketModalContent() {
   let html = "";
   if (b.champion) html += '<div style="background:#064e3b;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;color:#6ee7b7;font-weight:800;">🏆 Category Champion: ' + escapeHtml(b.champion.name) + " (" + escapeHtml(b.champion.team || "") + ")</div>";
   
-  html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Drag & Drop</strong> any competitor to swap them with another slot (e.g. to fix a wrong promotion).</div>';
+  html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Drag & Drop</strong> any competitor to swap them with another slot (e.g. to fix a wrong promotion). <strong>Click a filled Winner/Placement box to clear it.</strong></div>';
   
   html += '<div style="overflow-x:auto;padding:4px;margin-bottom:20px;"><table class="bracket-table"><thead><tr>';
   for (let r = 0; r < b.totalRounds; r++) html += "<th>" + (r === b.totalRounds - 1 ? "🏆 " : "") + escapeHtml(stageName(r, b.totalRounds)) + "</th>";
@@ -1304,10 +1253,36 @@ function renderBracketModalContent() {
       html += '<td rowspan="' + step + '">';
       html += '<div class="bracket-match' + (isCurrent ? " live" : "") + '">';
       
+      // ✅ Added draggable attributes to slots
       html += '<div class="' + c1 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n1) + '<div class="bracket-team">' + escapeHtml(match.p1.team || "") + "</div></div>";
       html += '<div class="' + c2 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n2) + '<div class="bracket-team">' + escapeHtml(match.p2.team || "") + "</div></div>";
       
-      html += "</div></td>";
+      html += "</div>";
+      
+      // ✅ Winner & Placement Drop Zones for the Final Match
+      if (r === b.totalRounds - 1) {
+        html += '<div class="winner-section">';
+        html += '<div class="winner-label"><i class="fas fa-trophy"></i> CHAMPION</div>';
+        const champName = b.champion ? b.champion.name : "";
+        const champTeam = b.champion ? b.champion.team || "" : "";
+        const champClass = champName ? "has-value" : "empty-zone";
+        html += '<div class="winner-drop-zone ' + champClass + '" onclick="handleWinnerZoneClick(event, \'champion\')" ondragover="event.preventDefault(); this.classList.add(\'drop-hover\')" ondragleave="this.classList.remove(\'drop-hover\')" ondrop="handleWinnerZoneDrop(event, \'champion\')">' + (champName ? escapeHtml(champName) + '<div class="bracket-team">' + escapeHtml(champTeam) + '</div>' : "Drop Champion Here") + '<button class="clear-winner" onclick="event.stopPropagation(); clearWinnerZone(\'champion\')"><i class="fas fa-times"></i></button></div>';
+        
+        html += '<div class="placements-list">';
+        const placements = b.placements || [null, null, null, null];
+        const rankLabels = ['🥇 1st', '🥈 2nd', '🥉 3rd', '  3rd'];
+        const rankClasses = ['gold', 'silver', 'bronze', 'bronze'];
+        for (let p = 0; p < 4; p++) {
+          const pName = placements[p] ? placements[p].name : "";
+          const pTeam = placements[p] ? placements[p].team || "" : "";
+          const pClass = pName ? "has-value" : "empty-zone";
+          html += '<div class="placement-row"><span class="placement-rank ' + rankClasses[p] + '">' + rankLabels[p] + '</span>';
+          html += '<div class="placement-drop-zone ' + pClass + '" onclick="handleWinnerZoneClick(event, \'placement_' + p + '\')" ondragover="event.preventDefault(); this.classList.add(\'drop-hover\')" ondragleave="this.classList.remove(\'drop-hover\')" ondrop="handleWinnerZoneDrop(event, \'placement_' + p + '\')">' + (pName ? escapeHtml(pName) : "—") + '<button class="clear-placement" onclick="event.stopPropagation(); clearWinnerZone(\'placement_' + p + '\')"><i class="fas fa-times"></i></button></div></div>';
+        }
+        html += '</div></div>';
+      }
+      
+      html += '</td>';
     }
     html += "</tr>";
   }
@@ -1323,7 +1298,76 @@ function renderBracketModalContent() {
   content.innerHTML = html;
 }
 
-/* ==================== QR & ADMIN KICK ==================== */
+// ✅ NEW: Winner/Placement Zone Click & Drop Handlers
+function handleWinnerZoneClick(e, zoneType) {
+  // If clicking the clear button, handle it separately
+  const clearBtn = e.target.closest(".clear-winner, .clear-placement");
+  if (clearBtn) return; // Let the clear button's own onclick handle it
+  
+  const zone = e.currentTarget;
+  
+  // If we have a player selected from the bracket, place them
+  if (dragSource && dragSource.playerName) {
+    setZoneValue(zone, zoneType, dragSource.playerName, dragSource.playerTeam || "");
+    saveBracket();
+    renderBracketModalContent();
+    showToast('"' + dragSource.playerName + '" placed', "success");
+    dragSource = null;
+    return;
+  }
+  
+  // FIX: If no player is selected, clicking a filled zone clears it
+  if (zone.classList.contains("has-value")) {
+    setZoneValue(zone, zoneType, "", "");
+    saveBracket();
+    renderBracketModalContent();
+    showToast("Cleared", "success");
+  }
+}
+
+function handleWinnerZoneDrop(e, zoneType) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-hover');
+  if (!dragSource || !dragSource.playerName) return;
+  
+  const zone = e.currentTarget;
+  setZoneValue(zone, zoneType, dragSource.playerName, dragSource.playerTeam || "");
+  saveBracket();
+  renderBracketModalContent();
+  showToast('"' + dragSource.playerName + '" placed', "success");
+  dragSource = null;
+}
+
+function clearWinnerZone(zoneType) {
+  const modal = document.getElementById("modal-bracket");
+  if (!modal || !state.bracket) return;
+  
+  if (zoneType === "champion") {
+    state.bracket.champion = null;
+  } else if (zoneType.startsWith("placement_")) {
+    const idx = parseInt(zoneType.split("_")[1]);
+    if (!state.bracket.placements) state.bracket.placements = [null, null, null, null];
+    state.bracket.placements[idx] = null;
+  }
+  
+  saveBracket();
+  renderBracketModalContent();
+  showToast("Cleared", "success");
+}
+
+function setZoneValue(zone, zoneType, name, team) {
+  if (!state.bracket) return;
+  
+  if (zoneType === "champion") {
+    state.bracket.champion = name ? { name, team } : null;
+  } else if (zoneType.startsWith("placement_")) {
+    const idx = parseInt(zoneType.split("_")[1]);
+    if (!state.bracket.placements) state.bracket.placements = [null, null, null, null];
+    state.bracket.placements[idx] = name ? { name, team } : null;
+  }
+}
+
+/* ==================== QR / ADMIN KICK ==================== */
 function openJudgeQR(slot) { const modal = document.getElementById("modal-qr"); const title = document.getElementById("modal-qr-title"); const container = document.getElementById("qrcode-container"); if (!modal || !container || !state.ring) return; container.innerHTML = ""; title.textContent = "Judge " + slot + " Connection QR"; const password = state.ring.phone_password || ""; const targetUrl = location.origin + location.pathname + "#phone?code=" + encodeURIComponent(password) + "&slot=" + slot; new QRCode(container, { text: targetUrl, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); modal.classList.remove("hidden-view"); }
 function closeQRModal() { const modal = document.getElementById("modal-qr"); if (modal) modal.classList.add("hidden-view"); }
 function openAdminKickModal() { document.getElementById("inp-admin-pin").value = ""; document.getElementById("modal-admin-kick").classList.remove("hidden-view"); }
@@ -1397,85 +1441,6 @@ async function tryLogin() {
   if (state.loggingIn) return;
   const pwd = document.getElementById("inp-password").value.trim(); const errEl = document.getElementById("landing-error"); const btn = document.getElementById("btn-enter");
   errEl.textContent = ""; if (!pwd) { errEl.textContent = "Please enter a password or TV code."; return; }
-  state.loggingIn = true; btn.disabled = true; btn.textContent = "Entering…";
-  try {
-    const { data, error } = await sb.from(RING_TABLE).select("*").or("laptop_password.eq." + pwd + ",phone_password.eq." + pwd + ",tv_code.eq." + pwd).limit(1);
-    if (error || !data || data.length === 0) { errEl.textContent = "Invalid password or TV code."; return; }
-    const ring = data[0]; state.ring = ring; try { sessionStorage.setItem("tkd_ring", JSON.stringify(ring)); } catch (e) {}
-    if (pwd === ring.tv_code) { state.role = "tv"; await enterTV(); }
-    else if (pwd === ring.laptop_password) { state.role = "laptop"; await enterLaptop(); }
-    else if (pwd === ring.phone_password) { state.role = "phone"; await enterPhone(); }
-  } catch (e) { console.error(e); errEl.textContent = "Connection error. Check console."; } finally { state.loggingIn = false; btn.disabled = false; btn.textContent = "Enter Ring"; }
-}
-
-async function refreshAllData(silent) {
-  if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
-  await fetchAssignments();
-  await fetchAllCompetitors();
-  await loadOrCreateBracket(false);
-  await loadCurrentFight(false);
-  renderQueue();
-  renderLaptopJudges();
-  renderVoteScores();
-  renderPenalties();
-  updateCompetitorDisplay();
-  if (!silent) showToast("Data refreshed from the tournament manager.", "success");
-}
-
-async function enterLaptop() {
-  setTxt("laptop-ring-name", state.ring.ring_name); setTxt("laptop-ring-id", "Ring " + (state.ring.ring_code || getRingNumber())); setTxt("laptop-tv-code", state.ring.tv_code || "—");
-  const maxP = maxJudges(); const selMax = document.getElementById("sel-max-phones"); if (selMax) selMax.value = String(maxP); const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display = maxP === 3 ? "none" : "flex";
-  loadTimerState(); subscribeTimer(); subscribeScores(); subscribeRing(); renderTimer(); startTimerTick(); startBroadcastLoop();
-  if (state.presenceInterval) clearInterval(state.presenceInterval); state.presenceInterval = setInterval(() => { updateRingLayoutCornerStats(); renderLaptopJudges(); }, 4000);
-  showView("laptop"); await refreshAllData(true); showToast("Welcome to " + (state.ring.ring_name || "the ring"), "success");
-}
-
-async function enterTV() { setTxt("tv-ring-name", state.ring.ring_name); loadTimerState(); subscribeTimer(); subscribeScores(); subscribeRing(); renderTimer(); startTimerTick(); renderVoteScores(); renderTVJudgeNets(); renderPenalties(); updateCompetitorDisplay(); showView("tv"); document.body.style.cursor = "none"; }
-
-function subscribeRing() {
-  if (state.ringChannel) sb.removeChannel(state.ringChannel); if (!state.ring || !state.ring.id) return;
-  state.ringChannel = sb.channel("ring-" + state.ring.id).on("postgres_changes", { event: "UPDATE", schema: "public", table: RING_TABLE, filter: "id=eq." + state.ring.id }, payload => {
-    if (!payload.new) return; state.ring = Object.assign({}, state.ring, payload.new); try { sessionStorage.setItem("tkd_ring", JSON.stringify(state.ring)); } catch (e) {}
-    const selMax = document.getElementById("sel-max-phones"); if (selMax && state.role === "laptop") selMax.value = String(state.ring.max_phones || 4);
-    updateCompetitorDisplay(); renderLaptopJudges(); renderVoteScores(); renderTVJudgeNets();
-  }).subscribe();
-}
-
-/* ==================== BUTTON WIRING ==================== */
-document.getElementById("btn-open-tv").addEventListener("click", () => { let tvUrl = location.origin + location.pathname + "#tv"; if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code); window.open(tvUrl, "_blank"); });
-document.getElementById("btn-refresh-data").addEventListener("click", () => refreshAllData(false));
-document.getElementById("btn-reset-match").addEventListener("click", resetMatch);
-document.getElementById("btn-timer-start").addEventListener("click", startTimer);
-document.getElementById("btn-timer-pause").addEventListener("click", pauseTimer);
-document.getElementById("btn-timer-reset").addEventListener("click", resetRound);
-document.getElementById("btn-winner-reset").addEventListener("click", resetMatch);
-document.getElementById("btn-logout").addEventListener("click", () => { state.role = null; cleanupChannels(); try { sessionStorage.removeItem("tkd_ring"); } catch (e) {} location.hash = ""; showView("landing"); document.getElementById("inp-password").value = ""; document.body.style.cursor = ""; });
-document.getElementById("btn-set-time").addEventListener("click", () => { if (state.role !== "laptop") return; const mins = parseInt(document.getElementById("inp-timer-min").value, 10) || 0; const secs = parseInt(document.getElementById("inp-timer-sec").value, 10) || 0; const breakSecs = parseInt(document.getElementById("inp-break-sec").value, 10) || 30; timerState.roundTime = (mins * 60) + secs; timerState.breakTime = breakSecs; if (!timerState.isBreak) { timerState.elapsed = 0; timerState.startTime = null; timerState.paused = true; } saveTimerState(); broadcastTimerState(); renderTimer(); showToast("Timer set: " + mins + ":" + String(secs).padStart(2, "0") + " | Break " + breakSecs + "s", "success"); });
-
-document.querySelectorAll(".penalty-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (state.role !== "laptop") return; const act = btn.dataset.act; if (!act) return;
-    if (timerState.finished) { showToast("Fight finished. Reset first.", "warning"); return; }
-    let column = null; let delta = 0;
-    if (act === "blue-gj-plus") { column = "blue_gam_jeom"; delta = 1; } else if (act === "blue-gj-minus") { column = "blue_gam_jeom"; delta = -1; }
-    else if (act === "red-gj-plus") { column = "red_gam_jeom"; delta = 1; } else if (act === "red-gj-minus") { column = "red_gam_jeom"; delta = -1; }
-    else if (act === "blue-yc-plus") { column = "blue_yellow_cards"; delta = 1; } else if (act === "blue-yc-minus") { column = "blue_yellow_cards"; delta = -1; }
-    else if (act === "red-yc-plus") { column = "red_yellow_cards"; delta = 1; } else if (act === "red-yc-minus") { column = "red_yellow_cards"; delta = -1; }
-    if (!column) return;
-    state.match[column] = Math.max(0, (state.match[column] || 0) + delta); renderPenalties(); broadcastScoreState();
-  });
-});
-
-/* ==================== CLEANUP & BOOTSTRAP ==================== */
-function cleanupChannels() {
-  if (state.ringChannel) sb.removeChannel(state.ringChannel); if (state.scoreChannel) sb.removeChannel(state.scoreChannel); if (timerChannel) sb.removeChannel(timerChannel);
-  state.ringChannel = null; state.scoreChannel = null; timerChannel = null;
-  if (state.heartbeatInterval) clearInterval(state.heartbeatInterval); if (state.presenceInterval) clearInterval(state.presenceInterval); if (state.queueInterval) clearInterval(state.queueInterval);
-  state.heartbeatInterval = null; state.presenceInterval = null; state.queueInterval = null;
-  stopTimerTick(); stopBroadcastLoop();
-}
-window.addEventListener("beforeunload", cleanupChannels); window.addEventListener("pagehide", cleanupChannels); window.addEventListener("hashchange", route);
-renderLaptopJudges(); renderPenalties(); renderVoteScores(); route();
-</script>
-</body>
-</html>
+ 
+</parameter>
+</invoke>
