@@ -215,17 +215,30 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .bracket-table { width: 100%; border-collapse: collapse; min-width: 620px; font-size: 0.85rem; }
 .bracket-table th { padding: 10px; background: #1e293b; color: #fbbf24; border: 1px solid #334155; text-align: center; }
 .bracket-table td { vertical-align: middle; padding: 6px; border: 1px solid #334155; }
-.bracket-match { border-radius: 6px; overflow: hidden; border: 1px solid #475569; background: #0f172a; }
+.bracket-match { border-radius: 6px; overflow: hidden; border: 1px solid #475569; background: #0f172a; position: relative; }
 .bracket-match.live { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.35); }
-.bracket-slot { padding: 6px 10px; color: #f1f5f9; font-weight: 700; cursor: grab; transition: all 0.2s; }
-.bracket-slot:active { cursor: grabbing; }
+.bracket-slot { padding: 6px 10px; color: #f1f5f9; font-weight: 700; }
 .bracket-slot.first { border-bottom: 1px solid #334155; }
 .bracket-slot.bye { color: #64748b; font-weight: 400; font-style: italic; }
 .bracket-slot.won { background: rgba(16,185,129,0.16); color: #6ee7b7; }
 .bracket-slot.lost { opacity: 0.5; text-decoration: line-through; }
-.bracket-slot.dragging { opacity: 0.4; background: #334155 !important; }
-.bracket-slot.drop-hover { background: #064e3b !important; outline: 2px dashed #10b981; outline-offset: -2px; }
 .bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
+
+/* ✅ NEW: Edit Winner Button */
+.edit-winner-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  color: #fbbf24;
+  opacity: 0.8;
+  z-index: 5;
+  pointer-events: none;
+}
+.bracket-match[onclick]:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4);
+}
 </style>
 </head>
 <body class="bg-slate-900">
@@ -495,7 +508,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
             <button class="timer-btn" style="background:#dc2626;color:white;" onclick="declareWinner('red')">🔴 Red Wins</button>
           </div>
           <p style="color:#94a3b8;font-size:0.8rem;margin:12px 0 0;text-align:center;">
-            Confirming a winner promotes them to the next round and loads the next two fighters.
+            Confirming a winner promotes them to the next round and automatically loads the next two fighters.
           </p>
         </div>
       </div>
@@ -622,6 +635,20 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
+<!-- ✅ NEW: CHANGE WINNER MODAL -->
+<div id="modal-change-winner" class="hidden-view modal-overlay">
+  <div class="modal-box" style="max-width: 400px;">
+    <h3 style="color: #fbbf24; margin-bottom: 15px; font-size: 1.3rem;">Change Winner</h3>
+    <p id="change-winner-match-info" style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem; white-space: pre-line;"></p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+      <button id="btn-change-blue" class="timer-btn" style="background: #2563eb; color: white; padding: 15px; font-size: 1rem;">🔵 Blue Wins</button>
+      <button id="btn-change-red" class="timer-btn" style="background: #dc2626; color: white; padding: 15px; font-size: 1rem;">🔴 Red Wins</button>
+    </div>
+    <button id="btn-change-clear" class="timer-btn" style="background: #475569; color: white; width: 100%; margin-bottom: 10px; padding: 12px;">Clear Winner</button>
+    <button class="timer-btn" style="background: #334155; color: white; width: 100%; padding: 12px;" onclick="closeChangeWinnerModal()">Cancel</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
@@ -652,8 +679,8 @@ function freshMatchObject() {
 }
 state.match = freshMatchObject();
 
-let dragSource = null;
 let autoAdvanceTimeout = null;
+let editingMatchCoords = null;
 
 const TIMER_CHANNEL_PREFIX = "timer-";
 const SCORE_CHANNEL_PREFIX = "scores-";
@@ -782,31 +809,17 @@ function onlineJudgeSlots() { const now = Date.now(); const set = new Set(); Obj
 function updateRingLayoutCornerStats() { const online = onlineJudgeSlots(); const max = maxJudges(); for (let i = 1; i <= 4; i++) { const btn = document.getElementById("qr-btn-" + i); const stat = document.getElementById("qr-stat-" + i); if (!btn || !stat) continue; if (i > max) { btn.style.display = "none"; continue; } btn.style.display = "flex"; if (online.has(i)) { btn.classList.add("connected"); stat.textContent = "Connected"; } else { btn.classList.remove("connected"); stat.textContent = "Empty"; } } }
 
 function renderLaptopJudges() {
-  const container = document.getElementById("laptop-judges-container");
-  if (!container) return;
-  const max = maxJudges();
-  container.style.gridTemplateColumns = "repeat(" + max + ", 1fr)";
-  const jb = pad4(state.match.judge_blue);
-  const jr = pad4(state.match.judge_red);
-  const votes = pad4Any(state.match.pattern_votes);
-  const online = onlineJudgeSlots();
-  const isPatterns = currentDiscipline() === "patterns";
+  const container = document.getElementById("laptop-judges-container"); if (!container) return;
+  const max = maxJudges(); container.style.gridTemplateColumns = "repeat(" + max + ", 1fr)";
+  const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); const votes = pad4Any(state.match.pattern_votes); const online = onlineJudgeSlots(); const isPatterns = currentDiscipline() === "patterns";
   let html = "";
   for (let i = 1; i <= max; i++) {
-    const isOnline = online.has(i);
-    const givenBlue = jb[i - 1];
-    const givenRed = jr[i - 1];
-    const net = givenBlue - givenRed;
-    let cls = "";
-    if (net > 0) cls = "leading-blue";
-    else if (net < 0) cls = "leading-red";
+    const isOnline = online.has(i); const givenBlue = jb[i - 1]; const givenRed = jr[i - 1]; const net = givenBlue - givenRed; let cls = ""; if (net > 0) cls = "leading-blue"; else if (net < 0) cls = "leading-red";
     html += '<div id="judge-laptop-' + i + '" class="judge-box ' + cls + '">';
     html += '<div class="judge-label">Judge ' + i + '</div>';
     html += '<div><span class="judge-status-badge ' + (isOnline ? "online" : "offline") + '">' + (isOnline ? "Connected" : "Empty") + '</span></div>';
-    if (isPatterns) {
-      const v = votes[i - 1];
-      html += '<div class="judge-detail">Vote: ' + (v ? v.toUpperCase() : "—") + '</div>';
-    } else {
+    if (isPatterns) { const v = votes[i - 1]; html += '<div class="judge-detail">Vote: ' + (v ? v.toUpperCase() : "—") + '</div>'; }
+    else {
       html += '<div class="judge-detail">Net: ' + Math.abs(net) + '</div>';
       html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + ' | R: ' + givenRed + '</div>';
       html += '<div class="judge-row-controls">';
@@ -1112,57 +1125,10 @@ function renderQueue() {
   container.innerHTML = html;
 }
 
-/* ============ BRACKET MODAL + DRAG & DROP ============ */
+/* ============ BRACKET MODAL + CHANGE WINNER ============ */
 function renderBracketIfOpen() { const modal = document.getElementById("modal-bracket"); if (modal && !modal.classList.contains("hidden-view")) renderBracketModalContent(); }
 function openBracketModal() { const modal = document.getElementById("modal-bracket"); if (!modal) return; modal.classList.remove("hidden-view"); renderBracketModalContent(); }
 function closeBracketModal() { const modal = document.getElementById("modal-bracket"); if (modal) modal.classList.add("hidden-view"); }
-
-function bracketDragStart(e, round, match, slot) {
-  dragSource = { round, match, slot };
-  e.dataTransfer.effectAllowed = 'move';
-  e.target.classList.add('dragging');
-}
-function bracketDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  e.currentTarget.classList.add('drop-hover');
-}
-function bracketDragLeave(e) {
-  e.currentTarget.classList.remove('drop-hover');
-}
-function bracketDrop(e, targetRound, targetMatch, targetSlot) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drop-hover');
-  if (!dragSource || !state.bracket) return;
-  const src = dragSource;
-  const tgt = { round: targetRound, match: targetMatch, slot: targetSlot };
-  if (src.round === tgt.round && src.match === tgt.match && src.slot === tgt.slot) {
-    dragSource = null;
-    return;
-  }
-  const srcMatch = state.bracket.rounds[src.round][src.match];
-  const tgtMatch = state.bracket.rounds[tgt.round][tgt.match];
-  const srcPlayer = srcMatch[src.slot];
-  const tgtPlayer = tgtMatch[tgt.slot];
-  srcMatch[src.slot] = tgtPlayer;
-  tgtMatch[tgt.slot] = srcPlayer;
-  saveBracket();
-  renderBracketModalContent();
-  renderQueue();
-  const isCurrentFightAffected =
-    (src.round === state.bracket.currentRound && src.match === state.bracket.currentMatch) ||
-    (tgt.round === state.bracket.currentRound && tgt.match === state.bracket.currentMatch);
-  if (isCurrentFightAffected) {
-    loadCurrentFight(false);
-  }
-  showToast("Players swapped in bracket", "success");
-  dragSource = null;
-}
-function bracketDragEnd(e) {
-  if (e.target) e.target.classList.remove('dragging');
-  document.querySelectorAll('.bracket-slot.drop-hover').forEach(el => el.classList.remove('drop-hover'));
-  dragSource = null;
-}
 
 function renderBracketModalContent() {
   const content = document.getElementById("bracket-modal-content");
@@ -1175,7 +1141,9 @@ function renderBracketModalContent() {
   if (!b) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No bracket available (not enough registered competitors).</div>'; return; }
   let html = "";
   if (b.champion) html += '<div style="background:#064e3b;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;color:#6ee7b7;font-weight:800;">🏆 Category Champion: ' + escapeHtml(b.champion.name) + " (" + escapeHtml(b.champion.team || "") + ")</div>";
-  html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Drag & Drop</strong> any competitor to swap them with another slot. <strong>Click a filled Winner/Placement box to clear it.</strong></div>';
+  
+  html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Click on any finished match</strong> (with the ✏️ icon) to change the winner if a mistake was made.</div>';
+  
   html += '<div style="overflow-x:auto;padding:4px;margin-bottom:20px;"><table class="bracket-table"><thead><tr>';
   for (let r = 0; r < b.totalRounds; r++) html += "<th>" + (r === b.totalRounds - 1 ? "🏆 " : "") + escapeHtml(stageName(r, b.totalRounds)) + "</th>";
   html += "</tr></thead><tbody>";
@@ -1190,10 +1158,15 @@ function renderBracketModalContent() {
       let c1 = "bracket-slot first"; let c2 = "bracket-slot";
       if (n1 === BYE) c1 += " bye"; if (n2 === BYE) c2 += " bye";
       if (match.winner === "p1") { c1 += " won"; c2 += " lost"; } if (match.winner === "p2") { c2 += " won"; c1 += " lost"; }
+      
+      const hasWinner = match.winner && match.winner !== "bye";
+      const clickAttr = hasWinner ? `onclick="openChangeWinnerModal(${r}, ${matchIdx})" style="cursor:pointer;"` : "";
+      
       html += '<td rowspan="' + step + '">';
-      html += '<div class="bracket-match' + (isCurrent ? " live" : "") + '">';
-      html += '<div class="' + c1 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p1\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n1) + '<div class="bracket-team">' + escapeHtml(match.p1.team || "") + "</div></div>";
-      html += '<div class="' + c2 + '" draggable="true" ondragstart="bracketDragStart(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragover="bracketDragOver(event)" ondragleave="bracketDragLeave(event)" ondrop="bracketDrop(event, ' + r + ', ' + matchIdx + ', \'p2\')" ondragend="bracketDragEnd(event)">' + escapeHtml(n2) + '<div class="bracket-team">' + escapeHtml(match.p2.team || "") + "</div></div>";
+      html += '<div class="bracket-match' + (isCurrent ? " live" : "") + '" ' + clickAttr + '>';
+      if (hasWinner) html += '<i class="fas fa-edit edit-winner-icon"></i>';
+      html += '<div class="' + c1 + '">' + escapeHtml(n1) + '<div class="bracket-team">' + escapeHtml(match.p1.team || "") + "</div></div>";
+      html += '<div class="' + c2 + '">' + escapeHtml(n2) + '<div class="bracket-team">' + escapeHtml(match.p2.team || "") + "</div></div>";
       html += "</div></td>";
     }
     html += "</tr>";
@@ -1215,6 +1188,82 @@ function renderBracketModalContent() {
   html += "</div></div>";
   if (state.bracketColumnMissing) html += '<div style="margin-top:15px;padding:12px;background:#78350f;border:1px solid #f59e0b;border-radius:8px;color:#fde68a;font-size:0.8rem;">⚠️ Bracket results are being saved on this laptop only. Add a <code>bracket_state</code> jsonb column to <code>ring_assignments</code> to sync results across all devices.</div>';
   content.innerHTML = html;
+}
+
+/* ============ CHANGE WINNER LOGIC ============ */
+function openChangeWinnerModal(r, m) {
+  const match = state.bracket.rounds[r][m];
+  if (!match || !match.winner || match.winner === "bye") return;
+  
+  editingMatchCoords = { r, m };
+  const modal = document.getElementById("modal-change-winner");
+  const info = document.getElementById("change-winner-match-info");
+  const currentWinnerName = match[match.winner].name;
+  info.textContent = `Match: ${match.p1.name} vs ${match.p2.name}\nCurrent winner: ${currentWinnerName}`;
+  modal.classList.remove("hidden-view");
+}
+
+function closeChangeWinnerModal() {
+  document.getElementById("modal-change-winner").classList.add("hidden-view");
+  editingMatchCoords = null;
+}
+
+document.getElementById("btn-change-blue").addEventListener("click", () => applyNewWinner("p1"));
+document.getElementById("btn-change-red").addEventListener("click", () => applyNewWinner("p2"));
+document.getElementById("btn-change-clear").addEventListener("click", () => applyNewWinner(null));
+
+function applyNewWinner(newWinner) {
+  if (!editingMatchCoords) return;
+  const { r, m } = editingMatchCoords;
+  const match = state.bracket.rounds[r][m];
+  
+  match.winner = newWinner;
+  match.finished_at = newWinner ? new Date().toISOString() : null;
+  
+  cascadeWinnerChange(r, m);
+  saveBracket();
+  closeChangeWinnerModal();
+  renderBracketModalContent();
+  renderQueue();
+  
+  if (r === state.bracket.currentRound && m === state.bracket.currentMatch) {
+    loadCurrentFight(false);
+  }
+  showToast(newWinner ? "Winner updated!" : "Winner cleared!", "success");
+}
+
+function cascadeWinnerChange(r, m) {
+  const match = state.bracket.rounds[r][m];
+  const nextRound = r + 1;
+  if (nextRound >= state.bracket.rounds.length) {
+    if (match.winner && match.winner !== "bye") {
+      state.bracket.champion = match[match.winner];
+    } else {
+      state.bracket.champion = null;
+    }
+    return;
+  }
+  
+  const nextMatchIdx = Math.floor(m / 2);
+  const slotKey = (m % 2 === 0) ? "p1" : "p2";
+  const nextMatch = state.bracket.rounds[nextRound][nextMatchIdx];
+  
+  if (!nextMatch) return;
+  
+  if (match.winner && match.winner !== "bye") {
+    const winnerObj = match[match.winner];
+    nextMatch[slotKey] = { name: winnerObj.name, team: winnerObj.team || "" };
+  } else {
+    nextMatch[slotKey] = { name: EMPTY_SLOT, team: "" };
+  }
+  
+  if (nextMatch.winner) {
+    nextMatch.winner = null;
+    nextMatch.blue_score = 0;
+    nextMatch.red_score = 0;
+    nextMatch.finished_at = null;
+    cascadeWinnerChange(nextRound, nextMatchIdx);
+  }
 }
 
 /* ============ QR / ADMIN KICK ============ */
