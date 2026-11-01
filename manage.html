@@ -1112,7 +1112,7 @@ const REG_TABLE = "final_registrations";
 let competitors = [], judges = [], coaches = [], tournamentDate = null;
 let currentGroups = null, currentBracketType = null;
 let lastDebugInfo = { registrations: [], competitors: [], judges: [], coaches: [], errors: [] };
-let tournamentPrices = { patterns: null, sparring: null, headReferee: null, referee: null, computerReferee: null };
+let tournamentPrices = { patterns: null, patternsExtra: null, sparring: null, sparringExtra: null, headReferee: null, referee: null, computerReferee: null };
 let bracketSizeOverrides = {};
 let undoStack = [];
 let selectedPlayerEl = null;
@@ -1136,6 +1136,26 @@ let tournamentStatusId = null;
 let currentPhase = null;
 let isTournamentPaused = false;
 let selectedPhase = null;
+
+function calculateDisciplineTotal(entries, basePrice, extraPrice) {
+  if (basePrice === null || isNaN(basePrice)) return null;
+  const compCounts = {};
+  entries.forEach(c => {
+    if (!compCounts[c.name]) compCounts[c.name] = 0;
+    compCounts[c.name]++;
+  });
+  const extra = (extraPrice !== null && !isNaN(extraPrice)) ? extraPrice : 0;
+  let total = 0;
+  for (const name in compCounts) {
+    const count = compCounts[name];
+    total += basePrice;
+    if (count > 1) {
+      total += (count - 1) * extra;
+    }
+  }
+  return total;
+}
+
 function parseAgeGroupFromOriginalCategory(fullCat) {
 if (!fullCat) return null;
 const lower = fullCat.toLowerCase();
@@ -3622,17 +3642,19 @@ sortedTeams.forEach((teamArr) => { teamArr.forEach((player) => { if (posIndex < 
 return slots;
 }
 async function fetchTournamentPrices() {
-try {
-const { data, error } = await sb.from("site_settings").select("patterns_price, sparring_price, head_referee_price, referee_price, computer_referee_price").eq("id", 1).single();
-if (error) { tournamentPrices = { patterns: null, sparring: null, headReferee: null, referee: null, computerReferee: null }; return; }
-if (data) {
-tournamentPrices.patterns = data.patterns_price != null ? parseFloat(data.patterns_price) : null;
-tournamentPrices.sparring = data.sparring_price != null ? parseFloat(data.sparring_price) : null;
-tournamentPrices.headReferee = data.head_referee_price != null ? parseFloat(data.head_referee_price) : null;
-tournamentPrices.referee = data.referee_price != null ? parseFloat(data.referee_price) : null;
-tournamentPrices.computerReferee = data.computer_referee_price != null ? parseFloat(data.computer_referee_price) : null;
-}
-} catch (err) { tournamentPrices = { patterns: null, sparring: null, headReferee: null, referee: null, computerReferee: null }; }
+  try {
+    const { data, error } = await sb.from("site_settings").select("patterns_price, patterns_extra, sparring_price, sparring_extra, head_referee_price, referee_price, computer_referee_price").eq("id", 1).single();
+    if (error) { tournamentPrices = { patterns: null, patternsExtra: null, sparring: null, sparringExtra: null, headReferee: null, referee: null, computerReferee: null }; return; }
+    if (data) {
+      tournamentPrices.patterns = data.patterns_price != null ? parseFloat(data.patterns_price) : null;
+      tournamentPrices.patternsExtra = data.patterns_extra != null ? parseFloat(data.patterns_extra) : null;
+      tournamentPrices.sparring = data.sparring_price != null ? parseFloat(data.sparring_price) : null;
+      tournamentPrices.sparringExtra = data.sparring_extra != null ? parseFloat(data.sparring_extra) : null;
+      tournamentPrices.headReferee = data.head_referee_price != null ? parseFloat(data.head_referee_price) : null;
+      tournamentPrices.referee = data.referee_price != null ? parseFloat(data.referee_price) : null;
+      tournamentPrices.computerReferee = data.computer_referee_price != null ? parseFloat(data.computer_referee_price) : null;
+    }
+  } catch (err) { tournamentPrices = { patterns: null, patternsExtra: null, sparring: null, sparringExtra: null, headReferee: null, referee: null, computerReferee: null }; }
 }
 function formatEuro(amount) {
 if (amount === null || amount === undefined || isNaN(amount)) return "€0.00";
@@ -4614,18 +4636,23 @@ const patternsCount = t.patternsCategories.size;
 const sparringCount = t.sparringCategories.size;
 const totalCats = patternsCount + sparringCount;
 const totalEntries = t.patternsEntries.length + t.sparringEntries.length;
+
 const patternsPrice = tournamentPrices.patterns;
+const patternsExtraPrice = tournamentPrices.patternsExtra;
 const sparringPrice = tournamentPrices.sparring;
-const patternsTotal = (patternsPrice !== null && !isNaN(patternsPrice)) ? patternsPrice * t.patternsEntries.length : null;
-const sparringTotal = (sparringPrice !== null && !isNaN(sparringPrice)) ? sparringPrice * t.sparringEntries.length : null;
+const sparringExtraPrice = tournamentPrices.sparringExtra;
+
+const patternsTotal = calculateDisciplineTotal(t.patternsEntries, patternsPrice, patternsExtraPrice);
+const sparringTotal = calculateDisciplineTotal(t.sparringEntries, sparringPrice, sparringExtraPrice);
+
 const hasAnyPrice = patternsTotal !== null || sparringTotal !== null;
 const grandTotal = (patternsTotal || 0) + (sparringTotal || 0);
 let priceSummaryHtml = "";
 if (!hasAnyPrice) priceSummaryHtml = '<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>';
 else {
 const segments = [];
-if (patternsTotal !== null) segments.push('<span class="price-segment patterns-price"><i class="fas fa-chess-board"></i> ' + formatEuro(patternsPrice) + ' × ' + t.patternsEntries.length + ' = <strong>' + formatEuro(patternsTotal) + '</strong></span>');
-if (sparringTotal !== null) segments.push('<span class="price-segment sparring-price"><i class="fas fa-fist-raised"></i> ' + formatEuro(sparringPrice) + ' × ' + t.sparringEntries.length + ' = <strong>' + formatEuro(sparringTotal) + '</strong></span>');
+if (patternsTotal !== null) segments.push('<span class="price-segment patterns-price"><i class="fas fa-chess-board"></i> Patterns (' + t.patternsEntries.length + ' entries) = <strong>' + formatEuro(patternsTotal) + '</strong></span>');
+if (sparringTotal !== null) segments.push('<span class="price-segment sparring-price"><i class="fas fa-fist-raised"></i> Sparring (' + t.sparringEntries.length + ' entries) = <strong>' + formatEuro(sparringTotal) + '</strong></span>');
 priceSummaryHtml = '<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ' + segments.join('<span class="price-operator">+</span>') + ' <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ' + formatEuro(grandTotal) + '</span></div>';
 }
 html += '<div class="team-overview-card"><div class="team-overview-header">' +
@@ -4856,7 +4883,9 @@ setActiveBtn("btnPriceOverview");
 await fetchData();
 await fetchTournamentPrices();
 const patternsPrice = tournamentPrices.patterns;
+const patternsExtraPrice = tournamentPrices.patternsExtra;
 const sparringPrice = tournamentPrices.sparring;
+const sparringExtraPrice = tournamentPrices.sparringExtra;
 const headRefPrice = tournamentPrices.headReferee;
 const refPrice = tournamentPrices.referee;
 const compRefPrice = tournamentPrices.computerReferee;
@@ -4866,15 +4895,21 @@ const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
 const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
 const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
 const unassignedJudges = judges.filter(j => !getJudgeRank(j.id));
-const patternsIncome = (patternsPrice !== null && !isNaN(patternsPrice)) ? patternsPrice * patternsEntries.length : 0;
-const sparringIncome = (sparringPrice !== null && !isNaN(sparringPrice)) ? sparringPrice * sparringEntries.length : 0;
+
+const patternsIncome = calculateDisciplineTotal(patternsEntries, patternsPrice, patternsExtraPrice) || 0;
+const sparringIncome = calculateDisciplineTotal(sparringEntries, sparringPrice, sparringExtraPrice) || 0;
 const totalIncome = patternsIncome + sparringIncome;
+
 const headRefExpense = (headRefPrice !== null && !isNaN(headRefPrice)) ? headRefPrice * headReferees.length : 0;
 const refExpense = (refPrice !== null && !isNaN(refPrice)) ? refPrice * regularReferees.length : 0;
 const compRefExpense = (compRefPrice !== null && !isNaN(compRefPrice)) ? compRefPrice * computerReferees.length : 0;
 const totalExpense = headRefExpense + refExpense + compRefExpense;
 const netProfit = totalIncome - totalExpense;
 const isNegative = netProfit < 0;
+
+const patternsSub = 'Base: ' + (patternsPrice !== null ? formatEuro(patternsPrice) : 'N/A') + ', Extra: ' + (patternsExtraPrice !== null ? formatEuro(patternsExtraPrice) : 'N/A');
+const sparringSub = 'Base: ' + (sparringPrice !== null ? formatEuro(sparringPrice) : 'N/A') + ', Extra: ' + (sparringExtraPrice !== null ? formatEuro(sparringExtraPrice) : 'N/A');
+
 let html = '<div class="price-overview-container"><div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
 '<h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>' +
 '<button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>' +
@@ -4901,20 +4936,20 @@ html += '<div class="price-breakdown-section"><div class="price-breakdown-header
 '<div class="price-breakdown-total income-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalIncome) + '</div>' +
 '<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span></div>' +
 '<div class="price-breakdown-body expanded">';
-html += buildPriceLineItem("Patterns (Tul) Entry Fees", "fa-chess-board", "patterns-icon", patternsEntries.length, patternsPrice, patternsIncome, "income", patternsEntries, 'per entry @ ' + (patternsPrice !== null ? formatEuro(patternsPrice) : 'N/A'));
-html += buildPriceLineItem("Sparring (Matsogi) Entry Fees", "fa-fist-raised", "sparring-icon", sparringEntries.length, sparringPrice, sparringIncome, "income", sparringEntries, 'per entry @ ' + (sparringPrice !== null ? formatEuro(sparringPrice) : 'N/A'));
+html += buildPriceLineItem("Patterns (Tul) Entry Fees", "fa-chess-board", "patterns-icon", patternsEntries.length, patternsPrice, patternsExtraPrice, patternsIncome, "income", patternsEntries, patternsSub);
+html += buildPriceLineItem("Sparring (Matsogi) Entry Fees", "fa-fist-raised", "sparring-icon", sparringEntries.length, sparringPrice, sparringExtraPrice, sparringIncome, "income", sparringEntries, sparringSub);
 html += '</div></div><div class="price-breakdown-section"><div class="price-breakdown-header expense-header expanded" onclick="toggleBreakdown(this)">' +
 '<div class="price-breakdown-title expense-title"><i class="fas fa-arrow-up"></i> EXPENSES — Referee Fees (by Rank)</div>' +
 '<div class="price-breakdown-total expense-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalExpense) + '</div>' +
 '<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span></div>' +
 '<div class="price-breakdown-body expanded">';
-html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headReferees.length, headRefPrice, headRefExpense, "expense", headReferees, headReferees.length + ' judge' + (headReferees.length !== 1 ? 's' : '') + ' @ ' + (headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'));
-html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", regularReferees.length, refPrice, refExpense, "expense", regularReferees, regularReferees.length + ' judge' + (regularReferees.length !== 1 ? 's' : '') + ' @ ' + (refPrice !== null ? formatEuro(refPrice) : 'N/A'));
-html += buildPriceLineItem("Computer Referees", "fa-desktop", "computer-icon", computerReferees.length, compRefPrice, compRefExpense, "expense", computerReferees, computerReferees.length + ' judge' + (computerReferees.length !== 1 ? 's' : '') + ' @ ' + (compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'));
+html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headReferees.length, headRefPrice, null, headRefExpense, "expense", headReferees, headReferees.length + ' judge' + (headReferees.length !== 1 ? 's' : '') + ' @ ' + (headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'));
+html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", regularReferees.length, refPrice, null, refExpense, "expense", regularReferees, regularReferees.length + ' judge' + (regularReferees.length !== 1 ? 's' : '') + ' @ ' + (refPrice !== null ? formatEuro(refPrice) : 'N/A'));
+html += buildPriceLineItem("Computer Referees", "fa-desktop", "computer-icon", computerReferees.length, compRefPrice, null, compRefExpense, "expense", computerReferees, computerReferees.length + ' judge' + (computerReferees.length !== 1 ? 's' : '') + ' @ ' + (compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'));
 html += '</div></div></div>';
 document.getElementById("content").innerHTML = html;
 }
-function buildPriceLineItem(title, icon, iconClass, count, unitPrice, total, type, entries, subtitle) {
+function buildPriceLineItem(title, icon, iconClass, count, unitPrice, extraPrice, total, type, entries, subtitle) {
 const amountClass = type === "income" ? "income-amount" : "expense-amount";
 const sign = type === "income" ? "+" : "−";
 const hasPrice = unitPrice !== null && !isNaN(unitPrice);
@@ -4923,12 +4958,18 @@ if (entries && entries.length > 0) {
 detailsHtml = '<div class="price-line-details">';
 if (!hasPrice) detailsHtml += '<div class="price-empty-msg"><i class="fas fa-info-circle"></i> Unit price not configured — cannot calculate total</div>';
 else {
+const compCurrent = {};
 entries.forEach((e, idx) => {
+if (!compCurrent[e.name]) compCurrent[e.name] = 0;
+compCurrent[e.name]++;
+const isFirst = compCurrent[e.name] === 1;
+const currentUnitPrice = isFirst ? unitPrice : ((extraPrice !== null && !isNaN(extraPrice)) ? extraPrice : 0);
+
 const name = escapeHtml(e.name) || "Unknown";
 const team = escapeHtml(e.team) || "N/A";
 const cat = escapeHtml(e._full_cat) || "";
 detailsHtml += '<div class="price-detail-row"><div class="price-detail-name"><span style="color:var(--gray);font-weight:700;width:22px">' + (idx + 1) + '.</span><span>' + name + '</span><span class="price-detail-team">• ' + team + (cat ? ' • ' + cat : '') + '</span></div>' +
-'<div class="price-detail-amount ' + amountClass + '">' + sign + formatEuro(unitPrice) + '</div></div>';
+'<div class="price-detail-amount ' + amountClass + '">' + sign + formatEuro(currentUnitPrice) + '</div></div>';
 });
 }
 detailsHtml += '</div>';
@@ -4949,7 +4990,9 @@ if (body) body.classList.toggle("expanded");
 function togglePriceLine(item) { item.classList.toggle("expanded"); }
 function exportFinancialReport() {
 const patternsPrice = tournamentPrices.patterns;
+const patternsExtraPrice = tournamentPrices.patternsExtra;
 const sparringPrice = tournamentPrices.sparring;
+const sparringExtraPrice = tournamentPrices.sparringExtra;
 const headRefPrice = tournamentPrices.headReferee;
 const refPrice = tournamentPrices.referee;
 const compRefPrice = tournamentPrices.computerReferee;
@@ -4959,8 +5002,25 @@ const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
 const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
 const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
 let csv = "data:text/csv;charset=utf-8,Type,Category,Name,Team,Amount (EUR)\n";
-patternsEntries.forEach(e => { csv += 'INCOME,Patterns,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (patternsPrice !== null ? patternsPrice : 0).toFixed(2) + '\n'; });
-sparringEntries.forEach(e => { csv += 'INCOME,Sparring,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (sparringPrice !== null ? sparringPrice : 0).toFixed(2) + '\n'; });
+
+const compPatternsCurrent = {};
+patternsEntries.forEach(e => {
+if (!compPatternsCurrent[e.name]) compPatternsCurrent[e.name] = 0;
+compPatternsCurrent[e.name]++;
+const isFirst = compPatternsCurrent[e.name] === 1;
+const amount = isFirst ? (patternsPrice !== null ? patternsPrice : 0) : (patternsExtraPrice !== null ? patternsExtraPrice : 0);
+csv += 'INCOME,Patterns,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + amount.toFixed(2) + '\n';
+});
+
+const compSparringCurrent = {};
+sparringEntries.forEach(e => {
+if (!compSparringCurrent[e.name]) compSparringCurrent[e.name] = 0;
+compSparringCurrent[e.name]++;
+const isFirst = compSparringCurrent[e.name] === 1;
+const amount = isFirst ? (sparringPrice !== null ? sparringPrice : 0) : (sparringExtraPrice !== null ? sparringExtraPrice : 0);
+csv += 'INCOME,Sparring,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + amount.toFixed(2) + '\n';
+});
+
 headReferees.forEach(e => { csv += 'EXPENSE,Head Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (headRefPrice !== null ? -headRefPrice : 0).toFixed(2) + '\n'; });
 regularReferees.forEach(e => { csv += 'EXPENSE,Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (refPrice !== null ? -refPrice : 0).toFixed(2) + '\n'; });
 computerReferees.forEach(e => { csv += 'EXPENSE,Computer Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (compRefPrice !== null ? -compRefPrice : 0).toFixed(2) + '\n'; });
