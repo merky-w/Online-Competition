@@ -44,9 +44,20 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tv-judge-corner.br { bottom: 80px; right: 30px; }
 .tv-judge-corner.bl { bottom: 80px; left: 30px; }
 .tv-jc-label { font-size: 0.75rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
-.tv-jc-score { font-size: 1.8rem; font-weight: 900; color: white; font-variant-numeric: tabular-nums; }
-.tv-judge-corner.lead-blue { border-color: #2563eb; background: rgba(30,58,138,0.7); }
-.tv-judge-corner.lead-red { border-color: #dc2626; background: rgba(127,29,29,0.7); }
+.tv-jc-score { 
+  font-size: 1.1rem; 
+  font-weight: 900; 
+  color: white; 
+  font-variant-numeric: tabular-nums; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 2px; 
+  line-height: 1.2; 
+}
+.tv-judge-corner.lead-blue { border-color: #2563eb; background: rgba(30,58,138,0.85); }
+.tv-judge-corner.lead-red { border-color: #dc2626; background: rgba(127,29,29,0.85); }
+.tv-judge-corner.lead-draw { border-color: #64748b; background: rgba(30, 41, 59, 0.85); }
 .tv-bottom-bar { background: linear-gradient(90deg, #111827 0%, #030712 100%); border-top: 3px solid #fbbf24; padding: 15px 35px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; z-index: 10; }
 .tv-next-match { display: flex; align-items: center; gap: 15px; }
 .tv-next-label { color: #9ca3af; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
@@ -223,22 +234,8 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .bracket-slot.won { background: rgba(16,185,129,0.16); color: #6ee7b7; }
 .bracket-slot.lost { opacity: 0.5; text-decoration: line-through; }
 .bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
-
-/* ✅ NEW: Edit Winner Button */
-.edit-winner-icon {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  font-size: 10px;
-  color: #fbbf24;
-  opacity: 0.8;
-  z-index: 5;
-  pointer-events: none;
-}
-.bracket-match[onclick]:hover {
-  border-color: #fbbf24;
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4);
-}
+.edit-winner-icon { position: absolute; top: 4px; right: 4px; font-size: 10px; color: #fbbf24; opacity: 0.8; z-index: 5; pointer-events: none; }
+.bracket-match[onclick]:hover { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4); }
 </style>
 </head>
 <body class="bg-slate-900">
@@ -550,7 +547,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     <div class="tv-center-overlay">
       <div id="tv-timer-label-top" class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
       <div id="tv-timer-time" class="tv-timer-display">2:00</div>
-      <div class="tv-penalties">
+      <div id="tv-penalties-container" class="tv-penalties">
         <div class="tv-penalty-item"><span class="tv-penalty-label">BLU GJ:</span><span id="tv-blue-gj" style="color:#60a5fa;">0</span></div>
         <div class="tv-penalty-item"><span class="tv-penalty-label">YC:</span><span id="tv-blue-yc" style="color:#fbbf24;">0</span></div>
         <span style="color:#475569;">|</span>
@@ -635,7 +632,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- ✅ NEW: CHANGE WINNER MODAL -->
+<!-- CHANGE WINNER MODAL -->
 <div id="modal-change-winner" class="hidden-view modal-overlay">
   <div class="modal-box" style="max-width: 400px;">
     <h3 style="color: #fbbf24; margin-bottom: 15px; font-size: 1.3rem;">Change Winner</h3>
@@ -804,7 +801,47 @@ function judgeVoteCounts() { const jb = pad4(state.match.judge_blue); const jr =
 function patternVoteCounts() { const votes = pad4Any(state.match.pattern_votes); const max = maxJudges(); let blue = 0, red = 0, draw = 0; for (let i = 0; i < max; i++) { if (votes[i] === "blue") blue++; else if (votes[i] === "red") red++; else if (votes[i] === "draw") draw++; } return { blue, red, draw }; }
 function renderVoteScores() { const isPatterns = currentDiscipline() === "patterns"; const v = isPatterns ? patternVoteCounts() : judgeVoteCounts(); setTxt("tv-blue-score", v.blue); setTxt("tv-red-score", v.red); setTxt("l-blue-score", v.blue); setTxt("l-red-score", v.red); }
 function renderPenalties() { const m = state.match || freshMatchObject(); setTxt("l-blue-gj", m.blue_gam_jeom || 0); setTxt("l-red-gj", m.red_gam_jeom || 0); setTxt("l-blue-yc", m.blue_yellow_cards || 0); setTxt("l-red-yc", m.red_yellow_cards || 0); setTxt("tv-blue-gj", m.blue_gam_jeom || 0); setTxt("tv-red-gj", m.red_gam_jeom || 0); setTxt("tv-blue-yc", m.blue_yellow_cards || 0); setTxt("tv-red-yc", m.red_yellow_cards || 0); }
-function renderTVJudgeNets() { const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); const max = maxJudges(); for (let i = 1; i <= 4; i++) { const cornerEl = document.getElementById("tv-corner-" + i); const netEl = document.getElementById("tv-net-" + i); if (!cornerEl || !netEl) continue; if (i > max) { cornerEl.classList.add("hidden-view"); continue; } cornerEl.classList.remove("hidden-view"); const net = jb[i-1] - jr[i-1]; netEl.textContent = Math.abs(net); cornerEl.classList.remove("lead-blue", "lead-red"); if (net > 0) cornerEl.classList.add("lead-blue"); else if (net < 0) cornerEl.classList.add("lead-red"); } }
+
+function renderTVJudgeNets() { 
+  const jb = pad4(state.match.judge_blue); 
+  const jr = pad4(state.match.judge_red); 
+  const votes = pad4Any(state.match.pattern_votes);
+  const max = maxJudges(); 
+  const isPatterns = currentDiscipline() === "patterns";
+  
+  for (let i = 1; i <= 4; i++) { 
+    const cornerEl = document.getElementById("tv-corner-" + i); 
+    const netEl = document.getElementById("tv-net-" + i); 
+    if (!cornerEl || !netEl) continue; 
+    if (i > max) { cornerEl.classList.add("hidden-view"); continue; } 
+    cornerEl.classList.remove("hidden-view"); 
+    
+    cornerEl.classList.remove("lead-blue", "lead-red", "lead-draw");
+    
+    if (isPatterns) {
+      const vote = votes[i-1];
+      if (vote === "blue") {
+        netEl.innerHTML = '<span style="color:#60a5fa;font-size:1.1rem;font-weight:900;">BLUE</span>';
+        cornerEl.classList.add("lead-blue");
+      } else if (vote === "red") {
+        netEl.innerHTML = '<span style="color:#f87171;font-size:1.1rem;font-weight:900;">RED</span>';
+        cornerEl.classList.add("lead-red");
+      } else {
+        netEl.innerHTML = '<span style="color:#94a3b8;font-size:1.1rem;font-weight:900;">—</span>';
+        cornerEl.classList.add("lead-draw");
+      }
+    } else {
+      const bPts = jb[i-1];
+      const rPts = jr[i-1];
+      netEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span style="color:#60a5fa;font-size:1rem;font-weight:800;">B: ${bPts}</span><span style="color:#f87171;font-size:1rem;font-weight:800;">R: ${rPts}</span></div>`;
+      const net = bPts - rPts;
+      if (net > 0) cornerEl.classList.add("lead-blue");
+      else if (net < 0) cornerEl.classList.add("lead-red");
+      else cornerEl.classList.add("lead-draw");
+    }
+  } 
+}
+
 function onlineJudgeSlots() { const now = Date.now(); const set = new Set(); Object.keys(state.judgeLastSeen).forEach(k => { if (now - state.judgeLastSeen[k] < 9000) set.add(Number(k)); }); return set; }
 function updateRingLayoutCornerStats() { const online = onlineJudgeSlots(); const max = maxJudges(); for (let i = 1; i <= 4; i++) { const btn = document.getElementById("qr-btn-" + i); const stat = document.getElementById("qr-stat-" + i); if (!btn || !stat) continue; if (i > max) { btn.style.display = "none"; continue; } btn.style.display = "flex"; if (online.has(i)) { btn.classList.add("connected"); stat.textContent = "Connected"; } else { btn.classList.remove("connected"); stat.textContent = "Empty"; } } }
 
@@ -818,10 +855,15 @@ function renderLaptopJudges() {
     html += '<div id="judge-laptop-' + i + '" class="judge-box ' + cls + '">';
     html += '<div class="judge-label">Judge ' + i + '</div>';
     html += '<div><span class="judge-status-badge ' + (isOnline ? "online" : "offline") + '">' + (isOnline ? "Connected" : "Empty") + '</span></div>';
-    if (isPatterns) { const v = votes[i - 1]; html += '<div class="judge-detail">Vote: ' + (v ? v.toUpperCase() : "—") + '</div>'; }
-    else {
-      html += '<div class="judge-detail">Net: ' + Math.abs(net) + '</div>';
-      html += '<div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">B: ' + givenBlue + ' | R: ' + givenRed + '</div>';
+    if (isPatterns) { 
+      const v = votes[i - 1]; 
+      let voteColor = v === "blue" ? "#60a5fa" : (v === "red" ? "#f87171" : "#94a3b8");
+      html += '<div class="judge-detail" style="font-size:1.1rem;font-weight:800;color:' + voteColor + ';margin-top:8px;">' + (v ? v.toUpperCase() : "NO VOTE") + '</div>'; 
+    } else {
+      html += '<div style="display:flex;justify-content:space-around;margin-top:8px;">';
+      html += '<div style="text-align:center;"><div style="font-size:0.7rem;color:#60a5fa;font-weight:800;">BLUE</div><div style="font-size:1.4rem;font-weight:900;color:#60a5fa;">' + givenBlue + '</div></div>';
+      html += '<div style="text-align:center;"><div style="font-size:0.7rem;color:#f87171;font-weight:800;">RED</div><div style="font-size:1.4rem;font-weight:900;color:#f87171;">' + givenRed + '</div></div>';
+      html += '</div>';
       html += '<div class="judge-row-controls">';
       html += '<div class="judge-side-adj"><span style="color:#60a5fa;font-weight:700;">B</span>';
       html += '<button class="judge-adj-btn plus" onclick="adjustSpecificJudge(' + i + ', \'blue\', 1)">+</button>';
@@ -1057,6 +1099,50 @@ async function advanceToNextCategory() {
 }
 
 /* ============ DISPLAY SYNC ============ */
+function updateLaptopUIForDiscipline() {
+  const isPatterns = currentDiscipline() === "patterns";
+  const timerSection = document.querySelector(".timer-section");
+  const penaltiesSection = document.querySelector(".penalties-section");
+  const scoreSection = document.querySelector(".score-section");
+  
+  if (timerSection) timerSection.style.display = isPatterns ? "none" : "block";
+  if (penaltiesSection) penaltiesSection.style.display = isPatterns ? "none" : "block";
+  
+  if (scoreSection) {
+    if (isPatterns) {
+      scoreSection.innerHTML = `
+        <div class="score-box blue-score" style="border-color: #1e40af; background: #1e3a8a;">
+          <div class="score-label">🔵 Blue Votes</div>
+          <div id="l-blue-score" class="score-value">0</div>
+        </div>
+        <div class="score-box red-score" style="border-color: #991b1b; background: #7f1d1d;">
+          <div class="score-label">🔴 Red Votes</div>
+          <div id="l-red-score" class="score-value">0</div>
+        </div>
+      `;
+    } else {
+      scoreSection.innerHTML = `
+        <div class="score-box blue-score">
+          <div class="score-label">🔵 Blue Majority Score</div>
+          <div id="l-blue-score" class="score-value">0</div>
+        </div>
+        <div class="score-box red-score">
+          <div class="score-label">🔴 Red Majority Score</div>
+          <div id="l-red-score" class="score-value">0</div>
+        </div>
+      `;
+    }
+  }
+  
+  const declareWinnerDiv = document.getElementById("laptop-declare-winner");
+  if (declareWinnerDiv) {
+    const h3 = declareWinnerDiv.querySelector("h3");
+    const p = declareWinnerDiv.querySelector("p");
+    if (h3) h3.textContent = isPatterns ? "🏆 Declare Pattern Winner" : "🏆 Declare Winner & Advance";
+    if (p) p.textContent = isPatterns ? "Computer confirms the winner based on pattern performance." : "Confirming a winner promotes them to the next round and automatically loads the next two fighters.";
+  }
+}
+
 function updateCompetitorDisplay() {
   const ring = state.ring || {};
   const blueName = ring.blue_name || "---"; const redName = ring.red_name || "---"; const blueClub = ring.blue_club || "---"; const redClub = ring.red_club || "---";
@@ -1076,6 +1162,11 @@ function updateCompetitorDisplay() {
   const sparringControls = document.getElementById("sparring-controls"); const patternsControls = document.getElementById("patterns-controls");
   if (discipline === "patterns") { if (sparringControls) sparringControls.classList.add("hidden-view"); if (patternsControls) patternsControls.classList.remove("hidden-view"); }
   else { if (sparringControls) sparringControls.classList.remove("hidden-view"); if (patternsControls) patternsControls.classList.add("hidden-view"); }
+  
+  const tvPenalties = document.getElementById("tv-penalties-container");
+  if (tvPenalties) tvPenalties.style.display = discipline === "patterns" ? "none" : "flex";
+  
+  updateLaptopUIForDiscipline();
 }
 
 function renderCategoryPicker() {
