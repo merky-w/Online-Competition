@@ -455,28 +455,23 @@
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let activeMode = 'brackets';
-    let rawCompetitors = [];
-    let patternsCategories = [];
-    let sparringCategories = [];
+    let bracketMatchesData = [];
     let bracketWinners = {};
     let ringAssignments = [];
     let siteSettings = {};
     let selectedRingId = null;
 
-    // Fetch All Data
+    // Fetch All Data (pulling brackets correctly from bracket_matches)
     async function initData() {
       try {
-        const [compRes, patCatRes, sparCatRes, winRes, ringRes, setRes] = await Promise.all([
-          sb.from("final_registrations").select("*"),
-          sb.from("patterns_categories").select("*"),
-          sb.from("sparring_categories").select("*"),
+        const [matchRes, winRes, ringRes, setRes] = await Promise.all([
+          sb.from("bracket_matches").select("*"),
           sb.from("bracket_winners").select("*"),
           sb.from("ring_assignments").select("*"),
           sb.from("site_settings").select("*").eq("id", 1).single()
         ]);
 
-        patternsCategories = patCatRes.data || [];
-        sparringCategories = sparCatRes.data || [];
+        bracketMatchesData = matchRes.data || [];
         ringAssignments = ringRes.data || [];
         siteSettings = setRes.data || {};
 
@@ -503,7 +498,7 @@
     }
 
     /* ----------------------------------------------------
-       BRACKETS LOGIC
+       BRACKETS LOGIC (Pulled from bracket_matches)
        ---------------------------------------------------- */
     function applyBracketFilters() {
       renderBrackets();
@@ -517,28 +512,30 @@
       const container = document.getElementById('bracketsList');
       container.innerHTML = '';
 
-      // Collect all available categories
+      // Group bracket_matches by category and bracket_type (discipline)
       const categoriesMap = {};
 
-      if (disc === 'ALL' || disc === 'patterns') {
-        patternsCategories.forEach(item => {
-          if (!categoriesMap[item.category]) categoriesMap[item.category] = { name: item.category, type: 'Patterns', items: [] };
-          categoriesMap[item.category].items.push(item);
-        });
-      }
-
-      if (disc === 'ALL' || disc === 'sparring') {
-        sparringCategories.forEach(item => {
-          if (!categoriesMap[item.category]) categoriesMap[item.category] = { name: item.category, type: 'Sparring', items: [] };
-          categoriesMap[item.category].items.push(item);
-        });
-      }
+      bracketMatchesData.forEach(match => {
+        const catName = match.category;
+        const bType = (match.bracket_type || '').toLowerCase(); // e.g., 'patterns' or 'sparring'
+        
+        const mapKey = `${catName}___${bType}`;
+        if (!categoriesMap[mapKey]) {
+          categoriesMap[mapKey] = {
+            name: catName,
+            type: match.bracket_type || 'Patterns',
+            matches: []
+          };
+        }
+        categoriesMap[mapKey].matches.push(match);
+      });
 
       const filteredKeys = Object.keys(categoriesMap).filter(key => {
         const cat = categoriesMap[key];
-        const matchSearch = key.toLowerCase().includes(search);
-        const matchGender = gen === 'ALL' || key.toLowerCase().includes(gen.toLowerCase());
-        return matchSearch && matchGender;
+        const matchDiscipline = disc === 'ALL' || cat.type.toLowerCase() === disc.toLowerCase();
+        const matchSearch = cat.name.toLowerCase().includes(search);
+        const matchGender = gen === 'ALL' || cat.name.toLowerCase().includes(gen.toLowerCase());
+        return matchDiscipline && matchSearch && matchGender;
       });
 
       if (filteredKeys.length === 0) {
@@ -548,10 +545,17 @@
 
       filteredKeys.forEach(key => {
         const cat = categoriesMap[key];
-        const winnerObj = bracketWinners[`${key}|||${cat.type}`] || {};
+        const winnerObj = bracketWinners[`${cat.name}|||${cat.type}`] || {};
         
-        // Build Tree structure from positions
-        const rounds = buildBracketRounds(cat.items);
+        // Organize matches by round number
+        const roundsMap = {};
+        cat.matches.forEach(m => {
+          const rNum = m.round_number || 1;
+          if (!roundsMap[rNum]) roundsMap[rNum] = [];
+          roundsMap[rNum].push(m);
+        });
+
+        const sortedRoundNums = Object.keys(roundsMap).sort((a,b) => Number(a) - Number(b));
 
         let bracketHtml = `
           <div class="bracket-container">
@@ -562,21 +566,26 @@
             <div class="bracket-tree">
         `;
 
-        rounds.forEach((rnd, idx) => {
-          bracketHtml += `<div class="bracket-round"><div class="round-title">Round ${idx + 1}</div>`;
-          rnd.forEach(match => {
-            const isP1Winner = winnerObj.winner_name && winnerObj.winner_name === match.p1.name;
-            const isP2Winner = winnerObj.winner_name && winnerObj.winner_name === match.p2.name;
+        sortedRoundNums.forEach(rNum => {
+          const roundMatches = roundsMap[rNum];
+          // Sort matches inside round by match_number if available
+          roundMatches.sort((a,b) => (a.match_number || 0) - (b.match_number || 0));
+
+          bracketHtml += `<div class="bracket-round"><div class="round-title">Round ${rNum}</div>`;
+          
+          roundMatches.forEach(match => {
+            const isP1Winner = (winnerObj.winner_name && winnerObj.winner_name === match.competitor1_name) || match.winner_name === match.competitor1_name;
+            const isP2Winner = (winnerObj.winner_name && winnerObj.winner_name === match.competitor2_name) || match.winner_name === match.competitor2_name;
 
             bracketHtml += `
               <div class="match-box">
                 <div class="match-player ${isP1Winner ? 'winner' : ''}">
-                  <span class="match-player-name">${match.p1.name || 'BYE'}</span>
-                  <span class="match-player-team">${match.p1.team || ''}</span>
+                  <span class="match-player-name">${match.competitor1_name || 'BYE'}</span>
+                  <span class="match-player-team">${match.competitor1_team || ''}</span>
                 </div>
                 <div class="match-player ${isP2Winner ? 'winner' : ''}">
-                  <span class="match-player-name">${match.p2.name || 'BYE'}</span>
-                  <span class="match-player-team">${match.p2.team || ''}</span>
+                  <span class="match-player-name">${match.competitor2_name || 'BYE'}</span>
+                  <span class="match-player-team">${match.competitor2_team || ''}</span>
                 </div>
               </div>
             `;
@@ -587,18 +596,6 @@
         bracketHtml += `</div></div>`;
         container.innerHTML += bracketHtml;
       });
-    }
-
-    function buildBracketRounds(items) {
-      items.sort((a,b) => (a.position_number || 0) - (b.position_number || 0));
-      const round1 = [];
-      for (let i = 0; i < items.length; i += 2) {
-        round1.push({
-          p1: items[i] || { name: 'BYE', team: '' },
-          p2: items[i+1] || { name: 'BYE', team: '' }
-        });
-      }
-      return [round1]; // Simplified rendering preview round
     }
 
     /* ----------------------------------------------------
