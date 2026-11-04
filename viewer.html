@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournament View & Live Rings</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg-body: #0f172a;
+      --bg-panel: #1e293b;
+      --bg-card: #334155;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-primary: #3b82f6;
+      --accent-secondary: #10b981;
+      --accent-alert: #ef4444;
+      --accent-warning: #f59e0b;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+      --transition: all 0.3s ease;
+      --border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-back {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      border: var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-back:hover { background-color: rgba(255, 255, 255, 0.2); }
+
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Mode Selection Header */
+    .mode-selector {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .mode-btn {
+      padding: 0.8rem 1.8rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      border: var(--border);
+      background: var(--bg-panel);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mode-btn:hover {
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .mode-btn.active {
+      background: var(--accent-primary);
+      color: white;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Filters Card */
+    .filters-card {
+      background: var(--bg-panel);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      border: var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.2rem;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .filter-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 0.65rem 0.8rem;
+      background-color: var(--bg-body);
+      border: var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    select:focus, input[type="text"]:focus {
+      border-color: var(--accent-primary);
+    }
+
+    /* Rings Grid & Display */
+    .rings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .ring-card {
+      background: var(--bg-panel);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      border: var(--border);
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+
+    .ring-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-primary);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+
+    .ring-card.selected {
+      border-color: var(--accent-secondary);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .ring-icon {
+      font-size: 2.5rem;
+      color: var(--accent-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .ring-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .ring-stats {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Bracket Tree Display */
+    .bracket-container {
+      background: var(--bg-panel);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      border: var(--border);
+      margin-bottom: 2rem;
+      overflow-x: auto;
+    }
+
+    .bracket-header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .bracket-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .bracket-tree {
+      display: flex;
+      gap: 2rem;
+      padding: 1rem 0;
+      min-width: max-content;
+    }
+
+    .bracket-round {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      min-width: 200px;
+    }
+
+    .round-title {
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .match-box {
+      background: var(--bg-card);
+      border: var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.85rem;
+    }
+
+    .match-player {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 6px;
+      border-radius: 4px;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .match-player.winner {
+      background: rgba(16, 185, 129, 0.2);
+      border-left: 3px solid var(--accent-secondary);
+      font-weight: 700;
+    }
+
+    .match-player-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 130px;
+    }
+
+    .match-player-team {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* Matches Queue (Ring View) */
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .queue-item {
+      background: var(--bg-panel);
+      border: var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .queue-item.live {
+      border-left: 5px solid var(--accent-alert);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .queue-item.next {
+      border-left: 5px solid var(--accent-warning);
+    }
+
+    .match-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .tag-live { background: rgba(239, 68, 68, 0.2); color: var(--accent-alert); }
+    .tag-next { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+    .tag-waiting { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+
+    .vs-block {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-weight: 700;
+    }
+
+    .competitor-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 120px;
+    }
+
+    .competitor-name { font-size: 1rem; }
+    .competitor-team { font-size: 0.75rem; color: var(--text-muted); font-weight: normal; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      background: var(--bg-panel);
+      border-radius: var(--radius-lg);
+      border: var(--border);
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      border-top-color: var(--accent-primary);
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="nav-title">
+        <i class="fas fa-eye"></i> Tournament Live Portal
+      </div>
+      <a href="index.html" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Home
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- View Switcher -->
+    <div class="mode-selector">
+      <button class="mode-btn active" id="btnModeBrackets" onclick="switchView('brackets')">
+        <i class="fas fa-sitemap"></i> Live Brackets
+      </button>
+      <button class="mode-btn" id="btnModeRings" onclick="switchView('rings')">
+        <i class="fas fa-ring"></i> Rings Overview
+      </button>
+    </div>
+
+    <!-- LIVE BRACKETS VIEW -->
+    <div id="viewBrackets">
+      <div class="filters-card">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label><i class="fas fa-list"></i> Discipline</label>
+            <select id="filterDiscipline" onchange="applyBracketFilters()">
+              <option value="ALL">All Disciplines</option>
+              <option value="patterns">Patterns (Tul)</option>
+              <option value="sparring">Sparring (Matsogi)</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label><i class="fas fa-venus-mars"></i> Gender</label>
+            <select id="filterGender" onchange="applyBracketFilters()">
+              <option value="ALL">All Genders</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label><i class="fas fa-search"></i> Category Search</label>
+            <input type="text" id="filterSearch" placeholder="Filter by category name..." oninput="applyBracketFilters()" />
+          </div>
+        </div>
+      </div>
+
+      <div id="bracketsList">
+        <div style="text-align:center; padding: 2rem;"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- RINGS VIEW -->
+    <div id="viewRings" style="display: none;">
+      <div class="rings-grid" id="ringsGrid">
+        <div style="text-align:center; grid-column: 1/-1; padding: 2rem;"><div class="spinner"></div></div>
+      </div>
+
+      <div id="ringMatchesDetail" style="display: none;">
+        <h3 id="selectedRingTitle" style="margin-bottom: 1rem; color: var(--accent-primary);">Ring Match Queue</h3>
+        <div class="queue-list" id="queueList"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let activeMode = 'brackets';
+    let rawCompetitors = [];
+    let patternsCategories = [];
+    let sparringCategories = [];
+    let bracketWinners = {};
+    let ringAssignments = [];
+    let siteSettings = {};
+    let selectedRingId = null;
+
+    // Fetch All Data
+    async function initData() {
+      try {
+        const [compRes, patCatRes, sparCatRes, winRes, ringRes, setRes] = await Promise.all([
+          sb.from("final_registrations").select("*"),
+          sb.from("patterns_categories").select("*"),
+          sb.from("sparring_categories").select("*"),
+          sb.from("bracket_winners").select("*"),
+          sb.from("ring_assignments").select("*"),
+          sb.from("site_settings").select("*").eq("id", 1).single()
+        ]);
+
+        patternsCategories = patCatRes.data || [];
+        sparringCategories = sparCatRes.data || [];
+        ringAssignments = ringRes.data || [];
+        siteSettings = setRes.data || {};
+
+        (winRes.data || []).forEach(w => {
+          bracketWinners[`${w.category}|||${w.bracket_type}`] = w;
+        });
+
+        if (activeMode === 'brackets') renderBrackets();
+        else renderRings();
+      } catch (err) {
+        console.error("Initialization Error:", err);
+      }
+    }
+
+    function switchView(mode) {
+      activeMode = mode;
+      document.getElementById('btnModeBrackets').classList.toggle('active', mode === 'brackets');
+      document.getElementById('btnModeRings').classList.toggle('active', mode === 'rings');
+      document.getElementById('viewBrackets').style.display = mode === 'brackets' ? 'block' : 'none';
+      document.getElementById('viewRings').style.display = mode === 'rings' ? 'block' : 'none';
+
+      if (mode === 'brackets') applyBracketFilters();
+      else renderRings();
+    }
+
+    /* ----------------------------------------------------
+       BRACKETS LOGIC
+       ---------------------------------------------------- */
+    function applyBracketFilters() {
+      renderBrackets();
+    }
+
+    function renderBrackets() {
+      const disc = document.getElementById('filterDiscipline').value;
+      const gen = document.getElementById('filterGender').value;
+      const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+      const container = document.getElementById('bracketsList');
+      container.innerHTML = '';
+
+      // Collect all available categories
+      const categoriesMap = {};
+
+      if (disc === 'ALL' || disc === 'patterns') {
+        patternsCategories.forEach(item => {
+          if (!categoriesMap[item.category]) categoriesMap[item.category] = { name: item.category, type: 'Patterns', items: [] };
+          categoriesMap[item.category].items.push(item);
+        });
+      }
+
+      if (disc === 'ALL' || disc === 'sparring') {
+        sparringCategories.forEach(item => {
+          if (!categoriesMap[item.category]) categoriesMap[item.category] = { name: item.category, type: 'Sparring', items: [] };
+          categoriesMap[item.category].items.push(item);
+        });
+      }
+
+      const filteredKeys = Object.keys(categoriesMap).filter(key => {
+        const cat = categoriesMap[key];
+        const matchSearch = key.toLowerCase().includes(search);
+        const matchGender = gen === 'ALL' || key.toLowerCase().includes(gen.toLowerCase());
+        return matchSearch && matchGender;
+      });
+
+      if (filteredKeys.length === 0) {
+        container.innerHTML = '<div class="empty-state">No active live brackets match your filters.</div>';
+        return;
+      }
+
+      filteredKeys.forEach(key => {
+        const cat = categoriesMap[key];
+        const winnerObj = bracketWinners[`${key}|||${cat.type}`] || {};
+        
+        // Build Tree structure from positions
+        const rounds = buildBracketRounds(cat.items);
+
+        let bracketHtml = `
+          <div class="bracket-container">
+            <div class="bracket-header-info">
+              <div class="bracket-title">${cat.name} (${cat.type})</div>
+              ${winnerObj.winner_name ? `<div style="color:var(--accent-secondary); font-weight:700;"><i class="fas fa-trophy"></i> Winner: ${winnerObj.winner_name}</div>` : ''}
+            </div>
+            <div class="bracket-tree">
+        `;
+
+        rounds.forEach((rnd, idx) => {
+          bracketHtml += `<div class="bracket-round"><div class="round-title">Round ${idx + 1}</div>`;
+          rnd.forEach(match => {
+            const isP1Winner = winnerObj.winner_name && winnerObj.winner_name === match.p1.name;
+            const isP2Winner = winnerObj.winner_name && winnerObj.winner_name === match.p2.name;
+
+            bracketHtml += `
+              <div class="match-box">
+                <div class="match-player ${isP1Winner ? 'winner' : ''}">
+                  <span class="match-player-name">${match.p1.name || 'BYE'}</span>
+                  <span class="match-player-team">${match.p1.team || ''}</span>
+                </div>
+                <div class="match-player ${isP2Winner ? 'winner' : ''}">
+                  <span class="match-player-name">${match.p2.name || 'BYE'}</span>
+                  <span class="match-player-team">${match.p2.team || ''}</span>
+                </div>
+              </div>
+            `;
+          });
+          bracketHtml += `</div>`;
+        });
+
+        bracketHtml += `</div></div>`;
+        container.innerHTML += bracketHtml;
+      });
+    }
+
+    function buildBracketRounds(items) {
+      items.sort((a,b) => (a.position_number || 0) - (b.position_number || 0));
+      const round1 = [];
+      for (let i = 0; i < items.length; i += 2) {
+        round1.push({
+          p1: items[i] || { name: 'BYE', team: '' },
+          p2: items[i+1] || { name: 'BYE', team: '' }
+        });
+      }
+      return [round1]; // Simplified rendering preview round
+    }
+
+    /* ----------------------------------------------------
+       RINGS LOGIC
+       ---------------------------------------------------- */
+    function renderRings() {
+      const grid = document.getElementById('ringsGrid');
+      grid.innerHTML = '';
+
+      const totalRings = siteSettings.rings_number || 4;
+
+      for (let i = 1; i <= totalRings; i++) {
+        const ringCats = ringAssignments.filter(r => r.ring_number === i);
+        const card = document.createElement('div');
+        card.className = `ring-card ${selectedRingId === i ? 'selected' : ''}`;
+        card.onclick = () => selectRing(i);
+        card.innerHTML = `
+          <div class="ring-icon"><i class="fas fa-ring"></i></div>
+          <div class="ring-title">Ring ${i}</div>
+          <div class="ring-stats">${ringCats.length} Categories Scheduled</div>
+        `;
+        grid.appendChild(card);
+      }
+    }
+
+    function selectRing(ringNum) {
+      selectedRingId = ringNum;
+      renderRings();
+
+      const detailDiv = document.getElementById('ringMatchesDetail');
+      const queueList = document.getElementById('queueList');
+      document.getElementById('selectedRingTitle').textContent = `Upcoming Matches in Ring ${ringNum}`;
+      
+      detailDiv.style.display = 'block';
+      queueList.innerHTML = '';
+
+      const ringCats = ringAssignments.filter(r => r.ring_number === ringNum);
+
+      if (ringCats.length === 0) {
+        queueList.innerHTML = '<div class="empty-state">No categories assigned to this ring yet.</div>';
+        return;
+      }
+
+      ringCats.forEach((cat, idx) => {
+        const tagClass = idx === 0 ? 'tag-live' : idx === 1 ? 'tag-next' : 'tag-waiting';
+        const tagLabel = idx === 0 ? 'LIVE NOW' : idx === 1 ? 'NEXT MATCH' : 'UPCOMING';
+
+        queueList.innerHTML += `
+          <div class="queue-item ${idx === 0 ? 'live' : idx === 1 ? 'next' : ''}">
+            <div>
+              <span class="match-tag ${tagClass}">${tagLabel}</span>
+              <h4 style="margin-top: 5px;">${cat.category_name}</h4>
+              <span style="font-size:0.8rem; color:var(--text-muted);">${cat.num_matches || 0} Matches scheduled</span>
+            </div>
+            <div class="vs-block">
+              <div class="competitor-pill">
+                <span class="competitor-name">Category Match</span>
+                <span class="competitor-team">${cat.discipline.toUpperCase()}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Auto Refresh every 15 seconds
+    setInterval(initData, 15000);
+    document.addEventListener("DOMContentLoaded", initData);
+  </script>
+</body>
+</html>
