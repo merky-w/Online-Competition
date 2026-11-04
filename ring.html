@@ -24,9 +24,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tv-top-info .stage-badge { background: #dc2626; color: white; padding: 5px 14px; border-radius: 6px; font-weight: 800; font-size: 14px; }
 .tv-top-info .category-info { display: flex; align-items: center; gap: 10px; color: #fbbf24; font-weight: 700; font-size: 1.1rem; }
 .tv-main-area { flex: 1; display: grid; grid-template-columns: 1fr 1fr; position: relative; }
-.tv-side { display: flex; flex-direction: column; justify-content: flex-start; padding-top: 60px; padding-left: 60px; padding-right: 60px; position: relative; }
+.tv-side { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 60px; padding-left: 40px; padding-right: 40px; text-align: center; position: relative; }
 .tv-side.blue-side { background: linear-gradient(135deg, rgba(30,58,138,0.85) 0%, rgba(37,99,235,0.75) 100%); border-right: 2px solid rgba(255,255,255,0.1); }
-.tv-side.red-side { background: linear-gradient(135deg, rgba(127,29,29,0.85) 0%, rgba(220,38,38,0.75) 100%); border-left: 2px solid rgba(255,255,255,0.1); align-items: flex-end; text-align: right; padding-right: 60px; padding-left: 60px; }
+.tv-side.red-side { background: linear-gradient(135deg, rgba(127,29,29,0.85) 0%, rgba(220,38,38,0.75) 100%); border-left: 2px solid rgba(255,255,255,0.1); }
 .tv-competitor-name { 
   font-size: clamp(2.5rem, 5vw, 4.5rem); 
   font-weight: 900; 
@@ -34,36 +34,31 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   text-shadow: 0 4px 16px rgba(0,0,0,0.6); 
   margin-bottom: 5px; 
   line-height: 1.1; 
-  max-width: 70%; 
-  margin-left: auto; 
-  margin-right: auto; 
+  max-width: 80%; 
   text-align: center; 
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
 }
-.tv-side.red-side .tv-competitor-name { margin-left: auto; margin-right: 0; text-align: right; }
 .tv-competitor-club { 
   font-size: clamp(1.2rem, 2.5vw, 2rem); 
   color: rgba(255,255,255,0.9); 
   font-weight: 700; 
   margin-bottom: 15px; 
-  max-width: 70%; 
-  margin-left: auto; 
-  margin-right: auto; 
+  max-width: 80%; 
   text-align: center; 
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
 }
-.tv-side.red-side .tv-competitor-club { margin-left: auto; margin-right: 0; text-align: right; }
 .tv-big-score { font-size: clamp(6rem, 14vw, 12rem); font-weight: 900; color: white; text-shadow: 0 8px 24px rgba(0,0,0,0.7); line-height: 1; font-variant-numeric: tabular-nums; }
 .tv-center-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.95); border: 4px solid #fbbf24; border-radius: 24px; padding: 25px 50px; text-align: center; z-index: 20; box-shadow: 0 15px 50px rgba(0,0,0,0.8); min-width: 340px; }
 .tv-round-info { color: #fbbf24; font-size: 1.3rem; font-weight: 800; letter-spacing: 3px; margin-bottom: 6px; }
 .tv-timer-display { color: white; font-size: clamp(3.5rem, 7vw, 6rem); font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 15px; }
 .tv-timer-display.warning { color: #ef4444; animation: timerBlink 0.8s infinite; }
 .tv-timer-display.break-mode { color: #38bdf8; }
-.tv-penalties { display: flex; align-items: center; justify-content: center; gap: 25px; color: white; font-size: 1.4rem; font-weight: 800; }
+.tv-penalties { display: flex; flex-direction: column; align-items: center; gap: 12px; color: white; font-size: 1.2rem; font-weight: 800; }
+.tv-penalty-row { display: flex; align-items: center; justify-content: center; gap: 20px; }
 .tv-penalty-item { display: flex; align-items: center; gap: 8px; }
 .tv-penalty-label { color: #fbbf24; }
 .tv-judge-corner { position: absolute; background: rgba(15, 23, 42, 0.85); border: 2px solid #334155; border-radius: 12px; padding: 10px 18px; text-align: center; z-index: 25; min-width: 90px; }
@@ -174,22 +169,28 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .judge-adj-btn.minus { background: #ef4444; }
 .judge-adj-btn:active { transform: scale(0.9); }
 
-/* PENALTIES - 2x2 GRID: Yellow Cards top, Gam-Jeom bottom */
+/* PENALTIES - 2 rows: Row 1 = Both Chuis, Row 2 = Both Gam-jeoms */
 .penalties-section { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  grid-template-rows: auto auto;
-  gap: 8px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
   margin-bottom: 12px; 
+}
+.penalty-row { 
+  display: flex; 
+  gap: 15px; 
+  justify-content: center;
 }
 .penalty-box { 
   background: #1e293b; 
   border-radius: 8px; 
-  padding: 8px 12px; 
+  padding: 8px 14px; 
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
   border-left: 3px solid transparent; 
+  flex: 1;
+  max-width: 280px;
 }
 .penalty-box .penalty-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .penalty-box .penalty-label { 
@@ -546,44 +547,48 @@ button:disabled { opacity: .6; cursor: not-allowed; }
         <div id="laptop-judges-container" class="judges-section"></div>
 
         <div class="penalties-section">
-          <div class="penalty-box" style="border-left-color: #fbbf24; grid-column: 1; grid-row: 1;">
-            <div class="penalty-info">
-              <span class="penalty-label">🔵 Blue Yellow Card</span>
-              <span id="l-blue-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+          <div class="penalty-row">
+            <div class="penalty-box" style="border-left-color: #fbbf24;">
+              <div class="penalty-info">
+                <span class="penalty-label">🔵 Blue Yellow Card</span>
+                <span id="l-blue-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="blue-yc-plus">+</button>
+                <button class="penalty-btn minus" data-act="blue-yc-minus">−</button>
+              </div>
             </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="blue-yc-plus">+</button>
-              <button class="penalty-btn minus" data-act="blue-yc-minus">−</button>
-            </div>
-          </div>
-          <div class="penalty-box" style="border-left-color: #fbbf24; grid-column: 2; grid-row: 1;">
-            <div class="penalty-info">
-              <span class="penalty-label">🔴 Red Yellow Card</span>
-              <span id="l-red-yc" class="penalty-value" style="color:#fbbf24;">0</span>
-            </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="red-yc-plus">+</button>
-              <button class="penalty-btn minus" data-act="red-yc-minus">−</button>
-            </div>
-          </div>
-          <div class="penalty-box" style="border-left-color: #60a5fa; grid-column: 1; grid-row: 2;">
-            <div class="penalty-info">
-              <span class="penalty-label">🔵 Blue Gam-Jeom</span>
-              <span id="l-blue-gj" class="penalty-value" style="color:#60a5fa;">0</span>
-            </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="blue-gj-plus">+</button>
-              <button class="penalty-btn minus" data-act="blue-gj-minus">−</button>
+            <div class="penalty-box" style="border-left-color: #fbbf24;">
+              <div class="penalty-info">
+                <span class="penalty-label">🔴 Red Yellow Card</span>
+                <span id="l-red-yc" class="penalty-value" style="color:#fbbf24;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="red-yc-plus">+</button>
+                <button class="penalty-btn minus" data-act="red-yc-minus">−</button>
+              </div>
             </div>
           </div>
-          <div class="penalty-box" style="border-left-color: #f87171; grid-column: 2; grid-row: 2;">
-            <div class="penalty-info">
-              <span class="penalty-label">🔴 Red Gam-Jeom</span>
-              <span id="l-red-gj" class="penalty-value" style="color:#f87171;">0</span>
+          <div class="penalty-row">
+            <div class="penalty-box" style="border-left-color: #60a5fa;">
+              <div class="penalty-info">
+                <span class="penalty-label">🔵 Blue Gam-Jeom</span>
+                <span id="l-blue-gj" class="penalty-value" style="color:#60a5fa;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="blue-gj-plus">+</button>
+                <button class="penalty-btn minus" data-act="blue-gj-minus">−</button>
+              </div>
             </div>
-            <div class="penalty-controls">
-              <button class="penalty-btn plus" data-act="red-gj-plus">+</button>
-              <button class="penalty-btn minus" data-act="red-gj-minus">−</button>
+            <div class="penalty-box" style="border-left-color: #f87171;">
+              <div class="penalty-info">
+                <span class="penalty-label">🔴 Red Gam-Jeom</span>
+                <span id="l-red-gj" class="penalty-value" style="color:#f87171;">0</span>
+              </div>
+              <div class="penalty-controls">
+                <button class="penalty-btn plus" data-act="red-gj-plus">+</button>
+                <button class="penalty-btn minus" data-act="red-gj-minus">−</button>
+              </div>
             </div>
           </div>
         </div>
@@ -639,11 +644,14 @@ button:disabled { opacity: .6; cursor: not-allowed; }
       <div id="tv-timer-label-top" class="tv-round-info">ROUND <span id="tv-timer-round">1</span></div>
       <div id="tv-timer-time" class="tv-timer-display">2:00</div>
       <div id="tv-penalties-container" class="tv-penalties">
-        <div class="tv-penalty-item"><span class="tv-penalty-label">BLU GJ:</span><span id="tv-blue-gj" style="color:#60a5fa;">0</span></div>
-        <div class="tv-penalty-item"><span class="tv-penalty-label">YC:</span><span id="tv-blue-yc" style="color:#fbbf24;">0</span></div>
-        <span style="color:#475569;">|</span>
-        <div class="tv-penalty-item"><span class="tv-penalty-label">RED YC:</span><span id="tv-red-yc" style="color:#fbbf24;">0</span></div>
-        <div class="tv-penalty-item"><span class="tv-penalty-label">GJ:</span><span id="tv-red-gj" style="color:#f87171;">0</span></div>
+        <div class="tv-penalty-row">
+          <div class="tv-penalty-item"><span class="tv-penalty-label">BLU YC:</span><span id="tv-blue-yc" style="color:#fbbf24;">0</span></div>
+          <div class="tv-penalty-item"><span class="tv-penalty-label">RED YC:</span><span id="tv-red-yc" style="color:#fbbf24;">0</span></div>
+        </div>
+        <div class="tv-penalty-row">
+          <div class="tv-penalty-item"><span class="tv-penalty-label">BLU GJ:</span><span id="tv-blue-gj" style="color:#60a5fa;">0</span></div>
+          <div class="tv-penalty-item"><span class="tv-penalty-label">RED GJ:</span><span id="tv-red-gj" style="color:#f87171;">0</span></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1074,18 +1082,13 @@ async function pushRingUpdate(fields) {
   updateCompetitorDisplay(); broadcastScoreState();
 }
 
-// Get round config for the current category's age group
 function getRoundConfigForCategory() {
   const a = activeAssignment();
   if (!a) return null;
   const catName = a.category_name || "";
   const disc = String(a.discipline || "sparring").toLowerCase();
-  
-  // Find the age group from the category name
   const ageGroup = findAgeGroupFromCategory(catName, disc);
   if (!ageGroup) return null;
-  
-  // Get round config from sparring_round_configs table
   if (disc === "sparring") {
     const roundCfg = state.roundConfigs ? state.roundConfigs[ageGroup.id] : null;
     if (roundCfg) {
@@ -1104,11 +1107,9 @@ function getRoundConfigForCategory() {
 function findAgeGroupFromCategory(catName, disc) {
   if (!state.ageGroups) return null;
   const groups = state.ageGroups.filter(g => g.discipline === disc && g.is_active);
-  // Try to match age group name from category
   for (const g of groups) {
     if (catName.toLowerCase().includes(g.display_name.toLowerCase())) return g;
   }
-  // Fallback: try to parse age from category
   const ageMatch = catName.match(/(\d+)/);
   if (ageMatch) {
     const age = parseInt(ageMatch[1]);
@@ -1119,12 +1120,9 @@ function findAgeGroupFromCategory(catName, disc) {
   return groups.length > 0 ? groups[0] : null;
 }
 
-// Auto-set timer from category config
 async function autoSetTimerFromCategory() {
   const cfg = getRoundConfigForCategory();
   if (!cfg) return;
-  
-  // Update timer state
   timerState.roundTime = (cfg.roundMinutes * 60) + cfg.roundSeconds;
   timerState.breakTime = (cfg.pauseMinutes * 60) + cfg.pauseSeconds;
   timerState.round = 1;
@@ -1133,19 +1131,15 @@ async function autoSetTimerFromCategory() {
   timerState.paused = true;
   timerState.finished = false;
   timerState.isBreak = false;
-  
-  // Update input fields
   const minInput = document.getElementById("inp-timer-min");
   const secInput = document.getElementById("inp-timer-sec");
   const breakInput = document.getElementById("inp-break-sec");
   if (minInput) minInput.value = cfg.roundMinutes;
   if (secInput) secInput.value = cfg.roundSeconds;
   if (breakInput) breakInput.value = timerState.breakTime;
-  
   saveTimerState();
   broadcastTimerState();
   renderTimer();
-  
   showToast("⏱ Timer set: " + cfg.roundMinutes + ":" + String(cfg.roundSeconds).padStart(2, '0') + " | Break: " + timerState.breakTime + "s", "success");
 }
 
@@ -1180,7 +1174,7 @@ async function loadCurrentFight(manual) {
   await pushRingUpdate({ blue_name: fight.p1.name, red_name: fight.p2.name, blue_club: fight.p1.team || "", red_club: fight.p2.team || "", next_blue_name: nextBlue, next_red_name: nextRed, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: stage, match_number: fightNo });
   resetMatchScores(); 
   resetTimerForNewFight(); 
-  await autoSetTimerFromCategory(); // Auto-set timer from category config
+  await autoSetTimerFromCategory();
   renderQueue(); renderLaptopJudges();
   if (manual) showToast("▶ Loaded fight #" + fightNo + ": " + fight.p1.name + " vs " + fight.p2.name, "success");
 }
@@ -1610,14 +1604,11 @@ async function tryLogin() {
   } catch (e) { console.error(e); errEl.textContent = "Connection error. Check console."; } finally { state.loggingIn = false; btn.disabled = false; btn.textContent = "Enter Ring"; }
 }
 
-// Load age groups and round configs
 async function loadAgeGroupsAndConfigs() {
   try {
     const { data: ageGroups, error } = await sb.from("age_groups").select("*").order("order_priority", { ascending: true });
     if (error) { console.warn("Could not load age_groups:", error.message); state.ageGroups = []; return; }
     state.ageGroups = ageGroups || [];
-    
-    // Load round configs
     const ageGroupIds = state.ageGroups.map(g => g.id);
     state.roundConfigs = {};
     if (ageGroupIds.length > 0) {
@@ -1641,7 +1632,7 @@ async function refreshAllData(silent) {
   if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
   await fetchAssignments();
   await fetchAllCompetitors();
-  await loadAgeGroupsAndConfigs(); // Load age groups and round configs
+  await loadAgeGroupsAndConfigs();
   await loadOrCreateBracket(false);
   await loadCurrentFight(false);
   renderQueue();
