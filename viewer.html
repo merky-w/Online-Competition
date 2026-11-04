@@ -61,7 +61,7 @@
     align-items: center;
     gap: 10px;
   }
-  .nav-right { display: flex; align-items: center; gap: 1rem; }
+  .nav-right { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
   .live-indicator {
     display: flex; align-items: center; gap: 8px;
     background: rgba(239, 68, 68, 0.15);
@@ -172,14 +172,14 @@
   }
   .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 1rem;
     align-items: flex-end;
   }
   .filter-group { display: flex; flex-direction: column; gap: 0.4rem; }
   .filter-group label {
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
     color: var(--text-muted);
     display: flex;
     align-items: center;
@@ -187,9 +187,9 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  select, input[type="text"] {
+  select {
     width: 100%;
-    padding: 0.7rem 0.9rem;
+    padding: 0.75rem 0.9rem;
     background-color: var(--bg-input);
     border: var(--border);
     border-radius: var(--radius-md);
@@ -197,9 +197,31 @@
     font-size: 0.95rem;
     outline: none;
     transition: var(--transition);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
   }
-  select:focus, input[type="text"]:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+  select:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
   select option { background: var(--bg-panel); color: var(--text-main); }
+  .filter-clear-btn {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent-alert);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+  .filter-clear-btn:hover { background: var(--accent-alert); color: white; }
 
   /* Rings Grid */
   .rings-grid {
@@ -423,11 +445,14 @@
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 0.8rem;
+    margin: 1.5rem 0 0.8rem 0;
     display: flex;
     align-items: center;
     gap: 8px;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--border);
   }
+  .upcoming-section-title:first-child { margin-top: 0; }
   .upcoming-list { display: flex; flex-direction: column; gap: 0.7rem; }
   .upcoming-item {
     background: var(--bg-card);
@@ -441,16 +466,20 @@
     transition: var(--transition);
   }
   .upcoming-item:hover { background: #3d4a5e; transform: translateX(4px); }
-  .upcoming-item.next-match { border-left-color: var(--accent-warning); }
+  .upcoming-item.next-match {
+    border-left-color: var(--accent-warning);
+    background: rgba(245, 158, 11, 0.08);
+  }
   .upcoming-item.category-item { border-left-color: var(--accent-secondary); }
   .upcoming-order {
-    width: 36px; height: 36px;
+    width: 38px; height: 38px;
     border-radius: 50%;
     background: var(--accent-primary);
     color: white;
     display: flex; align-items: center; justify-content: center;
     font-weight: 800;
     font-size: 0.9rem;
+    flex-shrink: 0;
   }
   .upcoming-item.next-match .upcoming-order { background: var(--accent-warning); color: #1a1a1a; }
   .upcoming-item.category-item .upcoming-order { background: var(--accent-secondary); }
@@ -467,6 +496,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 0.95rem;
   }
   .upcoming-meta {
     font-size: 0.75rem;
@@ -481,7 +511,9 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
+  .badge-live { background: rgba(239, 68, 68, 0.2); color: var(--accent-alert); }
   .badge-next { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
   .badge-upcoming { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); }
   .badge-category { background: rgba(16, 185, 129, 0.2); color: var(--accent-secondary); }
@@ -655,7 +687,7 @@
     border: var(--border);
     color: var(--text-muted);
   }
-  .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; display: block; }
   .empty-state h3 { color: var(--text-main); margin-bottom: 0.5rem; }
 
   .spinner {
@@ -672,6 +704,16 @@
   .view-section { display: none; }
   .view-section.active { display: block; }
 
+  .no-upcoming-msg {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--text-muted);
+    font-style: italic;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-md);
+    margin-top: 1rem;
+  }
+
   @media (max-width: 768px) {
     .current-fight-vs { grid-template-columns: 1fr; gap: 0.5rem; }
     .vs-divider { text-align: center; }
@@ -679,6 +721,7 @@
     .bracket-round { min-width: 180px; }
     .upcoming-item { grid-template-columns: auto 1fr; }
     .upcoming-badge { grid-column: 1 / -1; justify-self: start; }
+    .filters-grid { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -737,8 +780,16 @@
           </select>
         </div>
         <div class="filter-group">
-          <label><i class="fas fa-search"></i> Search Category</label>
-          <input type="text" id="filterSearch" placeholder="e.g. Juniors, Seniors..." oninput="renderBrackets()" />
+          <label><i class="fas fa-child"></i> Age Group</label>
+          <select id="filterAge" onchange="renderBrackets()">
+            <option value="ALL">All Ages</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>&nbsp;</label>
+          <button class="filter-clear-btn" onclick="clearFilters()">
+            <i class="fas fa-times"></i> Clear
+          </button>
         </div>
       </div>
     </div>
@@ -781,11 +832,12 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    STATE
 ============================================================ */
 let activeMode = 'brackets';
-let ringsData = [];           // from `rings` table - live match data
-let ringAssignments = [];     // from `ring_assignments` - scheduled categories
+let ringsData = [];
+let ringAssignments = [];
 let siteSettings = {};
 let selectedRingId = null;
 let ringsChannel = null;
+let extractedAgeGroups = [];
 
 /* ============================================================
    HELPERS
@@ -799,12 +851,22 @@ function escapeHtml(str) {
 }
 function norm(s) { return String(s || '').trim().toLowerCase(); }
 
+/* Extract age group name from category name like:
+   "Juniors - 50-55kg (Male)" -> "Juniors"
+   "Kids - 10th-9th Kup (Female)" -> "Kids"
+*/
+function extractAgeGroupFromCategory(catName) {
+  if (!catName) return null;
+  const parts = catName.split(' - ');
+  if (parts.length >= 1) {
+    const agePart = parts[0].trim();
+    if (agePart) return agePart;
+  }
+  return null;
+}
+
 /* ============================================================
    DATA FETCHING
-   Pulls from the SAME sources as ring.html:
-   - `rings` table (live current match data pushed by ring.html)
-   - `ring_assignments` table (has bracket_state JSON with full bracket tree)
-   - `site_settings` (rings_number)
 ============================================================ */
 async function loadData() {
   try {
@@ -818,6 +880,15 @@ async function loadData() {
     ringAssignments = assignRes.data || [];
     siteSettings = settingsRes.data || {};
 
+    // Extract unique age groups from all bracket categories
+    const ageSet = new Set();
+    ringAssignments.forEach(a => {
+      const age = extractAgeGroupFromCategory(a.category_name);
+      if (age) ageSet.add(age);
+    });
+    extractedAgeGroups = Array.from(ageSet).sort();
+    populateAgeFilter();
+
     document.getElementById('liveStatusText').textContent = 'LIVE';
 
     if (activeMode === 'brackets') renderBrackets();
@@ -828,9 +899,28 @@ async function loadData() {
   }
 }
 
+function populateAgeFilter() {
+  const sel = document.getElementById('filterAge');
+  const current = sel.value;
+  sel.innerHTML = '<option value="ALL">All Ages</option>';
+  extractedAgeGroups.forEach(age => {
+    const opt = document.createElement('option');
+    opt.value = age;
+    opt.textContent = age;
+    sel.appendChild(opt);
+  });
+  if (extractedAgeGroups.includes(current)) sel.value = current;
+}
+
+function clearFilters() {
+  document.getElementById('filterDiscipline').value = 'ALL';
+  document.getElementById('filterGender').value = 'ALL';
+  document.getElementById('filterAge').value = 'ALL';
+  renderBrackets();
+}
+
 /* ============================================================
-   REAL-TIME SUBSCRIPTION (rings table)
-   ring.html pushes live match updates here
+   REAL-TIME SUBSCRIPTION
 ============================================================ */
 function subscribeRings() {
   if (ringsChannel) sb.removeChannel(ringsChannel);
@@ -868,37 +958,38 @@ function switchView(mode) {
 
 /* ============================================================
    LIVE BRACKETS
-   Data source: ring_assignments.bracket_state (same as ring.html uses)
 ============================================================ */
 function renderBrackets() {
   const disc = document.getElementById('filterDiscipline').value;
   const gen = document.getElementById('filterGender').value;
-  const search = norm(document.getElementById('filterSearch').value);
+  const age = document.getElementById('filterAge').value;
   const container = document.getElementById('bracketsList');
 
-  // Collect all brackets from ring_assignments
   const brackets = [];
   ringAssignments.forEach(a => {
     const bs = a.bracket_state;
     if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) return;
     const discipline = norm(a.discipline || 'sparring');
     const catName = a.category_name || '';
+    const ageGroup = extractAgeGroupFromCategory(catName);
     brackets.push({
       assignment: a,
       bracket: bs,
       discipline: discipline,
-      categoryName: catName
+      categoryName: catName,
+      ageGroup: ageGroup
     });
   });
 
-  // Apply filters
   const filtered = brackets.filter(b => {
     if (disc !== 'ALL' && b.discipline !== norm(disc)) return false;
     if (gen !== 'ALL') {
       const catLower = norm(b.categoryName);
       if (!catLower.includes(norm(gen))) return false;
     }
-    if (search && !norm(b.categoryName).includes(search)) return false;
+    if (age !== 'ALL') {
+      if (!b.ageGroup || norm(b.ageGroup) !== norm(age)) return false;
+    }
     return true;
   });
 
@@ -919,12 +1010,10 @@ function renderBrackets() {
 }
 
 function renderBracketCard(b) {
-  const { bracket, categoryName, discipline, assignment } = b;
+  const { bracket, categoryName, discipline } = b;
   const rounds = bracket.rounds || [];
   const champion = bracket.champion;
   const competitorCount = bracket.competitor_count || 0;
-
-  // Find current match (where we are in the bracket)
   const currentRound = bracket.currentRound;
   const currentMatch = bracket.currentMatch;
 
@@ -960,7 +1049,6 @@ function renderBracketCard(b) {
       const p2 = match.p2 || { name: '', team: '' };
       const p1Name = p1.name || '';
       const p2Name = p2.name || '';
-      const isBye = p1Name === 'BYE' || p2Name === 'BYE';
 
       let p1Winner = false, p2Winner = false;
       if (match.winner === 'p1') p1Winner = true;
@@ -1081,9 +1169,7 @@ function closeRingDetail() {
 }
 
 /* ============================================================
-   RING DETAIL
-   Shows: current LIVE fight + next upcoming fights from bracket_state
-   + remaining categories from ring_assignments
+   RING DETAIL - shows LIVE fight + 5+ upcoming fights
 ============================================================ */
 function renderRingDetail(ringId) {
   const ring = ringsData.find(r => r.id === ringId) || ringsData.find(r => String(r.id) === String(ringId));
@@ -1099,7 +1185,7 @@ function renderRingDetail(ringId) {
 
   let html = '';
 
-  // Current LIVE fight (from rings table - pushed by ring.html)
+  // Current LIVE fight
   if (ring && ring.blue_name && ring.red_name) {
     html += `
       <div class="current-fight">
@@ -1128,56 +1214,122 @@ function renderRingDetail(ringId) {
     `;
   }
 
-  // Upcoming matches from the CURRENT category's bracket_state
-  const currentAssignment = ringCats.find(a =>
-    ring && a.category_name === ring.category_name && norm(a.discipline) === norm(ring.discipline)
-  ) || ringCats[0];
+  // Find the current category being fought (if live)
+  const currentAssignment = ring && ring.category_name
+    ? ringCats.find(a =>
+        a.category_name === ring.category_name &&
+        norm(a.discipline) === norm(ring.discipline)
+      ) || ringCats[0]
+    : ringCats[0];
 
+  // Collect upcoming fights from current category's bracket_state
+  const upcomingFromCurrent = [];
   if (currentAssignment && currentAssignment.bracket_state) {
-    const upcomingMatches = getUpcomingMatchesFromBracket(currentAssignment.bracket_state, ring);
-    if (upcomingMatches.length > 0) {
-      html += `<div class="upcoming-section-title">
-        <i class="fas fa-forward"></i> Upcoming in ${escapeHtml(currentAssignment.category_name)}
-      </div>`;
-      html += `<div class="upcoming-list">`;
-      upcomingMatches.forEach((m, idx) => {
-        html += `
-          <div class="upcoming-item ${idx === 0 ? 'next-match' : ''}">
-            <div class="upcoming-order">${idx + 1}</div>
-            <div class="upcoming-info">
-              <div class="upcoming-names">
-                🔵 ${escapeHtml(m.p1)} <span style="color:var(--text-muted);">vs</span>
-                🔴 ${escapeHtml(m.p2)}
-              </div>
-              <div class="upcoming-meta">
-                ${escapeHtml(m.roundName)} · Match #${m.matchNum}
-                ${m.discipline ? ` · ${m.discipline.toUpperCase()}` : ''}
-              </div>
-            </div>
-            <div class="upcoming-badge ${idx === 0 ? 'badge-next' : 'badge-upcoming'}">
-              ${idx === 0 ? 'NEXT' : 'UPCOMING'}
-            </div>
-          </div>
-        `;
-      });
-      html += `</div>`;
-    }
+    const upcoming = getUpcomingMatchesFromBracket(
+      currentAssignment.bracket_state,
+      ring,
+      6 // show at least 6 upcoming fights
+    );
+    upcoming.forEach(m => {
+      m._fromCategory = currentAssignment.category_name;
+      m._fromDiscipline = currentAssignment.discipline;
+      upcomingFromCurrent.push(m);
+    });
   }
 
-  // Remaining categories in this ring
+  // Also add upcoming fights from remaining categories in this ring
   const remainingCats = ringCats.filter(a => {
-    if (!ring) return true;
-    if (a.category_name === ring.category_name && norm(a.discipline) === norm(ring.discipline)) return false;
+    if (currentAssignment && a.id === currentAssignment.id) return false;
     if (a.bracket_state && a.bracket_state.champion) return false;
     return true;
   });
 
-  if (remainingCats.length > 0) {
-    html += `<div class="upcoming-section-title" style="margin-top: 1.5rem;">
-      <i class="fas fa-list-ol"></i> Following Categories
+  // If we don't have 5 upcoming from current category, pull from next categories
+  const remainingUpcoming = [];
+  if (upcomingFromCurrent.length < 5 && remainingCats.length > 0) {
+    const needed = 5 - upcomingFromCurrent.length;
+    remainingCats.forEach(cat => {
+      if (cat.bracket_state) {
+        const catUpcoming = getUpcomingMatchesFromBracket(cat.bracket_state, null, 3);
+        catUpcoming.forEach(m => {
+          m._fromCategory = cat.category_name;
+          m._fromDiscipline = cat.discipline;
+          m._isCategoryStart = true;
+          remainingUpcoming.push(m);
+        });
+      } else {
+        // Category has no bracket yet, show as placeholder
+        remainingUpcoming.push({
+          p1: 'TBD',
+          p2: 'TBD',
+          roundName: 'Start',
+          matchNum: 1,
+          discipline: cat.discipline,
+          _fromCategory: cat.category_name,
+          _fromDiscipline: cat.discipline,
+          _isCategoryStart: true,
+          _isPlaceholder: true
+        });
+      }
+    });
+  }
+
+  const allUpcoming = [...upcomingFromCurrent, ...remainingUpcoming].slice(0, 8);
+
+  if (allUpcoming.length > 0) {
+    html += `<div class="upcoming-section-title">
+      <i class="fas fa-forward"></i> Upcoming Fights (${allUpcoming.length})
     </div>`;
     html += `<div class="upcoming-list">`;
-    remainingCats.forEach((cat, idx) => {
+    allUpcoming.forEach((m, idx) => {
+      const isNext = idx === 0;
+      const isNewCategory = m._isCategoryStart;
+      const p1 = m.p1 || 'TBD';
+      const p2 = m.p2 || 'TBD';
+      const isPlaceholder = m._isPlaceholder;
+
+      html += `
+        <div class="upcoming-item ${isNext ? 'next-match' : ''} ${isNewCategory ? 'category-item' : ''}">
+          <div class="upcoming-order">${idx + 1}</div>
+          <div class="upcoming-info">
+            ${isNewCategory ? `<div class="upcoming-category">
+              <i class="fas fa-${m._fromDiscipline === 'patterns' ? 'chess-board' : 'fist-raised'}"></i>
+              ${escapeHtml(m._fromCategory)}
+            </div>` : ''}
+            <div class="upcoming-names">
+              🔵 ${escapeHtml(p1)} <span style="color:var(--text-muted);">vs</span>
+              🔴 ${escapeHtml(p2)}
+            </div>
+            <div class="upcoming-meta">
+              ${escapeHtml(m.roundName)} · Match #${m.matchNum}
+              ${m.discipline ? ` · ${m.discipline.toUpperCase()}` : ''}
+              ${isPlaceholder ? ' · <em style="color:var(--accent-warning)">Awaiting bracket</em>' : ''}
+            </div>
+          </div>
+          <div class="upcoming-badge ${isNext ? 'badge-next' : (isNewCategory ? 'badge-category' : 'badge-upcoming')}">
+            ${isNext ? 'NEXT' : (isNewCategory ? 'QUEUE' : 'UPCOMING')}
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  // Remaining categories that aren't started yet (if not already shown)
+  const shownCatIds = new Set();
+  if (currentAssignment) shownCatIds.add(currentAssignment.id);
+  allUpcoming.forEach(m => {
+    const found = ringCats.find(a => a.category_name === m._fromCategory);
+    if (found) shownCatIds.add(found.id);
+  });
+
+  const notStartedCats = ringCats.filter(a => !shownCatIds.has(a.id));
+  if (notStartedCats.length > 0) {
+    html += `<div class="upcoming-section-title">
+      <i class="fas fa-list-ol"></i> Later Categories (${notStartedCats.length})
+    </div>`;
+    html += `<div class="upcoming-list">`;
+    notStartedCats.forEach((cat, idx) => {
       const compCount = cat.bracket_state ? (cat.bracket_state.competitor_count || 0) : 0;
       html += `
         <div class="upcoming-item category-item">
@@ -1210,8 +1362,8 @@ function renderRingDetail(ringId) {
   body.innerHTML = html;
 }
 
-/* Get next 5 upcoming matches from a bracket_state */
-function getUpcomingMatchesFromBracket(bracket, ring) {
+/* Get next N upcoming matches from a bracket_state */
+function getUpcomingMatchesFromBracket(bracket, ring, limit) {
   if (!bracket || !bracket.rounds) return [];
   const rounds = bracket.rounds;
   const totalRounds = rounds.length;
@@ -1221,9 +1373,9 @@ function getUpcomingMatchesFromBracket(bracket, ring) {
   const startR = bracket.currentRound || 0;
   const startM = bracket.currentMatch || 0;
 
-  for (let r = startR; r < rounds.length && upcoming.length < 5; r++) {
+  for (let r = startR; r < rounds.length && upcoming.length < limit; r++) {
     const startMatchIdx = (r === startR) ? startM : 0;
-    for (let m = startMatchIdx; m < rounds[r].length && upcoming.length < 5; m++) {
+    for (let m = startMatchIdx; m < rounds[r].length && upcoming.length < limit; m++) {
       const match = rounds[r][m];
       if (match.winner) continue;
       const p1 = match.p1 && match.p1.name ? match.p1.name : 'TBD';
@@ -1232,6 +1384,8 @@ function getUpcomingMatchesFromBracket(bracket, ring) {
       upcoming.push({
         p1: p1,
         p2: p2,
+        p1Team: match.p1 ? match.p1.team : '',
+        p2Team: match.p2 ? match.p2.team : '',
         roundName: getRoundName(r, totalRounds),
         matchNum: m + 1,
         discipline: bracket.discipline
@@ -1253,4 +1407,3 @@ document.addEventListener("DOMContentLoaded", async () => {
 </script>
 </body>
 </html>
-
