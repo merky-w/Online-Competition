@@ -1143,6 +1143,42 @@ async function autoSetTimerFromCategory() {
   showToast("⏱ Timer set: " + cfg.roundMinutes + ":" + String(cfg.roundSeconds).padStart(2, '0') + " | Break: " + timerState.breakTime + "s", "success");
 }
 
+// Improved function to find next competitors with better fallback
+function findNextCompetitors(bracket, fromRound, fromMatch) {
+  if (!bracket) return { nextBlue: null, nextRed: null, nextFightNum: null };
+  
+  // Search for the next pending match
+  for (let r = fromRound; r < bracket.rounds.length; r++) {
+    const startM = (r === fromRound) ? fromMatch + 1 : 0;
+    for (let m = startM; m < bracket.rounds[r].length; m++) {
+      const match = bracket.rounds[r][m];
+      if (match.winner) continue;
+      
+      // If both participants are known, return them
+      if (isRealName(match.p1.name) && isRealName(match.p2.name)) {
+        const fightNum = globalFightNumber(bracket, r, m);
+        return { 
+          nextBlue: match.p1.name, 
+          nextRed: match.p2.name, 
+          nextFightNum: fightNum 
+        };
+      }
+      
+      // If only one participant is known (other is TBD), return what we have
+      const nextBlue = isRealName(match.p1.name) ? match.p1.name : null;
+      const nextRed = isRealName(match.p2.name) ? match.p2.name : null;
+      const fightNum = globalFightNumber(bracket, r, m);
+      
+      // If at least one is known, return partial info
+      if (nextBlue || nextRed) {
+        return { nextBlue, nextRed, nextFightNum: fightNum, partial: true };
+      }
+    }
+  }
+  
+  return { nextBlue: null, nextRed: null, nextFightNum: null };
+}
+
 async function loadCurrentFight(manual) {
   if (autoAdvanceTimeout && manual) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
   const a = activeAssignment(); if (!a) { showToast("No category assigned.", "warning"); return; }
@@ -1166,19 +1202,39 @@ async function loadCurrentFight(manual) {
   const fight = state.bracket.rounds[next.round][next.match];
   const fightNo = globalFightNumber(state.bracket, next.round, next.match);
   const stage = stageName(next.round, state.bracket.totalRounds);
-  let nextBlue = null, nextRed = null;
-  const saveR = state.bracket.currentRound, saveM = state.bracket.currentMatch;
-  const following = findFollowingPending(state.bracket, next.round, next.match);
-  if (following) { const f = state.bracket.rounds[following.round][following.match]; nextBlue = isRealName(f.p1.name) ? f.p1.name : null; nextRed = isRealName(f.p2.name) ? f.p2.name : null; }
-  state.bracket.currentRound = saveR; state.bracket.currentMatch = saveM;
-  await pushRingUpdate({ blue_name: fight.p1.name, red_name: fight.p2.name, blue_club: fight.p1.team || "", red_club: fight.p2.team || "", next_blue_name: nextBlue, next_red_name: nextRed, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: stage, match_number: fightNo });
+  
+  // Find next competitors with improved logic
+  const nextInfo = findNextCompetitors(state.bracket, next.round, next.match);
+  let nextBlue = nextInfo.nextBlue;
+  let nextRed = nextInfo.nextRed;
+  
+  // If we have partial info or no info, show TBD with fight number
+  if (!nextBlue && !nextRed && nextInfo.nextFightNum) {
+    nextBlue = "TBD (Fight #" + nextInfo.nextFightNum + ")";
+    nextRed = "TBD (Fight #" + nextInfo.nextFightNum + ")";
+  } else if (nextInfo.partial) {
+    if (!nextBlue) nextBlue = "TBD";
+    if (!nextRed) nextRed = "TBD";
+  }
+  
+  await pushRingUpdate({ 
+    blue_name: fight.p1.name, 
+    red_name: fight.p2.name, 
+    blue_club: fight.p1.team || "", 
+    red_club: fight.p2.team || "", 
+    next_blue_name: nextBlue, 
+    next_red_name: nextRed, 
+    category_name: a.category_name, 
+    discipline: String(a.discipline || "sparring").toLowerCase(), 
+    match_stage: stage, 
+    match_number: fightNo 
+  });
   resetMatchScores(); 
   resetTimerForNewFight(); 
   await autoSetTimerFromCategory();
   renderQueue(); renderLaptopJudges();
   if (manual) showToast("▶ Loaded fight #" + fightNo + ": " + fight.p1.name + " vs " + fight.p2.name, "success");
 }
-function findFollowingPending(bracket, fromRound, fromMatch) { for (let r = fromRound; r < bracket.rounds.length; r++) { const startM = (r === fromRound) ? fromMatch + 1 : 0; for (let m = startM; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; if (isRealName(match.p1.name) && isRealName(match.p2.name)) return { round: r, match: m }; } } return null; }
 
 /* ============ WINNER → ADVANCE ============ */
 function finishMatch() {
@@ -1316,7 +1372,7 @@ function updateLaptopUIForDiscipline() {
 function updateCompetitorDisplay() {
   const ring = state.ring || {};
   const blueName = ring.blue_name || "---"; const redName = ring.red_name || "---"; const blueClub = ring.blue_club || "---"; const redClub = ring.red_club || "---";
-  const nextBlueName = ring.next_blue_name || "---"; const nextRedName = ring.next_red_name || "---";
+  const nextBlueName = ring.next_blue_name || "TBD"; const nextRedName = ring.next_red_name || "TBD";
   const discipline = String(ring.mode || ring.discipline || currentDiscipline() || "sparring").toLowerCase();
   const categoryName = ring.category_name || "No Category"; const matchNumber = ring.match_number || 0; const matchStage = ring.match_stage || "Scheduled";
   setTxt("laptop-blue-name", blueName); setTxt("laptop-red-name", redName); setTxt("laptop-blue-club", blueClub); setTxt("laptop-red-club", redClub);
