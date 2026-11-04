@@ -483,9 +483,9 @@
     color: var(--accent-warning);
   }
 
-  /* Upcoming Fights List */
+  /* Upcoming Fights Section */
   .upcoming-section-title {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 800;
     color: var(--text-main);
     margin: 1.5rem 0 1rem 0;
@@ -497,15 +497,16 @@
   }
   .upcoming-section-title:first-child { margin-top: 0; }
   .upcoming-section-title .count-badge {
-    background: var(--accent-primary);
-    color: white;
-    padding: 2px 10px;
+    background: var(--accent-warning);
+    color: #1a1a1a;
+    padding: 3px 12px;
     border-radius: 12px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 800;
   }
-  .upcoming-list { display: flex; flex-direction: column; gap: 0.8rem; }
+  .upcoming-list { display: flex; flex-direction: column; gap: 0.6rem; }
 
-  /* FIGHT CARD - shows X vs Y clearly */
+  /* FIGHT CARD - shows X vs Y clearly with big names */
   .fight-card {
     background: var(--bg-card);
     border-radius: var(--radius-md);
@@ -528,13 +529,13 @@
     background: rgba(16, 185, 129, 0.05);
   }
   .fight-order {
-    width: 42px; height: 42px;
+    width: 48px; height: 48px;
     border-radius: 50%;
     background: var(--accent-primary);
     color: white;
     display: flex; align-items: center; justify-content: center;
     font-weight: 800;
-    font-size: 1rem;
+    font-size: 1.1rem;
     flex-shrink: 0;
   }
   .fight-card.is-next .fight-order { background: var(--accent-warning); color: #1a1a1a; }
@@ -556,39 +557,40 @@
   .fight-vs-display {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.3;
   }
   .fight-vs-display .fighter-blue {
     color: #60a5fa;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 220px;
   }
   .fight-vs-display .fighter-red {
     color: #f87171;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 220px;
   }
   .fight-vs-display .vs-text {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    font-weight: 800;
+    color: var(--accent-warning);
+    font-size: 0.9rem;
+    font-weight: 900;
   }
   .fight-meta {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     margin-top: 4px;
   }
   .fight-badge {
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 10px;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -792,6 +794,7 @@
     .fight-card { grid-template-columns: auto 1fr; }
     .fight-badge { grid-column: 1 / -1; justify-self: start; }
     .filters-grid { grid-template-columns: 1fr 1fr; }
+    .fight-vs-display { font-size: 0.95rem; }
     .fight-vs-display .fighter-blue,
     .fight-vs-display .fighter-red { max-width: 130px; }
   }
@@ -1160,11 +1163,6 @@ function getRoundName(roundIdx, totalRounds) {
 
 /* ============================================================
    RINGS VIEW
-   Each ring card shows:
-   - Ring name
-   - LIVE fight (X vs Y) if active
-   - NEXT fight (X vs Y) if available
-   - Category info
 ============================================================ */
 function renderRings() {
   const grid = document.getElementById('ringsGrid');
@@ -1196,7 +1194,6 @@ function renderRings() {
       a.ring_number === i || String(a.ring_number) === String(i)
     );
 
-    // Find the NEXT fight from bracket_state for preview
     const currentAssignment = ring && ring.category_name
       ? ringCats.find(a =>
           a.category_name === ring.category_name &&
@@ -1237,18 +1234,7 @@ function renderRings() {
           </div>
         ` : ''}
 
-        ${nextFightPreview && !isLive ? `
-          <div class="ring-next-fight">
-            <div class="ring-next-label">⏭ NEXT UP</div>
-            <div class="ring-next-vs">
-              <span style="color:#60a5fa;">${escapeHtml(nextFightPreview.p1)}</span>
-              <span class="vs-text">vs</span>
-              <span style="color:#f87171;">${escapeHtml(nextFightPreview.p2)}</span>
-            </div>
-          </div>
-        ` : ''}
-
-        ${nextFightPreview && isLive ? `
+        ${nextFightPreview ? `
           <div class="ring-next-fight">
             <div class="ring-next-label">⏭ NEXT UP</div>
             <div class="ring-next-vs">
@@ -1293,7 +1279,7 @@ function closeRingDetail() {
    RING DETAIL
    Shows:
    1. LIVE NOW fight (big display with names)
-   2. NEXT 6 upcoming fights with X vs Y format
+   2. NEXT 3+ upcoming fights with X vs Y format
       - Pulls from current category's bracket_state
       - If exhausted, pulls from next categories in ring
 ============================================================ */
@@ -1338,25 +1324,14 @@ function renderRingDetail(ringId) {
         </div>
       </div>
     `;
-  } else if (ring && ring.match_stage && ring.match_stage.includes('Complete')) {
-    html += `
-      <div class="current-fight" style="border-color: var(--accent-secondary); background: rgba(16,185,129,0.08);">
-        <div class="current-fight-category" style="color: var(--accent-secondary);">
-          <i class="fas fa-check-circle"></i> ${escapeHtml(ring.category_name || 'Category')}
-        </div>
-        <div style="text-align:center; padding: 1rem; color: var(--text-muted); font-weight: 700;">
-          Category Complete · Waiting for next category
-        </div>
-      </div>
-    `;
   }
 
-  // 2. Collect all upcoming fights (X vs Y)
-  const allUpcoming = collectUpcomingFights(ring, ringCats, 8);
+  // 2. Collect at least 3 upcoming fights (if available)
+  const allUpcoming = collectUpcomingFights(ring, ringCats, 3);
 
   if (allUpcoming.length > 0) {
     html += `<div class="upcoming-section-title">
-      <i class="fas fa-forward"></i> Upcoming Fights
+      <i class="fas fa-forward"></i> Next ${allUpcoming.length} Fight${allUpcoming.length !== 1 ? 's' : ''}
       <span class="count-badge">${allUpcoming.length}</span>
     </div>`;
     html += `<div class="upcoming-list">`;
@@ -1401,52 +1376,12 @@ function renderRingDetail(ringId) {
     });
 
     html += `</div>`;
-  }
-
-  // 3. Show remaining categories that haven't started yet
-  const shownCatNames = new Set();
-  allUpcoming.forEach(f => { if (f._categoryName) shownCatNames.add(f._categoryName); });
-  if (ring && ring.category_name) shownCatNames.add(ring.category_name);
-
-  const remainingCats = ringCats.filter(a => !shownCatNames.has(a.category_name));
-  if (remainingCats.length > 0) {
-    html += `<div class="upcoming-section-title">
-      <i class="fas fa-list-ol"></i> Later Categories
-      <span class="count-badge">${remainingCats.length}</span>
-    </div>`;
-    html += `<div class="upcoming-list">`;
-    remainingCats.forEach((cat, idx) => {
-      const compCount = cat.bracket_state ? (cat.bracket_state.competitor_count || 0) : 0;
-      html += `
-        <div class="fight-card new-category">
-          <div class="fight-order">${idx + 1}</div>
-          <div class="fight-info">
-            <div class="fight-category-tag">
-              <i class="fas fa-${cat.discipline === 'patterns' ? 'chess-board' : 'fist-raised'}"></i>
-              ${escapeHtml(cat.category_name)}
-            </div>
-            <div class="fight-vs-display" style="color: var(--text-muted); font-style: italic;">
-              Awaiting fighters...
-            </div>
-            <div class="fight-meta">
-              ${escapeHtml((cat.discipline || 'sparring').toUpperCase())}
-              ${compCount ? ` · ${compCount} competitors` : ''}
-              ${cat.num_matches ? ` · ${cat.num_matches} fights` : ''}
-            </div>
-          </div>
-          <div class="fight-badge badge-category">QUEUE</div>
-        </div>
-      `;
-    });
-    html += `</div>`;
-  }
-
-  if (!html) {
-    html = `
-      <div class="empty-state">
-        <i class="fas fa-ring"></i>
-        <h3>No matches scheduled</h3>
-        <p>This ring has no active or upcoming matches.</p>
+  } else {
+    html += `
+      <div class="empty-state" style="margin-top:1rem;">
+        <i class="fas fa-forward"></i>
+        <h3>No upcoming fights</h3>
+        <p>This ring has no more fights scheduled in the current or upcoming categories.</p>
       </div>
     `;
   }
@@ -1457,9 +1392,9 @@ function renderRingDetail(ringId) {
 /* ============================================================
    COLLECT UPCOMING FIGHTS
    Returns array of fight objects with p1, p2, categoryName, etc.
-   Pulls from current category first, then next categories
+   Tries to get at least 3 fights (or as many as available)
 ============================================================ */
-function collectUpcomingFights(ring, ringCats, limit) {
+function collectUpcomingFights(ring, ringCats, minCount) {
   const allFights = [];
 
   // Find current category being fought
@@ -1475,7 +1410,7 @@ function collectUpcomingFights(ring, ringCats, limit) {
     const upcoming = getUpcomingMatchesFromBracket(
       currentAssignment.bracket_state,
       ring,
-      limit
+      minCount
     );
     upcoming.forEach(m => {
       allFights.push({
@@ -1490,8 +1425,8 @@ function collectUpcomingFights(ring, ringCats, limit) {
     });
   }
 
-  // If we need more, pull from next categories
-  if (allFights.length < limit) {
+  // If we need more to reach minCount, pull from next categories
+  if (allFights.length < minCount) {
     const remainingCats = ringCats.filter(a => {
       if (currentAssignment && a.id === currentAssignment.id) return false;
       if (a.bracket_state && a.bracket_state.champion) return false;
@@ -1499,11 +1434,11 @@ function collectUpcomingFights(ring, ringCats, limit) {
     });
 
     for (const cat of remainingCats) {
-      if (allFights.length >= limit) break;
+      if (allFights.length >= minCount) break;
 
       if (cat.bracket_state) {
-        const needed = limit - allFights.length;
-        const catUpcoming = getUpcomingMatchesFromBracket(cat.bracket_state, null, Math.min(needed, 3));
+        const needed = minCount - allFights.length;
+        const catUpcoming = getUpcomingMatchesFromBracket(cat.bracket_state, null, Math.min(needed, 2));
         catUpcoming.forEach((m, idx) => {
           allFights.push({
             p1: m.p1,
@@ -1530,7 +1465,7 @@ function collectUpcomingFights(ring, ringCats, limit) {
     }
   }
 
-  return allFights.slice(0, limit);
+  return allFights.slice(0, Math.max(minCount, allFights.length));
 }
 
 /* Get next N upcoming matches from a bracket_state */
