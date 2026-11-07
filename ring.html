@@ -53,7 +53,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tv-bottom-bar { background: linear-gradient(90deg, #111827 0%, #030712 100%); border-top: 3px solid #fbbf24; padding: 20px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; z-index: 10; }
 .tv-next-match { display: flex; align-items: center; gap: 15px; }
 .tv-next-label { color: #9ca3af; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-.tv-next-name { color: white; font-size: 2rem; font-weight: 900; }
+.tv-next-name { color: white; font-size: 2rem; font-weight: 900; min-height: 2.4rem; }
 .tv-next-name.blue-next { color: #60a5fa; }
 .tv-next-name.red-next { color: #f87171; }
 .tv-winner-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.92); display: flex; align-items: center; justify-content: center; z-index: 100; }
@@ -564,13 +564,13 @@ button:disabled { opacity: .6; cursor: not-allowed; }
     <div class="tv-next-match">
       <div>
         <div class="tv-next-label">⏭️ NEXT BLUE</div>
-        <div id="tv-next-blue" class="tv-next-name blue-next">---</div>
+        <div id="tv-next-blue" class="tv-next-name blue-next"></div>
       </div>
     </div>
     <div class="tv-next-match" style="justify-content:flex-end;text-align:right;">
       <div>
         <div class="tv-next-label">NEXT RED ⏭️</div>
-        <div id="tv-next-red" class="tv-next-name red-next">---</div>
+        <div id="tv-next-red" class="tv-next-name red-next"></div>
       </div>
     </div>
   </div>
@@ -695,7 +695,7 @@ let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, ela
 let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
 
 /* ============ HELPERS ============ */
-function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val === null || val === undefined || val === "") ? "-" : val; }
+function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val === null || val === undefined || val === "") ? "" : val; }
 function escapeHtml(str) { return String(str === null || str === undefined ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 function escapeAttr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
@@ -1062,26 +1062,43 @@ async function autoSetTimerFromCategory(assignmentId) {
   renderTimer();
 }
 
-function findNextCompetitors(bracket, fromRound, fromMatch) {
-  if (!bracket) return { nextBlue: null, nextRed: null, nextFightNum: null };
-  for (let r = fromRound; r < bracket.rounds.length; r++) {
-    const startM = (r === fromRound) ? fromMatch + 1 : 0;
-    for (let m = startM; m < bracket.rounds[r].length; m++) {
-      const match = bracket.rounds[r][m];
-      if (match.winner) continue;
-      if (isRealName(match.p1.name) && isRealName(match.p2.name)) {
-        const fightNum = globalFightNumber(bracket, r, m);
-        return { nextBlue: match.p1.name, nextRed: match.p2.name, nextFightNum: fightNum };
-      }
-      const nextBlue = isRealName(match.p1.name) ? match.p1.name : null;
-      const nextRed = isRealName(match.p2.name) ? match.p2.name : null;
-      const fightNum = globalFightNumber(bracket, r, m);
-      if (nextBlue || nextRed) {
-        return { nextBlue, nextRed, nextFightNum: fightNum, partial: true };
+// NEW: Find next competitors for TV display - searches current bracket then next category
+function findNextCompetitorsForDisplay() {
+  // 1. Check current bracket for any pending fight with 2 real names (excluding current fight)
+  if (state.bracket) {
+    for (let r = 0; r < state.bracket.rounds.length; r++) {
+      for (let m = 0; m < state.bracket.rounds[r].length; m++) {
+        const match = state.bracket.rounds[r][m];
+        if (match.winner) continue;
+        if (isRealName(match.p1.name) && isRealName(match.p2.name)) {
+          if (state.bracket.currentRound === r && state.bracket.currentMatch === m) continue;
+          return { nextBlue: match.p1.name, nextRed: match.p2.name };
+        }
       }
     }
   }
-  return { nextBlue: null, nextRed: null, nextFightNum: null };
+
+  // 2. Check next category bracket
+  const a = activeAssignment();
+  if (a) {
+    const nextCat = findNextCategoryWithPendingFight(a.id);
+    if (nextCat) {
+      const nextCatBracket = loadBracketForDisplay(nextCat.assignment.id);
+      if (nextCatBracket) {
+        for (let r = 0; r < nextCatBracket.rounds.length; r++) {
+          for (let m = 0; m < nextCatBracket.rounds[r].length; m++) {
+            const match = nextCatBracket.rounds[r][m];
+            if (match.winner) continue;
+            if (isRealName(match.p1.name) && isRealName(match.p2.name)) {
+              return { nextBlue: match.p1.name, nextRed: match.p2.name };
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return { nextBlue: null, nextRed: null };
 }
 
 // Global function for clickable queue items
@@ -1179,12 +1196,19 @@ async function loadCurrentFight(manual, specificAssignmentId, specificRound, spe
   const fightNo = globalFightNumber(state.bracket, next.round, next.match);
   const stage = stageName(next.round, state.bracket.totalRounds);
   
-  const nextInfo = findNextCompetitors(state.bracket, next.round, next.match);
-  let nextBlue = nextInfo.nextBlue; let nextRed = nextInfo.nextRed;
-  if (!nextBlue && !nextRed && nextInfo.nextFightNum) { nextBlue = "TBD (Fight #" + nextInfo.nextFightNum + ")"; nextRed = "TBD (Fight #" + nextInfo.nextFightNum + ")"; } 
-  else if (nextInfo.partial) { if (!nextBlue) nextBlue = "TBD"; if (!nextRed) nextRed = "TBD"; }
+  // Find next competitors for TV display (no TBD allowed)
+  const nextInfo = findNextCompetitorsForDisplay();
+  let nextBlue = nextInfo.nextBlue || ""; 
+  let nextRed = nextInfo.nextRed || "";
   
-  await pushRingUpdate({ blue_name: fight.p1.name, red_name: fight.p2.name, blue_club: fight.p1.team || "", red_club: fight.p2.team || "", next_blue_name: nextBlue, next_red_name: nextRed, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: stage, match_number: fightNo });
+  await pushRingUpdate({ 
+    blue_name: fight.p1.name, red_name: fight.p2.name, 
+    blue_club: fight.p1.team || "", red_club: fight.p2.team || "", 
+    next_blue_name: nextBlue, next_red_name: nextRed, 
+    category_name: a.category_name, 
+    discipline: String(a.discipline || "sparring").toLowerCase(), 
+    match_stage: stage, match_number: fightNo 
+  });
   resetMatchScores(); resetTimerForNewFight(); await autoSetTimerFromCategory();
   renderQueue(); renderLaptopJudges();
   if (manual) showToast("▶ Loaded fight #" + fightNo + ": " + fight.p1.name + " vs " + fight.p2.name, "success");
@@ -1257,7 +1281,6 @@ async function confirmAndAdvance() {
   if (nextFight) {
     const returnedMatch = b.rounds[nextFight.round][nextFight.match];
     if (returnedMatch.p1.name !== winnerName && returnedMatch.p2.name !== winnerName) {
-      // Found a fight without the winner!
       state.bracket.currentRound = nextFight.round;
       state.bracket.currentMatch = nextFight.match;
       await saveBracket();
@@ -1268,7 +1291,7 @@ async function confirmAndAdvance() {
     }
   }
   
-  // 2. If not possible (all remaining fights involve the winner, or none left), get a fight from another category
+  // 2. If not possible, get a fight from another category
   const a = activeAssignment();
   const nextCat = findNextCategoryWithPendingFight(a.id);
   if (nextCat) {
@@ -1304,7 +1327,7 @@ async function confirmAndAdvance() {
     }
   }
   
-  // 3. If absolutely no other fights exist anywhere, fall back to loading the winner's next fight
+  // 3. Fallback: load the winner's next fight if absolutely nothing else exists
   const anyPending = findAnyPendingFight(b);
   if (anyPending) {
     state.bracket.currentRound = anyPending.round;
@@ -1359,8 +1382,8 @@ function updateLaptopUIForDiscipline() {
 
 function updateCompetitorDisplay() {
   const ring = state.ring || {};
-  const blueName = ring.blue_name || "---"; const redName = ring.red_name || "---"; const blueClub = ring.blue_club || "---"; const redClub = ring.red_club || "---";
-  const nextBlueName = ring.next_blue_name || "TBD"; const nextRedName = ring.next_red_name || "TBD";
+  const blueName = ring.blue_name || ""; const redName = ring.red_name || ""; const blueClub = ring.blue_club || ""; const redClub = ring.red_club || "";
+  const nextBlueName = ring.next_blue_name || ""; const nextRedName = ring.next_red_name || "";
   const discipline = String(ring.mode || ring.discipline || currentDiscipline() || "sparring").toLowerCase();
   const categoryName = ring.category_name || "No Category"; const matchNumber = ring.match_number || 0; const matchStage = ring.match_stage || "Scheduled";
   setTxt("laptop-blue-name", blueName); setTxt("laptop-red-name", redName); setTxt("laptop-blue-club", blueClub); setTxt("laptop-red-club", redClub);
@@ -1437,8 +1460,8 @@ function renderQueue() {
         else if (isDone && !isByeMatch) pill = '<span class="ml-pill done">DONE</span>'; 
         else if (!isDone && isRealName(match.p1.name) && isRealName(match.p2.name)) pill = '<span class="ml-pill next">NEXT</span>';
         
-        const p1 = match.p1.name === EMPTY_SLOT ? "TBD" : match.p1.name; 
-        const p2 = match.p2.name === EMPTY_SLOT ? "TBD" : match.p2.name;
+        const p1 = match.p1.name === EMPTY_SLOT ? "" : match.p1.name; 
+        const p2 = match.p2.name === EMPTY_SLOT ? "" : match.p2.name;
         
         const hasBothNames = isRealName(match.p1.name) && isRealName(match.p2.name);
         const clickHandler = hasBothNames && !isDone ? `onclick="loadSpecificFight(${String(a.id)}, ${r}, ${m})" title="Click to load this fight"` : '';
@@ -1532,7 +1555,7 @@ function renderBracketModalContent() {
       const step = Math.pow(2, r); if (i % step !== 0) continue;
       const matchIdx = Math.floor(i / step); const match = b.rounds[r][matchIdx]; if (!match) continue;
       const isCurrent = (b.currentRound === r && b.currentMatch === matchIdx && !match.winner);
-      const n1 = match.p1.name === EMPTY_SLOT ? "TBD" : match.p1.name; const n2 = match.p2.name === EMPTY_SLOT ? "TBD" : match.p2.name;
+      const n1 = match.p1.name === EMPTY_SLOT ? "" : match.p1.name; const n2 = match.p2.name === EMPTY_SLOT ? "" : match.p2.name;
       let c1 = "bracket-slot first"; let c2 = "bracket-slot";
       if (n1 === BYE) c1 += " bye"; if (n2 === BYE) c2 += " bye";
       if (match.winner === "p1") { c1 += " won"; c2 += " lost"; } if (match.winner === "p2") { c2 += " won"; c1 += " lost"; }
