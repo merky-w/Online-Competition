@@ -506,7 +506,7 @@
   }
   .upcoming-list { display: flex; flex-direction: column; gap: 0.6rem; }
 
-  /* FIGHT CARD - shows X vs Y clearly with big names */
+  /* FIGHT CARD */
   .fight-card {
     background: var(--bg-card);
     border-radius: var(--radius-md);
@@ -912,6 +912,7 @@ let ringAssignments = [];
 let siteSettings = {};
 let selectedRingId = null;
 let ringsChannel = null;
+let assignmentsChannel = null; // NEW: For live bracket updates
 let extractedAgeGroups = [];
 
 /* ============================================================
@@ -943,7 +944,7 @@ async function loadData() {
   try {
     const [ringsRes, assignRes, settingsRes] = await Promise.all([
       sb.from("rings").select("*"),
-      sb.from("ring_assignments").select("*"),
+      sb.from("ring_assignments").select("*").order("id", { ascending: true }),
       sb.from("site_settings").select("*").eq("id", 1).maybeSingle()
     ]);
 
@@ -990,7 +991,7 @@ function clearFilters() {
 }
 
 /* ============================================================
-   REAL-TIME SUBSCRIPTION
+   REAL-TIME SUBSCRIPTIONS
 ============================================================ */
 function subscribeRings() {
   if (ringsChannel) sb.removeChannel(ringsChannel);
@@ -1004,7 +1005,47 @@ function subscribeRings() {
       const idx = ringsData.findIndex(r => r.id === payload.new.id);
       if (idx >= 0) ringsData[idx] = { ...ringsData[idx], ...payload.new };
       else ringsData.push(payload.new);
+      
       if (activeMode === 'rings') {
+        renderRings();
+        if (selectedRingId) renderRingDetail(selectedRingId);
+      }
+    })
+    .subscribe();
+}
+
+// NEW: Subscribe to ring_assignments to get LIVE bracket updates when someone wins
+function subscribeAssignments() {
+  if (assignmentsChannel) sb.removeChannel(assignmentsChannel);
+  assignmentsChannel = sb.channel('view-assignments-live')
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'ring_assignments'
+    }, payload => {
+      if (!payload.new) return;
+      const idx = ringAssignments.findIndex(a => a.id === payload.new.id);
+      if (idx >= 0) {
+        ringAssignments[idx] = { ...ringAssignments[idx], ...payload.new };
+      } else {
+        ringAssignments.push(payload.new);
+      }
+      
+      // Update age groups dynamically
+      const ageSet = new Set();
+      ringAssignments.forEach(a => {
+        const age = extractAgeGroupFromCategory(a.category_name);
+        if (age) ageSet.add(age);
+      });
+      extractedAgeGroups = Array.from(ageSet).sort();
+      
+      // Preserve current filter selection
+      const currentAge = document.getElementById('filterAge').value;
+      populateAgeFilter();
+      document.getElementById('filterAge').value = currentAge;
+
+      if (activeMode === 'brackets') renderBrackets();
+      else {
         renderRings();
         if (selectedRingId) renderRingDetail(selectedRingId);
       }
@@ -1038,6 +1079,7 @@ function renderBrackets() {
   const brackets = [];
   ringAssignments.forEach(a => {
     const bs = a.bracket_state;
+    // Show ALL brackets that have been generated, regardless of whether they are the "current" ring fight
     if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) return;
     const discipline = norm(a.discipline || 'sparring');
     const catName = a.category_name || '';
@@ -1277,11 +1319,6 @@ function closeRingDetail() {
 
 /* ============================================================
    RING DETAIL
-   Shows:
-   1. LIVE NOW fight (big display with names)
-   2. NEXT 3+ upcoming fights with X vs Y format
-      - Pulls from current category's bracket_state
-      - If exhausted, pulls from next categories in ring
 ============================================================ */
 function renderRingDetail(ringId) {
   const ring = ringsData.find(r => r.id === ringId) || ringsData.find(r => String(r.id) === String(ringId));
@@ -1297,7 +1334,6 @@ function renderRingDetail(ringId) {
 
   let html = '';
 
-  // 1. Current LIVE fight
   if (ring && ring.blue_name && ring.red_name) {
     html += `
       <div class="current-fight">
@@ -1326,7 +1362,6 @@ function renderRingDetail(ringId) {
     `;
   }
 
-  // 2. Collect at least 3 upcoming fights (if available)
   const allUpcoming = collectUpcomingFights(ring, ringCats, 3);
 
   if (allUpcoming.length > 0) {
@@ -1389,15 +1424,9 @@ function renderRingDetail(ringId) {
   body.innerHTML = html;
 }
 
-/* ============================================================
-   COLLECT UPCOMING FIGHTS
-   Returns array of fight objects with p1, p2, categoryName, etc.
-   Tries to get at least 3 fights (or as many as available)
-============================================================ */
 function collectUpcomingFights(ring, ringCats, minCount) {
   const allFights = [];
 
-  // Find current category being fought
   const currentAssignment = ring && ring.category_name
     ? ringCats.find(a =>
         a.category_name === ring.category_name &&
@@ -1405,7 +1434,6 @@ function collectUpcomingFights(ring, ringCats, minCount) {
       ) || ringCats[0]
     : ringCats[0];
 
-  // Get upcoming from current category
   if (currentAssignment && currentAssignment.bracket_state) {
     const upcoming = getUpcomingMatchesFromBracket(
       currentAssignment.bracket_state,
@@ -1425,7 +1453,6 @@ function collectUpcomingFights(ring, ringCats, minCount) {
     });
   }
 
-  // If we need more to reach minCount, pull from next categories
   if (allFights.length < minCount) {
     const remainingCats = ringCats.filter(a => {
       if (currentAssignment && a.id === currentAssignment.id) return false;
@@ -1451,7 +1478,6 @@ function collectUpcomingFights(ring, ringCats, minCount) {
           });
         });
       } else {
-        // No bracket yet - show placeholder
         allFights.push({
           p1: 'TBD',
           p2: 'TBD',
@@ -1468,7 +1494,6 @@ function collectUpcomingFights(ring, ringCats, minCount) {
   return allFights.slice(0, Math.max(minCount, allFights.length));
 }
 
-/* Get next N upcoming matches from a bracket_state */
 function getUpcomingMatchesFromBracket(bracket, ring, limit) {
   if (!bracket || !bracket.rounds) return [];
   const rounds = bracket.rounds;
@@ -1505,7 +1530,8 @@ function getUpcomingMatchesFromBracket(bracket, ring, limit) {
 document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
   subscribeRings();
-  setInterval(loadData, 20000);
+  subscribeAssignments(); // NEW: Listen for live bracket updates
+  setInterval(loadData, 20000); // Fallback refresh
 });
 </script>
 </body>
