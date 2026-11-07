@@ -654,23 +654,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- BREAK SUGGESTION MODAL -->
-<div id="modal-break-suggestion" class="hidden-view modal-overlay">
-  <div class="modal-box" style="max-width: 500px;">
-    <h3 style="color: #fbbf24; margin-bottom: 15px; font-size: 1.3rem;"><i class="fas fa-hourglass-half"></i> Winner's Next Fight</h3>
-    <p id="break-suggestion-text" style="color: #e2e8f0; margin-bottom: 20px; font-size: 1rem; line-height: 1.5;"></p>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-      <button id="btn-start-break" class="timer-btn" style="background: #f59e0b; color: white; padding: 15px; font-size: 1rem;">
-        <i class="fas fa-play"></i> Start 3-Min Break
-      </button>
-      <button id="btn-load-anyway" class="timer-btn" style="background: #3b82f6; color: white; padding: 15px; font-size: 1rem;">
-        <i class="fas fa-forward"></i> Load Fight Anyway
-      </button>
-    </div>
-    <button class="timer-btn" style="background: #475569; color: white; width: 100%; margin-top: 10px; padding: 12px;" onclick="closeBreakModal()">Cancel</button>
-  </div>
-</div>
-
 <div id="toast" class="toast"></div>
 
 <script>
@@ -705,9 +688,6 @@ state.match = freshMatchObject();
 
 let autoAdvanceTimeout = null;
 let editingMatchCoords = null;
-let breakInterval = null;
-let pendingBreakRound = null;
-let pendingBreakMatch = null;
 
 const TIMER_CHANNEL_PREFIX = "timer-";
 const SCORE_CHANNEL_PREFIX = "scores-";
@@ -1057,8 +1037,6 @@ async function pushRingUpdate(fields) {
 function getRoundConfigForCategory(assignmentId) {
   const a = assignmentId ? state.assignments.find(x => String(x.id) === String(assignmentId)) : activeAssignment();
   if (!a) return null;
-  const catName = a.category_name || "";
-  const disc = String(a.discipline || "sparring").toLowerCase();
   return { rounds: 3, roundMinutes: 2, roundSeconds: 0, pauseMinutes: 0, pauseSeconds: 30 };
 }
 
@@ -1273,61 +1251,79 @@ async function confirmAndAdvance() {
   await saveBracket();
   showToast("✓ " + winnerName + " advances.", "success");
   
-  // SMART SKIP: Check if there's a fight NOT involving the winner
+  // 1. Try to find a fight in the current category NOT involving the winner
   const nextFight = findNextPending(b, false, winnerName);
   
-  if (!nextFight) {
-    const anyPending = findAnyPendingFight(b);
-    if (anyPending) {
-      const pendingMatch = b.rounds[anyPending.round][anyPending.match];
-      if (pendingMatch.p1.name === winnerName || pendingMatch.p2.name === winnerName) {
-        showBreakSuggestionModal(winnerName, anyPending.round, anyPending.match);
-        return; // Stop here, let modal handle it
+  if (nextFight) {
+    const returnedMatch = b.rounds[nextFight.round][nextFight.match];
+    if (returnedMatch.p1.name !== winnerName && returnedMatch.p2.name !== winnerName) {
+      // Found a fight without the winner!
+      state.bracket.currentRound = nextFight.round;
+      state.bracket.currentMatch = nextFight.match;
+      await saveBracket();
+      await loadCurrentFight(false, null, nextFight.round, nextFight.match);
+      renderQueue();
+      showToast("⏭️ Skipped winner's next fight, loading alternative.", "success");
+      return;
+    }
+  }
+  
+  // 2. If not possible (all remaining fights involve the winner, or none left), get a fight from another category
+  const a = activeAssignment();
+  const nextCat = findNextCategoryWithPendingFight(a.id);
+  if (nextCat) {
+    await loadOrCreateBracket(false, nextCat.assignment.id);
+    if (state.bracket) {
+      autoResolveByes(state.bracket);
+      const nextFightOther = findNextPending(state.bracket, false);
+      if (nextFightOther) {
+        state.borrowedFromAssignmentId = a.id;
+        state.activeAssignmentId = nextCat.assignment.id;
+        state.bracket.currentRound = nextFightOther.round;
+        state.bracket.currentMatch = nextFightOther.match;
+        await saveBracket();
+        
+        const fightOther = state.bracket.rounds[nextFightOther.round][nextFightOther.match];
+        const fightNo = globalFightNumber(state.bracket, nextFightOther.round, nextFightOther.match);
+        const stage = stageName(nextFightOther.round, state.bracket.totalRounds);
+        
+        await pushRingUpdate({ 
+          blue_name: fightOther.p1.name, red_name: fightOther.p2.name, 
+          blue_club: fightOther.p1.team || "", red_club: fightOther.p2.team || "", 
+          next_blue_name: null, next_red_name: null, 
+          category_name: nextCat.assignment.category_name, 
+          discipline: String(nextCat.assignment.discipline || "sparring").toLowerCase(), 
+          match_stage: stage + " (borrowed)", 
+          match_number: fightNo 
+        });
+        resetMatchScores(); resetTimerForNewFight(); await autoSetTimerFromCategory(nextCat.assignment.id);
+        renderQueue(); renderLaptopJudges();
+        showToast("⏭️ No alternative in this category. Borrowed from: " + nextCat.assignment.category_name, "success");
+        return;
       }
     }
   }
   
-  // If we get here, either nextFight is valid (skipped winner's fight), or there's no fight at all
-  await loadCurrentFight(false, null, null, null, winnerName); 
-  renderQueue();
-}
-
-function showBreakSuggestionModal(winnerName, r, m) {
-  pendingBreakRound = r;
-  pendingBreakMatch = m;
-  const modal = document.getElementById("modal-break-suggestion");
-  const text = document.getElementById("break-suggestion-text");
-  text.innerHTML = `<strong>${escapeHtml(winnerName)}</strong> is scheduled for the next fight, and no alternative fights are currently available.<br><br>Would you like to start a <strong>3-minute break</strong> for the winner before loading this fight?`;
-  modal.classList.remove("hidden-view");
-}
-
-function closeBreakModal() {
-  document.getElementById("modal-break-suggestion").classList.add("hidden-view");
-  pendingBreakRound = null;
-  pendingBreakMatch = null;
-}
-
-document.getElementById("btn-start-break").addEventListener("click", () => {
-  closeBreakModal();
-  timerState.isBreak = true;
-  timerState.breakTime = 180; // 3 minutes
-  timerState.elapsed = 0;
-  timerState.startTime = Date.now();
-  timerState.paused = false;
-  timerState.finished = false;
-  saveTimerState();
-  broadcastTimerState();
-  renderTimer();
-  startTimerTick();
-  showToast("☕ 3-minute break started for the winner!", "success");
-});
-
-document.getElementById("btn-load-anyway").addEventListener("click", () => {
-  closeBreakModal();
-  if (pendingBreakRound !== null && pendingBreakMatch !== null) {
-    loadCurrentFight(false, null, pendingBreakRound, pendingBreakMatch);
+  // 3. If absolutely no other fights exist anywhere, fall back to loading the winner's next fight
+  const anyPending = findAnyPendingFight(b);
+  if (anyPending) {
+    state.bracket.currentRound = anyPending.round;
+    state.bracket.currentMatch = anyPending.match;
+    await saveBracket();
+    await loadCurrentFight(false, null, anyPending.round, anyPending.match);
+    renderQueue();
+    showToast("⚠️ No other fights available anywhere. Loading winner's next fight.", "warning");
+    return;
   }
-});
+
+  // 4. No pending fights at all
+  state.bracket.currentRound = null; state.bracket.currentMatch = null; await saveBracket();
+  const champ = b.champion;
+  await pushRingUpdate({ blue_name: champ ? champ.name : null, red_name: null, blue_club: champ ? champ.team : null, red_club: null, next_blue_name: null, next_red_name: null, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: champ ? "🏆 Category Complete" : "No Fight Available", match_number: 0 });
+  resetMatchScores(); resetTimerForNewFight(); renderQueue();
+  if (champ) { showToast("🏆 " + champ.name + " wins the category!", "success"); } 
+  else { showToast("No more fights available.", "warning"); }
+}
 
 async function resetCategoryBracket() {
   if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
