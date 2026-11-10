@@ -25,6 +25,7 @@
     --border: 1px solid rgba(255, 255, 255, 0.1);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-body);
@@ -1447,7 +1448,7 @@ function closeRingDetail() {
 }
 
 /* ============================================================
-   RING DETAIL - Shows next 5 fights
+   RING DETAIL - Shows LIVE fight + Next 5 Fights
 ============================================================ */
 function renderRingDetail(ringId) {
   const ring = ringsData.find(r => r.id === ringId) || ringsData.find(r => String(r.id) === String(ringId));
@@ -1463,6 +1464,7 @@ function renderRingDetail(ringId) {
 
   let html = '';
 
+  // 1. Show current LIVE fight
   if (ring && ring.blue_name && ring.red_name) {
     html += `
       <div class="current-fight">
@@ -1491,8 +1493,8 @@ function renderRingDetail(ringId) {
     `;
   }
 
-  // Get next 5 fights for this ring
-  const allUpcoming = collectUpcomingFightsForRing(ringCats, 5);
+  // 2. Collect NEXT 5 upcoming fights for this ring
+  const allUpcoming = collectNext5FightsForRing(ring, ringCats, 5);
 
   if (allUpcoming.length > 0) {
     html += `<div class="upcoming-section-title">
@@ -1554,46 +1556,94 @@ function renderRingDetail(ringId) {
 
 /* ============================================================
    COLLECT NEXT 5 FIGHTS FOR A RING
+   Pulls from current category first, then next categories on same ring
 ============================================================ */
-function collectUpcomingFightsForRing(ringCats, minCount) {
+function collectNext5FightsForRing(ring, ringCats, minCount) {
   const allFights = [];
 
-  for (const cat of ringCats) {
-    if (allFights.length >= minCount) break;
+  // Find current category being fought
+  const currentAssignment = ring && ring.category_name
+    ? ringCats.find(a =>
+        a.category_name === ring.category_name &&
+        norm(a.discipline) === norm(ring.discipline)
+      ) || ringCats[0]
+    : ringCats[0];
 
-    let bs = cat.bracket_state;
-    const catName = cat.category_name || '';
-    const disc = norm(cat.discipline || 'sparring');
+  // Get upcoming from current category
+  if (currentAssignment) {
+    let bs = currentAssignment.bracket_state;
+    const catName = currentAssignment.category_name || '';
+    const disc = norm(currentAssignment.discipline || 'sparring');
 
-    // Generate bracket on-the-fly if missing
+    // Generate on-the-fly if missing
     if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) {
       const list = competitorsFor(catName, disc, allCompetitors);
-      if (list.length > 0) {
+      if (list && list.length > 0) {
         bs = buildBracket(list, catName, disc);
         if (bs) autoResolveByes(bs);
       }
     }
 
     if (bs && bs.rounds && Array.isArray(bs.rounds)) {
-      const needed = minCount - allFights.length;
-      const catUpcoming = getUpcomingMatchesFromBracket(bs, needed);
-      catUpcoming.forEach((m, idx) => {
+      const upcoming = getUpcomingMatchesFromBracket(bs, minCount);
+      upcoming.forEach(m => {
         allFights.push({
           p1: m.p1,
           p2: m.p2,
-          _categoryName: cat.category_name,
-          _discipline: cat.discipline,
+          _categoryName: currentAssignment.category_name,
+          _discipline: currentAssignment.discipline,
           _roundName: m.roundName,
-          _isNewCategory: idx === 0 && allFights.length > 0,
-          _isPlaceholder: false
+          _isNewCategory: false
         });
       });
+    }
+  }
+
+  // If we need more, pull from next categories on the same ring
+  if (allFights.length < minCount) {
+    const remainingCats = ringCats.filter(a => {
+      if (currentAssignment && a.id === currentAssignment.id) return false;
+      if (a.bracket_state && a.bracket_state.champion) return false;
+      return true;
+    });
+
+    for (const cat of remainingCats) {
+      if (allFights.length >= minCount) break;
+
+      let bs = cat.bracket_state;
+      const catName = cat.category_name || '';
+      const disc = norm(cat.discipline || 'sparring');
+
+      // Generate on-the-fly if missing
+      if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) {
+        const list = competitorsFor(catName, disc, allCompetitors);
+        if (list && list.length > 0) {
+          bs = buildBracket(list, catName, disc);
+          if (bs) autoResolveByes(bs);
+        }
+      }
+
+      if (bs && bs.rounds && Array.isArray(bs.rounds)) {
+        const needed = minCount - allFights.length;
+        const catUpcoming = getUpcomingMatchesFromBracket(bs, needed);
+        catUpcoming.forEach((m, idx) => {
+          allFights.push({
+            p1: m.p1,
+            p2: m.p2,
+            _categoryName: cat.category_name,
+            _discipline: cat.discipline,
+            _roundName: m.roundName,
+            _isNewCategory: idx === 0
+          });
+        });
+      }
     }
   }
 
   return allFights.slice(0, Math.max(minCount, allFights.length));
 }
 
+/* Get next N upcoming matches from a bracket_state */
 function getUpcomingMatchesFromBracket(bracket, limit) {
   if (!bracket || !bracket.rounds) return [];
   const rounds = bracket.rounds;
