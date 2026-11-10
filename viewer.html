@@ -25,6 +25,7 @@
     --border: 1px solid rgba(255, 255, 255, 0.1);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-body);
@@ -184,42 +185,8 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  select {
-    width: 100%;
-    padding: 0.75rem 0.9rem;
-    background-color: var(--bg-input);
-    border: var(--border);
-    border-radius: var(--radius-md);
-    color: var(--text-main);
-    font-size: 0.95rem;
-    outline: none;
-    transition: var(--transition);
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 36px;
-  }
-  select:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
-  select option { background: var(--bg-panel); color: var(--text-main); }
-  .filter-clear-btn {
-    background: rgba(239, 68, 68, 0.15);
-    color: var(--accent-alert);
-    border: 1px solid rgba(239, 68, 68, 0.4);
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-md);
-    font-weight: 700;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    justify-content: center;
-    font-size: 0.9rem;
-  }
-  .filter-clear-btn:hover { background: var(--accent-alert); color: white; }
-
+  select, input[type="date"], input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; transition: var(--transition); font-family: inherit; }
+  
   /* Rings Grid */
   .rings-grid {
     display: grid;
@@ -602,166 +569,6 @@
   .badge-category { background: rgba(16, 185, 129, 0.2); color: var(--accent-secondary); }
   .badge-done { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
 
-  /* Bracket Cards */
-  .bracket-card {
-    background: var(--bg-panel);
-    border-radius: var(--radius-lg);
-    border: var(--border);
-    box-shadow: var(--shadow);
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-  }
-  .bracket-card-header {
-    background: linear-gradient(135deg, var(--bg-card), var(--bg-panel));
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    border-bottom: var(--border);
-  }
-  .bracket-card-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .bracket-card-name {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--text-main);
-  }
-  .bracket-disc-badge {
-    padding: 3px 10px;
-    border-radius: 10px;
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .bracket-disc-badge.patterns { background: rgba(21, 101, 192, 0.2); color: #60a5fa; }
-  .bracket-disc-badge.sparring { background: rgba(194, 24, 91, 0.2); color: #f472b6; }
-  .bracket-count-badge {
-    background: rgba(255,255,255,0.1);
-    color: var(--text-muted);
-    padding: 3px 10px;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 700;
-  }
-  .bracket-winner-badge {
-    background: rgba(16, 185, 129, 0.2);
-    color: var(--accent-secondary);
-    padding: 5px 12px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .bracket-card-body {
-    padding: 1.5rem;
-    overflow-x: auto;
-  }
-  .bracket-tree {
-    display: flex;
-    gap: 2.5rem;
-    padding: 1rem 0;
-    min-width: max-content;
-    align-items: stretch;
-  }
-  .bracket-round {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    min-width: 220px;
-    position: relative;
-  }
-  .round-title {
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: var(--text-muted);
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px dashed var(--border);
-  }
-  .round-matches-wrap {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    flex: 1;
-    gap: 0.6rem;
-  }
-  .match-box {
-    background: var(--bg-card);
-    border: var(--border);
-    border-radius: 8px;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    font-size: 0.82rem;
-    transition: var(--transition);
-    position: relative;
-  }
-  .match-box:hover { border-color: var(--accent-primary); }
-  .match-box.current-match {
-    border-color: var(--accent-alert);
-    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
-    animation: currentPulse 2s ease-in-out infinite;
-  }
-  @keyframes currentPulse {
-    0%, 100% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
-    50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5); }
-  }
-  .match-box.completed { opacity: 0.75; }
-  .match-player {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 8px;
-    border-radius: 4px;
-    background: rgba(15, 23, 42, 0.5);
-    gap: 6px;
-  }
-  .match-player.winner {
-    background: rgba(16, 185, 129, 0.2);
-    border-left: 3px solid var(--accent-secondary);
-    font-weight: 700;
-  }
-  .match-player.bye { opacity: 0.5; font-style: italic; }
-  .match-player-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    flex: 1;
-  }
-  .match-player-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 600;
-    font-size: 0.82rem;
-  }
-  .match-player-team {
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .match-player-score {
-    font-weight: 800;
-    font-size: 0.9rem;
-    color: var(--accent-warning);
-    flex-shrink: 0;
-  }
-
   .empty-state {
     text-align: center;
     padding: 3rem 2rem;
@@ -790,8 +597,6 @@
   @media (max-width: 768px) {
     .current-fight-vs { grid-template-columns: 1fr; gap: 0.5rem; }
     .vs-divider { text-align: center; }
-    .bracket-tree { gap: 1.5rem; }
-    .bracket-round { min-width: 180px; }
     .fight-card { grid-template-columns: auto 1fr; }
     .fight-badge { grid-column: 1 / -1; justify-self: start; }
     .filters-grid { grid-template-columns: 1fr 1fr; }
@@ -915,7 +720,7 @@ let selectedRingId = null;
 let ringsChannel = null;
 let assignmentsChannel = null;
 let extractedAgeGroups = [];
-let allCompetitors = []; // Cache for on-the-fly bracket generation
+let allCompetitors = []; 
 
 /* ============================================================
    HELPERS
@@ -926,6 +731,10 @@ function escapeHtml(str) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+function escapeAttr(str) { 
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
 }
 function norm(s) { return String(s || '').trim().toLowerCase(); }
 
@@ -1034,7 +843,6 @@ async function loadData() {
     extractedAgeGroups = Array.from(ageSet).sort();
     populateAgeFilter();
 
-    // Fetch competitors once for on-the-fly bracket generation
     if (allCompetitors.length === 0) {
       allCompetitors = await fetchAllCompetitors();
     }
@@ -1163,7 +971,6 @@ async function renderBrackets() {
     const catName = a.category_name || '';
     const ageGroup = extractAgeGroupFromCategory(catName);
     
-    // Generate on-the-fly if bracket_state is missing
     if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) {
       const list = competitorsFor(catName, discipline, allCompetitors);
       if (list.length > 0) {
@@ -1239,7 +1046,7 @@ function renderBracketCard(b) {
   `;
 
   rounds.forEach((roundMatches, rIdx) => {
-    const roundName = getRoundName(rIdx, rounds.length);
+    const roundName = stageName(rIdx, rounds.length);
     html += `<div class="bracket-round">
       <div class="round-title">${escapeHtml(roundName)}</div>
       <div class="round-matches-wrap">`;
@@ -1281,16 +1088,6 @@ function renderBracketCard(b) {
 
   html += `</div></div></div>`;
   return html;
-}
-
-function getRoundName(roundIdx, totalRounds) {
-  const remaining = totalRounds - roundIdx;
-  if (remaining === 1) return 'Final';
-  if (remaining === 2) return 'Semi-Final';
-  if (remaining === 3) return 'Quarter-Final';
-  if (remaining === 4) return 'Round of 16';
-  if (remaining === 5) return 'Round of 32';
-  return 'Round ' + (roundIdx + 1);
 }
 
 /* ============================================================
@@ -1452,94 +1249,133 @@ function renderRingDetail(ringId) {
     `;
   }
 
-  if (ringCats.length > 0) {
-    html += `<div class="upcoming-section-title"><i class="fas fa-list-ol"></i> Full Fight Queue</div>`;
-    
-    for (const cat of ringCats) {
-      const catName = cat.category_name || 'Unknown Category';
-      const discipline = norm(cat.discipline || 'sparring');
-      let bs = cat.bracket_state;
-      
-      // Generate on the fly if missing
-      if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) {
-        const list = competitorsFor(catName, discipline, allCompetitors);
-        if (list.length > 0) {
-          bs = buildBracket(list, catName, discipline);
-          autoResolveByes(bs);
-        }
-      }
+  // CHANGED: Request at least 5 upcoming fights
+  const allUpcoming = collectUpcomingFights(ring, ringCats, 5);
 
-      if (bs && bs.rounds && Array.isArray(bs.rounds)) {
-        html += `<div style="margin-bottom: 1.5rem; background: var(--bg-card); border-radius: var(--radius-md); padding: 1rem; border-left: 4px solid var(--accent-primary);">`;
-        html += `<div style="font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">`;
-        html += `<i class="fas fa-${discipline === 'patterns' ? 'chess-board' : 'fist-raised'}" style="color: var(--accent-warning);"></i> ${escapeHtml(catName)}`;
-        if (bs.champion) {
-          html += `<span style="margin-left: auto; font-size: 0.8rem; background: rgba(16, 185, 129, 0.2); color: var(--accent-secondary); padding: 2px 8px; border-radius: 10px;"><i class="fas fa-trophy"></i> ${escapeHtml(bs.champion.name)}</span>`;
-        }
-        html += `</div>`;
-        html += `<div class="upcoming-list">`;
+  if (allUpcoming.length > 0) {
+    html += `<div class="upcoming-section-title">
+      <i class="fas fa-forward"></i> Next ${allUpcoming.length} Fight${allUpcoming.length !== 1 ? 's' : ''}
+      <span class="count-badge">${allUpcoming.length}</span>
+    </div>`;
+    html += `<div class="upcoming-list">`;
 
-        for (let r = 0; r < bs.rounds.length; r++) {
-          for (let m = 0; m < bs.rounds[r].length; m++) {
-            const match = bs.rounds[r][m];
-            const isCurrent = (bs.currentRound === r && bs.currentMatch === m && !match.winner);
-            const isByeMatch = (match.p1.name === "BYE" || match.p2.name === "BYE");
-            const isDone = !!match.winner;
-            const fightNo = globalFightNumber(bs, r, m);
-            
-            let cardClass = 'fight-card';
-            let badgeClass = 'badge-upcoming';
-            let badgeText = 'UPCOMING';
-            
-            if (isCurrent) {
-              cardClass += ' is-next';
-              badgeClass = 'badge-next';
-              badgeText = 'LIVE';
-            } else if (isDone && !isByeMatch) {
-              badgeClass = 'badge-done';
-              badgeText = 'DONE';
-            } else if (isByeMatch) {
-              badgeClass = 'badge-done';
-              badgeText = 'BYE';
-            }
+    allUpcoming.forEach((fight, idx) => {
+      const isNext = idx === 0;
+      const isNewCategory = fight._isNewCategory;
+      const p1 = fight.p1 || 'TBD';
+      const p2 = fight.p2 || 'TBD';
+      const categoryName = fight._categoryName || '';
+      const roundName = fight._roundName || '';
+      const discipline = fight._discipline || '';
+      const isPlaceholder = fight._isPlaceholder;
 
-            const p1 = match.p1.name === "" ? "TBD" : match.p1.name;
-            const p2 = match.p2.name === "" ? "TBD" : match.p2.name;
+      let cardClass = 'fight-card';
+      if (isNext) cardClass += ' is-next';
+      else if (isNewCategory) cardClass += ' new-category';
 
-            html += `<div class="${cardClass}">`;
-            html += `<div class="fight-order" style="${isCurrent ? 'background: var(--accent-alert);' : ''}">${fightNo}</div>`;
-            html += `<div class="fight-info">`;
-            html += `<div class="fight-category-tag"><i class="fas fa-${discipline === 'patterns' ? 'chess-board' : 'fist-raised'}"></i> ${escapeHtml(stageName(r, bs.totalRounds))}</div>`;
-            html += `<div class="fight-vs-display">`;
-            html += `<span class="fighter-blue" style="${match.winner === 'p1' ? 'text-decoration: line-through; opacity: 0.6;' : ''}">🔵 ${escapeHtml(p1)}</span>`;
-            html += `<span class="vs-text">vs</span>`;
-            html += `<span class="fighter-red" style="${match.winner === 'p2' ? 'text-decoration: line-through; opacity: 0.6;' : ''}">🔴 ${escapeHtml(p2)}</span>`;
-            html += `</div>`;
-            if (isDone && !isByeMatch) {
-              const wName = match.winner === "p1" ? match.p1.name : (match.winner === "p2" ? match.p2.name : "—");
-              html += `<div class="fight-meta" style="color: var(--accent-secondary); font-weight: 700;">✓ ${escapeHtml(wName)} won (${match.blue_score || 0} - ${match.red_score || 0})</div>`;
-            } else if (isByeMatch) {
-              html += `<div class="fight-meta">Auto-advanced (BYE)</div>`;
-            }
-            html += `</div>`;
-            html += `<div class="fight-badge ${badgeClass}">${badgeText}</div>`;
-            html += `</div>`;
-          }
-        }
-        html += `</div></div>`;
-      }
-    }
+      html += `
+        <div class="${cardClass}">
+          <div class="fight-order">${idx + 1}</div>
+          <div class="fight-info">
+            ${isNewCategory || isNext ? `<div class="fight-category-tag">
+              <i class="fas fa-${discipline === 'patterns' ? 'chess-board' : 'fist-raised'}"></i>
+              ${escapeHtml(categoryName)}
+            </div>` : ''}
+            <div class="fight-vs-display">
+              <span class="fighter-blue">🔵 ${escapeHtml(p1)}</span>
+              <span class="vs-text">vs</span>
+              <span class="fighter-red">🔴 ${escapeHtml(p2)}</span>
+            </div>
+            <div class="fight-meta">
+              ${roundName ? escapeHtml(roundName) : ''}
+              ${isPlaceholder ? ' · <em style="color:var(--accent-warning)">Awaiting bracket</em>' : ''}
+            </div>
+          </div>
+          <div class="fight-badge ${isNext ? 'badge-next' : (isNewCategory ? 'badge-category' : 'badge-upcoming')}">
+            ${isNext ? '⏭ NEXT' : (isNewCategory ? 'NEW CAT' : 'UPCOMING')}
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
   } else {
     html += `
       <div class="empty-state" style="margin-top:1rem;">
         <i class="fas fa-forward"></i>
-        <h3>No categories assigned</h3>
-        <p>This ring has no categories assigned to it yet.</p>
+        <h3>No upcoming fights</h3>
+        <p>This ring has no more fights scheduled in the current or upcoming categories.</p>
       </div>
     `;
   }
 
   body.innerHTML = html;
+}
+
+function collectUpcomingFights(ring, ringCats, minCount) {
+  const allFights = [];
+
+  const currentAssignment = ring && ring.category_name
+    ? ringCats.find(a =>
+        a.category_name === ring.category_name &&
+        norm(a.discipline) === norm(ring.discipline)
+      ) || ringCats[0]
+    : ringCats[0];
+
+  if (currentAssignment && currentAssignment.bracket_state) {
+    const upcoming = getUpcomingMatchesFromBracket(currentAssignment.bracket_state, ring, minCount);
+    upcoming.forEach(m => {
+      allFights.push({
+        p1: m.p1,
+        p2: m.p2,
+        _categoryName: currentAssignment.category_name,
+        _discipline: currentAssignment.discipline,
+        _roundName: m.roundName,
+        _isNewCategory: false,
+        _isPlaceholder: false
+      });
+    });
+  }
+
+  if (allFights.length < minCount) {
+    const remainingCats = ringCats.filter(a => {
+      if (currentAssignment && a.id === currentAssignment.id) return false;
+      if (a.bracket_state && a.bracket_state.champion) return false;
+      return true;
+    });
+
+    for (const cat of remainingCats) {
+      if (allFights.length >= minCount) break;
+
+      if (cat.bracket_state) {
+        const needed = minCount - allFights.length;
+        const catUpcoming = getUpcomingMatchesFromBracket(cat.bracket_state, null, needed);
+        catUpcoming.forEach((m, idx) => {
+          allFights.push({
+            p1: m.p1,
+            p2: m.p2,
+            _categoryName: cat.category_name,
+            _discipline: cat.discipline,
+            _roundName: m.roundName,
+            _isNewCategory: idx === 0,
+            _isPlaceholder: false
+          });
+        });
+      } else {
+        allFights.push({
+          p1: 'TBD',
+          p2: 'TBD',
+          _categoryName: cat.category_name,
+          _discipline: cat.discipline,
+          _roundName: '',
+          _isNewCategory: true,
+          _isPlaceholder: true
+        });
+      }
+    }
+  }
+
+  return allFights.slice(0, Math.max(minCount, allFights.length));
 }
 
 function getUpcomingMatchesFromBracket(bracket, ring, limit) {
@@ -1563,7 +1399,7 @@ function getUpcomingMatchesFromBracket(bracket, ring, limit) {
       upcoming.push({
         p1: p1,
         p2: p2,
-        roundName: getRoundName(r, totalRounds),
+        roundName: stageName(r, totalRounds),
         matchNum: m + 1,
         discipline: bracket.discipline
       });
