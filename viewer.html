@@ -520,9 +520,9 @@
   }
   .fight-card:hover { background: #3d4a5e; transform: translateX(4px); }
   .fight-card.is-next {
-    border-left-color: var(--accent-warning);
-    background: rgba(245, 158, 11, 0.08);
-    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
+    border-left-color: var(--accent-alert);
+    background: rgba(239, 68, 68, 0.08);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
   }
   .fight-card.new-category {
     border-left-color: var(--accent-secondary);
@@ -538,7 +538,7 @@
     font-size: 1.1rem;
     flex-shrink: 0;
   }
-  .fight-card.is-next .fight-order { background: var(--accent-warning); color: #1a1a1a; }
+  .fight-card.is-next .fight-order { background: var(--accent-alert); color: white; }
   .fight-card.new-category .fight-order { background: var(--accent-secondary); }
 
   .fight-info { min-width: 0; }
@@ -597,9 +597,10 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .badge-next { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+  .badge-next { background: rgba(239, 68, 68, 0.2); color: var(--accent-alert); }
   .badge-upcoming { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); }
   .badge-category { background: rgba(16, 185, 129, 0.2); color: var(--accent-secondary); }
+  .badge-done { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
 
   /* Bracket Cards */
   .bracket-card {
@@ -912,8 +913,9 @@ let ringAssignments = [];
 let siteSettings = {};
 let selectedRingId = null;
 let ringsChannel = null;
-let assignmentsChannel = null; // NEW: For live bracket updates
+let assignmentsChannel = null;
 let extractedAgeGroups = [];
+let allCompetitors = []; // Cache for on-the-fly bracket generation
 
 /* ============================================================
    HELPERS
@@ -938,6 +940,78 @@ function extractAgeGroupFromCategory(catName) {
 }
 
 /* ============================================================
+   BRACKET GENERATION (For on-the-fly viewing)
+============================================================ */
+async function fetchAllCompetitors() {
+  try {
+    const { data: allRegs, error: regErr } = await sb.from("final_registrations").select("*");
+    if (regErr) throw regErr;
+    const compRegs = (allRegs || []).filter(r => {
+      const t = String(r.entry_type || r.type || r.role || "").toLowerCase();
+      return t === "comp" || t === "competitor" || t === "c";
+    });
+    const compIds = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
+    if (compIds.length === 0) return [];
+    const { data: compDetails, error: compErr } = await sb.from("competitors").select("*").in("id", compIds);
+    if (compErr) throw compErr;
+    const out = [];
+    (compDetails || []).forEach(person => {
+      const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
+      personRegs.forEach(reg => {
+        let entries = [];
+        if (reg.entry_data && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
+        else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
+        else if (Array.isArray(reg.entries_list)) entries = reg.entries_list;
+        else if (reg.full_cat || reg.category || reg.discipline) entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline }];
+        entries.forEach(entry => {
+          const fullCat = entry.full_cat || entry.category || entry.fullCat || "";
+          const disc = String(entry.discipline || entry.type || "sparring").toLowerCase();
+          out.push({ id: person.id, name: person.name || "Unknown", team: person.team || "N/A", gender: person.gender || "", belt: person.belt || "", _full_cat: fullCat, _discipline: disc });
+        });
+      });
+    });
+    return out;
+  } catch (e) { console.error("fetchAllCompetitors error:", e); return []; }
+}
+
+function competitorsFor(categoryName, discipline, comps) {
+  const target = norm(categoryName);
+  const disc = norm(discipline);
+  const seen = new Set();
+  const list = [];
+  comps.forEach(c => {
+    if (norm(c._discipline) !== disc) return;
+    if (norm(c._full_cat) !== target) return;
+    const key = String(c.id) + "|" + norm(c.name);
+    if (seen.has(key)) return;
+    seen.add(key);
+    list.push({ name: c.name, team: c.team, gender: c.gender, belt: c.belt });
+  });
+  return list;
+}
+
+function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
+function generateSeedOrder(size) { if (size === 1) return [0]; const half = size / 2; const left = generateSeedOrder(half); const right = left.map(x => x + half); const result = []; for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); } return result; }
+function spreadTeams(list, bracketSize) { const slots = new Array(bracketSize).fill(null); const teams = {}; list.forEach(p => { const key = p.team || "N/A"; if (!teams[key]) teams[key] = []; teams[key].push(p); }); const sortedTeams = Object.values(teams).sort((a, b) => b.length - a.length); const positions = generateSeedOrder(bracketSize); let posIndex = 0; sortedTeams.forEach(teamArr => { teamArr.forEach(player => { if (posIndex < positions.length) { slots[positions[posIndex]] = player; posIndex++; } }); }); return slots; }
+function slotObj(p) { return p ? { name: p.name, team: p.team || "" } : { name: "BYE", team: "" }; }
+function emptySlot() { return { name: "", team: "" }; }
+function buildBracket(list, categoryName, discipline) {
+  const size = Math.max(2, getBracketSize(list.length)); const totalRounds = Math.max(1, Math.log2(size));
+  const seeded = spreadTeams(list, size); const slots = seeded.map(slotObj);
+  const rounds = []; const r1 = [];
+  for (let i = 0; i < size; i += 2) r1.push({ p1: slots[i], p2: slots[i + 1], winner: null, blue_score: 0, red_score: 0 });
+  rounds.push(r1);
+  let matchCount = size / 2;
+  for (let r = 1; r < totalRounds; r++) { matchCount = matchCount / 2; const arr = []; for (let m = 0; m < matchCount; m++) arr.push({ p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 }); rounds.push(arr); }
+  return { version: 1, category_name: categoryName, discipline: discipline, competitor_count: list.length, size: size, totalRounds: totalRounds, rounds: rounds, currentRound: 0, currentMatch: 0, champion: null, updated_at: new Date().toISOString() };
+}
+function isRealName(n) { return !!n && n !== "BYE" && n !== ""; }
+function autoResolveByes(bracket) { if (!bracket) return; let changed = true; let guard = 0; while (changed && guard < 12) { changed = false; guard++; for (let r = 0; r < bracket.rounds.length; r++) { for (let m = 0; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; const n1 = match.p1.name; const n2 = match.p2.name; if (n1 === "" || n2 === "") continue; if (n1 === "BYE" && n2 === "BYE") { match.winner = "bye"; promote(bracket, r, m, { name: "BYE", team: "" }); changed = true; } else if (n1 === "BYE" && isRealName(n2)) { match.winner = "p2"; promote(bracket, r, m, match.p2); changed = true; } else if (n2 === "BYE" && isRealName(n1)) { match.winner = "p1"; promote(bracket, r, m, match.p1); changed = true; } } } } }
+function promote(bracket, roundIdx, matchIdx, winnerObj) { const nextRound = roundIdx + 1; if (nextRound >= bracket.rounds.length) { bracket.champion = winnerObj && isRealName(winnerObj.name) ? winnerObj : null; return; } const nextMatchIdx = Math.floor(matchIdx / 2); const slotKey = (matchIdx % 2 === 0) ? "p1" : "p2"; const target = bracket.rounds[nextRound][nextMatchIdx]; if (!target) return; target[slotKey] = { name: winnerObj.name, team: winnerObj.team || "" }; }
+function stageName(roundIdx, totalRounds) { const remaining = totalRounds - roundIdx; if (remaining === 1) return "Final"; if (remaining === 2) return "Semi-Final"; if (remaining === 3) return "Quarter-Final"; if (remaining === 4) return "Round of 16"; if (remaining === 5) return "Round of 32"; return "Round " + (roundIdx + 1); }
+function globalFightNumber(bracket, roundIdx, matchIdx) { let n = 0; for (let r = 0; r < roundIdx; r++) n += bracket.rounds[r].length; return n + matchIdx + 1; }
+
+/* ============================================================
    DATA FETCHING
 ============================================================ */
 async function loadData() {
@@ -959,6 +1033,11 @@ async function loadData() {
     });
     extractedAgeGroups = Array.from(ageSet).sort();
     populateAgeFilter();
+
+    // Fetch competitors once for on-the-fly bracket generation
+    if (allCompetitors.length === 0) {
+      allCompetitors = await fetchAllCompetitors();
+    }
 
     document.getElementById('liveStatusText').textContent = 'LIVE';
 
@@ -1014,7 +1093,6 @@ function subscribeRings() {
     .subscribe();
 }
 
-// NEW: Subscribe to ring_assignments to get LIVE bracket updates when someone wins
 function subscribeAssignments() {
   if (assignmentsChannel) sb.removeChannel(assignmentsChannel);
   assignmentsChannel = sb.channel('view-assignments-live')
@@ -1031,7 +1109,6 @@ function subscribeAssignments() {
         ringAssignments.push(payload.new);
       }
       
-      // Update age groups dynamically
       const ageSet = new Set();
       ringAssignments.forEach(a => {
         const age = extractAgeGroupFromCategory(a.category_name);
@@ -1039,7 +1116,6 @@ function subscribeAssignments() {
       });
       extractedAgeGroups = Array.from(ageSet).sort();
       
-      // Preserve current filter selection
       const currentAge = document.getElementById('filterAge').value;
       populateAgeFilter();
       document.getElementById('filterAge').value = currentAge;
@@ -1070,28 +1146,42 @@ function switchView(mode) {
 /* ============================================================
    LIVE BRACKETS
 ============================================================ */
-function renderBrackets() {
+async function renderBrackets() {
   const disc = document.getElementById('filterDiscipline').value;
   const gen = document.getElementById('filterGender').value;
   const age = document.getElementById('filterAge').value;
   const container = document.getElementById('bracketsList');
 
+  if (allCompetitors.length === 0) {
+    allCompetitors = await fetchAllCompetitors();
+  }
+
   const brackets = [];
-  ringAssignments.forEach(a => {
-    const bs = a.bracket_state;
-    // Show ALL brackets that have been generated, regardless of whether they are the "current" ring fight
-    if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) return;
+  for (const a of ringAssignments) {
+    let bs = a.bracket_state;
     const discipline = norm(a.discipline || 'sparring');
     const catName = a.category_name || '';
     const ageGroup = extractAgeGroupFromCategory(catName);
-    brackets.push({
-      assignment: a,
-      bracket: bs,
-      discipline: discipline,
-      categoryName: catName,
-      ageGroup: ageGroup
-    });
-  });
+    
+    // Generate on-the-fly if bracket_state is missing
+    if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) {
+      const list = competitorsFor(catName, discipline, allCompetitors);
+      if (list.length > 0) {
+        bs = buildBracket(list, catName, discipline);
+        autoResolveByes(bs);
+      }
+    }
+    
+    if (bs && bs.rounds && Array.isArray(bs.rounds)) {
+      brackets.push({
+        assignment: a,
+        bracket: bs,
+        discipline: discipline,
+        categoryName: catName,
+        ageGroup: ageGroup
+      });
+    }
+  }
 
   const filtered = brackets.filter(b => {
     if (disc !== 'ALL' && b.discipline !== norm(disc)) return false;
@@ -1318,7 +1408,7 @@ function closeRingDetail() {
 }
 
 /* ============================================================
-   RING DETAIL
+   RING DETAIL (Full Fight Queue)
 ============================================================ */
 function renderRingDetail(ringId) {
   const ring = ringsData.find(r => r.id === ringId) || ringsData.find(r => String(r.id) === String(ringId));
@@ -1362,136 +1452,94 @@ function renderRingDetail(ringId) {
     `;
   }
 
-  const allUpcoming = collectUpcomingFights(ring, ringCats, 3);
+  if (ringCats.length > 0) {
+    html += `<div class="upcoming-section-title"><i class="fas fa-list-ol"></i> Full Fight Queue</div>`;
+    
+    for (const cat of ringCats) {
+      const catName = cat.category_name || 'Unknown Category';
+      const discipline = norm(cat.discipline || 'sparring');
+      let bs = cat.bracket_state;
+      
+      // Generate on the fly if missing
+      if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) {
+        const list = competitorsFor(catName, discipline, allCompetitors);
+        if (list.length > 0) {
+          bs = buildBracket(list, catName, discipline);
+          autoResolveByes(bs);
+        }
+      }
 
-  if (allUpcoming.length > 0) {
-    html += `<div class="upcoming-section-title">
-      <i class="fas fa-forward"></i> Next ${allUpcoming.length} Fight${allUpcoming.length !== 1 ? 's' : ''}
-      <span class="count-badge">${allUpcoming.length}</span>
-    </div>`;
-    html += `<div class="upcoming-list">`;
+      if (bs && bs.rounds && Array.isArray(bs.rounds)) {
+        html += `<div style="margin-bottom: 1.5rem; background: var(--bg-card); border-radius: var(--radius-md); padding: 1rem; border-left: 4px solid var(--accent-primary);">`;
+        html += `<div style="font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">`;
+        html += `<i class="fas fa-${discipline === 'patterns' ? 'chess-board' : 'fist-raised'}" style="color: var(--accent-warning);"></i> ${escapeHtml(catName)}`;
+        if (bs.champion) {
+          html += `<span style="margin-left: auto; font-size: 0.8rem; background: rgba(16, 185, 129, 0.2); color: var(--accent-secondary); padding: 2px 8px; border-radius: 10px;"><i class="fas fa-trophy"></i> ${escapeHtml(bs.champion.name)}</span>`;
+        }
+        html += `</div>`;
+        html += `<div class="upcoming-list">`;
 
-    allUpcoming.forEach((fight, idx) => {
-      const isNext = idx === 0;
-      const isNewCategory = fight._isNewCategory;
-      const p1 = fight.p1 || 'TBD';
-      const p2 = fight.p2 || 'TBD';
-      const categoryName = fight._categoryName || '';
-      const roundName = fight._roundName || '';
-      const discipline = fight._discipline || '';
-      const isPlaceholder = fight._isPlaceholder;
+        for (let r = 0; r < bs.rounds.length; r++) {
+          for (let m = 0; m < bs.rounds[r].length; m++) {
+            const match = bs.rounds[r][m];
+            const isCurrent = (bs.currentRound === r && bs.currentMatch === m && !match.winner);
+            const isByeMatch = (match.p1.name === "BYE" || match.p2.name === "BYE");
+            const isDone = !!match.winner;
+            const fightNo = globalFightNumber(bs, r, m);
+            
+            let cardClass = 'fight-card';
+            let badgeClass = 'badge-upcoming';
+            let badgeText = 'UPCOMING';
+            
+            if (isCurrent) {
+              cardClass += ' is-next';
+              badgeClass = 'badge-next';
+              badgeText = 'LIVE';
+            } else if (isDone && !isByeMatch) {
+              badgeClass = 'badge-done';
+              badgeText = 'DONE';
+            } else if (isByeMatch) {
+              badgeClass = 'badge-done';
+              badgeText = 'BYE';
+            }
 
-      let cardClass = 'fight-card';
-      if (isNext) cardClass += ' is-next';
-      else if (isNewCategory) cardClass += ' new-category';
+            const p1 = match.p1.name === "" ? "TBD" : match.p1.name;
+            const p2 = match.p2.name === "" ? "TBD" : match.p2.name;
 
-      html += `
-        <div class="${cardClass}">
-          <div class="fight-order">${idx + 1}</div>
-          <div class="fight-info">
-            ${isNewCategory || isNext ? `<div class="fight-category-tag">
-              <i class="fas fa-${discipline === 'patterns' ? 'chess-board' : 'fist-raised'}"></i>
-              ${escapeHtml(categoryName)}
-            </div>` : ''}
-            <div class="fight-vs-display">
-              <span class="fighter-blue">🔵 ${escapeHtml(p1)}</span>
-              <span class="vs-text">vs</span>
-              <span class="fighter-red">🔴 ${escapeHtml(p2)}</span>
-            </div>
-            <div class="fight-meta">
-              ${roundName ? escapeHtml(roundName) : ''}
-              ${isPlaceholder ? ' · <em style="color:var(--accent-warning)">Awaiting bracket</em>' : ''}
-            </div>
-          </div>
-          <div class="fight-badge ${isNext ? 'badge-next' : (isNewCategory ? 'badge-category' : 'badge-upcoming')}">
-            ${isNext ? '⏭ NEXT' : (isNewCategory ? 'NEW CAT' : 'UPCOMING')}
-          </div>
-        </div>
-      `;
-    });
-
-    html += `</div>`;
+            html += `<div class="${cardClass}">`;
+            html += `<div class="fight-order" style="${isCurrent ? 'background: var(--accent-alert);' : ''}">${fightNo}</div>`;
+            html += `<div class="fight-info">`;
+            html += `<div class="fight-category-tag"><i class="fas fa-${discipline === 'patterns' ? 'chess-board' : 'fist-raised'}"></i> ${escapeHtml(stageName(r, bs.totalRounds))}</div>`;
+            html += `<div class="fight-vs-display">`;
+            html += `<span class="fighter-blue" style="${match.winner === 'p1' ? 'text-decoration: line-through; opacity: 0.6;' : ''}">🔵 ${escapeHtml(p1)}</span>`;
+            html += `<span class="vs-text">vs</span>`;
+            html += `<span class="fighter-red" style="${match.winner === 'p2' ? 'text-decoration: line-through; opacity: 0.6;' : ''}">🔴 ${escapeHtml(p2)}</span>`;
+            html += `</div>`;
+            if (isDone && !isByeMatch) {
+              const wName = match.winner === "p1" ? match.p1.name : (match.winner === "p2" ? match.p2.name : "—");
+              html += `<div class="fight-meta" style="color: var(--accent-secondary); font-weight: 700;">✓ ${escapeHtml(wName)} won (${match.blue_score || 0} - ${match.red_score || 0})</div>`;
+            } else if (isByeMatch) {
+              html += `<div class="fight-meta">Auto-advanced (BYE)</div>`;
+            }
+            html += `</div>`;
+            html += `<div class="fight-badge ${badgeClass}">${badgeText}</div>`;
+            html += `</div>`;
+          }
+        }
+        html += `</div></div>`;
+      }
+    }
   } else {
     html += `
       <div class="empty-state" style="margin-top:1rem;">
         <i class="fas fa-forward"></i>
-        <h3>No upcoming fights</h3>
-        <p>This ring has no more fights scheduled in the current or upcoming categories.</p>
+        <h3>No categories assigned</h3>
+        <p>This ring has no categories assigned to it yet.</p>
       </div>
     `;
   }
 
   body.innerHTML = html;
-}
-
-function collectUpcomingFights(ring, ringCats, minCount) {
-  const allFights = [];
-
-  const currentAssignment = ring && ring.category_name
-    ? ringCats.find(a =>
-        a.category_name === ring.category_name &&
-        norm(a.discipline) === norm(ring.discipline)
-      ) || ringCats[0]
-    : ringCats[0];
-
-  if (currentAssignment && currentAssignment.bracket_state) {
-    const upcoming = getUpcomingMatchesFromBracket(
-      currentAssignment.bracket_state,
-      ring,
-      minCount
-    );
-    upcoming.forEach(m => {
-      allFights.push({
-        p1: m.p1,
-        p2: m.p2,
-        _categoryName: currentAssignment.category_name,
-        _discipline: currentAssignment.discipline,
-        _roundName: m.roundName,
-        _isNewCategory: false,
-        _isPlaceholder: false
-      });
-    });
-  }
-
-  if (allFights.length < minCount) {
-    const remainingCats = ringCats.filter(a => {
-      if (currentAssignment && a.id === currentAssignment.id) return false;
-      if (a.bracket_state && a.bracket_state.champion) return false;
-      return true;
-    });
-
-    for (const cat of remainingCats) {
-      if (allFights.length >= minCount) break;
-
-      if (cat.bracket_state) {
-        const needed = minCount - allFights.length;
-        const catUpcoming = getUpcomingMatchesFromBracket(cat.bracket_state, null, Math.min(needed, 2));
-        catUpcoming.forEach((m, idx) => {
-          allFights.push({
-            p1: m.p1,
-            p2: m.p2,
-            _categoryName: cat.category_name,
-            _discipline: cat.discipline,
-            _roundName: m.roundName,
-            _isNewCategory: idx === 0,
-            _isPlaceholder: false
-          });
-        });
-      } else {
-        allFights.push({
-          p1: 'TBD',
-          p2: 'TBD',
-          _categoryName: cat.category_name,
-          _discipline: cat.discipline,
-          _roundName: '',
-          _isNewCategory: true,
-          _isPlaceholder: true
-        });
-      }
-    }
-  }
-
-  return allFights.slice(0, Math.max(minCount, allFights.length));
 }
 
 function getUpcomingMatchesFromBracket(bracket, ring, limit) {
@@ -1530,7 +1578,7 @@ function getUpcomingMatchesFromBracket(bracket, ring, limit) {
 document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
   subscribeRings();
-  subscribeAssignments(); // NEW: Listen for live bracket updates
+  subscribeAssignments();
   setInterval(loadData, 20000); // Fallback refresh
 });
 </script>
