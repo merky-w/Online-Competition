@@ -25,7 +25,6 @@
     --border: 1px solid rgba(255, 255, 255, 0.1);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
   body {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-body);
@@ -185,8 +184,42 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  select, input[type="date"], input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; transition: var(--transition); font-family: inherit; }
-  
+  select {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    background-color: var(--bg-input);
+    border: var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    outline: none;
+    transition: var(--transition);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+  select:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+  select option { background: var(--bg-panel); color: var(--text-main); }
+  .filter-clear-btn {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent-alert);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+  .filter-clear-btn:hover { background: var(--accent-alert); color: white; }
+
   /* Rings Grid */
   .rings-grid {
     display: grid;
@@ -487,9 +520,9 @@
   }
   .fight-card:hover { background: #3d4a5e; transform: translateX(4px); }
   .fight-card.is-next {
-    border-left-color: var(--accent-alert);
-    background: rgba(239, 68, 68, 0.08);
-    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
+    border-left-color: var(--accent-warning);
+    background: rgba(245, 158, 11, 0.08);
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
   }
   .fight-card.new-category {
     border-left-color: var(--accent-secondary);
@@ -505,7 +538,7 @@
     font-size: 1.1rem;
     flex-shrink: 0;
   }
-  .fight-card.is-next .fight-order { background: var(--accent-alert); color: white; }
+  .fight-card.is-next .fight-order { background: var(--accent-warning); color: #1a1a1a; }
   .fight-card.new-category .fight-order { background: var(--accent-secondary); }
 
   .fight-info { min-width: 0; }
@@ -564,10 +597,169 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .badge-next { background: rgba(239, 68, 68, 0.2); color: var(--accent-alert); }
+  .badge-next { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
   .badge-upcoming { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); }
   .badge-category { background: rgba(16, 185, 129, 0.2); color: var(--accent-secondary); }
-  .badge-done { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+  /* Bracket Cards */
+  .bracket-card {
+    background: var(--bg-panel);
+    border-radius: var(--radius-lg);
+    border: var(--border);
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .bracket-card-header {
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-panel));
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    border-bottom: var(--border);
+  }
+  .bracket-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .bracket-card-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+  .bracket-disc-badge {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .bracket-disc-badge.patterns { background: rgba(21, 101, 192, 0.2); color: #60a5fa; }
+  .bracket-disc-badge.sparring { background: rgba(194, 24, 91, 0.2); color: #f472b6; }
+  .bracket-count-badge {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-muted);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .bracket-winner-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent-secondary);
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bracket-card-body {
+    padding: 1.5rem;
+    overflow-x: auto;
+  }
+  .bracket-tree {
+    display: flex;
+    gap: 2.5rem;
+    padding: 1rem 0;
+    min-width: max-content;
+    align-items: stretch;
+  }
+  .bracket-round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 220px;
+    position: relative;
+  }
+  .round-title {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--border);
+  }
+  .round-matches-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex: 1;
+    gap: 0.6rem;
+  }
+  .match-box {
+    background: var(--bg-card);
+    border: var(--border);
+    border-radius: 8px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.82rem;
+    transition: var(--transition);
+    position: relative;
+  }
+  .match-box:hover { border-color: var(--accent-primary); }
+  .match-box.current-match {
+    border-color: var(--accent-alert);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+    animation: currentPulse 2s ease-in-out infinite;
+  }
+  @keyframes currentPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5); }
+  }
+  .match-box.completed { opacity: 0.75; }
+  .match-player {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.5);
+    gap: 6px;
+  }
+  .match-player.winner {
+    background: rgba(16, 185, 129, 0.2);
+    border-left: 3px solid var(--accent-secondary);
+    font-weight: 700;
+  }
+  .match-player.bye { opacity: 0.5; font-style: italic; }
+  .match-player-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+  .match-player-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+  .match-player-team {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .match-player-score {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--accent-warning);
+    flex-shrink: 0;
+  }
 
   .empty-state {
     text-align: center;
@@ -597,6 +789,8 @@
   @media (max-width: 768px) {
     .current-fight-vs { grid-template-columns: 1fr; gap: 0.5rem; }
     .vs-divider { text-align: center; }
+    .bracket-tree { gap: 1.5rem; }
+    .bracket-round { min-width: 180px; }
     .fight-card { grid-template-columns: auto 1fr; }
     .fight-badge { grid-column: 1 / -1; justify-self: start; }
     .filters-grid { grid-template-columns: 1fr 1fr; }
@@ -720,7 +914,7 @@ let selectedRingId = null;
 let ringsChannel = null;
 let assignmentsChannel = null;
 let extractedAgeGroups = [];
-let allCompetitors = []; 
+let allCompetitors = [];
 
 /* ============================================================
    HELPERS
@@ -732,10 +926,6 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-function escapeAttr(str) { 
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
-}
 function norm(s) { return String(s || '').trim().toLowerCase(); }
 
 function extractAgeGroupFromCategory(catName) {
@@ -746,6 +936,24 @@ function extractAgeGroupFromCategory(catName) {
     if (agePart) return agePart;
   }
   return null;
+}
+
+function isRealName(n) { return !!n && n !== "BYE" && n !== ""; }
+
+function stageName(roundIdx, totalRounds) {
+  const remaining = totalRounds - roundIdx;
+  if (remaining === 1) return "Final";
+  if (remaining === 2) return "Semi-Final";
+  if (remaining === 3) return "Quarter-Final";
+  if (remaining === 4) return "Round of 16";
+  if (remaining === 5) return "Round of 32";
+  return "Round " + (roundIdx + 1);
+}
+
+function globalFightNumber(bracket, roundIdx, matchIdx) {
+  let n = 0;
+  for (let r = 0; r < roundIdx; r++) n += bracket.rounds[r].length;
+  return n + matchIdx + 1;
 }
 
 /* ============================================================
@@ -805,20 +1013,54 @@ function spreadTeams(list, bracketSize) { const slots = new Array(bracketSize).f
 function slotObj(p) { return p ? { name: p.name, team: p.team || "" } : { name: "BYE", team: "" }; }
 function emptySlot() { return { name: "", team: "" }; }
 function buildBracket(list, categoryName, discipline) {
-  const size = Math.max(2, getBracketSize(list.length)); const totalRounds = Math.max(1, Math.log2(size));
-  const seeded = spreadTeams(list, size); const slots = seeded.map(slotObj);
-  const rounds = []; const r1 = [];
+  if (!list || list.length === 0) return null;
+  const size = Math.max(2, getBracketSize(list.length));
+  const totalRounds = Math.max(1, Math.log2(size));
+  const seeded = spreadTeams(list, size);
+  const slots = seeded.map(slotObj);
+  const rounds = [];
+  const r1 = [];
   for (let i = 0; i < size; i += 2) r1.push({ p1: slots[i], p2: slots[i + 1], winner: null, blue_score: 0, red_score: 0 });
   rounds.push(r1);
   let matchCount = size / 2;
-  for (let r = 1; r < totalRounds; r++) { matchCount = matchCount / 2; const arr = []; for (let m = 0; m < matchCount; m++) arr.push({ p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 }); rounds.push(arr); }
+  for (let r = 1; r < totalRounds; r++) {
+    matchCount = matchCount / 2;
+    const arr = [];
+    for (let m = 0; m < matchCount; m++) arr.push({ p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 });
+    rounds.push(arr);
+  }
   return { version: 1, category_name: categoryName, discipline: discipline, competitor_count: list.length, size: size, totalRounds: totalRounds, rounds: rounds, currentRound: 0, currentMatch: 0, champion: null, updated_at: new Date().toISOString() };
 }
-function isRealName(n) { return !!n && n !== "BYE" && n !== ""; }
-function autoResolveByes(bracket) { if (!bracket) return; let changed = true; let guard = 0; while (changed && guard < 12) { changed = false; guard++; for (let r = 0; r < bracket.rounds.length; r++) { for (let m = 0; m < bracket.rounds[r].length; m++) { const match = bracket.rounds[r][m]; if (match.winner) continue; const n1 = match.p1.name; const n2 = match.p2.name; if (n1 === "" || n2 === "") continue; if (n1 === "BYE" && n2 === "BYE") { match.winner = "bye"; promote(bracket, r, m, { name: "BYE", team: "" }); changed = true; } else if (n1 === "BYE" && isRealName(n2)) { match.winner = "p2"; promote(bracket, r, m, match.p2); changed = true; } else if (n2 === "BYE" && isRealName(n1)) { match.winner = "p1"; promote(bracket, r, m, match.p1); changed = true; } } } } }
-function promote(bracket, roundIdx, matchIdx, winnerObj) { const nextRound = roundIdx + 1; if (nextRound >= bracket.rounds.length) { bracket.champion = winnerObj && isRealName(winnerObj.name) ? winnerObj : null; return; } const nextMatchIdx = Math.floor(matchIdx / 2); const slotKey = (matchIdx % 2 === 0) ? "p1" : "p2"; const target = bracket.rounds[nextRound][nextMatchIdx]; if (!target) return; target[slotKey] = { name: winnerObj.name, team: winnerObj.team || "" }; }
-function stageName(roundIdx, totalRounds) { const remaining = totalRounds - roundIdx; if (remaining === 1) return "Final"; if (remaining === 2) return "Semi-Final"; if (remaining === 3) return "Quarter-Final"; if (remaining === 4) return "Round of 16"; if (remaining === 5) return "Round of 32"; return "Round " + (roundIdx + 1); }
-function globalFightNumber(bracket, roundIdx, matchIdx) { let n = 0; for (let r = 0; r < roundIdx; r++) n += bracket.rounds[r].length; return n + matchIdx + 1; }
+function autoResolveByes(bracket) {
+  if (!bracket) return;
+  let changed = true;
+  let guard = 0;
+  while (changed && guard < 12) {
+    changed = false;
+    guard++;
+    for (let r = 0; r < bracket.rounds.length; r++) {
+      for (let m = 0; m < bracket.rounds[r].length; m++) {
+        const match = bracket.rounds[r][m];
+        if (match.winner) continue;
+        const n1 = match.p1.name;
+        const n2 = match.p2.name;
+        if (n1 === "" || n2 === "") continue;
+        if (n1 === "BYE" && n2 === "BYE") { match.winner = "bye"; promote(bracket, r, m, { name: "BYE", team: "" }); changed = true; }
+        else if (n1 === "BYE" && isRealName(n2)) { match.winner = "p2"; promote(bracket, r, m, match.p2); changed = true; }
+        else if (n2 === "BYE" && isRealName(n1)) { match.winner = "p1"; promote(bracket, r, m, match.p1); changed = true; }
+      }
+    }
+  }
+}
+function promote(bracket, roundIdx, matchIdx, winnerObj) {
+  const nextRound = roundIdx + 1;
+  if (nextRound >= bracket.rounds.length) { bracket.champion = winnerObj && isRealName(winnerObj.name) ? winnerObj : null; return; }
+  const nextMatchIdx = Math.floor(matchIdx / 2);
+  const slotKey = (matchIdx % 2 === 0) ? "p1" : "p2";
+  const target = bracket.rounds[nextRound][nextMatchIdx];
+  if (!target) return;
+  target[slotKey] = { name: winnerObj.name, team: winnerObj.team || "" };
+}
 
 /* ============================================================
    DATA FETCHING
@@ -975,7 +1217,7 @@ async function renderBrackets() {
       const list = competitorsFor(catName, discipline, allCompetitors);
       if (list.length > 0) {
         bs = buildBracket(list, catName, discipline);
-        autoResolveByes(bs);
+        if (bs) autoResolveByes(bs);
       }
     }
     
@@ -1132,7 +1374,7 @@ function renderRings() {
 
     let nextFightPreview = null;
     if (currentAssignment && currentAssignment.bracket_state) {
-      const upcoming = getUpcomingMatchesFromBracket(currentAssignment.bracket_state, ring, 1);
+      const upcoming = getUpcomingMatchesFromBracket(currentAssignment.bracket_state, 1);
       if (upcoming.length > 0) nextFightPreview = upcoming[0];
     }
 
@@ -1205,7 +1447,7 @@ function closeRingDetail() {
 }
 
 /* ============================================================
-   RING DETAIL (Full Fight Queue)
+   RING DETAIL - Shows next 5 fights
 ============================================================ */
 function renderRingDetail(ringId) {
   const ring = ringsData.find(r => r.id === ringId) || ringsData.find(r => String(r.id) === String(ringId));
@@ -1249,8 +1491,8 @@ function renderRingDetail(ringId) {
     `;
   }
 
-  // CHANGED: Request at least 5 upcoming fights
-  const allUpcoming = collectUpcomingFights(ring, ringCats, 5);
+  // Get next 5 fights for this ring
+  const allUpcoming = collectUpcomingFightsForRing(ringCats, 5);
 
   if (allUpcoming.length > 0) {
     html += `<div class="upcoming-section-title">
@@ -1267,7 +1509,6 @@ function renderRingDetail(ringId) {
       const categoryName = fight._categoryName || '';
       const roundName = fight._roundName || '';
       const discipline = fight._discipline || '';
-      const isPlaceholder = fight._isPlaceholder;
 
       let cardClass = 'fight-card';
       if (isNext) cardClass += ' is-next';
@@ -1288,7 +1529,6 @@ function renderRingDetail(ringId) {
             </div>
             <div class="fight-meta">
               ${roundName ? escapeHtml(roundName) : ''}
-              ${isPlaceholder ? ' · <em style="color:var(--accent-warning)">Awaiting bracket</em>' : ''}
             </div>
           </div>
           <div class="fight-badge ${isNext ? 'badge-next' : (isNewCategory ? 'badge-category' : 'badge-upcoming')}">
@@ -1312,90 +1552,66 @@ function renderRingDetail(ringId) {
   body.innerHTML = html;
 }
 
-function collectUpcomingFights(ring, ringCats, minCount) {
+/* ============================================================
+   COLLECT NEXT 5 FIGHTS FOR A RING
+============================================================ */
+function collectUpcomingFightsForRing(ringCats, minCount) {
   const allFights = [];
 
-  const currentAssignment = ring && ring.category_name
-    ? ringCats.find(a =>
-        a.category_name === ring.category_name &&
-        norm(a.discipline) === norm(ring.discipline)
-      ) || ringCats[0]
-    : ringCats[0];
+  for (const cat of ringCats) {
+    if (allFights.length >= minCount) break;
 
-  if (currentAssignment && currentAssignment.bracket_state) {
-    const upcoming = getUpcomingMatchesFromBracket(currentAssignment.bracket_state, ring, minCount);
-    upcoming.forEach(m => {
-      allFights.push({
-        p1: m.p1,
-        p2: m.p2,
-        _categoryName: currentAssignment.category_name,
-        _discipline: currentAssignment.discipline,
-        _roundName: m.roundName,
-        _isNewCategory: false,
-        _isPlaceholder: false
-      });
-    });
-  }
+    let bs = cat.bracket_state;
+    const catName = cat.category_name || '';
+    const disc = norm(cat.discipline || 'sparring');
 
-  if (allFights.length < minCount) {
-    const remainingCats = ringCats.filter(a => {
-      if (currentAssignment && a.id === currentAssignment.id) return false;
-      if (a.bracket_state && a.bracket_state.champion) return false;
-      return true;
-    });
+    // Generate bracket on-the-fly if missing
+    if (!bs || !bs.rounds || !Array.isArray(bs.rounds)) {
+      const list = competitorsFor(catName, disc, allCompetitors);
+      if (list.length > 0) {
+        bs = buildBracket(list, catName, disc);
+        if (bs) autoResolveByes(bs);
+      }
+    }
 
-    for (const cat of remainingCats) {
-      if (allFights.length >= minCount) break;
-
-      if (cat.bracket_state) {
-        const needed = minCount - allFights.length;
-        const catUpcoming = getUpcomingMatchesFromBracket(cat.bracket_state, null, needed);
-        catUpcoming.forEach((m, idx) => {
-          allFights.push({
-            p1: m.p1,
-            p2: m.p2,
-            _categoryName: cat.category_name,
-            _discipline: cat.discipline,
-            _roundName: m.roundName,
-            _isNewCategory: idx === 0,
-            _isPlaceholder: false
-          });
-        });
-      } else {
+    if (bs && bs.rounds && Array.isArray(bs.rounds)) {
+      const needed = minCount - allFights.length;
+      const catUpcoming = getUpcomingMatchesFromBracket(bs, needed);
+      catUpcoming.forEach((m, idx) => {
         allFights.push({
-          p1: 'TBD',
-          p2: 'TBD',
+          p1: m.p1,
+          p2: m.p2,
           _categoryName: cat.category_name,
           _discipline: cat.discipline,
-          _roundName: '',
-          _isNewCategory: true,
-          _isPlaceholder: true
+          _roundName: m.roundName,
+          _isNewCategory: idx === 0 && allFights.length > 0,
+          _isPlaceholder: false
         });
-      }
+      });
     }
   }
 
   return allFights.slice(0, Math.max(minCount, allFights.length));
 }
 
-function getUpcomingMatchesFromBracket(bracket, ring, limit) {
+function getUpcomingMatchesFromBracket(bracket, limit) {
   if (!bracket || !bracket.rounds) return [];
   const rounds = bracket.rounds;
   const totalRounds = rounds.length;
   const upcoming = [];
 
-  const startR = bracket.currentRound || 0;
-  const startM = bracket.currentMatch || 0;
+  const startR = bracket.currentRound !== null && bracket.currentRound !== undefined ? bracket.currentRound : 0;
+  const startM = bracket.currentMatch !== null && bracket.currentMatch !== undefined ? bracket.currentMatch : 0;
 
   for (let r = startR; r < rounds.length && upcoming.length < limit; r++) {
     const startMatchIdx = (r === startR) ? startM : 0;
     for (let m = startMatchIdx; m < rounds[r].length && upcoming.length < limit; m++) {
       const match = rounds[r][m];
       if (match.winner) continue;
-      const p1 = match.p1 && match.p1.name ? match.p1.name : 'TBD';
-      const p2 = match.p2 && match.p2.name ? match.p2.name : 'TBD';
+      const p1 = match.p1 && match.p1.name ? match.p1.name : '';
+      const p2 = match.p2 && match.p2.name ? match.p2.name : '';
+      if (!isRealName(p1) || !isRealName(p2)) continue;
       if (p1 === 'BYE' || p2 === 'BYE') continue;
-      if (p1 === '' || p2 === '') continue;
       upcoming.push({
         p1: p1,
         p2: p2,
@@ -1415,7 +1631,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadData();
   subscribeRings();
   subscribeAssignments();
-  setInterval(loadData, 20000); // Fallback refresh
+  setInterval(loadData, 20000);
 });
 </script>
 </body>
