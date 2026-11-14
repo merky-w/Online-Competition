@@ -25,6 +25,8 @@
 --phase-patterns: #1565c0;
 --phase-sparring: #c2185b;
 --phase-paused: #f59e0b;
+--medal-gold: #f9a825; --medal-silver: #9e9e9e; --medal-bronze: #a1887f;
+--points-accent: #00838f;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
@@ -55,6 +57,8 @@ h1 { font-size: 2rem; color: var(--primary); margin-bottom: 5px; font-weight: 70
 .btn-profit:hover { background: linear-gradient(135deg, #4a148c 0%, #311b92 100%); transform: translateY(-1px); }
 .btn-categories { background: linear-gradient(135deg, #e65100 0%, #bf360c 100%); color: white; box-shadow: 0 2px 8px rgba(230, 81, 0, 0.3); }
 .btn-categories:hover { background: linear-gradient(135deg, #bf360c 0%, #8f2a0a 100%); transform: translateY(-1px); }
+.btn-points { background: linear-gradient(135deg, #00838f 0%, #006064 100%); color: white; box-shadow: 0 2px 8px rgba(0, 131, 143, 0.3); }
+.btn-points:hover { background: linear-gradient(135deg, #006064 0%, #004d40 100%); transform: translateY(-1px); }
 .btn-active { background: var(--secondary); color: #fff; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
 .btn-tournament-start {
 background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
@@ -863,11 +867,116 @@ background: var(--success);
 .ring-stop-btn.stopped:hover {
 background: #218838;
 }
+/* ==========================================================
+   NEW: POINTS & RANKINGS SYSTEM
+========================================================== */
+.points-wrap { padding: 10px 0; }
+.points-config-card { background: white; border-radius: 14px; box-shadow: var(--shadow); padding: 22px; margin-bottom: 22px; border-left: 6px solid var(--points-accent); }
+.points-config-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--light-gray); }
+.points-config-title { font-size: 1.3rem; font-weight: 800; color: var(--points-accent); display: flex; align-items: center; gap: 10px; }
+.points-config-sub { color: var(--gray); font-size: 0.88rem; margin-top: 4px; }
+.points-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.point-card { border-radius: 12px; padding: 18px; text-align: center; border: 2px solid var(--border); background: #fafafa; transition: var(--transition); }
+.point-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.1); }
+.point-card.gold { border-color: var(--medal-gold); background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); }
+.point-card.silver { border-color: var(--medal-silver); background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); }
+.point-card.bronze { border-color: var(--medal-bronze); background: linear-gradient(135deg, #efebe9 0%, #ffffff 100%); }
+.point-card .medal-big { font-size: 2.3rem; margin-bottom: 6px; }
+.point-card.gold .medal-big { color: var(--medal-gold); }
+.point-card.silver .medal-big { color: var(--medal-silver); }
+.point-card.bronze .medal-big { color: var(--medal-bronze); }
+.point-card label { font-weight: 800; color: var(--dark); font-size: 0.9rem; margin-bottom: 8px; }
+.point-card input { text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--primary); border: 2px solid var(--border); }
+.point-card input:focus { border-color: var(--points-accent); box-shadow: 0 0 0 3px rgba(0,131,143,0.15); }
+.points-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; border-bottom: 2px solid var(--border); }
+.points-tab { padding: 10px 20px; cursor: pointer; font-weight: 700; color: var(--gray); border-bottom: 3px solid transparent; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
+.points-tab:hover { color: var(--points-accent); }
+.points-tab.active { color: var(--points-accent); border-bottom-color: var(--points-accent); }
+.points-panel { display: none; }
+.points-panel.active { display: block; }
+.rank-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 15px; margin-bottom: 22px; }
+.rank-summary-card { background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow); text-align: center; border-top: 5px solid var(--primary); transition: var(--transition); }
+.rank-summary-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
+.rank-summary-card .rs-icon { font-size: 2rem; margin-bottom: 6px; }
+.rank-summary-card .rs-label { color: var(--gray); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 4px; }
+.rank-summary-card .rs-value { font-size: 1.35rem; font-weight: 800; color: var(--primary); word-break: break-word; }
+.rank-summary-card .rs-sub { color: var(--gray); font-size: 0.82rem; margin-top: 3px; }
+.rank-summary-card.gold-card { border-top-color: var(--medal-gold); }
+.rank-summary-card.gold-card .rs-icon, .rank-summary-card.gold-card .rs-value { color: var(--medal-gold); }
+.rank-summary-card.team-card { border-top-color: #6a1b9a; }
+.rank-summary-card.team-card .rs-icon, .rank-summary-card.team-card .rs-value { color: #6a1b9a; }
+.rank-summary-card.count-card { border-top-color: var(--points-accent); }
+.rank-summary-card.count-card .rs-icon, .rank-summary-card.count-card .rs-value { color: var(--points-accent); }
+.rankings-table-wrap { background: white; border-radius: 12px; box-shadow: var(--shadow); overflow-x: auto; margin-bottom: 22px; }
+.rankings-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.rankings-table thead th { background: var(--primary); color: white; padding: 12px 14px; text-align: left; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; white-space: nowrap; }
+.rankings-table tbody tr { border-bottom: 1px solid var(--border); transition: var(--transition); }
+.rankings-table tbody tr:hover { background: #f8f9fa; }
+.rankings-table tbody td { padding: 11px 14px; font-size: 0.92rem; }
+.rank-cell { font-weight: 800; font-size: 1.05rem; text-align: center; width: 62px; }
+.rank-cell.r1 { color: var(--medal-gold); }
+.rank-cell.r2 { color: var(--medal-silver); }
+.rank-cell.r3 { color: var(--medal-bronze); }
+.rank-cell.rx { color: var(--gray); }
+.pts-cell { font-weight: 800; font-size: 1.1rem; color: var(--points-accent); text-align: center; }
+.team-chip { display: inline-block; padding: 3px 10px; border-radius: 12px; background: #e3f2fd; color: #1565c0; font-size: 0.78rem; font-weight: 700; }
+.medal-count { text-align: center; font-weight: 700; }
+.medal-count.g { color: var(--medal-gold); }
+.medal-count.s { color: var(--medal-silver); }
+.medal-count.b { color: var(--medal-bronze); }
+.place-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; margin: 1px 2px; }
+.place-chip.g { background: #fff8e1; color: #f57f17; border: 1px solid #ffd54f; }
+.place-chip.s { background: #f5f5f5; color: #616161; border: 1px solid #bdbdbd; }
+.place-chip.b { background: #efebe9; color: #6d4c41; border: 1px solid #bcaaa4; }
+.age-rank-block { background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden; border-left: 5px solid var(--primary); }
+.age-rank-block.male { border-left-color: var(--gender-male); }
+.age-rank-block.female { border-left-color: var(--gender-female); }
+.age-rank-head { padding: 12px 18px; background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 800; font-size: 1.05rem; }
+.age-rank-block.male .age-rank-head { color: var(--gender-male); }
+.age-rank-block.female .age-rank-head { color: var(--gender-female); }
+.age-rank-body { padding: 14px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.top-comp-card { background: #f8f9fa; border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; display: flex; align-items: center; gap: 12px; transition: var(--transition); }
+.top-comp-card:hover { border-color: var(--points-accent); transform: translateX(3px); }
+.top-comp-card.t1 { background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); border-color: var(--medal-gold); }
+.top-comp-card.t2 { background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border-color: var(--medal-silver); }
+.top-comp-card.t3 { background: linear-gradient(135deg, #efebe9 0%, #ffffff 100%); border-color: var(--medal-bronze); }
+.top-comp-rank { font-size: 1.6rem; font-weight: 900; width: 44px; text-align: center; flex-shrink: 0; }
+.top-comp-rank.r1 { color: var(--medal-gold); }
+.top-comp-rank.r2 { color: var(--medal-silver); }
+.top-comp-rank.r3 { color: var(--medal-bronze); }
+.top-comp-rank.rx { color: var(--gray); }
+.top-comp-info { flex: 1; min-width: 0; }
+.top-comp-name { font-weight: 700; color: var(--dark); font-size: 0.98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-comp-team { font-size: 0.78rem; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-comp-medals { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+.top-comp-pts { font-weight: 800; color: var(--points-accent); font-size: 1.2rem; text-align: center; flex-shrink: 0; }
+.top-comp-pts span { display: block; font-size: 0.65rem; color: var(--gray); font-weight: 600; }
+.age-group-heading { color: var(--primary); margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 3px solid var(--primary); display: flex; align-items: center; gap: 10px; font-size: 1.25rem; }
+.points-empty { text-align: center; padding: 40px 20px; color: var(--gray); background: white; border-radius: 12px; border: 2px dashed var(--border); box-shadow: var(--shadow); }
+.points-empty i { font-size: 3rem; opacity: 0.35; display: block; margin-bottom: 12px; }
+.points-empty h3 { color: var(--primary); margin-bottom: 6px; }
+.points-source-note { background: #e0f7fa; border-left: 4px solid var(--points-accent); color: #006064; padding: 12px 16px; border-radius: 8px; font-size: 0.86rem; margin-bottom: 18px; }
+.cat-result-card { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 16px 18px; margin-bottom: 14px; border-left: 5px solid var(--primary); }
+.cat-result-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.cat-result-name { font-weight: 800; color: var(--primary); font-size: 1.02rem; display: flex; align-items: center; gap: 8px; }
+.cat-result-meta { font-size: 0.76rem; color: var(--gray); margin-top: 2px; }
+.cat-result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.cat-place-box { border-radius: 8px; padding: 10px; border: 2px solid var(--border); }
+.cat-place-box.g { border-color: var(--medal-gold); background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); }
+.cat-place-box.s { border-color: var(--medal-silver); background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); }
+.cat-place-box.b { border-color: var(--medal-bronze); background: linear-gradient(135deg, #efebe9 0%, #ffffff 100%); }
+.cat-place-label { font-size: 0.72rem; font-weight: 800; margin-bottom: 4px; }
+.cat-place-box.g .cat-place-label { color: var(--medal-gold); }
+.cat-place-box.s .cat-place-label { color: #616161; }
+.cat-place-box.b .cat-place-label { color: #6d4c41; }
+.cat-place-name { font-weight: 700; color: var(--dark); font-size: 0.92rem; }
+.cat-place-team { font-size: 0.76rem; color: var(--gray); }
 @media print {
 body { padding: 0; background: white; }
 .nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn,
 .toast, .selection-banner, .autosave-indicator, .bracket-header-actions,
-.drag-handle, .delete-btn, header, .tournament-status-banner, .phase-status-bar { display: none !important; }
+.drag-handle, .delete-btn, header, .tournament-status-banner, .phase-status-bar,
+.points-tabs, .points-config-card .btn, .points-config-card button { display: none !important; }
 .container > .nav + .filters-card { display: none !important; }
 .a4-page {
 margin: 0 !important;
@@ -879,6 +988,8 @@ padding: 5mm;
 .a4-page:last-of-type { page-break-after: auto; }
 .container { max-width: 100%; padding: 0; }
 #content { margin: 0; padding: 0; }
+.points-panel { display: block !important; }
+.rankings-table-wrap, .age-rank-block, .cat-result-card { box-shadow: none !important; page-break-inside: avoid; }
 }
 @media (max-width: 768px) {
 .parallel-container { grid-template-columns: 1fr; border-bottom: none; }
@@ -899,6 +1010,9 @@ padding: 5mm;
 .round-config-body { grid-template-columns: 1fr; }
 .phase-status-bar .phase-info { flex-direction: column; align-items: flex-start; }
 .phase-actions { width: 100%; justify-content: center; }
+.points-grid { grid-template-columns: 1fr; }
+.age-rank-body { grid-template-columns: 1fr; }
+.points-tab { flex: 1; justify-content: center; font-size: 0.85rem; padding: 8px 10px; }
 }
 </style>
 </head>
@@ -949,6 +1063,7 @@ padding: 5mm;
 <button id="btnCategories" class="btn btn-categories" onclick="showCategories()"><i class="fas fa-sliders-h"></i> Categories</button>
 <button id="btnTeamOverview" class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-users-cog"></i> Team Overview</button>
 <button id="btnPriceOverview" class="btn btn-profit" onclick="showPriceOverview()"><i class="fas fa-coins"></i> Price / Profit</button>
+<button id="btnPointsRankings" class="btn btn-points" onclick="showPointsRankings()"><i class="fas fa-medal"></i> Points &amp; Rankings</button>
 <button id="btnRingSchedule" class="btn btn-info" onclick="showRingSchedule()"><i class="fas fa-ring"></i> Ring Schedule</button>
 <button id="btnDeleted" class="btn btn-secondary" onclick="showDeleted()"><i class="fas fa-trash-alt"></i> Deleted</button>
 <button id="btnJudges" class="btn btn-secondary" onclick="showJudges()"><i class="fas fa-gavel"></i> Judges</button>
@@ -1136,50 +1251,49 @@ let tournamentStatusId = null;
 let currentPhase = null;
 let isTournamentPaused = false;
 let selectedPhase = null;
-
+/* ============================================================
+   NEW: POINTS & RANKINGS STATE
+============================================================ */
+let pointsConfig = { first: 7, second: 5, third: 3 };
+let placementsData = [];
+let ageGroupsData = [];
 function calculateDisciplineBreakdown(entries, basePrice, extraPrice) {
-  if (basePrice === null || isNaN(basePrice)) return null;
-  const compCounts = {};
-  entries.forEach(c => {
-    if (!compCounts[c.name]) compCounts[c.name] = 0;
-    compCounts[c.name]++;
-  });
-  const extra = (extraPrice !== null && !isNaN(extraPrice)) ? extraPrice : 0;
-  let total = 0;
-  let totalBaseEntries = 0;
-  let totalExtraEntries = 0;
-  const competitorDetails = [];
-
-  for (const name in compCounts) {
-    const count = compCounts[name];
-    totalBaseEntries++;
-    const extraCount = count > 1 ? count - 1 : 0;
-    totalExtraEntries += extraCount;
-
-    const baseAmount = basePrice;
-    const extraAmount = extraCount * extra;
-    const compTotal = baseAmount + extraAmount;
-    total += compTotal;
-
-    const compObj = entries.find(e => e.name === name);
-    const team = compObj ? (compObj.team || 'N/A') : 'N/A';
-
-    competitorDetails.push({
-      name, team, count, baseAmount, extraCount, extraUnitPrice: extra, extraAmount, compTotal
-    });
-  }
-
-  return {
-    total,
-    uniqueCompetitors: totalBaseEntries,
-    baseEntries: totalBaseEntries,
-    extraEntries: totalExtraEntries,
-    baseAmount: totalBaseEntries * basePrice,
-    extraAmount: totalExtraEntries * extra,
-    competitorDetails
-  };
+if (basePrice === null || isNaN(basePrice)) return null;
+const compCounts = {};
+entries.forEach(c => {
+if (!compCounts[c.name]) compCounts[c.name] = 0;
+compCounts[c.name]++;
+});
+const extra = (extraPrice !== null && !isNaN(extraPrice)) ? extraPrice : 0;
+let total = 0;
+let totalBaseEntries = 0;
+let totalExtraEntries = 0;
+const competitorDetails = [];
+for (const name in compCounts) {
+const count = compCounts[name];
+totalBaseEntries++;
+const extraCount = count > 1 ? count - 1 : 0;
+totalExtraEntries += extraCount;
+const baseAmount = basePrice;
+const extraAmount = extraCount * extra;
+const compTotal = baseAmount + extraAmount;
+total += compTotal;
+const compObj = entries.find(e => e.name === name);
+const team = compObj ? (compObj.team || 'N/A') : 'N/A';
+competitorDetails.push({
+name, team, count, baseAmount, extraCount, extraUnitPrice: extra, extraAmount, compTotal
+});
 }
-
+return {
+total,
+uniqueCompetitors: totalBaseEntries,
+baseEntries: totalBaseEntries,
+extraEntries: totalExtraEntries,
+baseAmount: totalBaseEntries * basePrice,
+extraAmount: totalExtraEntries * extra,
+competitorDetails
+};
+}
 function parseAgeGroupFromOriginalCategory(fullCat) {
 if (!fullCat) return null;
 const lower = fullCat.toLowerCase();
@@ -1467,7 +1581,7 @@ updateTournamentStartUI();
 updatePhaseStatusBar();
 const phaseLabel = currentPhase === 'patterns' ? 'Patterns' : currentPhase === 'sparring' ? 'Sparring' : 'Both';
 showToast(
-"🏁 " + phaseLabel + " phase STARTED!\n• " + stats.totalFights + " total fights\n• " + Math.ceil(stats.totalTimeSeconds/60) + " min total time\n• Balanced across " + stats.numRings + " ring(s)",
+"🏁 " + phaseLabel + " phase STARTED! • " + stats.totalFights + " total fights • " + Math.ceil(stats.totalTimeSeconds/60) + " min total time • Balanced across " + stats.numRings + " ring(s)",
 "success"
 );
 } catch (err) {
@@ -2249,1015 +2363,7 @@ teamRowsHtml +
 '</div>' +
 '</div></div>';
 }
-async function showCategories() {
-setActiveBtn("btnCategories");
-await loadCategoryConfig();
-const content = document.getElementById("content");
-content.innerHTML = '<div class="cat-editor-wrap">' +
-'<div class="cat-editor-header"><div>' +
-'<div class="cat-editor-title"><i class="fas fa-sliders-h"></i> Category Configuration</div>' +
-'<div class="cat-editor-subtitle">Configure age groups and divisions separately for Male & Female. <strong style="color:var(--success)">Changes auto-save to database.</strong></div>' +
-'</div><div style="display:flex; gap:8px; flex-wrap:wrap;">' +
-'<button class="btn btn-success btn-sm" onclick="saveAllCategoryConfig()"><i class="fas fa-save"></i> Save All Now</button>' +
-'<button class="btn btn-warning btn-sm" onclick="resetToDefaults()"><i class="fas fa-undo"></i> Reset to Defaults</button>' +
-'</div></div>' +
-'<div class="cat-discipline-tabs">' +
-'<div class="cat-disc-tab ' + (currentCatDiscipline === 'patterns' ? 'active-patterns' : '') + '" onclick="switchCatDiscipline(\'patterns\')"><i class="fas fa-chess-board"></i> Patterns (Tul)</div>' +
-'<div class="cat-disc-tab ' + (currentCatDiscipline === 'sparring' ? 'active-sparring' : '') + '" onclick="switchCatDiscipline(\'sparring\')"><i class="fas fa-fist-raised"></i> Sparring (Matsogi)</div>' +
-'</div>' +
-'<div class="cat-gender-tabs" id="catGenderTabs"></div>' +
-'<div id="catEditorBody"></div></div>';
-renderGenderTabs();
-renderCatEditorBody();
-}
-function switchCatDiscipline(disc) {
-currentCatDiscipline = disc;
-document.querySelectorAll(".cat-disc-tab").forEach(t => t.classList.remove("active-patterns", "active-sparring"));
-const tabs = document.querySelectorAll(".cat-disc-tab");
-if (disc === "patterns") tabs[0].classList.add("active-patterns");
-else tabs[1].classList.add("active-sparring");
-renderGenderTabs();
-renderCatEditorBody();
-}
-function switchCatGender(gender) {
-currentCatGender = gender;
-renderGenderTabs();
-renderCatEditorBody();
-}
-function renderGenderTabs() {
-const container = document.getElementById("catGenderTabs");
-if (!container) return;
-const disc = currentCatDiscipline;
-const groups = categoryConfig[disc].ageGroups || [];
-const maleCount = groups.filter(g => normalizeGender(g.gender) === "male").length;
-const femaleCount = groups.filter(g => normalizeGender(g.gender) === "female").length;
-container.innerHTML = GENDER_OPTIONS.map(opt => {
-const count = opt.value === "male" ? maleCount : femaleCount;
-const activeClass = currentCatGender === opt.value ? ('active-' + opt.value) : '';
-return '<div class="cat-gender-tab ' + activeClass + '" onclick="switchCatGender(\'' + opt.value + '\')">' +
-'<i class="fas ' + opt.icon + '"></i> ' + opt.label +
-' <span class="gender-count">' + count + ' group' + (count !== 1 ? 's' : '') + '</span></div>';
-}).join("");
-}
-function renderCatEditorBody() {
-const body = document.getElementById("catEditorBody");
-if (!body) return;
-const disc = currentCatDiscipline;
-const gender = currentCatGender;
-const genderLabel = gender === "male" ? "Male" : "Female";
-const genderIcon = gender === "male" ? "fa-mars" : "fa-venus";
-const genderColor = gender === "male" ? "var(--gender-male)" : "var(--gender-female)";
-body.innerHTML = '<div style="background:linear-gradient(90deg, ' + genderColor + '22, transparent);border-left:4px solid ' + genderColor + ';padding:10px 14px;border-radius:8px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">' +
-'<i class="fas ' + genderIcon + '" style="font-size:1.3rem;color:' + genderColor + '"></i>' +
-'<div><strong style="color:' + genderColor + ';font-size:1.05rem;">' + genderLabel + ' Categories</strong>' +
-'<div style="font-size:0.82rem;color:var(--gray);">Configure age groups and divisions for <strong>' + genderLabel + '</strong> competitors in ' + (disc === "patterns" ? "Patterns" : "Sparring") + '</div></div></div>' +
-'<div class="cat-section">' +
-'<div class="cat-section-title"><i class="fas fa-calendar-alt" style="color:var(--cat-age)"></i> Age Groups Timeline — <span class="gender-indicator ' + gender + '"><i class="fas ' + genderIcon + '"></i> ' + genderLabel + '</span></div>' +
-'<div class="cat-section-hint">Drag the blue markers to adjust age boundaries. Click on the track to add a new boundary. Toggle groups on/off. <strong>All changes auto-save.</strong></div>' +
-'<div class="age-timeline-card"><div class="age-timeline" id="ageTimeline_' + disc + '_' + gender + '">' +
-'<div class="age-timeline-track" id="ageTrack_' + disc + '_' + gender + '" onclick="handleAgeTrackClick(event, \'' + disc + '\', \'' + gender + '\')"></div>' +
-'<div class="age-timeline-segments" id="ageSegments_' + disc + '_' + gender + '"></div>' +
-'<div class="age-scale" id="ageScale_' + disc + '_' + gender + '"></div></div>' +
-'<div class="age-group-list" id="ageGroupList_' + disc + '_' + gender + '"></div>' +
-'<div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">' +
-'<button class="btn btn-add btn-sm" onclick="addNewAgeGroup(\'' + disc + '\', \'' + gender + '\')"><i class="fas fa-plus"></i> Add ' + genderLabel + ' Age Group</button>' +
-'</div></div></div>' +
-'<div class="cat-section" id="divisionSection_' + disc + '_' + gender + '"></div>';
-renderAgeTimeline(disc, gender);
-renderAgeGroupList(disc, gender);
-if (disc === "patterns") renderPatternsTimeline(disc, gender);
-else renderWeightSliders(disc, gender);
-}
-function renderAgeTimeline(disc, gender) {
-const groups = (categoryConfig[disc].ageGroups || []).filter(g => normalizeGender(g.gender) === gender).slice().sort((a,b) => a.order_priority - b.order_priority);
-const track = document.getElementById("ageTrack_" + disc + "_" + gender);
-const segments = document.getElementById("ageSegments_" + disc + "_" + gender);
-const scale = document.getElementById("ageScale_" + disc + "_" + gender);
-const timeline = document.getElementById("ageTimeline_" + disc + "_" + gender);
-if (!track || !segments || !scale || !timeline) return;
-timeline.querySelectorAll(".age-marker").forEach(m => m.remove());
-const maxAge = 70;
-segments.innerHTML = "";
-groups.forEach((g, idx) => {
-const startPct = (g.min_age / maxAge) * 100;
-const endAge = g.max_age === null ? maxAge : g.max_age;
-const endPct = (endAge / maxAge) * 100;
-const widthPct = endPct - startPct;
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const seg = document.createElement("div");
-seg.className = "age-segment" + (g.is_active ? "" : " inactive");
-seg.style.position = "absolute";
-seg.style.left = startPct + "%";
-seg.style.width = widthPct + "%";
-seg.style.background = color;
-seg.innerHTML = '<span class="age-segment-label">' + escapeHtml(g.display_name) + '</span>';
-segments.appendChild(seg);
-});
-const boundaries = new Set();
-groups.forEach(g => { boundaries.add(g.min_age); if (g.max_age !== null) boundaries.add(g.max_age); });
-boundaries.forEach(age => {
-const pct = (age / maxAge) * 100;
-const marker = document.createElement("div");
-marker.className = "age-marker";
-marker.style.left = "calc(30px + (100% - 60px) * " + (pct / 100) + ")";
-marker.innerHTML = '<div class="age-marker-label">' + age + '</div>';
-marker.dataset.age = age;
-marker.addEventListener("mousedown", (e) => startAgeMarkerDrag(e, age, disc, gender));
-marker.addEventListener("touchstart", (e) => startAgeMarkerDrag(e, age, disc, gender), {passive: false});
-timeline.appendChild(marker);
-});
-scale.innerHTML = "";
-for (let a = 0; a <= maxAge; a += 10) {
-const span = document.createElement("span");
-span.textContent = a;
-scale.appendChild(span);
-}
-}
-function handleAgeTrackClick(e, disc, gender) {
-if (e.target.classList.contains("age-marker")) return;
-const track = e.currentTarget;
-const rect = track.getBoundingClientRect();
-const pct = (e.clientX - rect.left) / rect.width;
-const age = Math.max(1, Math.min(70, Math.round(pct * 70)));
-const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender);
-const targetGroup = groups.find(g => g.is_active !== false && age > g.min_age && (g.max_age === null || age < g.max_age));
-if (!targetGroup) { showToast("Cannot add boundary here", "error"); return; }
-const existing = groups.find(g => g.min_age === age || g.max_age === age);
-if (existing) { showToast("Boundary already exists at age " + age, "error"); return; }
-const oldMax = targetGroup.max_age;
-const newGroup = { id: "tmp_" + Date.now(), display_name: targetGroup.display_name + " (split)",
-min_age: age, max_age: oldMax, is_active: true, order_priority: targetGroup.order_priority + 0.5, discipline: disc, gender: gender };
-targetGroup.max_age = age - 1;
-categoryConfig[disc].ageGroups.push(newGroup);
-reorderAndRenumber(disc, gender);
-renderCatEditorBody();
-scheduleAutoSave("Added " + gender + " age boundary at " + age);
-}
-async function startAgeMarkerDrag(e, age, disc, gender) {
-e.preventDefault(); e.stopPropagation();
-const track = document.getElementById("ageTrack_" + disc + "_" + gender);
-if (!track) return;
-const trackRect = track.getBoundingClientRect();
-const marker = e.currentTarget;
-marker.classList.add("dragging");
-const maxAge = 70;
-let currentAge = age;
-const onMove = (ev) => {
-const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
-currentAge = Math.max(1, Math.min(70, Math.round(pct * maxAge)));
-marker.style.left = "calc(30px + (100% - 60px) * " + (currentAge / maxAge) + ")";
-marker.querySelector(".age-marker-label").textContent = currentAge;
-};
-const onEnd = () => {
-document.removeEventListener("mousemove", onMove);
-document.removeEventListener("mouseup", onEnd);
-document.removeEventListener("touchmove", onMove);
-document.removeEventListener("touchend", onEnd);
-marker.classList.remove("dragging");
-if (currentAge !== age) {
-const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender).sort((a,b) => a.min_age - b.min_age);
-let updated = false;
-let groupMaxIdx = -1;
-let groupMinIdx = -1;
-groups.forEach((g, idx) => {
-if (g.max_age === age) groupMaxIdx = idx;
-if (g.min_age === age) groupMinIdx = idx;
-});
-if (groupMaxIdx !== -1) {
-groups[groupMaxIdx].max_age = currentAge;
-updated = true;
-}
-if (groupMinIdx !== -1) {
-groups[groupMinIdx].min_age = currentAge;
-updated = true;
-}
-for (let i = 0; i < groups.length; i++) {
-if (groups[i].max_age !== null && groups[i].min_age > groups[i].max_age) {
-groups[i].min_age = groups[i].max_age;
-}
-if (i < groups.length - 1 && groups[i].max_age !== null) {
-if (groups[i].max_age >= groups[i+1].min_age) {
-groups[i+1].min_age = groups[i].max_age + 1;
-}
-}
-}
-if (updated) {
-reorderAndRenumber(disc, gender);
-renderCatEditorBody();
-scheduleAutoSave("Moved " + gender + " age boundary " + age + " → " + currentAge);
-}
-}
-};
-document.addEventListener("mousemove", onMove);
-document.addEventListener("mouseup", onEnd);
-document.addEventListener("touchmove", onMove, {passive: false});
-document.addEventListener("touchend", onEnd);
-}
-function renderAgeGroupList(disc, gender) {
-const list = document.getElementById("ageGroupList_" + disc + "_" + gender);
-if (!list) return;
-const groups = (categoryConfig[disc].ageGroups || []).filter(g => normalizeGender(g.gender) === gender).slice().sort((a,b) => a.order_priority - b.order_priority);
-list.innerHTML = groups.map((g, idx) => {
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
-return '<div class="age-group-item ' + (g.is_active ? 'active' : 'inactive') + '">' +
-'<div class="age-group-color" style="background:' + color + '"></div>' +
-'<div class="age-group-info">' +
-'<input type="text" class="inline-input inline-input-wide" value="' + escapeAttr(g.display_name) + '" onchange="updateAgeGroupName(\'' + disc + '\', \'' + g.id + '\', this.value)" />' +
-'<div class="age-group-range">Ages: ' + rangeText + ' <span class="gender-badge ' + gender + '"><i class="fas ' + (gender === "male" ? "fa-mars" : "fa-venus") + '"></i> ' + (gender === "male" ? "Male" : "Female") + '</span></div></div>' +
-'<div class="age-group-actions">' +
-'<label class="switch"><input type="checkbox" ' + (g.is_active ? 'checked' : '') + ' onchange="toggleAgeGroupActive(\'' + disc + '\', \'' + g.id + '\', this.checked)" /><span class="slider-toggle"></span></label>' +
-'<button class="btn btn-danger btn-xs" onclick="deleteAgeGroup(\'' + disc + '\', \'' + g.id + '\')"><i class="fas fa-trash"></i></button>' +
-'</div></div>';
-}).join("");
-}
-function updateAgeGroupName(disc, groupId, newName) {
-const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) {
-g.display_name = newName.trim() || g.display_name;
-showToast('Renamed to "' + g.display_name + '"', "success");
-scheduleAutoSave('Renamed group "' + g.display_name + '"');
-}
-}
-function toggleAgeGroupActive(disc, groupId, isActive) {
-const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (g) {
-g.is_active = isActive;
-renderCatEditorBody();
-showToast(isActive ? 'Enabled' : 'Disabled', "success");
-scheduleAutoSave((isActive ? 'Enabled' : 'Disabled') + ' "' + g.display_name + '"');
-}
-}
-async function deleteAgeGroup(disc, groupId) {
-const g = categoryConfig[disc].ageGroups.find(x => x.id === groupId);
-if (!g) return;
-if (!confirm('Delete age group "' + g.display_name + '"?')) return;
-if (!g.id.startsWith("tmp_")) await sb.from("age_groups").delete().eq("id", g.id);
-categoryConfig[disc].ageGroups = categoryConfig[disc].ageGroups.filter(x => x.id !== groupId);
-if (disc === "patterns") delete categoryConfig.patterns.kupRanges[groupId];
-else {
-delete categoryConfig.sparring.weightBoundaries[groupId];
-delete categoryConfig.sparring.roundConfigs[groupId];
-}
-reorderAndRenumber(disc, normalizeGender(g.gender));
-renderCatEditorBody();
-showToast('Deleted "' + g.display_name + '"', "success");
-scheduleAutoSave('Deleted "' + g.display_name + '"');
-}
-async function addNewAgeGroup(disc, gender) {
-const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender);
-const maxPriority = groups.reduce((m, g) => Math.max(m, g.order_priority || 0), 0);
-const lastGroup = groups.sort((a,b) => b.order_priority - a.order_priority)[0];
-const defaultMin = lastGroup ? (lastGroup.max_age !== null ? lastGroup.max_age + 1 : 36) : 0;
-const newGroupId = "tmp_" + Date.now();
-const newGroup = { id: newGroupId, display_name: "New Group",
-min_age: defaultMin, max_age: defaultMin + 5, is_active: true, order_priority: maxPriority + 1, discipline: disc, gender: gender };
-categoryConfig[disc].ageGroups.push(newGroup);
-if (disc === "patterns") {
-categoryConfig.patterns.kupRanges[newGroupId] = DEFAULT_KUP_RANGES.map((r, idx) => ({
-id: "tmp_" + Date.now() + "_" + Math.random().toString(36).substr(2,5),
-age_group_id: newGroupId, min_kup: r.min_kup, max_kup: r.max_kup,
-display_name: r.display_name, is_active: true, order_priority: idx + 1
-}));
-} else {
-categoryConfig.sparring.weightBoundaries[newGroupId] = [...DEFAULT_WEIGHT_BOUNDS];
-categoryConfig.sparring.roundConfigs[newGroupId] = { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 };
-}
-reorderAndRenumber(disc, gender);
-renderCatEditorBody();
-showToast("Added new " + gender + " age group with default ranges", "success");
-scheduleAutoSave('Added new ' + gender + ' age group "' + newGroup.display_name + '"');
-}
-function reorderAndRenumber(disc, gender) {
-const groups = categoryConfig[disc].ageGroups.filter(g => normalizeGender(g.gender) === gender);
-groups.sort((a,b) => a.min_age - b.min_age);
-groups.forEach((g, i) => g.order_priority = i + 1);
-}
-function renderPatternsTimeline(disc, gender) {
-const section = document.getElementById("divisionSection_" + disc + "_" + gender);
-if (!section) return;
-const groups = (categoryConfig.patterns.ageGroups || []).filter(g => normalizeGender(g.gender) === gender).slice().sort((a,b) => a.order_priority - b.order_priority);
-if (groups.length === 0) {
-section.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No ' + gender + ' age groups defined.</div>';
-return;
-}
-let html = '<div class="cat-section-title"><i class="fas fa-award" style="color:#1565c0"></i> Kup/Dan Ranges per Age Group (Timeline View) — <span class="gender-indicator ' + gender + '"><i class="fas ' + (gender === "male" ? "fa-mars" : "fa-venus") + '"></i> ' + (gender === "male" ? "Male" : "Female") + '</span></div>' +
-'<div class="cat-section-hint">Each colored segment represents a kup/dan range. Drag the markers to adjust min/max. Click on empty space to add a new range.</div>';
-html += groups.map((g, idx) => {
-const ranges = (categoryConfig.patterns.kupRanges[g.id] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-return '<div style="margin-bottom:20px;border:2px solid ' + color + ';border-radius:12px;overflow:hidden;">' +
-'<div style="background:' + color + ';color:white;padding:10px 15px;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
-'<span>' + escapeHtml(g.display_name) + ' (' + rangeText + ' years) <span class="gender-badge ' + gender + '" style="background:rgba(255,255,255,0.25);color:white;border:none;"><i class="fas ' + (gender === "male" ? "fa-mars" : "fa-venus") + '"></i> ' + (gender === "male" ? "Male" : "Female") + '</span></span>' +
-'<div style="display:flex;gap:6px;">' +
-'<button class="btn btn-sm" style="background:white;color:' + color + ';" onclick="addPatternsRange(\'' + g.id + '\')"><i class="fas fa-plus"></i> Add Range</button>' +
-'<button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:white;" onclick="resetPatternsRanges(\'' + g.id + '\')"><i class="fas fa-undo"></i> Reset</button>' +
-'</div></div>' +
-'<div style="padding:12px;">' +
-(ranges.length === 0 ? '<div style="text-align:center;color:var(--gray);padding:15px;font-style:italic;">No ranges defined. Click "Add Range".</div>' :
-'<div class="patterns-timeline-wrap" id="patternsTimelineWrap_' + g.id + '">' +
-'<div class="patterns-timeline-track" id="patternsTrack_' + g.id + '" onclick="handlePatternsTrackClick(event, \'' + g.id + '\')"></div>' +
-'<div class="patterns-timeline-segments" id="patternsSegments_' + g.id + '"></div>' +
-'<div class="patterns-scale" id="patternsScale_' + g.id + '"></div>' +
-'</div>') +
-'</div></div>';
-}).join("");
-section.innerHTML = html;
-groups.forEach(g => renderPatternsMarkers(g));
-}
-function renderPatternsMarkers(group) {
-const wrap = document.getElementById("patternsTimelineWrap_" + group.id);
-const track = document.getElementById("patternsTrack_" + group.id);
-const segments = document.getElementById("patternsSegments_" + group.id);
-const scale = document.getElementById("patternsScale_" + group.id);
-if (!wrap || !track || !segments || !scale) return;
-wrap.querySelectorAll(".patterns-marker").forEach(m => m.remove());
-const ranges = (categoryConfig.patterns.kupRanges[group.id] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-const minVal = PATTERNS_MIN_VALUE;
-const maxVal = PATTERNS_MAX_VALUE;
-const range = minVal - maxVal;
-segments.innerHTML = "";
-ranges.forEach((r, idx) => {
-if (r.is_active === false) return;
-const hi = Math.max(r.min_kup, r.max_kup);
-const lo = Math.min(r.min_kup, r.max_kup);
-const startPct = ((minVal - hi) / range) * 100;
-const endPct = ((minVal - lo) / range) * 100;
-const widthPct = endPct - startPct;
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const seg = document.createElement("div");
-seg.className = "age-segment";
-seg.style.position = "absolute";
-seg.style.left = startPct + "%";
-seg.style.width = widthPct + "%";
-seg.style.background = color;
-seg.innerHTML = '<span class="age-segment-label">' + escapeHtml(r.display_name) + '</span>';
-segments.appendChild(seg);
-});
-const markerPositions = new Map();
-ranges.forEach(r => {
-if (r.is_active === false) return;
-const hi = Math.max(r.min_kup, r.max_kup);
-const lo = Math.min(r.min_kup, r.max_kup);
-if (!markerPositions.has(hi)) markerPositions.set(hi, []);
-if (!markerPositions.has(lo)) markerPositions.set(lo, []);
-markerPositions.get(hi).push({ range: r, type: 'max' });
-markerPositions.get(lo).push({ range: r, type: 'min' });
-});
-markerPositions.forEach((rangeInfos, val) => {
-const pct = ((minVal - val) / range) * 100;
-const marker = document.createElement("div");
-marker.className = "patterns-marker";
-marker.style.left = "calc(20px + (100% - 40px) * " + (pct / 100) + ")";
-const label = KUP_DAN_NAMES[val] || val;
-marker.innerHTML = '<div class="patterns-marker-label">' + label + '</div>' +
-'<button class="patterns-marker-delete" onclick="deletePatternsMarker(event, \'' + group.id + '\', ' + val + ')" title="Delete all ranges at this level"><i class="fas fa-times"></i></button>';
-marker.dataset.value = val;
-marker.addEventListener("mousedown", (e) => {
-if (e.target.closest(".patterns-marker-delete")) return;
-startPatternsMarkerDrag(e, val, group.id);
-});
-marker.addEventListener("touchstart", (e) => {
-if (e.target.closest(".patterns-marker-delete")) return;
-startPatternsMarkerDrag(e, val, group.id);
-}, {passive: false});
-wrap.appendChild(marker);
-});
-scale.innerHTML = "";
-for (let v = minVal; v >= maxVal; v--) {
-const span = document.createElement("span");
-span.textContent = KUP_DAN_NAMES[v] || v;
-scale.appendChild(span);
-}
-}
-function handlePatternsTrackClick(e, groupId) {
-if (e.target.classList.contains("patterns-marker") || e.target.closest(".patterns-marker")) return;
-const track = e.currentTarget;
-const rect = track.getBoundingClientRect();
-const pct = (e.clientX - rect.left) / rect.width;
-const minVal = PATTERNS_MIN_VALUE;
-const maxVal = PATTERNS_MAX_VALUE;
-const range = minVal - maxVal;
-const val = Math.round(minVal - (pct * range));
-const clampedVal = Math.max(maxVal, Math.min(minVal, val));
-if (!categoryConfig.patterns.kupRanges[groupId]) categoryConfig.patterns.kupRanges[groupId] = [];
-const ranges = categoryConfig.patterns.kupRanges[groupId];
-const maxPriority = ranges.reduce((m, r) => Math.max(m, r.order_priority || 0), 0);
-const newRange = {
-id: "tmp_" + Date.now() + "_" + Math.random().toString(36).substr(2,5),
-age_group_id: groupId, min_kup: clampedVal, max_kup: clampedVal - 1,
-display_name: (KUP_DAN_NAMES[clampedVal] || clampedVal) + " range",
-is_active: true, order_priority: maxPriority + 1
-};
-ranges.push(newRange);
-renderCatEditorBody();
-showToast("Added new range. Drag markers to adjust.", "success");
-scheduleAutoSave("Added kup range");
-}
-async function deletePatternsMarker(e, groupId, val) {
-e.preventDefault(); e.stopPropagation();
-if (!confirm("Remove all ranges at " + (KUP_DAN_NAMES[val] || val) + "?")) return;
-const ranges = categoryConfig.patterns.kupRanges[groupId] || [];
-const toDelete = ranges.filter(r => r.min_kup === val || r.max_kup === val);
-for (const r of toDelete) {
-if (!r.id.startsWith("tmp_")) {
-await sb.from("patterns_kup_ranges").delete().eq("id", r.id);
-}
-}
-categoryConfig.patterns.kupRanges[groupId] = ranges.filter(r => r.min_kup !== val && r.max_kup !== val);
-renderCatEditorBody();
-showToast("Removed ranges at " + (KUP_DAN_NAMES[val] || val), "success");
-scheduleAutoSave("Removed kup ranges at " + (KUP_DAN_NAMES[val] || val));
-}
-async function startPatternsMarkerDrag(e, val, groupId) {
-e.preventDefault(); e.stopPropagation();
-const track = document.getElementById("patternsTrack_" + groupId);
-if (!track) return;
-const trackRect = track.getBoundingClientRect();
-const marker = e.currentTarget;
-marker.classList.add("dragging");
-const minVal = PATTERNS_MIN_VALUE;
-const maxVal = PATTERNS_MAX_VALUE;
-const range = minVal - maxVal;
-let currentVal = val;
-const onMove = (ev) => {
-const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
-currentVal = Math.round(minVal - (pct * range));
-currentVal = Math.max(maxVal, Math.min(minVal, currentVal));
-const pctDisplay = ((minVal - currentVal) / range) * 100;
-marker.style.left = "calc(20px + (100% - 40px) * " + (pctDisplay / 100) + ")";
-marker.querySelector(".patterns-marker-label").textContent = KUP_DAN_NAMES[currentVal] || currentVal;
-};
-const onEnd = () => {
-document.removeEventListener("mousemove", onMove);
-document.removeEventListener("mouseup", onEnd);
-document.removeEventListener("touchmove", onMove);
-document.removeEventListener("touchend", onEnd);
-marker.classList.remove("dragging");
-if (currentVal !== val) {
-const ranges = categoryConfig.patterns.kupRanges[groupId] || [];
-let updated = false;
-ranges.forEach(r => {
-if (r.min_kup === val) { r.min_kup = currentVal; updated = true; }
-if (r.max_kup === val) { r.max_kup = currentVal; updated = true; }
-});
-if (updated) {
-renderCatEditorBody();
-scheduleAutoSave("Moved kup boundary " + (KUP_DAN_NAMES[val] || val) + " → " + (KUP_DAN_NAMES[currentVal] || currentVal));
-}
-}
-};
-document.addEventListener("mousemove", onMove);
-document.addEventListener("mouseup", onEnd);
-document.addEventListener("touchmove", onMove, {passive: false});
-document.addEventListener("touchend", onEnd);
-}
-function addPatternsRange(ageGroupId) {
-if (!categoryConfig.patterns.kupRanges[ageGroupId]) categoryConfig.patterns.kupRanges[ageGroupId] = [];
-const ranges = categoryConfig.patterns.kupRanges[ageGroupId];
-const maxPriority = ranges.reduce((m, r) => Math.max(m, r.order_priority || 0), 0);
-ranges.push({
-id: "tmp_" + Date.now() + "_" + Math.random().toString(36).substr(2,5),
-age_group_id: ageGroupId, min_kup: 10, max_kup: 9,
-display_name: "10th-9th Kup", is_active: true, order_priority: maxPriority + 1
-});
-renderCatEditorBody();
-showToast("Added new range. Adjust markers.", "success");
-scheduleAutoSave("Added new kup range");
-}
-async function resetPatternsRanges(ageGroupId) {
-if (!confirm("Reset this age group's kup ranges to defaults?")) return;
-const existing = categoryConfig.patterns.kupRanges[ageGroupId] || [];
-for (const r of existing) {
-if (!r.id.startsWith("tmp_")) {
-await sb.from("patterns_kup_ranges").delete().eq("id", r.id);
-}
-}
-categoryConfig.patterns.kupRanges[ageGroupId] = DEFAULT_KUP_RANGES.map((r, idx) => ({
-id: "tmp_" + Date.now() + "_" + Math.random().toString(36).substr(2,5),
-age_group_id: ageGroupId, min_kup: r.min_kup, max_kup: r.max_kup,
-display_name: r.display_name, is_active: true, order_priority: idx + 1
-}));
-renderCatEditorBody();
-showToast("Reset to default ranges", "success");
-scheduleAutoSave("Reset patterns ranges");
-}
-function renderWeightSliders(disc, gender) {
-const section = document.getElementById("divisionSection_" + disc + "_" + gender);
-if (!section) return;
-const groups = (categoryConfig.sparring.ageGroups || []).filter(g => normalizeGender(g.gender) === gender).slice().sort((a,b) => a.order_priority - b.order_priority);
-if (groups.length === 0) {
-section.innerHTML = '<div style="padding:20px;text-align:center;color:var(--gray);font-style:italic;">No ' + gender + ' age groups defined.</div>';
-return;
-}
-let html = '<div class="cat-section-title"><i class="fas fa-weight-hanging" style="color:var(--cat-weight)"></i> Weight Divisions per Age Group — <span class="gender-indicator ' + gender + '"><i class="fas ' + (gender === "male" ? "fa-mars" : "fa-venus") + '"></i> ' + (gender === "male" ? "Male" : "Female") + '</span></div>' +
-'<div class="cat-section-hint">For each ' + gender + ' age group, drag markers to set weight boundaries. Click on the track to add a new boundary. Hover a marker to delete it.</div>' +
-'<div id="weightSliders_' + disc + '_' + gender + '"></div>';
-section.innerHTML = html;
-const container = document.getElementById("weightSliders_" + disc + "_" + gender);
-const maxVal = SPARRING_MAX_KG;
-container.innerHTML = groups.map((g, idx) => {
-const boundaries = (categoryConfig.sparring.weightBoundaries[g.id] || []).slice().sort((a,b) => b-a);
-const rangeText = g.max_age === null ? (g.min_age + "+") : (g.min_age + " - " + g.max_age);
-const color = AGE_GROUP_COLORS[idx % AGE_GROUP_COLORS.length];
-const chips = buildWeightCategoryChips(boundaries);
-const roundCfg = categoryConfig.sparring.roundConfigs[g.id] || { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 };
-return '<div class="weight-slider-card ' + (g.is_active ? 'active' : 'inactive') + '">' +
-'<div class="weight-slider-header"><div class="weight-slider-title">' +
-'<span class="age-badge" style="background:' + color + '">' + escapeHtml(g.display_name) + '</span>' +
-'<span class="gender-badge ' + gender + '"><i class="fas ' + (gender === "male" ? "fa-mars" : "fa-venus") + '"></i> ' + (gender === "male" ? "Male" : "Female") + '</span>' +
-'<span style="font-size:0.85rem;color:var(--gray)">(' + rangeText + ' years) — ' + boundaries.length + ' weight division' + (boundaries.length !== 1 ? 's' : '') + '</span>' +
-'</div>' +
-'<div style="display:flex;gap:6px;">' +
-(g.is_active ? '' : '<span style="color:var(--cat-inactive);font-size:0.8rem;font-weight:700;"><i class="fas fa-pause-circle"></i> DISABLED</span>') +
-'<button class="btn btn-sm" style="background:rgba(0,0,0,0.1);color:var(--dark);" onclick="resetWeightBoundaries(\'' + g.id + '\')"><i class="fas fa-undo"></i> Reset</button>' +
-'</div></div>' +
-'<div class="weight-slider-track-wrap" id="weightTrackWrap_' + g.id + '">' +
-'<div class="weight-slider-track" id="weightTrack_' + g.id + '" onclick="handleWeightTrackClick(event, \'' + g.id + '\')"></div>' +
-'<div class="weight-scale" id="weightScale_' + g.id + '"></div>' +
-'</div><div class="weight-categories-display">' + chips + '</div>' +
-buildRoundConfigCard(g.id, g.display_name, roundCfg) +
-'</div>';
-}).join("");
-groups.forEach(g => renderWeightMarkers(g));
-}
-function buildRoundConfigCard(ageGroupId, groupName, cfg) {
-const rounds = cfg.rounds_count;
-const mins = cfg.round_minutes;
-const secs = cfg.round_seconds;
-const pMins = cfg.pause_minutes !== undefined ? cfg.pause_minutes : 1;
-const pSecs = cfg.pause_seconds !== undefined ? cfg.pause_seconds : 0;
-const totalSecsPerRound = mins * 60 + secs;
-const totalMatchSecs = totalSecsPerRound * rounds;
-const totalMin = Math.floor(totalMatchSecs / 60);
-const totalSec = totalMatchSecs % 60;
-const safeGroupId = escapeAttr(ageGroupId);
-const timeDisplay = secs > 0 ? (mins + ':' + String(secs).padStart(2, '0')) : (mins + ':00');
-const pauseDisplay = pSecs > 0 ? (pMins + ':' + String(pSecs).padStart(2, '0')) : (pMins + ':00');
-const roundVisualHtml = buildRoundVisual(cfg);
-return '<div class="round-config-card" id="roundCard_' + safeGroupId + '">' +
-'<div class="round-config-saved-indicator" id="roundSaved_' + safeGroupId + '"><i class="fas fa-check-circle"></i> Saved</div>' +
-'<div class="round-config-header">' +
-'<div class="round-config-title"><i class="fas fa-stopwatch"></i> Round & Pause Configuration</div>' +
-'<div class="round-config-preview">' +
-'<span><strong>' + rounds + '</strong> round' + (rounds !== 1 ? 's' : '') + '</span>' +
-'<span class="preview-divider">×</span>' +
-'<span><strong>' + timeDisplay + '</strong> min/round</span>' +
-'<span class="preview-divider">+</span>' +
-'<span><strong>' + pauseDisplay + '</strong> pause</span>' +
-'<span class="preview-divider">=</span>' +
-'<span><strong>' + totalMin + ':' + String(totalSec).padStart(2, '0') + '</strong> fight time</span>' +
-'</div></div>' +
-'<div class="round-config-body">' +
-'<div class="round-config-field">' +
-'<label><i class="fas fa-redo"></i> Number of Rounds</label>' +
-'<div class="round-input-wrap">' +
-'<i class="fas fa-layer-group input-icon"></i>' +
-'<input type="number" id="roundsCount_' + safeGroupId + '" value="' + rounds + '" min="1" max="15" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
-'<span class="unit-label">rounds</span>' +
-'<div class="round-stepper">' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'rounds\', 1)"><i class="fas fa-caret-up"></i></button>' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'rounds\', -1)"><i class="fas fa-caret-down"></i></button>' +
-'</div></div></div>' +
-'<div class="round-config-field">' +
-'<label><i class="fas fa-clock"></i> Round Duration</label>' +
-'<div style="display:flex;gap:6px;">' +
-'<div class="round-input-wrap" style="flex:1;">' +
-'<i class="fas fa-hourglass-half input-icon"></i>' +
-'<input type="number" id="roundMinutes_' + safeGroupId + '" value="' + mins + '" min="0" max="30" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
-'<span class="unit-label">min</span>' +
-'<div class="round-stepper">' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'minutes\', 1)"><i class="fas fa-caret-up"></i></button>' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'minutes\', -1)"><i class="fas fa-caret-down"></i></button>' +
-'</div></div>' +
-'<div class="round-input-wrap" style="flex:1;">' +
-'<i class="fas fa-stopwatch input-icon"></i>' +
-'<input type="number" id="roundSeconds_' + safeGroupId + '" value="' + secs + '" min="0" max="59" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
-'<span class="unit-label">sec</span>' +
-'<div class="round-stepper">' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'seconds\', 5)"><i class="fas fa-caret-up"></i></button>' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'seconds\', -5)"><i class="fas fa-caret-down"></i></button>' +
-'</div></div></div></div>' +
-'<div class="round-config-field">' +
-'<label><i class="fas fa-hourglass-end"></i> Pause Time</label>' +
-'<div style="display:flex;gap:6px;">' +
-'<div class="round-input-wrap" style="flex:1;">' +
-'<i class="fas fa-hourglass-half input-icon"></i>' +
-'<input type="number" id="pauseMinutes_' + safeGroupId + '" value="' + pMins + '" min="0" max="30" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
-'<span class="unit-label">min</span>' +
-'<div class="round-stepper">' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'pause_minutes\', 1)"><i class="fas fa-caret-up"></i></button>' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'pause_minutes\', -1)"><i class="fas fa-caret-down"></i></button>' +
-'</div></div>' +
-'<div class="round-input-wrap" style="flex:1;">' +
-'<i class="fas fa-stopwatch input-icon"></i>' +
-'<input type="number" id="pauseSeconds_' + safeGroupId + '" value="' + pSecs + '" min="0" max="59" onchange="updateRoundConfig(\'' + safeGroupId + '\')" oninput="updateRoundConfig(\'' + safeGroupId + '\')" />' +
-'<span class="unit-label">sec</span>' +
-'<div class="round-stepper">' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'pause_seconds\', 5)"><i class="fas fa-caret-up"></i></button>' +
-'<button onclick="stepRoundValue(\'' + safeGroupId + '\', \'pause_seconds\', -5)"><i class="fas fa-caret-down"></i></button>' +
-'</div></div></div></div>' +
-'<div class="round-total-display">' +
-'<span class="total-label"><i class="fas fa-hourglass-end"></i> Total Fight Time (excl. pauses):</span>' +
-'<span class="total-value"><i class="fas fa-stopwatch"></i> ' + totalMin + ':' + String(totalSec).padStart(2, '0') + ' min</span>' +
-'</div>' +
-'<div class="round-visual">' + roundVisualHtml + '</div>' +
-'</div></div>';
-}
-function buildRoundVisual(cfg) {
-const rounds = Math.min(cfg.rounds_count, 15);
-const mins = cfg.round_minutes;
-const secs = cfg.round_seconds;
-const timeStr = secs > 0 ? (mins + ':' + String(secs).padStart(2, '0')) : (mins + ':00');
-let html = '';
-for (let i = 0; i < rounds; i++) {
-if (i > 0) html += '<i class="fas fa-chevron-right round-visual-arrow"></i>';
-html += '<div class="round-visual-dot">' +
-'<div class="round-visual-circle">R' + (i + 1) + '</div>' +
-'<div class="round-visual-time">' + timeStr + '</div>' +
-'</div>';
-}
-return html;
-}
-function stepRoundValue(groupId, field, delta) {
-let inputId;
-if (field === 'rounds') inputId = 'roundsCount_' + groupId;
-else if (field === 'minutes') inputId = 'roundMinutes_' + groupId;
-else if (field === 'seconds') inputId = 'roundSeconds_' + groupId;
-else if (field === 'pause_minutes') inputId = 'pauseMinutes_' + groupId;
-else if (field === 'pause_seconds') inputId = 'pauseSeconds_' + groupId;
-const input = document.getElementById(inputId);
-if (!input) return;
-let val = parseInt(input.value);
-if (isNaN(val)) val = 0;
-val += delta;
-let min = 0, max = 59;
-if (field === 'rounds') { min = 1; max = 15; }
-else if (field === 'minutes' || field === 'pause_minutes') { min = 0; max = 30; }
-else if (field === 'seconds' || field === 'pause_seconds') { min = 0; max = 59; }
-val = Math.max(min, Math.min(max, val));
-input.value = val;
-updateRoundConfig(groupId);
-}
-function updateRoundConfig(groupId) {
-const roundsEl = document.getElementById('roundsCount_' + groupId);
-const minsEl = document.getElementById('roundMinutes_' + groupId);
-const secsEl = document.getElementById('roundSeconds_' + groupId);
-const pMinsEl = document.getElementById('pauseMinutes_' + groupId);
-const pSecsEl = document.getElementById('pauseSeconds_' + groupId);
-if (!roundsEl || !minsEl || !secsEl || !pMinsEl || !pSecsEl) return;
-let rounds = parseInt(roundsEl.value);
-if (isNaN(rounds)) rounds = 3;
-let mins = parseInt(minsEl.value);
-if (isNaN(mins)) mins = 0;
-let secs = parseInt(secsEl.value);
-if (isNaN(secs)) secs = 0;
-let pMins = parseInt(pMinsEl.value);
-if (isNaN(pMins)) pMins = 1;
-let pSecs = parseInt(pSecsEl.value);
-if (isNaN(pSecs)) pSecs = 0;
-rounds = Math.max(1, Math.min(15, rounds));
-mins = Math.max(0, Math.min(30, mins));
-secs = Math.max(0, Math.min(59, secs));
-pMins = Math.max(0, Math.min(30, pMins));
-pSecs = Math.max(0, Math.min(59, pSecs));
-if (secs >= 60) { mins += Math.floor(secs / 60); secs = secs % 60; }
-if (pSecs >= 60) { pMins += Math.floor(pSecs / 60); pSecs = pSecs % 60; }
-roundsEl.value = rounds;
-minsEl.value = mins;
-secsEl.value = secs;
-pMinsEl.value = pMins;
-pSecsEl.value = pSecs;
-if (!categoryConfig.sparring.roundConfigs[groupId]) {
-categoryConfig.sparring.roundConfigs[groupId] = { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 };
-}
-categoryConfig.sparring.roundConfigs[groupId] = {
-rounds_count: rounds,
-round_minutes: mins,
-round_seconds: secs,
-pause_minutes: pMins,
-pause_seconds: pSecs
-};
-updateRoundPreview(groupId, rounds, mins, secs, pMins, pSecs);
-showRoundSavedIndicator(groupId);
-scheduleAutoSave('Updated round & pause config for age group');
-}
-function updateRoundPreview(groupId, rounds, mins, secs, pMins, pSecs) {
-const card = document.getElementById('roundCard_' + groupId);
-if (!card) return;
-const preview = card.querySelector('.round-config-preview');
-const totalDisplay = card.querySelector('.round-total-display .total-value');
-const visual = card.querySelector('.round-visual');
-if (!preview || !totalDisplay || !visual) return;
-const timeStr = secs > 0 ? (mins + ':' + String(secs).padStart(2, '0')) : (mins + ':00');
-const pauseStr = pSecs > 0 ? (pMins + ':' + String(pSecs).padStart(2, '0')) : (pMins + ':00');
-const totalSecsPerRound = mins * 60 + secs;
-const totalMatchSecs = totalSecsPerRound * rounds;
-const totalMin = Math.floor(totalMatchSecs / 60);
-const totalSec = totalMatchSecs % 60;
-preview.innerHTML = '<span><strong>' + rounds + '</strong> round' + (rounds !== 1 ? 's' : '') + '</span>' +
-'<span class="preview-divider">×</span>' +
-'<span><strong>' + timeStr + '</strong> min/round</span>' +
-'<span class="preview-divider">+</span>' +
-'<span><strong>' + pauseStr + '</strong> pause</span>' +
-'<span class="preview-divider">=</span>' +
-'<span><strong>' + totalMin + ':' + String(totalSec).padStart(2, '0') + '</strong> fight time</span>';
-totalDisplay.innerHTML = '<i class="fas fa-stopwatch"></i> ' + totalMin + ':' + String(totalSec).padStart(2, '0') + ' min';
-visual.innerHTML = buildRoundVisual({ rounds_count: rounds, round_minutes: mins, round_seconds: secs });
-}
-function showRoundSavedIndicator(groupId) {
-const indicator = document.getElementById('roundSaved_' + groupId);
-if (!indicator) return;
-indicator.classList.add('visible');
-clearTimeout(indicator._hideTimer);
-indicator._hideTimer = setTimeout(() => {
-indicator.classList.remove('visible');
-}, 1500);
-}
-function buildWeightCategoryChips(boundaries) {
-if (boundaries.length === 0) return '<span class="weight-cat-chip">Open (no divisions)</span>';
-const chips = [];
-chips.push('<span class="weight-cat-chip first">-' + boundaries[0] + 'kg</span>');
-for (let i = 0; i < boundaries.length - 1; i++) {
-chips.push('<span class="weight-cat-chip">' + Math.ceil(boundaries[i]) + '-' + boundaries[i+1] + 'kg</span>');
-}
-chips.push('<span class="weight-cat-chip last">+' + boundaries[boundaries.length-1] + 'kg</span>');
-return chips.join("");
-}
-function renderWeightMarkers(group) {
-const wrap = document.getElementById("weightTrackWrap_" + group.id);
-const track = document.getElementById("weightTrack_" + group.id);
-const scale = document.getElementById("weightScale_" + group.id);
-if (!wrap || !track || !scale) return;
-wrap.querySelectorAll(".weight-marker").forEach(m => m.remove());
-const maxVal = SPARRING_MAX_KG;
-const boundaries = (categoryConfig.sparring.weightBoundaries[group.id] || []).slice().sort((a,b) => a-b);
-boundaries.forEach(val => {
-const pct = (val / maxVal) * 100;
-const marker = document.createElement("div");
-marker.className = "weight-marker";
-marker.style.left = "calc(20px + (100% - 40px) * " + (pct / 100) + ")";
-marker.innerHTML = '<div class="weight-marker-label">' + val + 'kg</div>' +
-'<button class="weight-marker-delete" onclick="deleteWeightMarker(event, \'' + group.id + '\', ' + val + ')" title="Delete"><i class="fas fa-times"></i></button>';
-marker.addEventListener("mousedown", (e) => {
-if (e.target.closest(".weight-marker-delete")) return;
-startWeightMarkerDrag(e, val, group.id);
-});
-marker.addEventListener("touchstart", (e) => {
-if (e.target.closest(".weight-marker-delete")) return;
-startWeightMarkerDrag(e, val, group.id);
-}, {passive: false});
-wrap.appendChild(marker);
-});
-scale.innerHTML = "";
-for (let k = 0; k <= maxVal; k += 20) {
-const span = document.createElement("span");
-span.textContent = k + "kg";
-scale.appendChild(span);
-}
-}
-function handleWeightTrackClick(e, groupId) {
-if (e.target.classList.contains("weight-marker") || e.target.closest(".weight-marker")) return;
-const track = e.currentTarget;
-const rect = track.getBoundingClientRect();
-const pct = (e.clientX - rect.left) / rect.width;
-const val = Math.max(1, Math.min(SPARRING_MAX_KG, Math.round(pct * SPARRING_MAX_KG * 2) / 2));
-const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
-if (boundaries.includes(val)) { showToast("Boundary already exists at " + val + "kg", "error"); return; }
-boundaries.push(val);
-categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
-renderCatEditorBody();
-showToast("Added weight boundary at " + val + "kg", "success");
-scheduleAutoSave("Added weight boundary at " + val + "kg");
-}
-async function deleteWeightMarker(e, groupId, val) {
-e.preventDefault(); e.stopPropagation();
-if (!confirm("Remove weight boundary at " + val + "kg?")) return;
-const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
-categoryConfig.sparring.weightBoundaries[groupId] = boundaries.filter(b => b !== val);
-renderCatEditorBody();
-showToast("Removed " + val + "kg boundary", "success");
-scheduleAutoSave("Removed weight boundary at " + val + "kg");
-}
-async function startWeightMarkerDrag(e, val, groupId) {
-e.preventDefault(); e.stopPropagation();
-const track = document.getElementById("weightTrack_" + groupId);
-if (!track) return;
-const trackRect = track.getBoundingClientRect();
-const marker = e.currentTarget;
-marker.classList.add("dragging");
-const maxVal = SPARRING_MAX_KG;
-let currentVal = val;
-const onMove = (ev) => {
-const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-const pct = Math.max(0, Math.min(1, (clientX - trackRect.left) / trackRect.width));
-currentVal = Math.max(1, Math.min(maxVal, Math.round(pct * maxVal * 2) / 2));
-marker.style.left = "calc(20px + (100% - 40px) * " + (currentVal / maxVal) + ")";
-marker.querySelector(".weight-marker-label").textContent = currentVal + "kg";
-};
-const onEnd = () => {
-document.removeEventListener("mousemove", onMove);
-document.removeEventListener("mouseup", onEnd);
-document.removeEventListener("touchmove", onMove);
-document.removeEventListener("touchend", onEnd);
-marker.classList.remove("dragging");
-if (currentVal !== val) {
-const boundaries = categoryConfig.sparring.weightBoundaries[groupId] || [];
-const idx = boundaries.indexOf(val);
-if (idx >= 0) {
-if (boundaries.includes(currentVal)) { showToast("Boundary already exists", "error"); renderCatEditorBody(); return; }
-boundaries[idx] = currentVal;
-categoryConfig.sparring.weightBoundaries[groupId] = boundaries;
-renderCatEditorBody();
-scheduleAutoSave("Moved weight boundary " + val + "kg → " + currentVal + "kg");
-}
-}
-};
-document.addEventListener("mousemove", onMove);
-document.addEventListener("mouseup", onEnd);
-document.addEventListener("touchmove", onMove, {passive: false});
-document.addEventListener("touchend", onEnd);
-}
-async function resetWeightBoundaries(ageGroupId) {
-if (!confirm("Reset this age group's weight boundaries to defaults?")) return;
-const existing = categoryConfig.sparring.weightBoundaries[ageGroupId] || [];
-for (const kg of existing) {
-const { data: rows } = await sb.from("weight_boundaries").select("id").eq("age_group_id", ageGroupId).eq("boundary_kg", kg);
-if (rows && rows.length > 0) {
-await sb.from("weight_boundaries").delete().eq("id", rows[0].id);
-}
-}
-categoryConfig.sparring.weightBoundaries[ageGroupId] = [...DEFAULT_WEIGHT_BOUNDS];
-for (const kg of DEFAULT_WEIGHT_BOUNDS) {
-await sb.from("weight_boundaries").insert([{ age_group_id: ageGroupId, boundary_kg: kg }]);
-}
-renderCatEditorBody();
-showToast("Reset to default boundaries", "success");
-}
-async function saveAllCategoryConfigInternal(silent) {
-if (!silent) showToast("Saving...", "");
-let errors = 0;
-let successCount = 0;
-for (const disc of ["patterns", "sparring"]) {
-const groups = categoryConfig[disc].ageGroups;
-for (const g of groups) {
-const gender = normalizeGender(g.gender);
-g.gender = gender;
-if (g.id.startsWith("tmp_")) {
-const { data: inserted, error } = await sb.from("age_groups").insert([{
-display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
-is_active: g.is_active, order_priority: g.order_priority, discipline: disc, gender: gender
-}]).select().single();
-if (error) {
-console.error("Insert age group error:", error);
-errors++;
-if (!silent) showToast("DB Error: " + (error.message || error.hint || "Table may not exist. Check SQL setup."), "error");
-continue;
-}
-const oldId = g.id;
-g.id = inserted.id;
-if (disc === "patterns" && categoryConfig.patterns.kupRanges[oldId]) {
-const tmpRanges = categoryConfig.patterns.kupRanges[oldId];
-delete categoryConfig.patterns.kupRanges[oldId];
-tmpRanges.forEach(r => r.age_group_id = inserted.id);
-categoryConfig.patterns.kupRanges[inserted.id] = tmpRanges;
-} else if (disc === "sparring") {
-if (categoryConfig.sparring.weightBoundaries[oldId]) {
-const tmpBounds = categoryConfig.sparring.weightBoundaries[oldId];
-delete categoryConfig.sparring.weightBoundaries[oldId];
-categoryConfig.sparring.weightBoundaries[inserted.id] = tmpBounds;
-}
-if (categoryConfig.sparring.roundConfigs[oldId]) {
-const tmpRounds = categoryConfig.sparring.roundConfigs[oldId];
-delete categoryConfig.sparring.roundConfigs[oldId];
-categoryConfig.sparring.roundConfigs[inserted.id] = tmpRounds;
-}
-}
-} else {
-const { error } = await sb.from("age_groups").update({
-display_name: g.display_name, min_age: g.min_age, max_age: g.max_age,
-is_active: g.is_active, order_priority: g.order_priority, gender: gender
-}).eq("id", g.id);
-if (error) { console.error("Update age group error:", error); errors++; }
-}
-if (disc === "patterns") {
-const r = await savePatternsRangesForGroup(g.id);
-if (r.errors > 0) errors += r.errors;
-else successCount++;
-} else {
-const r = await saveSparringBoundariesForGroup(g.id);
-const r2 = await saveSparringRoundConfigForGroup(g.id);
-if (r.errors > 0 || r2.errors > 0) errors += (r.errors + r2.errors);
-else successCount++;
-}
-}
-}
-await loadCategoryConfig();
-recomputeCompetitorCategories();
-if (!silent && errors === 0) showToast("All categories saved! (" + successCount + " groups)", "success");
-else if (!silent) showToast("Saved with " + errors + " error(s)", "error");
-if (document.getElementById("catEditorBody")) renderCatEditorBody();
-return { errors, successCount };
-}
-async function saveAllCategoryConfig() {
-await saveAllCategoryConfigInternal(false);
-}
-async function savePatternsRangesForGroup(ageGroupId) {
-let errors = 0;
-const currentRanges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).slice().sort((a,b) => a.order_priority - b.order_priority);
-const { data: existing, error: fetchErr } = await sb.from("patterns_kup_ranges").select("*").eq("age_group_id", ageGroupId);
-if (fetchErr) {
-console.error("Fetch patterns ranges error:", fetchErr);
-showToast("Cannot save patterns ranges: " + (fetchErr.message || "Table may not exist"), "error");
-return { errors: 1 };
-}
-for (const eb of (existing || [])) {
-const current = currentRanges.find(r => r.id === eb.id);
-if (!current) {
-const { error } = await sb.from("patterns_kup_ranges").delete().eq("id", eb.id);
-if (error) { console.error("Delete range error:", error); errors++; }
-}
-}
-for (const r of currentRanges) {
-if (r.id.startsWith("tmp_")) {
-const { data: inserted, error } = await sb.from("patterns_kup_ranges").insert([{
-age_group_id: ageGroupId, min_kup: r.min_kup, max_kup: r.max_kup,
-display_name: r.display_name, is_active: r.is_active !== false, order_priority: r.order_priority
-}]).select().single();
-if (error) { console.error("Insert range error:", error); errors++; }
-else r.id = inserted.id;
-} else {
-const { error } = await sb.from("patterns_kup_ranges").update({
-min_kup: r.min_kup, max_kup: r.max_kup, display_name: r.display_name,
-is_active: r.is_active !== false, order_priority: r.order_priority
-}).eq("id", r.id);
-if (error) { console.error("Update range error:", error); errors++; }
-}
-}
-return { errors };
-}
-async function saveSparringBoundariesForGroup(ageGroupId) {
-let errors = 0;
-const currentBounds = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
-const { data: existing, error: fetchErr } = await sb.from("weight_boundaries").select("*").eq("age_group_id", ageGroupId);
-if (fetchErr) { console.error("Fetch boundaries error:", fetchErr); return { errors: 1 }; }
-const existingKg = (existing || []).map(b => b.boundary_kg);
-for (const eb of (existing || [])) {
-if (!currentBounds.includes(eb.boundary_kg)) {
-const { error } = await sb.from("weight_boundaries").delete().eq("id", eb.id);
-if (error) { console.error("Delete boundary error:", error); errors++; }
-}
-}
-for (const kg of currentBounds) {
-if (!existingKg.includes(kg)) {
-const { error } = await sb.from("weight_boundaries").insert([{ age_group_id: ageGroupId, boundary_kg: kg }]);
-if (error) { console.error("Insert boundary error:", error); errors++; }
-}
-}
-return { errors };
-}
-async function saveSparringRoundConfigForGroup(ageGroupId) {
-let errors = 0;
-const cfg = categoryConfig.sparring.roundConfigs[ageGroupId];
-if (!cfg) return { errors: 0 };
-const { data: existing, error: fetchErr } = await sb.from("sparring_round_configs").select("*").eq("age_group_id", ageGroupId);
-if (fetchErr) {
-console.error("Fetch round config error:", fetchErr);
-return { errors: 1 };
-}
-const payload = {
-rounds_count: cfg.rounds_count,
-round_minutes: cfg.round_minutes,
-round_seconds: cfg.round_seconds,
-pause_minutes: cfg.pause_minutes !== undefined ? cfg.pause_minutes : 1,
-pause_seconds: cfg.pause_seconds !== undefined ? cfg.pause_seconds : 0
-};
-if (existing && existing.length > 0) {
-const { error } = await sb.from("sparring_round_configs").update(payload).eq("age_group_id", ageGroupId);
-if (error) { console.error("Update round config error:", error); errors++; }
-} else {
-payload.age_group_id = ageGroupId;
-const { error } = await sb.from("sparring_round_configs").insert([payload]);
-if (error) { console.error("Insert round config error:", error); errors++; }
-}
-return { errors };
-}
-async function resetToDefaults() {
-if (!confirm("Reset ALL categories to defaults? This will DELETE all current age groups and divisions for both genders.")) return;
-await sb.from("weight_boundaries").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-await sb.from("patterns_kup_ranges").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-await sb.from("sparring_round_configs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-await sb.from("age_groups").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-await seedDefaultCategories();
-await loadCategoryConfig();
-recomputeCompetitorCategories();
-renderCatEditorBody();
-showToast("Reset to defaults (male + female)", "success");
-}
-function clearSelection() {
+  function clearSelection() {
 if (selectedPlayerEl) selectedPlayerEl.classList.remove("selected");
 selectedPlayerEl = null; selectedPlayerData = null;
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
@@ -3601,19 +2707,19 @@ sortedTeams.forEach((teamArr) => { teamArr.forEach((player) => { if (posIndex < 
 return slots;
 }
 async function fetchTournamentPrices() {
-  try {
-    const { data, error } = await sb.from("site_settings").select("patterns_price, patterns_extra, sparring_price, sparring_extra, head_referee_price, referee_price, computer_referee_price").eq("id", 1).single();
-    if (error) { tournamentPrices = { patterns: null, patternsExtra: null, sparring: null, sparringExtra: null, headReferee: null, referee: null, computerReferee: null }; return; }
-    if (data) {
-      tournamentPrices.patterns = data.patterns_price != null ? parseFloat(data.patterns_price) : null;
-      tournamentPrices.patternsExtra = data.patterns_extra != null ? parseFloat(data.patterns_extra) : null;
-      tournamentPrices.sparring = data.sparring_price != null ? parseFloat(data.sparring_price) : null;
-      tournamentPrices.sparringExtra = data.sparring_extra != null ? parseFloat(data.sparring_extra) : null;
-      tournamentPrices.headReferee = data.head_referee_price != null ? parseFloat(data.head_referee_price) : null;
-      tournamentPrices.referee = data.referee_price != null ? parseFloat(data.referee_price) : null;
-      tournamentPrices.computerReferee = data.computer_referee_price != null ? parseFloat(data.computer_referee_price) : null;
-    }
-  } catch (err) { tournamentPrices = { patterns: null, patternsExtra: null, sparring: null, sparringExtra: null, headReferee: null, referee: null, computerReferee: null }; }
+try {
+const { data, error } = await sb.from("site_settings").select("patterns_price, patterns_extra, sparring_price, sparring_extra, head_referee_price, referee_price, computer_referee_price").eq("id", 1).single();
+if (error) { tournamentPrices = { patterns: null, patternsExtra: null, sparring: null, sparringExtra: null, headReferee: null, referee: null, computerReferee: null }; return; }
+if (data) {
+tournamentPrices.patterns = data.patterns_price != null ? parseFloat(data.patterns_price) : null;
+tournamentPrices.patternsExtra = data.patterns_extra != null ? parseFloat(data.patterns_extra) : null;
+tournamentPrices.sparring = data.sparring_price != null ? parseFloat(data.sparring_price) : null;
+tournamentPrices.sparringExtra = data.sparring_extra != null ? parseFloat(data.sparring_extra) : null;
+tournamentPrices.headReferee = data.head_referee_price != null ? parseFloat(data.head_referee_price) : null;
+tournamentPrices.referee = data.referee_price != null ? parseFloat(data.referee_price) : null;
+tournamentPrices.computerReferee = data.computer_referee_price != null ? parseFloat(data.computer_referee_price) : null;
+}
+} catch (err) { tournamentPrices = { patterns: null, patternsExtra: null, sparring: null, sparringExtra: null, headReferee: null, referee: null, computerReferee: null }; }
 }
 function formatEuro(amount) {
 if (amount === null || amount === undefined || isNaN(amount)) return "€0.00";
@@ -4587,12 +3693,10 @@ html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(2
 '<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #1565c0;"><div style="font-size:2rem;font-weight:700;color:#1565c0;">' + totalPatternsCats.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Pattern Categories</div></div>' +
 '<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #c2185b;"><div style="font-size:2rem;font-weight:700;color:#c2185b;">' + totalSparringCats.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Sparring Categories</div></div>' +
 '</div>';
-
 const patternsPrice = tournamentPrices.patterns;
 const patternsExtraPrice = tournamentPrices.patternsExtra;
 const sparringPrice = tournamentPrices.sparring;
 const sparringExtraPrice = tournamentPrices.sparringExtra;
-
 teamNames.forEach((teamName) => {
 const t = teamsMap[teamName];
 const initial = teamName.charAt(0).toUpperCase();
@@ -4601,36 +3705,33 @@ const patternsCount = t.patternsCategories.size;
 const sparringCount = t.sparringCategories.size;
 const totalCats = patternsCount + sparringCount;
 const totalEntries = t.patternsEntries.length + t.sparringEntries.length;
-
 const patternsBreakdown = calculateDisciplineBreakdown(t.patternsEntries, patternsPrice, patternsExtraPrice);
 const sparringBreakdown = calculateDisciplineBreakdown(t.sparringEntries, sparringPrice, sparringExtraPrice);
-
 const hasAnyPrice = patternsBreakdown !== null || sparringBreakdown !== null;
 const grandTotal = (patternsBreakdown?.total || 0) + (sparringBreakdown?.total || 0);
 let priceSummaryHtml = "";
 if (!hasAnyPrice) {
-    priceSummaryHtml = '<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>';
+priceSummaryHtml = '<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>';
 } else {
-    const segments = [];
-    if (patternsBreakdown) {
-        let patText = `${patternsBreakdown.uniqueCompetitors} Base (${formatEuro(patternsPrice)})`;
-        if (patternsBreakdown.extraEntries > 0) {
-            patText += ` + ${patternsBreakdown.extraEntries} Extra (${formatEuro(patternsExtraPrice)})`;
-        }
-        patText += ` = <strong>${formatEuro(patternsBreakdown.total)}</strong>`;
-        segments.push(`<span class="price-segment patterns-price" title="Patterns Breakdown"><i class="fas fa-chess-board"></i> Patterns: ${patText}</span>`);
-    }
-    if (sparringBreakdown) {
-        let sparText = `${sparringBreakdown.uniqueCompetitors} Base (${formatEuro(sparringPrice)})`;
-        if (sparringBreakdown.extraEntries > 0) {
-            sparText += ` + ${sparringBreakdown.extraEntries} Extra (${formatEuro(sparringExtraPrice)})`;
-        }
-        sparText += ` = <strong>${formatEuro(sparringBreakdown.total)}</strong>`;
-        segments.push(`<span class="price-segment sparring-price" title="Sparring Breakdown"><i class="fas fa-fist-raised"></i> Sparring: ${sparText}</span>`);
-    }
-    priceSummaryHtml = '<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ' + segments.join('<span class="price-operator">+</span>') + ' <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ' + formatEuro(grandTotal) + '</span></div>';
+const segments = [];
+if (patternsBreakdown) {
+let patText = `${patternsBreakdown.uniqueCompetitors} Base (${formatEuro(patternsPrice)})`;
+if (patternsBreakdown.extraEntries > 0) {
+patText += ` + ${patternsBreakdown.extraEntries} Extra (${formatEuro(patternsExtraPrice)})`;
 }
-
+patText += ` = <strong>${formatEuro(patternsBreakdown.total)}</strong>`;
+segments.push(`<span class="price-segment patterns-price" title="Patterns Breakdown"><i class="fas fa-chess-board"></i> Patterns: ${patText}</span>`);
+}
+if (sparringBreakdown) {
+let sparText = `${sparringBreakdown.uniqueCompetitors} Base (${formatEuro(sparringPrice)})`;
+if (sparringBreakdown.extraEntries > 0) {
+sparText += ` + ${sparringBreakdown.extraEntries} Extra (${formatEuro(sparringExtraPrice)})`;
+}
+sparText += ` = <strong>${formatEuro(sparringBreakdown.total)}</strong>`;
+segments.push(`<span class="price-segment sparring-price" title="Sparring Breakdown"><i class="fas fa-fist-raised"></i> Sparring: ${sparText}</span>`);
+}
+priceSummaryHtml = '<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ' + segments.join('<span class="price-operator">+</span>') + ' <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ' + formatEuro(grandTotal) + '</span></div>';
+}
 html += '<div class="team-overview-card"><div class="team-overview-header">' +
 '<div class="team-name-block"><div class="team-icon">' + initial + '</div><div><div class="team-name">' + escapeHtml(teamName) + '</div><div style="font-size:0.85rem;color:var(--gray);">' + t.competitorNames.size + ' competitors • ' + totalEntries + ' entries</div></div></div>' +
 '<div class="team-stats">' +
@@ -4871,24 +3972,19 @@ const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
 const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
 const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
 const unassignedJudges = judges.filter(j => !getJudgeRank(j.id));
-
 const patternsBreakdown = calculateDisciplineBreakdown(patternsEntries, patternsPrice, patternsExtraPrice);
 const sparringBreakdown = calculateDisciplineBreakdown(sparringEntries, sparringPrice, sparringExtraPrice);
-
 const patternsIncome = patternsBreakdown ? patternsBreakdown.total : 0;
 const sparringIncome = sparringBreakdown ? sparringBreakdown.total : 0;
 const totalIncome = patternsIncome + sparringIncome;
-
 const headRefExpense = (headRefPrice !== null && !isNaN(headRefPrice)) ? headRefPrice * headReferees.length : 0;
 const refExpense = (refPrice !== null && !isNaN(refPrice)) ? refPrice * regularReferees.length : 0;
 const compRefExpense = (compRefPrice !== null && !isNaN(compRefPrice)) ? compRefPrice * computerReferees.length : 0;
 const totalExpense = headRefExpense + refExpense + compRefExpense;
 const netProfit = totalIncome - totalExpense;
 const isNegative = netProfit < 0;
-
 const patternsSub = `Base: ${formatEuro(patternsPrice)} | Extra: ${formatEuro(patternsExtraPrice)}`;
 const sparringSub = `Base: ${formatEuro(sparringPrice)} | Extra: ${formatEuro(sparringExtraPrice)}`;
-
 let html = '<div class="price-overview-container"><div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
 '<h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>' +
 '<button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>' +
@@ -4922,83 +4018,75 @@ html += '</div></div><div class="price-breakdown-section"><div class="price-brea
 '<div class="price-breakdown-total expense-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalExpense) + '</div>' +
 '<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span></div>' +
 '<div class="price-breakdown-body expanded">';
-
 const headRefData = { total: headRefExpense, unitPrice: headRefPrice };
 const refData = { total: refExpense, unitPrice: refPrice };
 const compRefData = { total: compRefExpense, unitPrice: compRefPrice };
-
 html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headRefData, "expense", headReferees, headReferees.length + ' judge' + (headReferees.length !== 1 ? 's' : '') + ' @ ' + (headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'));
 html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", refData, "expense", regularReferees, regularReferees.length + ' judge' + (regularReferees.length !== 1 ? 's' : '') + ' @ ' + (refPrice !== null ? formatEuro(refPrice) : 'N/A'));
 html += buildPriceLineItem("Computer Referees", "fa-desktop", "computer-icon", compRefData, "expense", computerReferees, computerReferees.length + ' judge' + (computerReferees.length !== 1 ? 's' : '') + ' @ ' + (compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'));
 html += '</div></div></div>';
 document.getElementById("content").innerHTML = html;
 }
-
 function buildPriceLineItem(title, icon, iconClass, dataObj, type, entries, subtitle) {
 const amountClass = type === "income" ? "income-amount" : "expense-amount";
 const sign = type === "income" ? "+" : "−";
 const total = dataObj ? (dataObj.total || 0) : 0;
 const hasPrice = dataObj !== null && dataObj !== undefined;
 let detailsHtml = "";
-
 if (dataObj && dataObj.competitorDetails && dataObj.competitorDetails.length > 0) {
-    detailsHtml = '<div class="price-line-details">';
-    detailsHtml += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.85rem; border:1px dashed var(--border); display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-        <strong style="width:100%; margin-bottom:4px;"><i class="fas fa-info-circle" style="color:var(--primary)"></i> Calculation Summary:</strong>
-        <span><strong>${dataObj.uniqueCompetitors}</strong> unique competitors</span>
-        <span>•</span>
-        <span><strong>${dataObj.baseEntries}</strong> Base entries = <strong class="${amountClass}">${formatEuro(dataObj.baseAmount)}</strong></span>
-        ${dataObj.extraEntries > 0 ? `<span>•</span><span><strong>${dataObj.extraEntries}</strong> Extra entries (+categories) = <strong class="${amountClass}">${formatEuro(dataObj.extraAmount)}</strong></span>` : ''}
-    </div>`;
-
-    dataObj.competitorDetails.forEach((comp, idx) => {
-        let detailText = `${comp.count} entr${comp.count > 1 ? 'ies' : 'y'}`;
-        let mathText = `${formatEuro(comp.baseAmount)}`;
-        if (comp.extraCount > 0) {
-            detailText += ` <span style="color:var(--price-total); font-weight:700;">(1 Base + ${comp.extraCount} Extra)</span>`;
-            mathText += ` <span style="color:var(--gray)">+</span> (${comp.extraCount} × ${formatEuro(comp.extraUnitPrice)})`;
-        }
-        mathText += ` <span style="color:var(--gray)">=</span> <strong>${formatEuro(comp.compTotal)}</strong>`;
-
-        detailsHtml += `<div class="price-detail-row">
-            <div class="price-detail-name">
-                <span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
-                <span>${escapeHtml(comp.name)}</span>
-                <span class="price-detail-team">• ${escapeHtml(comp.team)} • ${detailText}</span>
-            </div>
-            <div class="price-detail-amount ${amountClass}">${sign} ${mathText}</div>
-        </div>`;
-    });
-    detailsHtml += '</div>';
+detailsHtml = '<div class="price-line-details">';
+detailsHtml += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.85rem; border:1px dashed var(--border); display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+<strong style="width:100%; margin-bottom:4px;"><i class="fas fa-info-circle" style="color:var(--primary)"></i> Calculation Summary:</strong>
+<span><strong>${dataObj.uniqueCompetitors}</strong> unique competitors</span>
+<span>•</span>
+<span><strong>${dataObj.baseEntries}</strong> Base entries = <strong class="${amountClass}">${formatEuro(dataObj.baseAmount)}</strong></span>
+${dataObj.extraEntries > 0 ? `<span>•</span><span><strong>${dataObj.extraEntries}</strong> Extra entries (+categories) = <strong class="${amountClass}">${formatEuro(dataObj.extraAmount)}</strong></span>` : ''}
+</div>`;
+dataObj.competitorDetails.forEach((comp, idx) => {
+let detailText = `${comp.count} entr${comp.count > 1 ? 'ies' : 'y'}`;
+let mathText = `${formatEuro(comp.baseAmount)}`;
+if (comp.extraCount > 0) {
+detailText += ` <span style="color:var(--price-total); font-weight:700;">(1 Base + ${comp.extraCount} Extra)</span>`;
+mathText += ` <span style="color:var(--gray)">+</span> (${comp.extraCount} × ${formatEuro(comp.extraUnitPrice)})`;
+}
+mathText += ` <span style="color:var(--gray)">=</span> <strong>${formatEuro(comp.compTotal)}</strong>`;
+detailsHtml += `<div class="price-detail-row">
+<div class="price-detail-name">
+<span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
+<span>${escapeHtml(comp.name)}</span>
+<span class="price-detail-team">• ${escapeHtml(comp.team)} • ${detailText}</span>
+</div>
+<div class="price-detail-amount ${amountClass}">${sign} ${mathText}</div>
+</div>`;
+});
+detailsHtml += '</div>';
 } else if (entries && entries.length > 0 && hasPrice) {
-    detailsHtml = '<div class="price-line-details">';
-    const unitPrice = dataObj.unitPrice;
-    entries.forEach((e, idx) => {
-        const name = escapeHtml(e.name) || "Unknown";
-        const team = escapeHtml(e.team) || "N/A";
-        detailsHtml += `<div class="price-detail-row">
-            <div class="price-detail-name">
-                <span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
-                <span>${name}</span>
-                <span class="price-detail-team">• ${team}</span>
-            </div>
-            <div class="price-detail-amount ${amountClass}">${sign} ${formatEuro(unitPrice)}</div>
-        </div>`;
-    });
-    detailsHtml += '</div>';
+detailsHtml = '<div class="price-line-details">';
+const unitPrice = dataObj.unitPrice;
+entries.forEach((e, idx) => {
+const name = escapeHtml(e.name) || "Unknown";
+const team = escapeHtml(e.team) || "N/A";
+detailsHtml += `<div class="price-detail-row">
+<div class="price-detail-name">
+<span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
+<span>${name}</span>
+<span class="price-detail-team">• ${team}</span>
+</div>
+<div class="price-detail-amount ${amountClass}">${sign} ${formatEuro(unitPrice)}</div>
+</div>`;
+});
+detailsHtml += '</div>';
 } else {
-    detailsHtml = '<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>';
+detailsHtml = '<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>';
 }
-
 return `<div class="price-line-item" onclick="togglePriceLine(this)"><div class="price-line-left">
-    <div class="price-line-icon ${iconClass}"><i class="fas ${icon}"></i></div>
-    <div class="price-line-info"><div class="price-line-title">${escapeHtml(title)} <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">${entries.length} entries</span></div>
-    <div class="price-line-subtitle">${escapeHtml(subtitle)}</div></div></div>
-    <div class="price-line-right"><div class="price-line-amount ${amountClass}">${sign} ${formatEuro(total)}</div>
-    <span class="price-line-expand"><i class="fas fa-chevron-down"></i></span></div>
-    ${detailsHtml}</div>`;
+<div class="price-line-icon ${iconClass}"><i class="fas ${icon}"></i></div>
+<div class="price-line-info"><div class="price-line-title">${escapeHtml(title)} <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">${entries.length} entries</span></div>
+<div class="price-line-subtitle">${escapeHtml(subtitle)}</div></div></div>
+<div class="price-line-right"><div class="price-line-amount ${amountClass}">${sign} ${formatEuro(total)}</div>
+<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span></div>
+${detailsHtml}</div>`;
 }
-
 function toggleBreakdown(header) {
 header.classList.toggle("expanded");
 const body = header.nextElementSibling;
@@ -5018,29 +4106,25 @@ const sparringEntries = competitors.filter(c => c._discipline === "sparring");
 const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
 const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
 const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
-
 const patternsBreakdown = calculateDisciplineBreakdown(patternsEntries, patternsPrice, patternsExtraPrice);
 const sparringBreakdown = calculateDisciplineBreakdown(sparringEntries, sparringPrice, sparringExtraPrice);
-
 let csv = "data:text/csv;charset=utf-8,Type,Category,Name,Team,Amount (EUR)\n";
-
 if (patternsBreakdown) {
-    patternsBreakdown.competitorDetails.forEach(comp => {
-        csv += `INCOME,Patterns (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
-        if (comp.extraCount > 0) {
-            csv += `INCOME,Patterns (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
-        }
-    });
+patternsBreakdown.competitorDetails.forEach(comp => {
+csv += `INCOME,Patterns (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
+if (comp.extraCount > 0) {
+csv += `INCOME,Patterns (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
+}
+});
 }
 if (sparringBreakdown) {
-    sparringBreakdown.competitorDetails.forEach(comp => {
-        csv += `INCOME,Sparring (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
-        if (comp.extraCount > 0) {
-            csv += `INCOME,Sparring (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
-        }
-    });
+sparringBreakdown.competitorDetails.forEach(comp => {
+csv += `INCOME,Sparring (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
+if (comp.extraCount > 0) {
+csv += `INCOME,Sparring (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
 }
-
+});
+}
 headReferees.forEach(e => { csv += 'EXPENSE,Head Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (headRefPrice !== null ? -headRefPrice : 0).toFixed(2) + '\n'; });
 regularReferees.forEach(e => { csv += 'EXPENSE,Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (refPrice !== null ? -refPrice : 0).toFixed(2) + '\n'; });
 computerReferees.forEach(e => { csv += 'EXPENSE,Computer Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (compRefPrice !== null ? -compRefPrice : 0).toFixed(2) + '\n'; });
