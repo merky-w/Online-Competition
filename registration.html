@@ -569,7 +569,6 @@
         return null;
       }
 
-      // CRITICAL FIX: Strictly filter by gender to ensure Male only steps up to Male, Female to Female
       function getNextAgeGroup(currentAgeGroup, discipline, gender) {
         const normGender = normalizeGender(gender);
         const groups = (categoryConfig[discipline]?.ageGroups || [])
@@ -651,7 +650,6 @@
 
       function computePersonCategories(personObj) {
         const age = calcAge(personObj.birthdate);
-        // Explicitly resolve to "male" or "female" string for strict matching
         const genderStr = (personObj.gender || "").trim().toUpperCase().startsWith("M") ? "male" : "female";
         const genderLabel = genderStr === "male" ? "Male" : "Female";
         
@@ -666,7 +664,6 @@
         const isPatterns = String(personObj.patterns).toLowerCase() === "yes" || personObj.patterns === true;
         const weightNum = Number(personObj.weight);
 
-        // ============ SPARRING ============
         if (isSparring && weightNum > 0) {
           const ageGroup = getAgeGroupForAge(age, "sparring", genderStr);
           if (ageGroup) {
@@ -689,7 +686,6 @@
                 };
               }
 
-              // CRITICAL FIX: Pass genderStr to ensure we only look at the SAME gender's next age group
               const nextAgeGroup = getNextAgeGroup(ageGroup, "sparring", genderStr);
               if (nextAgeGroup) {
                 const nextBoundaries = categoryConfig.sparring.weightBoundaries[nextAgeGroup.id];
@@ -720,7 +716,6 @@
           }
         }
 
-        // ============ PATTERNS ============
         if (isPatterns) {
           const kupDanNum = kupDanNameToNumber(personObj.belt);
           if (kupDanNum !== null) {
@@ -735,7 +730,6 @@
                   fullCat: ageGroup.display_name + " - " + beltLabel + " (" + genderLabel + ")"
                 };
 
-                // CRITICAL FIX: Pass genderStr to ensure we only look at the SAME gender's next age group
                 const nextAgeGroup = getNextAgeGroup(ageGroup, "patterns", genderStr);
                 if (nextAgeGroup) {
                   const nextRanges = categoryConfig.patterns.kupRanges[nextAgeGroup.id];
@@ -893,21 +887,26 @@
             card.className = "person-card";
             card.setAttribute("data-reg-id", registration.id);
 
-            const entriesList = registration.entry_data?.entries_list || [];
-            if (entriesList.length > 1) {
-                const btnUnreg = document.createElement("div");
-                btnUnreg.className = "btn-unregister";
-                btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
-                btnUnreg.addEventListener("click", async (e) => {
-                  e.stopPropagation();
-                  if(confirm(`Remove ${person.name} completely from registration?`)) {
-                    const { data: { session } } = await supaClient.auth.getSession();
-                    await supaClient.from("final_registrations").delete().eq("id", registration.id).eq("user_id", session.user.id);
-                    if(session) loadAllData(session.user.id);
-                  }
-                });
-                card.appendChild(btnUnreg);
-            }
+            // === UNREGISTER BUTTON: Always show for ALL types (competitors, judges, coaches) ===
+            const btnUnreg = document.createElement("div");
+            btnUnreg.className = "btn-unregister";
+            btnUnreg.title = "Unregister " + person.name;
+            btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
+            btnUnreg.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              if(confirm(`Remove ${person.name} completely from registration?`)) {
+                const { data: { session } } = await supaClient.auth.getSession();
+                if (!session) return;
+                const { error } = await supaClient.from("final_registrations").delete().eq("id", registration.id).eq("user_id", session.user.id);
+                if (error) {
+                  showToast("Error removing: " + error.message, "error");
+                } else {
+                  showToast(`${person.name} unregistered.`, "success");
+                  loadAllData(session.user.id);
+                }
+              }
+            });
+            card.appendChild(btnUnreg);
 
             const headerDiv = document.createElement("div");
             headerDiv.className = "card-header-row";
@@ -917,11 +916,24 @@
             headerDiv.appendChild(nameDiv);
             card.appendChild(headerDiv);
 
+            // === Show details for judges/coaches (belt, team) ===
+            if (typeShort === 'judge' || typeShort === 'coach') {
+              const details = document.createElement("div");
+              details.className = "card-details";
+              let detailsHtml = '';
+              if (person.belt) detailsHtml += `<div><i class="fas fa-ranking-star"></i> ${person.belt}</div>`;
+              if (person.team) detailsHtml += `<div><i class="fas fa-shield-halved"></i> ${person.team}</div>`;
+              details.innerHTML = detailsHtml || '<div style="opacity:0.5;">No details</div>';
+              card.appendChild(details);
+            }
+
+            // === Competitors: show category tags ===
             if (typeShort === 'comp') {
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
               catDiv.id = `cat-display-${registration.id}`;
               
+              const entriesList = registration.entry_data?.entries_list || [];
               entriesList.forEach(entry => {
                  const tagDiv = document.createElement("div");
                  tagDiv.className = "cat-tag";
@@ -951,25 +963,28 @@
               card.appendChild(catDiv);
             }
 
+            // === Action buttons for ALL types ===
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "card-actions";
+
+            const editInfoBtn = document.createElement("button");
+            editInfoBtn.className = "btn btn-edit-info";
+            editInfoBtn.innerHTML = '<i class="fas fa-user-edit"></i> Edit Info';
+            editInfoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
+            actionsDiv.appendChild(editInfoBtn);
+
+            // === Additional Categories button: only for competitors ===
             if (typeShort === 'comp') {
-               const actionsDiv = document.createElement("div");
-               actionsDiv.className = "card-actions";
-
-               const editInfoBtn = document.createElement("button");
-               editInfoBtn.className = "btn btn-edit-info";
-               editInfoBtn.innerHTML = '<i class="fas fa-user-edit"></i> Edit Info';
-               editInfoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
-
                const catBtn = document.createElement("button");
                catBtn.className = "btn btn-categories";
                catBtn.innerHTML = '<i class="fas fa-list-ul"></i> Additional Categories';
                catBtn.addEventListener("click", (e) => { e.stopPropagation(); card.classList.toggle('expanded'); });
-
-               actionsDiv.appendChild(editInfoBtn);
                actionsDiv.appendChild(catBtn);
-               card.appendChild(actionsDiv);
             }
 
+            card.appendChild(actionsDiv);
+
+            // === Extras panel: only for competitors ===
             if (typeShort === 'comp') {
                const extrasPanel = createExtrasPanel(person, registration);
                card.appendChild(extrasPanel);
@@ -1243,6 +1258,10 @@
           createStatField(container, "Weight (kg)", "weight", personData.weight, "number");
           createStatField(container, "Sparring", "sparring", personData.sparring, "select", ["Yes", "No"]);
           createStatField(container, "Patterns", "patterns", personData.patterns, "select", ["Yes", "No"]);
+        } else if (type === 'judge') {
+          createStatField(container, "Name", "name", personData.name);
+          createStatField(container, "Belt", "belt", personData.belt, "belt-select");
+          createStatField(container, "Team", "team", personData.team);
         } else {
           createStatField(container, "Name", "name", personData.name);
           createStatField(container, "Belt", "belt", personData.belt, "belt-select");
