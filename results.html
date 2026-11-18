@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results - 9th Vojvodina Open ITF</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+:root {
+  --bg-body: #0f172a;
+  --bg-panel: #1e293b;
+  --bg-card: #334155;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #10b981;
+  --gold: #f9a825;
+  --silver: #9e9e9e;
+  --bronze: #a1887f;
+  --patterns: #1565c0;
+  --sparring: #c2185b;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-body);
+  color: var(--text-main);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+header {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 3px solid #d4af37;
+  padding: 25px 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+header h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin-bottom: 5px;
+}
+header h1 i { color: #d4af37; margin-right: 10px; }
+header p { color: var(--text-muted); font-size: 0.95rem; }
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 15px 20px;
+  background: var(--bg-panel);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.stat i { font-size: 1.2rem; }
+.stat .num {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #d4af37;
+}
+.stat .label { color: var(--text-muted); }
+.filter-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.filter-group select {
+  padding: 8px 14px;
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+}
+.btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+.btn-back {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.2);
+  text-decoration: none;
+}
+.btn-back:hover { background: rgba(255,255,255,0.2); }
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+.category-card {
+  background: var(--bg-panel);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.category-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+.card-header {
+  padding: 15px 18px;
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.category-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.badge {
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-patterns {
+  background: rgba(21, 101, 192, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(21, 101, 192, 0.4);
+}
+.badge-sparring {
+  background: rgba(194, 24, 91, 0.2);
+  color: #f472b6;
+  border: 1px solid rgba(194, 24, 91, 0.4);
+}
+.badge-ring {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.placements {
+  padding: 15px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.placement {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.2);
+  border-left: 4px solid;
+  transition: background 0.2s;
+}
+.placement:hover { background: rgba(0,0,0,0.3); }
+.placement.gold { border-left-color: var(--gold); background: rgba(249, 168, 37, 0.08); }
+.placement.silver { border-left-color: var(--silver); }
+.placement.bronze { border-left-color: var(--bronze); background: rgba(161, 136, 127, 0.06); }
+.medal {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
+}
+.placement-info {
+  flex: 1;
+  min-width: 0;
+}
+.placement-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+.placement.gold .placement-label { color: var(--gold); }
+.placement.silver .placement-label { color: var(--silver); }
+.placement.bronze .placement-label { color: var(--bronze); }
+.placement-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.placement-team {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.placement-team i { color: var(--accent-primary); font-size: 0.75rem; }
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--bg-panel);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.empty-state i {
+  font-size: 4rem;
+  color: var(--text-muted);
+  opacity: 0.4;
+  margin-bottom: 15px;
+  display: block;
+}
+.empty-state h3 {
+  color: var(--text-main);
+  margin-bottom: 8px;
+  font-size: 1.3rem;
+}
+.empty-state p { color: var(--text-muted); }
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: var(--bg-card);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--accent-secondary);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 1000;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { border-left-color: #ef4444; }
+@media (max-width: 640px) {
+  header h1 { font-size: 1.4rem; }
+  .controls { flex-direction: column; align-items: stretch; }
+  .stats { justify-content: center; }
+  .filter-group { justify-content: center; }
+  .results-grid { grid-template-columns: 1fr; }
+  .category-name { font-size: 0.95rem; }
+}
+@media print {
+  header { position: static; }
+  .controls { display: none; }
+  .category-card { break-inside: avoid; }
+  body { background: white; color: black; }
+  .category-card, .card-header { background: #f5f5f5; color: black; }
+  .placement-name { color: black; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><i class="fas fa-trophy"></i> Tournament Results</h1>
+  <p>9th Vojvodina Open ITF — Official Placements</p>
+</header>
+
+<div class="container">
+  <div class="controls">
+    <div class="stats">
+      <div class="stat">
+        <i class="fas fa-list" style="color: var(--accent-primary);"></i>
+        <span class="num" id="totalCount">0</span>
+        <span class="label">Categories</span>
+      </div>
+      <div class="stat">
+        <i class="fas fa-medal" style="color: var(--gold);"></i>
+        <span class="num" id="placedCount">0</span>
+        <span class="label">Athletes Placed</span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <select id="filterDiscipline" onchange="renderResults()">
+        <option value="ALL">All Disciplines</option>
+        <option value="sparring">Sparring Only</option>
+        <option value="patterns">Patterns Only</option>
+      </select>
+      <select id="sortBy" onchange="renderResults()">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="name">By Category Name</option>
+      </select>
+      <button class="btn btn-primary" onclick="loadResults()">
+        <i class="fas fa-sync"></i> Refresh
+      </button>
+      <a href="index.html" class="btn btn-back">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+    </div>
+  </div>
+
+  <div id="resultsContainer">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Loading results...</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let allResults = [];
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + (type || "");
+  setTimeout(() => t.className = "toast", 2500);
+}
+
+async function loadResults() {
+  const container = document.getElementById("resultsContainer");
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><div>Loading results...</div></div>';
+
+  try {
+    const { data, error } = await sb
+      .from("category_placements")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    allResults = data || [];
+    renderResults();
+    showToast("✓ Loaded " + allResults.length + " categories", "success");
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error Loading Results</h3><p>' + escapeHtml(err.message) + '</p></div>';
+    showToast("Failed to load", "error");
+  }
+}
+
+function renderResults() {
+  const container = document.getElementById("resultsContainer");
+  const filter = document.getElementById("filterDiscipline").value;
+  const sort = document.getElementById("sortBy").value;
+
+  let filtered = allResults.slice();
+  if (filter !== "ALL") {
+    filtered = filtered.filter(r => (r.discipline || "").toLowerCase() === filter.toLowerCase());
+  }
+
+  if (sort === "newest") {
+    filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  } else if (sort === "oldest") {
+    filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+  } else if (sort === "name") {
+    filtered.sort((a, b) => (a.category_name || "").localeCompare(b.category_name || ""));
+  }
+
+  // Update stats
+  document.getElementById("totalCount").textContent = filtered.length;
+  let placedCount = 0;
+  filtered.forEach(r => {
+    if (r.first_place_name) placedCount++;
+    if (r.second_place_name) placedCount++;
+    if (r.third_a_place_name) placedCount++;
+    if (r.third_b_place_name) placedCount++;
+  });
+  document.getElementById("placedCount").textContent = placedCount;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-trophy"></i><h3>No Results Yet</h3><p>Category results will appear here once competitions are completed.</p></div>';
+    return;
+  }
+
+  let html = '<div class="results-grid">';
+  filtered.forEach(r => {
+    const disc = (r.discipline || "sparring").toLowerCase();
+    const discLabel = disc === "patterns" ? "Patterns" : "Sparring";
+    const discClass = disc === "patterns" ? "badge-patterns" : "badge-sparring";
+    const discIcon = disc === "patterns" ? "fa-chess-board" : "fa-fist-raised";
+
+    html += '<div class="category-card">';
+    html += '<div class="card-header">';
+    html += '<div class="category-name">' + escapeHtml(r.category_name || "Category") + '</div>';
+    html += '<div class="badges">';
+    html += '<span class="badge ' + discClass + '"><i class="fas ' + discIcon + '"></i> ' + discLabel + '</span>';
+    if (r.ring_number) {
+      html += '<span class="badge badge-ring"><i class="fas fa-ring"></i> Ring ' + r.ring_number + '</span>';
+    }
+    html += '</div></div>';
+    html += '<div class="placements">';
+
+    // 1st place
+    if (r.first_place_name) {
+      html += buildPlacement("gold", "🥇", "1st Place", r.first_place_name, r.first_place_team);
+    }
+    // 2nd place
+    if (r.second_place_name) {
+      html += buildPlacement("silver", "🥈", "2nd Place", r.second_place_name, r.second_place_team);
+    }
+    // 3rd place A
+    if (r.third_a_place_name) {
+      html += buildPlacement("bronze", "🥉", "3rd Place", r.third_a_place_name, r.third_a_place_team);
+    }
+    // 3rd place B
+    if (r.third_b_place_name) {
+      html += buildPlacement("bronze", "🥉", "3rd Place", r.third_b_place_name, r.third_b_place_team);
+    }
+
+    // If no placements at all
+    if (!r.first_place_name && !r.second_place_name && !r.third_a_place_name && !r.third_b_place_name) {
+      html += '<div style="text-align:center;padding:15px;color:var(--text-muted);font-style:italic;">No placements recorded</div>';
+    }
+
+    html += '</div></div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function buildPlacement(tier, medal, label, name, team) {
+  const teamHtml = team ? '<div class="placement-team"><i class="fas fa-users"></i> ' + escapeHtml(team) + '</div>' : '';
+  return '<div class="placement ' + tier + '">' +
+    '<div class="medal">' + medal + '</div>' +
+    '<div class="placement-info">' +
+    '<div class="placement-label">' + label + '</div>' +
+    '<div class="placement-name">' + escapeHtml(name) + '</div>' +
+    teamHtml +
+    '</div></div>';
+}
+
+// Initial load
+loadResults();
+
+// Auto-refresh every 30 seconds
+setInterval(loadResults, 30000);
+</script>
+</body>
+</html>
