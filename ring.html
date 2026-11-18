@@ -665,71 +665,62 @@ const TIMER_CHANNEL_PREFIX = "timer-";
 const SCORE_CHANNEL_PREFIX = "scores-";
 let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
 let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
-
 /* ============ SAVE PLACEMENTS ============ */
 async function saveCategoryPlacements(bracket, categoryName, discipline, ringNumber) {
-  if (!bracket || !bracket.rounds || bracket.rounds.length === 0) return;
-  
-  const placements = {
-    first: null, second: null, third_a: null, third_b: null
-  };
-
-  const totalRounds = bracket.totalRounds;
-  if (totalRounds === 1) {
-    const finalMatch = bracket.rounds[0][0];
-    if (finalMatch.winner === "p1") { placements.first = finalMatch.p1; placements.second = finalMatch.p2; }
-    else if (finalMatch.winner === "p2") { placements.first = finalMatch.p2; placements.second = finalMatch.p1; }
-  } else {
-    const finalMatch = bracket.rounds[totalRounds - 1][0];
-    if (finalMatch.winner === "p1") { placements.first = finalMatch.p1; placements.second = finalMatch.p2; }
-    else if (finalMatch.winner === "p2") { placements.first = finalMatch.p2; placements.second = finalMatch.p1; }
-
-    const semiFinals = bracket.rounds[totalRounds - 2];
-    if (semiFinals && semiFinals.length >= 2) {
-      const sf1 = semiFinals[0];
-      const sf2 = semiFinals[1];
-      if (sf1.winner === "p1") placements.third_a = sf1.p2;
-      else if (sf1.winner === "p2") placements.third_a = sf1.p1;
-      
-      if (sf2.winner === "p1") placements.third_b = sf2.p2;
-      else if (sf2.winner === "p2") placements.third_b = sf2.p1;
-    }
-  }
-
-  const payload = {
-    category_name: categoryName,
-    discipline: discipline,
-    ring_number: ringNumber,
-    first_place_name: placements.first ? placements.first.name : null,
-    first_place_team: placements.first ? (placements.first.team || "") : null,
-    second_place_name: placements.second ? placements.second.name : null,
-    second_place_team: placements.second ? (placements.second.team || "") : null,
-    third_a_place_name: placements.third_a ? placements.third_a.name : null,
-    third_a_place_team: placements.third_a ? (placements.third_a.team || "") : null,
-    third_b_place_name: placements.third_b ? placements.third_b.name : null,
-    third_b_place_team: placements.third_b ? (placements.third_b.team || "") : null
-  };
-
-  try {
-    const { data: existing } = await sb.from("category_placements")
-      .select("id")
-      .eq("category_name", categoryName)
-      .eq("discipline", discipline)
-      .eq("ring_number", ringNumber)
-      .maybeSingle();
-      
-    if (existing) {
-      const { error } = await sb.from("category_placements").update(payload).eq("id", existing.id);
-      if (error) console.error("Error updating category placements:", error);
-    } else {
-      const { error } = await sb.from("category_placements").insert([payload]);
-      if (error) console.error("Error inserting category placements:", error);
-    }
-  } catch (err) {
-    console.error("Exception saving category placements:", err);
-  }
+if (!bracket || !bracket.rounds || bracket.rounds.length === 0) return;
+const placements = {
+first: null, second: null, third_a: null, third_b: null
+};
+const totalRounds = bracket.totalRounds;
+if (totalRounds === 1) {
+const finalMatch = bracket.rounds[0][0];
+if (finalMatch.winner === "p1") { placements.first = finalMatch.p1; placements.second = finalMatch.p2; }
+else if (finalMatch.winner === "p2") { placements.first = finalMatch.p2; placements.second = finalMatch.p1; }
+} else {
+const finalMatch = bracket.rounds[totalRounds - 1][0];
+if (finalMatch.winner === "p1") { placements.first = finalMatch.p1; placements.second = finalMatch.p2; }
+else if (finalMatch.winner === "p2") { placements.first = finalMatch.p2; placements.second = finalMatch.p1; }
+const semiFinals = bracket.rounds[totalRounds - 2];
+if (semiFinals && semiFinals.length >= 2) {
+const sf1 = semiFinals[0];
+const sf2 = semiFinals[1];
+if (sf1.winner === "p1") placements.third_a = sf1.p2;
+else if (sf1.winner === "p2") placements.third_a = sf1.p1;
+if (sf2.winner === "p1") placements.third_b = sf2.p2;
+else if (sf2.winner === "p2") placements.third_b = sf2.p1;
 }
-
+}
+const payload = {
+category_name: categoryName,
+discipline: discipline,
+ring_number: ringNumber,
+first_place_name: placements.first ? placements.first.name : null,
+first_place_team: placements.first ? (placements.first.team || "") : null,
+second_place_name: placements.second ? placements.second.name : null,
+second_place_team: placements.second ? (placements.second.team || "") : null,
+third_a_place_name: placements.third_a ? placements.third_a.name : null,
+third_a_place_team: placements.third_a ? (placements.third_a.team || "") : null,
+third_b_place_name: placements.third_b ? placements.third_b.name : null,
+third_b_place_team: placements.third_b ? (placements.third_b.team || "") : null
+};
+try {
+const { data: existing } = await sb.from("category_placements")
+.select("id")
+.eq("category_name", categoryName)
+.eq("discipline", discipline)
+.eq("ring_number", ringNumber)
+.maybeSingle();
+if (existing) {
+const { error } = await sb.from("category_placements").update(payload).eq("id", existing.id);
+if (error) console.error("Error updating category placements:", error);
+} else {
+const { error } = await sb.from("category_placements").insert([payload]);
+if (error) console.error("Error inserting category placements:", error);
+}
+} catch (err) {
+console.error("Exception saving category placements:", err);
+}
+}
 /* ============ HELPERS ============ */
 function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val === null || val === undefined || val === "") ? "-" : val; }
 function escapeHtml(str) { return String(str === null || str === undefined ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
@@ -912,8 +903,20 @@ async function resetMatch() { if (!confirm("Reset all scores, cards, judge corne
 /* ============ DATA ============ */
 async function fetchAssignments() {
 const ringNum = getRingNumber();
-try { const { data, error } = await sb.from(ASSIGN_TABLE).select("*").eq("ring_number", ringNum).order("id", { ascending: true }); if (error) throw error; state.assignments = data || []; } catch (e) { console.error("fetchAssignments error:", e); state.assignments = []; }
-if (state.assignments.length > 0) { const stillThere = state.assignments.some(a => String(a.id) === String(state.activeAssignmentId)); if (!stillThere) state.activeAssignmentId = state.assignments[0].id; } else { state.activeAssignmentId = null; }
+try { 
+    const { data, error } = await sb.from(ASSIGN_TABLE).select("*").eq("ring_number", ringNum).order("id", { ascending: true }); 
+    if (error) throw error; 
+    state.assignments = data || []; 
+} catch (e) { 
+    console.error("fetchAssignments error:", e); 
+    state.assignments = []; 
+}
+if (state.assignments.length > 0) { 
+    const stillThere = state.assignments.some(a => String(a.id) === String(state.activeAssignmentId)); 
+    if (!stillThere) state.activeAssignmentId = state.assignments[0].id; 
+} else { 
+    state.activeAssignmentId = null; 
+}
 renderCategoryPicker();
 }
 async function fetchAllCompetitors() {
@@ -1016,32 +1019,58 @@ try { localStorage.setItem(bracketLocalKey(a.id), JSON.stringify(b)); } catch(e)
 if (state.bracketColumnMissing) return;
 try { const { error } = await sb.from(ASSIGN_TABLE).update({ bracket_state: b }).eq("id", a.id); if (error) { const msg = String(error.message || ""); if (/bracket_state|column|schema cache/i.test(msg)) { state.bracketColumnMissing = true; console.warn("bracket_state column missing - using localStorage only."); } } else { a.bracket_state = b; } } catch(e) { state.bracketColumnMissing = true; }
 }
+
+// FIX APPLIED HERE: Strictly pulls the bracket assigned to the specific ring/assignment
 async function loadOrCreateBracket(force, assignmentId) {
-const a = assignmentId ? state.assignments.find(x => String(x.id) === String(assignmentId)) : activeAssignment();
-if (!a) { if (!assignmentId) state.bracket = null; return; }
-const catName = a.category_name || ""; const disc = String(a.discipline || "sparring").toLowerCase();
-if (!force) {
-let candidate = null;
-if (a.bracket_state && a.bracket_state.rounds) candidate = a.bracket_state;
-if (!candidate) { try { const raw = localStorage.getItem(bracketLocalKey(a.id)); if (raw) { const parsed = JSON.parse(raw); if (parsed && parsed.rounds) candidate = parsed; } } catch(e){} }
-if (candidate && norm(candidate.category_name) === norm(catName)) {
-state.bracket = candidate;
-state.bracket.totalRounds = state.bracket.rounds.length;
-if (!state.bracket.skipped_fights) state.bracket.skipped_fights = [];
-autoResolveByes(state.bracket);
-const next = findNextPending(state.bracket, false);
-if (next) { state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; }
-return;
+    const a = assignmentId ? state.assignments.find(x => String(x.id) === String(assignmentId)) : activeAssignment();
+    if (!a) { if (!assignmentId) state.bracket = null; return; }
+    const catName = a.category_name || ""; 
+    const disc = String(a.discipline || "sparring").toLowerCase();
+    
+    // 1. Always prioritize the DB bracket_state for THIS specific assignment ID
+    if (!force && a.bracket_state && a.bracket_state.rounds && a.bracket_state.rounds.length > 0) {
+        state.bracket = a.bracket_state;
+        state.bracket.totalRounds = state.bracket.rounds.length;
+        if (!state.bracket.skipped_fights) state.bracket.skipped_fights = [];
+        autoResolveByes(state.bracket);
+        const next = findNextPending(state.bracket, false);
+        if (next) { state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; }
+        return;
+    }
+
+    // 2. Fallback to localStorage ONLY if it matches the exact assignment ID and category
+    if (!force) {
+        let candidate = null;
+        try { 
+            const raw = localStorage.getItem(bracketLocalKey(a.id)); 
+            if (raw) { 
+                const parsed = JSON.parse(raw); 
+                if (parsed && parsed.rounds && parsed.rounds.length > 0 && norm(parsed.category_name) === norm(catName)) {
+                    candidate = parsed; 
+                } 
+            } 
+        } catch(e){} 
+        if (candidate) {
+            state.bracket = candidate;
+            state.bracket.totalRounds = state.bracket.rounds.length;
+            if (!state.bracket.skipped_fights) state.bracket.skipped_fights = [];
+            autoResolveByes(state.bracket);
+            const next = findNextPending(state.bracket, false);
+            if (next) { state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; }
+            return;
+        }
+    }
+    
+    // 3. Build new bracket if none exists
+    const list = competitorsFor(catName, disc);
+    if (list.length < 1) { if (!assignmentId) state.bracket = null; return; }
+    state.bracket = buildBracket(list, catName, disc);
+    autoResolveByes(state.bracket);
+    const next = findNextPending(state.bracket, false);
+    if (next) { state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; } else { state.bracket.currentRound = 0; state.bracket.currentMatch = 0; }
+    await saveBracket();
 }
-}
-const list = competitorsFor(catName, disc);
-if (list.length < 1) { if (!assignmentId) state.bracket = null; return; }
-state.bracket = buildBracket(list, catName, disc);
-autoResolveByes(state.bracket);
-const next = findNextPending(state.bracket, false);
-if (next) { state.bracket.currentRound = next.round; state.bracket.currentMatch = next.match; } else { state.bracket.currentRound = 0; state.bracket.currentMatch = 0; }
-await saveBracket();
-}
+
 /* ============ PUSH CURRENT FIGHT ============ */
 async function pushRingUpdate(fields) {
 if (!state.ring || !state.ring.id) return;
@@ -1277,12 +1306,11 @@ const champ = state.bracket.champion;
 await pushRingUpdate({ blue_name: champ ? champ.name : null, red_name: null, blue_club: champ ? champ.team : null, red_club: null, next_blue_name: null, next_red_name: null, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: champ ? "🏆 Category Complete" : "No Fight Available", match_number: 0 });
 resetMatchScores(); resetTimerForNewFight(); renderQueue();
 if (champ) {
-  // Save placements to Supabase when category ends
-  await saveCategoryPlacements(state.bracket, a.category_name, String(a.discipline || "sparring").toLowerCase(), getRingNumber());
-  
-  showToast("🏆 " + champ.name + " wins the category!", "success");
-  if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
-  autoAdvanceTimeout = setTimeout(async () => { await advanceToNextCategory(); autoAdvanceTimeout = null; }, 2500);
+// Save placements to Supabase when category ends
+await saveCategoryPlacements(state.bracket, a.category_name, String(a.discipline || "sparring").toLowerCase(), getRingNumber());
+showToast("🏆 " + champ.name + " wins the category!", "success");
+if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
+autoAdvanceTimeout = setTimeout(async () => { await advanceToNextCategory(); autoAdvanceTimeout = null; }, 2500);
 } else { showToast("No more fights available.", "warning"); }
 return;
 }
