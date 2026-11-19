@@ -589,7 +589,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <div id="admin-password-error" style="color:#ef4444;margin-top:10px;font-size:0.85rem;min-height:20px;"></div>
 </div>
 </div>
-<!-- EDIT PAST CATEGORY MODAL -->
 <div id="modal-edit-past" class="hidden-view modal-overlay">
   <div class="modal-box" style="max-width:500px;">
     <h3 style="color:#fbbf24;margin-bottom:15px;font-size:1.3rem;"><i class="fas fa-history"></i> Edit Past Category</h3>
@@ -696,7 +695,13 @@ function escapeHtml(str) { return String(str === null || str === undefined ? "" 
 function escapeAttr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
 function tightNorm(str) { return norm(str).replace(/\s+/g, " ").replace(/\s*-\s*/g, "-"); }
-function getRingNumber() { const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1"; const n = parseInt(String(raw).replace(/\D/g, ""), 10); return isNaN(n) || n < 1 ? 1 : n; }
+
+function getRingNumber() { 
+  const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1"; 
+  const n = parseInt(String(raw).replace(/\D/g, ""), 10); 
+  return isNaN(n) || n < 1 ? 1 : n; 
+}
+
 function maxJudges() { return state.ring ? (parseInt(state.ring.max_phones, 10) || 4) : 4; }
 function currentDiscipline() { const a = activeAssignment(); return String((a && a.discipline) || (state.ring && (state.ring.mode || state.ring.discipline)) || "sparring").toLowerCase(); }
 function activeAssignment() { if (!state.assignments || state.assignments.length === 0) return null; const found = state.assignments.find(a => String(a.id) === String(state.activeAssignmentId)); return found || state.assignments[0]; }
@@ -962,12 +967,22 @@ pause_seconds: (rc.pause_seconds !== null && rc.pause_seconds !== undefined) ? r
 }
 
 async function fetchAssignments() {
-const ringNum = getRingNumber();
+const ringName = state.ring ? String(state.ring.ring_name || "").trim().toLowerCase() : "";
+const ringNum = state.ring ? String(state.ring.ring_number || "").trim().toLowerCase() : "";
+
 try {
-const { data, error } = await sb.from(ASSIGN_TABLE).select("*").eq("ring_number", ringNum).order("id", { ascending: true });
+const { data, error } = await sb.from(ASSIGN_TABLE).select("*").order("id", { ascending: true });
 if (error) throw error;
-state.assignments = data || [];
+
+state.assignments = (data || []).filter(a => {
+  const aName = String(a.ring_name || "").trim().toLowerCase();
+  const aNum = String(a.ring_number || "").trim().toLowerCase();
+  if (ringName && aName === ringName) return true;
+  if (ringNum && aNum === ringNum) return true;
+  return false;
+});
 } catch (e) { console.error("fetchAssignments:", e); state.assignments = []; }
+
 if (state.assignments.length > 0) {
 const still = state.assignments.some(a => String(a.id) === String(state.activeAssignmentId));
 if (!still) state.activeAssignmentId = state.assignments[0].id;
@@ -1008,106 +1023,189 @@ if (gender === "all") gender = null;
 return { base: s, gender: gender };
 }
 
+function categoryKeyCandidates(a) {
+const info = parseAssignmentCategory(a.category_name);
+const keys = [];
+const push = k => { if (k && keys.indexOf(norm(k)) === -1) keys.push(norm(k)); };
+if (info.gender) {
+push(info.base + " - " + info.gender);
+push(info.base + " (" + info.gender + ")");
+push(info.base + "-" + info.gender);
+}
+push(a.category_name);
+push(info.base);
+if (!info.gender) { push(info.base + " - male"); push(info.base + " - female"); }
+return keys;
+}
+
 function findSavedOrderRows(a) {
 const disc = String(a.discipline || "sparring").toLowerCase();
 const bucket = state.savedOrders[disc] || {};
-const keys = [norm(a.category_name)];
+const keys = categoryKeyCandidates(a);
+
+for (const k of keys) { 
+  if (bucket[k] && bucket[k].length) {
+    return bucket[k]; 
+  }
+}
+
+const otherDisc = disc === "sparring" ? "patterns" : "sparring";
+const otherBucket = state.savedOrders[otherDisc] || {};
+for (const k of keys) { 
+  if (otherBucket[k] && otherBucket[k].length) {
+    return otherBucket[k]; 
+  }
+}
+
 const info = parseAssignmentCategory(a.category_name);
-keys.push(norm(info.base));
-for (const k of keys) { if (bucket[k] && bucket[k].length) return bucket[k]; }
 const target = tightNorm(info.base);
 for (const k in bucket) {
-const kk = tightNorm(k.replace(/\s*-\s*(male|female)$/i, "").replace(/\s*\((male|female)\)$/i, ""));
-if (kk === target) return bucket[k];
+  const kk = tightNorm(k.replace(/\s*-\s*(male|female)$/i, "").replace(/\s*\((male|female)\)$/i, ""));
+  if (kk === target) return bucket[k];
 }
+for (const k in otherBucket) {
+  const kk = tightNorm(k.replace(/\s*-\s*(male|female)$/i, "").replace(/\s*\((male|female)\)$/i, ""));
+  if (kk === target) return otherBucket[k];
+}
+
+console.warn("NO saved order found for", a.category_name, "discipline:", disc, "keys tried:", keys);
 return [];
 }
 
 function findOverrideSize(a) {
-const keys = [norm(a.category_name)];
-const info = parseAssignmentCategory(a.category_name);
-keys.push(norm(info.base));
+const keys = categoryKeyCandidates(a);
 for (const k of keys) { if (state.bracketOverrides[k]) return state.bracketOverrides[k]; }
 return null;
 }
 
-function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
+function competitorsForAssignment(a) {
+const info = parseAssignmentCategory(a.category_name);
+const disc = String(a.discipline || "sparring").toLowerCase();
+const pool = state.competitors.filter(c => c._discipline === disc);
+const genderOk = c => !info.gender || getCompetitorGender(c) === info.gender;
+const target = norm(info.base), targetTight = tightNorm(info.base);
+const tiers = [
+c => norm(c._full_cat) === target,
+c => norm(c._raw_full_cat) === target,
+c => tightNorm(c._full_cat) === targetTight,
+c => tightNorm(c._raw_full_cat) === targetTight
+];
+let matched = [];
+for (const test of tiers) {
+matched = pool.filter(c => genderOk(c) && test(c));
+if (matched.length) break;
+}
+if (!matched.length && info.gender) {
+for (const test of tiers) { matched = pool.filter(c => test(c)); if (matched.length) break; }
+}
+const seen = new Set(); const list = [];
+matched.forEach(c => {
+const key = norm(c.name) + "|" + norm(c.team);
+if (seen.has(key)) return;
+seen.add(key);
+list.push({ name: c.name, team: c.team || "", gender: getCompetitorGender(c), belt: c.belt || "" });
+});
+return list;
+}
 
+function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
 function emptySlot() { return { name: EMPTY_SLOT, team: "" }; }
 function newMatchObj() { return { p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 }; }
 
 function buildBracketForAssignment(a) {
 const saved = findSavedOrderRows(a);
-if (!saved || saved.length === 0) {
-console.warn("No saved bracket found for:", a.category_name);
-return null;
-}
-
-const round1Rows = saved.filter(r => (r.position_number || 0) < 10000).sort((x,y) => (x.position_number || 0) - (y.position_number || 0));
-const laterRows = saved.filter(r => (r.position_number || 0) >= 10000);
-const laterNames = new Set(laterRows.map(r => norm(r.name)));
-
-const base = []; const seen = new Set();
-const push = p => { 
-const k = norm(p.name); 
-if (!k || k === "bye" || seen.has(k)) return; 
-seen.add(k); 
-base.push({ name: p.name, team: p.team || "" }); 
-};
+const round1Rows = saved ? saved.filter(r => (r.position_number || 0) < 10000).sort((x,y) => (x.position_number || 0) - (y.position_number || 0)) : [];
+const laterRows = saved ? saved.filter(r => (r.position_number || 0) >= 10000) : [];
 
 if (round1Rows.length > 0) {
-round1Rows.forEach(r => { if (!laterNames.has(norm(r.name))) push(r); });
-} else {
-// Fallback if no saved order exists
-const regList = competitorsForAssignment(a);
-regList.forEach(p => { if (!laterNames.has(norm(p.name))) push(p); });
+  const base = [];
+  const seen = new Set();
+  const laterNames = new Set(laterRows.map(r => norm(r.name)));
+  const push = p => { 
+    const k = norm(p.name); 
+    if (!k || k === "bye" || seen.has(k)) return; 
+    seen.add(k); 
+    base.push({ name: p.name, team: p.team || "" }); 
+  };
+  
+  round1Rows.forEach(r => { if (!laterNames.has(norm(r.name))) push(r); });
+  
+  if (base.length === 0) {
+    console.warn("buildBracket: base.length is 0 for", a.category_name);
+    return null;
+  }
+
+  const override = findOverrideSize(a);
+  const size = Math.max(2, override || getBracketSize(base.length));
+  const totalRounds = Math.max(1, Math.log2(size));
+
+  const slots = [];
+  for (let i = 1; i <= size; i++) {
+    const row = round1Rows.find(r => r.position_number === i);
+    if (row) {
+      slots.push({ name: row.name, team: row.team || "" });
+    } else {
+      slots.push({ name: BYE, team: "" });
+    }
+  }
+  
+  const rounds = [];
+  const r1 = [];
+  for (let i = 0; i < size; i += 2) r1.push({ p1: slots[i], p2: slots[i+1], winner: null, blue_score: 0, red_score: 0 });
+  rounds.push(r1);
+
+  let matchCount = size / 2;
+  for (let r = 1; r < totalRounds; r++) { 
+    matchCount = matchCount / 2; 
+    const arr = []; 
+    for (let m = 0; m < matchCount; m++) arr.push(newMatchObj()); 
+    rounds.push(arr); 
+  }
+
+  laterRows.forEach(entry => {
+    const pos = entry.position_number;
+    const round = Math.floor(pos / 10000) - 1;
+    const rest = pos % 10000;
+    const match = Math.floor(rest / 100) - 1;
+    const slot = rest % 100;
+    if (round >= 1 && round < totalRounds && rounds[round] && rounds[round][match]) {
+      if (slot === 0) rounds[round][match].p1 = { name: entry.name, team: entry.team || "" };
+      else if (slot === 1) rounds[round][match].p2 = { name: entry.name, team: entry.team || "" };
+    }
+  });
+
+  return {
+    version: 2, assignment_id: a.id, category_name: a.category_name,
+    discipline: String(a.discipline || "sparring").toLowerCase(),
+    competitor_count: base.length, size: size, totalRounds: totalRounds, rounds: rounds,
+    currentRound: 0, currentMatch: 0, champion: null, skipped_fights: [],
+    source: "manage",
+    updated_at: new Date().toISOString()
+  };
 }
 
-if (!base.length) return null;
+const regList = competitorsForAssignment(a);
+if (!regList || regList.length === 0) {
+  console.warn("buildBracket: No saved data and no regList for", a.category_name);
+  return null;
+}
 
 const override = findOverrideSize(a);
-const size = Math.max(2, override || getBracketSize(base.length));
+const size = Math.max(2, override || getBracketSize(regList.length));
 const totalRounds = Math.max(1, Math.log2(size));
-
-let slots;
-if (round1Rows.length > 0) { 
-slots = base.slice(0, size).map(slotObj); 
-while (slots.length < size) slots.push({ name: BYE, team: "" }); 
-} else { 
-slots = spreadTeams(shuffle(base), size).map(slotObj); 
-}
-
+const slots = spreadTeams(shuffle(regList), size).map(p => p ? { name: p.name, team: p.team || "" } : { name: BYE, team: "" });
 const rounds = [];
 const r1 = [];
 for (let i = 0; i < size; i += 2) r1.push({ p1: slots[i], p2: slots[i+1], winner: null, blue_score: 0, red_score: 0 });
 rounds.push(r1);
-
 let matchCount = size / 2;
-for (let r = 1; r < totalRounds; r++) { 
-matchCount = matchCount / 2; 
-const arr = []; 
-for (let m = 0; m < matchCount; m++) arr.push(newMatchObj()); 
-rounds.push(arr); 
-}
-
-laterRows.forEach(entry => {
-const pos = entry.position_number;
-const round = Math.floor(pos / 10000) - 1;
-const rest = pos % 10000;
-const match = Math.floor(rest / 100) - 1;
-const slot = rest % 100;
-if (round >= 1 && round < totalRounds && rounds[round] && rounds[round][match]) {
-if (slot === 0) rounds[round][match].p1 = { name: entry.name, team: entry.team || "" };
-else if (slot === 1) rounds[round][match].p2 = { name: entry.name, team: entry.team || "" };
-}
-});
-
+for (let r = 1; r < totalRounds; r++) { matchCount = matchCount / 2; const arr = []; for (let m = 0; m < matchCount; m++) arr.push(newMatchObj()); rounds.push(arr); }
 return {
 version: 2, assignment_id: a.id, category_name: a.category_name,
 discipline: String(a.discipline || "sparring").toLowerCase(),
-competitor_count: base.length, size: size, totalRounds: totalRounds, rounds: rounds,
+competitor_count: regList.length, size: size, totalRounds: totalRounds, rounds: rounds,
 currentRound: 0, currentMatch: 0, champion: null, skipped_fights: [],
-source: round1Rows.length ? "manage" : "auto",
+source: "auto",
 updated_at: new Date().toISOString()
 };
 }
@@ -1234,10 +1332,14 @@ if (force) { try { localStorage.removeItem(bracketLocalKey(a.id)); } catch(e){} 
 const b = await getBracketForAssignment(a, force);
 if (!assignmentId || String(assignmentId) === String(state.activeAssignmentId) || !state.bracket) state.bracket = b;
 if (!b) {
+const info = parseAssignmentCategory(a.category_name);
+const saved = findSavedOrderRows(a);
 state.lastDiag = '<b>No saved bracket found for this category.</b><br>' +
 'Assignment: <code>' + escapeHtml(a.category_name) + '</code><br>' +
-'Saved Manage bracket rows: <b>0</b><br>' +
-'Please save the bracket in the Manage panel first.';
+'Parsed: <code>' + escapeHtml(info.base) + '</code> gender=<code>' + (info.gender || "any") + '</code> disc=<code>' + escapeHtml(String(a.discipline)) + '</code><br>' +
+'Registrations loaded: <b>' + state.competitors.length + '</b> · matched: <b>0</b><br>' +
+'Saved Manage bracket rows: <b>' + (saved ? saved.length : 0) + '</b><br>' +
+'Age groups loaded: <b>' + ((state.categoryConfig.sparring.ageGroups.length || 0) + (state.categoryConfig.patterns.ageGroups.length || 0)) + '</b>';
 }
 }
 
@@ -1531,7 +1633,7 @@ renderQueue(); renderBracketIfOpen();
 async function resetCategoryBracket() {
 if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
 const a = activeAssignment(); if (!a) return;
-if (!confirm("Rebuild the bracket for '" + a.category_name + "' from the Manage bracket? All ring results will be cleared.")) return;
+if (!confirm("Rebuild the bracket for '" + a.category_name + "' from the Manage bracket / registrations? All ring results will be cleared.")) return;
 try { localStorage.removeItem(bracketLocalKey(a.id)); } catch(e){}
 delete state.brackets[String(a.id)];
 try { await sb.from(ASSIGN_TABLE).update({ bracket_state: null }).eq("id", a.id); a.bracket_state = null; } catch(e){}
@@ -1694,7 +1796,7 @@ html += '</div>';
 }
 }
 } else {
-html += '<div class="diag-box">' + (state.lastDiag || 'No saved bracket found for this category.') + '</div>';
+html += '<div class="diag-box">' + (state.lastDiag || 'No bracket could be built for this category.') + '</div>';
 html += '<button class="timer-btn" style="background:#3b82f6;color:white;width:100%;margin-bottom:10px;" onclick="resetCategoryBracket()"><i class="fas fa-rotate-left"></i> Rebuild Bracket</button>';
 }
 const nextCat = peekNextCategoryAssignment(a.id);
@@ -1805,7 +1907,7 @@ if (!content) return;
 const a = activeAssignment(); const b = state.bracket;
 if (!a) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">No category selected.</div>'; return; }
 if (title) title.textContent = a.category_name + " · " + String(a.discipline || "sparring").toUpperCase();
-if (!b) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No saved bracket available.<br><br>' + (state.lastDiag || "") + '</div>'; return; }
+if (!b) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No bracket available.<br><br>' + (state.lastDiag || "") + '</div>'; return; }
 let html = "";
 if (b.champion) html += '<div style="background:#064e3b;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;color:#6ee7b7;font-weight:800;">🏆 Category Champion: ' + escapeHtml(b.champion.name) + ' (' + escapeHtml(b.champion.team || "") + ')</div>';
 html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Click any finished match</strong> (✏️) to correct the winner. Source: ' + (b.source === "manage" ? "Manage bracket" : "auto-seeded") + '</div>';
@@ -2025,6 +2127,7 @@ state.brackets = {};
 await loadTournamentDate();
 await loadCategoryConfig();
 await fetchAssignments();
+await fetchAllCompetitors();
 await loadSavedOrders();
 for (const a of state.assignments) { await getBracketForAssignment(a, false); }
 await loadOrCreateBracket(false);
