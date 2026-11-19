@@ -1028,7 +1028,7 @@ function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) retu
 function emptySlot() { return { name: EMPTY_SLOT, team: "" }; }
 function newMatchObj() { return { p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 }; }
 
-// STRICT BRACKET BUILDING FROM SAVED POSITIONS
+// STRICT BRACKET BUILDING FROM SAVED POSITIONS ONLY
 function buildBracketForAssignment(a) {
 const saved = findSavedOrderRows(a);
 if (!saved || saved.length === 0) {
@@ -1051,7 +1051,7 @@ const maxPos = Math.max(...round1Rows.map(r => r.position_number));
 const size = Math.max(2, getBracketSize(maxPos));
 const totalRounds = Math.max(1, Math.log2(size));
 
-// Build round 1 slots in exact order
+// Build round 1 slots in EXACT order from saved positions
 const slots = [];
 for (let i = 1; i <= size; i++) {
 const row = round1Rows.find(r => r.position_number === i);
@@ -1078,7 +1078,7 @@ for (let m = 0; m < matchCount; m++) arr.push(newMatchObj());
 rounds.push(arr);
 }
 
-// Fill in later round positions
+// Fill in later round positions from saved data
 laterRows.forEach(entry => {
 const pos = entry.position_number;
 const round = Math.floor(pos / 10000) - 1;
@@ -1972,7 +1972,7 @@ const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display =
 loadTimerState(); subscribeTimer(); subscribeScores(); subscribeRing(); subscribeAssignments();
 renderTimer(); startTimerTick(); startBroadcastLoop();
 if (state.presenceInterval) clearInterval(state.presenceInterval);
-state.presenceInterval = setInterval(() => { updateRingLayoutCornerCornerStats(); renderLaptopJudges(); }, 4000);
+state.presenceInterval = setInterval(() => { updateRingLayoutCornerStats(); renderLaptopJudges(); }, 4000);
 showView("laptop");
 await refreshAllData(true);
 showToast("Welcome to " + (state.ring.ring_name || "the ring"), "success");
