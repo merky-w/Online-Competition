@@ -1953,14 +1953,14 @@ if (state.bracketColumnMissing) html += '<div style="margin-top:15px;padding:12p
 content.innerHTML = html;
 }
 function openChangeWinnerModal(r, m) {
-const b = state.bracket;
-if (!b || !b.rounds[r] || !b.rounds[r][m]) return;
-const match = b.rounds[r][m];
-if (!match.winner || match.winner === "bye") return;
-editingMatchCoords = { r: r, m: m };
-const info = document.getElementById("change-winner-match-info");
-info.textContent = "Match: " + match.p1.name + " vs " + match.p2.name + "\nCurrent winner: " + match[match.winner].name;
-document.getElementById("modal-change-winner").classList.remove("hidden-view");
+  const b = state.bracket;
+  if (!b || !b.rounds[r] || !b.rounds[r][m]) return;
+  const match = b.rounds[r][m];
+  if (!match.winner || match.winner === "bye") return;
+  editingMatchCoords = { r: r, m: m };
+  const info = document.getElementById("change-winner-match-info");
+  info.textContent = "Match: " + match.p1.name + " vs " + match.p2.name + "\nCurrent winner: " + match[match.winner].name;
+  document.getElementById("modal-change-winner").classList.remove("hidden-view");
 }
 function closeChangeWinnerModal() { document.getElementById("modal-change-winner").classList.add("hidden-view"); editingMatchCoords = null; }
 function clearDownstream(b, r, m) {
