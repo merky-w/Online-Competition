@@ -954,135 +954,12 @@ pause_seconds: (rc.pause_seconds !== null && rc.pause_seconds !== undefined) ? r
 }
 } catch (e) { console.warn("loadCategoryConfig:", e); }
 }
-function computeAge(dob) {
-if (!dob || !state.tournamentDate) return null;
-try {
-const birth = new Date(dob); const tour = new Date(state.tournamentDate);
-if (isNaN(birth.getTime()) || isNaN(tour.getTime())) return null;
-let age = tour.getFullYear() - birth.getFullYear();
-const m = tour.getMonth() - birth.getMonth();
-if (m < 0 || (m === 0 && tour.getDate() < birth.getDate())) age--;
-return age;
-} catch (e) { return null; }
-}
-function findClosestAgeGroup(age, groups) {
-if (!groups || !groups.length) return null;
-const sorted = groups.slice().sort((a,b) => a.min_age - b.min_age);
-if (age < sorted[0].min_age) return sorted[0];
-const last = sorted[sorted.length - 1];
-if (last.max_age === null) return last;
-if (age > last.max_age) return last;
-let best = sorted[0], bestDist = Infinity;
-for (const g of sorted) {
-const maxA = g.max_age === null ? 999 : g.max_age;
-const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - maxA));
-if (dist < bestDist) { bestDist = dist; best = g; }
-}
-return best;
-}
-function getFallbackAgeGroup(discipline, gender) {
-const all = (state.categoryConfig[discipline].ageGroups || []).filter(g => g.is_active);
-if (!all.length) return null;
-const same = all.filter(g => normalizeGender(g.gender) === normalizeGender(gender));
-const pool = same.length ? same : all;
-const seniors = pool.find(g => /senior/i.test(g.display_name));
-if (seniors) return seniors;
-return pool[Math.floor(pool.length / 2)];
-}
-function getAgeGroupForAge(age, discipline, gender) {
-const ng = normalizeGender(gender);
-const all = (state.categoryConfig[discipline].ageGroups || []).filter(g => g.is_active);
-if (!all.length) return null;
-let groups = all.filter(g => normalizeGender(g.gender) === ng);
-for (const g of groups) { if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g; }
-for (const g of all) { if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g; }
-const closest = findClosestAgeGroup(age, all);
-if (closest) return closest;
-return getFallbackAgeGroup(discipline, gender);
-}
-function parseAgeGroupFromOriginalCategory(fullCat) {
-if (!fullCat) return null;
-const lower = fullCat.toLowerCase();
-for (const kw of AGE_GROUP_KEYWORDS) { if (lower.startsWith(kw)) return kw.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "); }
-const parts = fullCat.split(" - ");
-if (parts.length >= 2) { const c = parts[0].trim(); if (c.length > 0 && c.length < 30) return c; }
-return null;
-}
-function findAgeGroupByName(name, discipline, gender) {
-if (!name) return null;
-const ng = normalizeGender(gender);
-const all = (state.categoryConfig[discipline].ageGroups || []).filter(g => g.is_active);
-const lower = name.toLowerCase().trim();
-let m = all.find(g => normalizeGender(g.gender) === ng && g.display_name.toLowerCase() === lower); if (m) return m;
-m = all.find(g => g.display_name.toLowerCase() === lower); if (m) return m;
-m = all.find(g => normalizeGender(g.gender) === ng && lower.includes(g.display_name.toLowerCase())); if (m) return m;
-m = all.find(g => lower.includes(g.display_name.toLowerCase())); if (m) return m;
-return null;
-}
-function getPatternsCategoryLabel(kupDanNum, ageGroupId) {
-const ranges = (state.categoryConfig.patterns.kupRanges[ageGroupId] || []).filter(r => r.is_active !== false);
-if (!ranges.length) return "Open";
-for (const r of ranges) {
-const hi = Math.max(r.min_kup, r.max_kup), lo = Math.min(r.min_kup, r.max_kup);
-if (kupDanNum <= hi && kupDanNum >= lo) return r.display_name;
-}
-return "Open";
-}
-function getSparringCategoryLabel(weightKg, ageGroupId) {
-const boundaries = (state.categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
-if (!boundaries.length) return "Open";
-if (weightKg <= boundaries[0]) return "-" + boundaries[0] + "kg";
-for (let i = 0; i < boundaries.length - 1; i++) {
-if (weightKg > boundaries[i] && weightKg <= boundaries[i+1]) return Math.ceil(boundaries[i]) + "-" + boundaries[i+1] + "kg";
-}
-return "+" + boundaries[boundaries.length-1] + "kg";
-}
-function recomputeCompetitorCategories() {
-state.competitors.forEach(c => {
-const discipline = c._discipline;
-const gender = getCompetitorGender(c);
-const age = computeAge(c.dob || c.date_of_birth || c.birthdate);
-let ageGroup = null;
-if (age !== null) ageGroup = getAgeGroupForAge(age, discipline, gender);
-else {
-const parsed = parseAgeGroupFromOriginalCategory(c._raw_full_cat);
-if (parsed) ageGroup = findAgeGroupByName(parsed, discipline, gender);
-}
-if (!ageGroup) ageGroup = getFallbackAgeGroup(discipline, gender);
-c._computed_gender = gender;
-c._computed_age = age;
-if (ageGroup) {
-c._age_group_id = ageGroup.id;
-c._age_group_name = ageGroup.display_name;
-if (discipline === "sparring") {
-const w = parseFloat(c.weight_kg);
-if (!isNaN(w) && w > 0) { c._actual_sub_cat = getSparringCategoryLabel(w, ageGroup.id); c._full_cat = ageGroup.display_name + " - " + c._actual_sub_cat; }
-else { c._actual_sub_cat = "Open"; c._full_cat = ageGroup.display_name + " - Open"; }
-} else {
-const beltName = c._original_sub_cat || c._actual_sub_cat || "";
-const num = kupDanNameToNumber(beltName);
-if (num !== null) { c._actual_sub_cat = getPatternsCategoryLabel(num, ageGroup.id); c._full_cat = ageGroup.display_name + " - " + c._actual_sub_cat; }
-else { c._actual_sub_cat = beltName || "Open"; c._full_cat = ageGroup.display_name + " - " + (beltName || "Open"); }
-}
-} else {
-c._age_group_id = null; c._age_group_name = "Open";
-c._full_cat = c._raw_full_cat || "Open";
-}
-});
-}
-  async function fetchAssignments() {
-const ringName = state.ring ? String(state.ring.ring_name || "").trim().toLowerCase() : "";
-const ringNum = state.ring ? String(state.ring.ring_number || "").trim().toLowerCase() : "";
+async function fetchAssignments() {
+const targetRingNum = getRingNumber();
 try {
 const { data, error } = await sb.from(ASSIGN_TABLE).select("*").order("id", { ascending: true });
 if (error) throw error;
-state.assignments = (data || []).filter(a => {
-const aName = String(a.ring_name || "").trim().toLowerCase();
-const aNum = String(a.ring_number || "").trim().toLowerCase();
-if (ringName && aName === ringName) return true;
-if (ringNum && aNum === ringNum) return true;
-return false;
-});
+state.assignments = (data || []).filter(a => Number(a.ring_number) === targetRingNum);
 } catch (e) { console.error("fetchAssignments:", e); state.assignments = []; }
 if (state.assignments.length > 0) {
 const still = state.assignments.some(a => String(a.id) === String(state.activeAssignmentId));
@@ -1096,13 +973,13 @@ const { data: allRegs, error } = await sb.from(REG_TABLE).select("*");
 if (error) throw error;
 const compRegs = (allRegs || []).filter(r => { const t = String(r.entry_type || r.type || r.role || "").toLowerCase(); return t === "comp" || t === "competitor" || t === "c"; });
 const ids = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
-if (!ids.length) { state.competitors = []; recomputeCompetitorCategories(); return; }
+if (!ids.length) { state.competitors = []; return; }
 const { data: people, error: pErr } = await sb.from(COMP_TABLE).select("*").in("id", ids);
 if (pErr) throw pErr;
 const out = [];
 (people || []).forEach(person => {
-const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
-personRegs.forEach(reg => {
+const regs = compRegs.filter(r => String(r.entry_id) === String(person.id));
+regs.forEach(reg => {
 let entries = [];
 if (reg.entry_data && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
 else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
@@ -1112,7 +989,6 @@ else if (reg.full_cat || reg.category || reg.discipline) entries = [{ full_cat: 
 entries.forEach(entry => {
 const fullCat = entry.full_cat || entry.category || entry.fullCat || "";
 const disc = String(entry.discipline || entry.type || "").toLowerCase();
-if (disc !== "sparring" && disc !== "patterns") return;
 let origSubCat = "", origWeight = null;
 if (disc === "sparring") {
 const wMatch = String(fullCat).match(/[-\s]?(\d+(?:\.\d+)?)\s*kg/i);
@@ -1129,7 +1005,6 @@ _original_sub_cat: origSubCat, _actual_sub_cat: origSubCat,
 weight_kg: origWeight || person.weight_kg || null,
 _age_group_id: null, _age_group_name: null
 }));
-});
 });
 });
 state.competitors = out;
@@ -1161,7 +1036,7 @@ let gender = null;
 let m = s.match(/\((male|female|all)\)\s*$/i);
 if (m) { gender = m[1].toLowerCase(); s = s.slice(0, m.index).trim(); }
 else {
-m = s.match(/[-–]\s*(male|female)\s*$/i);
+m = s.match(/[-–]\s*(male|female|all)\s*$/i);
 if (m) { gender = m[1].toLowerCase(); s = s.slice(0, m.index).trim(); }
 }
 if (gender === "all") gender = null;
@@ -1186,28 +1061,13 @@ const disc = String(a.discipline || "sparring").toLowerCase();
 const bucket = state.savedOrders[disc] || {};
 const keys = categoryKeyCandidates(a);
 for (const k of keys) {
-if (bucket[k] && bucket[k].length) {
-return bucket[k];
+if (bucket[k] && bucket[k].length) return bucket[k];
 }
-}
-const otherDisc = disc === "sparring" ? "patterns" : "sparring";
-const otherBucket = state.savedOrders[otherDisc] || {};
-for (const k of keys) {
-if (otherBucket[k] && otherBucket[k].length) {
-return otherBucket[k];
-}
-}
-const info = parseAssignmentCategory(a.category_name);
-const target = tightNorm(info.base);
+const targetBase = norm(parseAssignmentCategory(a.category_name).base);
 for (const k in bucket) {
-const kk = tightNorm(k.replace(/\s*-\s*(male|female)$/i, "").replace(/\s*\((male|female)\)$/i, ""));
-if (kk === target) return bucket[k];
+const kBase = norm(parseAssignmentCategory(k).base);
+if (kBase === targetBase) return bucket[k];
 }
-for (const k in otherBucket) {
-const kk = tightNorm(k.replace(/\s*-\s*(male|female)$/i, "").replace(/\s*\((male|female)\)$/i, ""));
-if (kk === target) return otherBucket[k];
-}
-console.warn("NO saved order found for", a.category_name, "discipline:", disc, "keys tried:", keys);
 return [];
 }
 function findOverrideSize(a) {
@@ -1220,12 +1080,17 @@ const info = parseAssignmentCategory(a.category_name);
 const disc = String(a.discipline || "sparring").toLowerCase();
 const pool = state.competitors.filter(c => c._discipline === disc);
 const genderOk = c => !info.gender || getCompetitorGender(c) === info.gender;
-const target = norm(info.base), targetTight = tightNorm(info.base);
+const target = norm(info.base);
+const targetTight = tightNorm(info.base);
 const tiers = [
+c => { const cBase = parseAssignmentCategory(c._full_cat).base; return norm(cBase) === target; },
+c => { const cBase = parseAssignmentCategory(c._raw_full_cat).base; return norm(cBase) === target; },
 c => norm(c._full_cat) === target,
 c => norm(c._raw_full_cat) === target,
 c => tightNorm(c._full_cat) === targetTight,
-c => tightNorm(c._raw_full_cat) === targetTight
+c => tightNorm(c._raw_full_cat) === targetTight,
+c => norm(c._full_cat).includes(target.replace(/\s+/g, "")),
+c => norm(c._raw_full_cat).includes(target.replace(/\s+/g, ""))
 ];
 let matched = [];
 for (const test of tiers) {
@@ -1233,9 +1098,13 @@ matched = pool.filter(c => genderOk(c) && test(c));
 if (matched.length) break;
 }
 if (!matched.length && info.gender) {
-for (const test of tiers) { matched = pool.filter(c => test(c)); if (matched.length) break; }
+for (const test of tiers) { 
+matched = pool.filter(c => test(c)); 
+if (matched.length) break; 
 }
-const seen = new Set(); const list = [];
+}
+const seen = new Set(); 
+const list = [];
 matched.forEach(c => {
 const key = norm(c.name) + "|" + norm(c.team);
 if (seen.has(key)) return;
@@ -1421,7 +1290,14 @@ const id = String(a.id);
 if (!force && state.brackets[id]) return state.brackets[id];
 let candidate = null;
 if (!force) {
-if (a.bracket_state && a.bracket_state.rounds && a.bracket_state.rounds.length) candidate = a.bracket_state;
+if (a.bracket_state) {
+try {
+const parsed = typeof a.bracket_state === "string" ? JSON.parse(a.bracket_state) : a.bracket_state;
+if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
+candidate = parsed;
+}
+} catch (e) { console.warn("Failed to parse bracket_state:", e); }
+}
 if (!candidate) {
 try {
 const raw = localStorage.getItem(bracketLocalKey(a.id));
@@ -1782,7 +1658,7 @@ return;
 }
 showToast("✅ All categories on this ring are complete!", "warning");
 }
-  function updateLaptopUIForDiscipline() {
+function updateLaptopUIForDiscipline() {
 const isPatterns = currentDiscipline() === "patterns";
 const timerSection = document.querySelector(".timer-section");
 const penaltiesSection = document.querySelector(".penalties-section");
