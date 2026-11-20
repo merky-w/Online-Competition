@@ -974,6 +974,55 @@ if (!still) state.activeAssignmentId = state.assignments[0].id;
 } else state.activeAssignmentId = null;
 renderCategoryPicker();
 }
+async function fetchAllCompetitors() {
+try {
+const { data: allRegs, error } = await sb.from(REG_TABLE).select("*");
+if (error) throw error;
+const compRegs = (allRegs || []).filter(r => {
+const t = String(r.entry_type || r.type || r.role || "").toLowerCase();
+return t === "comp" || t === "competitor" || t === "c";
+});
+const ids = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
+if (!ids.length) { state.competitors = []; return; }
+const { data: people, error: pErr } = await sb.from(COMP_TABLE).select("*").in("id", ids);
+if (pErr) throw pErr;
+const out = [];
+(people || []).forEach(person => {
+const personRegs = compRegs.filter(r => String(r.entry_id) === String(person.id));
+personRegs.forEach(reg => {
+let entries = [];
+if (reg.entry_data && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
+else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
+else if (Array.isArray(reg.entries_list)) entries = reg.entries_list;
+else if (reg.entry_data && typeof reg.entry_data === "object" && !Array.isArray(reg.entry_data) && (reg.entry_data.full_cat || reg.entry_data.discipline)) entries = [reg.entry_data];
+else if (reg.full_cat || reg.category || reg.discipline) entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline, label: reg.label }];
+entries.forEach(entry => {
+const fullCat = entry.full_cat || entry.category || entry.fullCat || "";
+const disc = String(entry.discipline || entry.type || "").toLowerCase();
+if (disc !== "sparring" && disc !== "patterns") return;
+let origSubCat = "", origWeight = null;
+if (disc === "sparring") {
+const wMatch = String(fullCat).match(/[-\s]?(\d+(?:\.\d+)?)\s*kg/i);
+if (wMatch) { origWeight = parseFloat(wMatch[1]); origSubCat = wMatch[1] + "kg"; }
+} else {
+const parts = String(fullCat).split(" - ");
+if (parts.length >= 2) origSubCat = parts.slice(1).join(" - ").trim();
+}
+out.push(Object.assign({}, person, {
+id: person.id, name: person.name || "Unknown", team: person.team || "N/A",
+gender: getCompetitorGender(person), belt: person.belt || "",
+_reg_id: reg.id, _discipline: disc, _raw_full_cat: fullCat, _full_cat: fullCat,
+_original_sub_cat: origSubCat, _actual_sub_cat: origSubCat,
+weight_kg: origWeight || person.weight_kg || null,
+_age_group_id: null, _age_group_name: null
+}));
+});
+});
+});
+state.competitors = out;
+recomputeCompetitorCategories();
+} catch (e) { console.error("fetchAllCompetitors error:", e); state.competitors = []; }
+}
 async function loadSavedOrders() {
 state.savedOrders = { sparring: {}, patterns: {} };
 state.bracketOverrides = {};
