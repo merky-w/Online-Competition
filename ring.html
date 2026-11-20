@@ -750,15 +750,6 @@ if (existing) { const { error } = await sb.from("category_placements").update(pa
 else { const { error } = await sb.from("category_placements").insert([payload]); if (error) console.warn("placements insert:", error.message); }
 } catch (err) { console.warn("saveCategoryPlacements:", err); }
 }
-async function updatePlacementsFromBracket() {
-const a = activeAssignment();
-if (!a || !state.bracket) return;
-const b = state.bracket;
-const finalMatch = b.rounds[b.totalRounds - 1][0];
-if (b.champion || (finalMatch && finalMatch.winner)) {
-await saveCategoryPlacements(b, a.category_name, String(a.discipline || "sparring").toLowerCase(), getRingNumber());
-}
-}
 function getTimerKey() { return "tkd_timer_" + (state.ring ? state.ring.id : "unknown"); }
 function loadTimerState() { try { const s = localStorage.getItem(getTimerKey()); if (s) timerState = Object.assign({}, timerState, JSON.parse(s)); } catch(e){} }
 function saveTimerState() { try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e){} }
@@ -987,13 +978,10 @@ async function fetchAllCompetitors() {
 try {
 const { data: allRegs, error } = await sb.from(REG_TABLE).select("*");
 if (error) throw error;
-const compRegs = (allRegs || []).filter(r => {
-const t = String(r.entry_type || r.type || r.role || "").toLowerCase();
-return t === "comp" || t === "competitor" || t === "c";
-});
-const compIds = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
-if (!compIds.length) { state.competitors = []; return; }
-const { data: people, error: pErr } = await sb.from(COMP_TABLE).select("*").in("id", compIds);
+const compRegs = (allRegs || []).filter(r => { const t = String(r.entry_type || r.type || r.role || "").toLowerCase(); return t === "comp" || t === "competitor" || t === "c"; });
+const ids = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
+if (!ids.length) { state.competitors = []; return; }
+const { data: people, error: pErr } = await sb.from(COMP_TABLE).select("*").in("id", ids);
 if (pErr) throw pErr;
 const out = [];
 (people || []).forEach(person => {
@@ -1003,12 +991,12 @@ let entries = [];
 if (reg.entry_data && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
 else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
 else if (Array.isArray(reg.entries_list)) entries = reg.entries_list;
-else if (reg.full_cat || reg.category || reg.discipline) {
-entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline }];
-}
+else if (reg.entry_data && typeof reg.entry_data === "object" && !Array.isArray(reg.entry_data) && (reg.entry_data.full_cat || reg.entry_data.discipline)) entries = [reg.entry_data];
+else if (reg.full_cat || reg.category || reg.discipline) entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline, label: reg.label }];
 entries.forEach(entry => {
 const fullCat = entry.full_cat || entry.category || entry.fullCat || "";
-const disc = String(entry.discipline || entry.type || "sparring").toLowerCase();
+const disc = String(entry.discipline || entry.type || "").toLowerCase();
+if (disc !== "sparring" && disc !== "patterns") return;
 let origSubCat = "", origWeight = null;
 if (disc === "sparring") {
 const wMatch = String(fullCat).match(/[-\s]?(\d+(?:\.\d+)?)\s*kg/i);
@@ -1029,7 +1017,7 @@ _age_group_id: null, _age_group_name: null
 });
 state.competitors = out;
 recomputeCompetitorCategories();
-} catch (e) { console.error("fetchAllCompetitors error:", e); state.competitors = []; }
+} catch (e) { console.error("fetchAllCompetitors:", e); state.competitors = []; }
 }
 async function loadSavedOrders() {
 state.savedOrders = { sparring: {}, patterns: {} };
@@ -1535,7 +1523,7 @@ match_stage: champ ? "🏆 Category Complete" : "No Fight Available", match_numb
 });
 resetMatchScores(); resetTimerForNewFight(); renderQueue(); renderBracketIfOpen();
 if (champ) {
-await updatePlacementsFromBracket();
+await saveCategoryPlacements(b, a.category_name, String(a.discipline || "sparring").toLowerCase(), getRingNumber());
 showToast("🏆 " + champ.name + " wins the category!", "success");
 if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 autoAdvanceTimeout = setTimeout(async () => { autoAdvanceTimeout = null; await advanceToNextCategory(); }, 2500);
@@ -1641,7 +1629,6 @@ const winnerObj = side === "blue" ? match.p1 : match.p2;
 promote(b, r, m, winnerObj);
 autoResolveByes(b);
 await saveBracketFor(activeAssignment(), b);
-await updatePlacementsFromBracket();
 showToast("✓ " + winnerObj.name + " advances.", "success");
 await loadCurrentFight(false);
 renderQueue(); renderBracketIfOpen();
@@ -1866,33 +1853,19 @@ document.getElementById("admin-password-error").textContent = "Incorrect passwor
 }
 }
 document.getElementById("inp-admin-password").addEventListener("keydown", e => { if (e.key === "Enter") confirmAdminPassword(); });
-async function openEditPastCategoryModal() {
-requireAdmin(async () => {
+function openEditPastCategoryModal() {
+requireAdmin(() => {
 const sel = document.getElementById("sel-past-category");
-sel.innerHTML = '<option value="">Loading...</option>';
-const ringNum = getRingNumber();
-const { data: assignments, error } = await sb.from(ASSIGN_TABLE).select("*").eq("ring_number", ringNum).order("id", { ascending: true });
-if (error || !assignments) {
-sel.innerHTML = '<option value="">Error loading</option>';
-return;
-}
 sel.innerHTML = "";
-for (const a of assignments) {
+state.assignments.forEach(a => {
 const opt = document.createElement("option");
 opt.value = a.id;
 const disc = (a.discipline || "sparring").toUpperCase();
-const b = state.brackets[String(a.id)] || (a.bracket_state ? JSON.parse(JSON.stringify(a.bracket_state)) : null);
-let status = "Not Started";
-if (b) {
-if (b.champion) {
-status = "✓ Champion: " + b.champion.name;
-} else {
-status = "In Progress";
-}
-}
-opt.textContent = a.category_name + " (" + disc + ") - " + status;
+const b = state.brackets[String(a.id)];
+const status = (b && b.champion) ? " ✓" : "";
+opt.textContent = a.category_name + " (" + disc + ")" + status;
 sel.appendChild(opt);
-}
+});
 document.getElementById("modal-edit-past").classList.remove("hidden-view");
 });
 }
@@ -1963,6 +1936,19 @@ html += '</div></td>';
 html += '</tr>';
 }
 html += '</tbody></table></div>';
+const list = competitorsForAssignment(a);
+html += '<div style="padding:18px;background:#1e293b;border-radius:12px;border:1px solid #334155;">';
+html += '<h4 style="color:#fbbf24;margin:0 0 12px;display:flex;align-items:center;gap:8px;"><i class="fas fa-list"></i> Matched Competitors (' + list.length + ')</h4>';
+html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;">';
+list.forEach((c, idx) => {
+html += '<div style="background:#0f172a;padding:10px;border-radius:8px;border-left:3px solid #3b82f6;">';
+html += '<div style="font-weight:700;color:#f1f5f9;margin-bottom:3px;">' + (idx + 1) + '. ' + escapeHtml(c.name) + '</div>';
+html += '<div style="font-size:0.72rem;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap;"><span><i class="fas fa-users"></i> ' + escapeHtml(c.team) + '</span>';
+if (c.gender) html += '<span><i class="fas fa-venus-mars"></i> ' + escapeHtml(c.gender) + '</span>';
+if (c.belt) html += '<span><i class="fas fa-certificate"></i> ' + escapeHtml(c.belt) + '</span>';
+html += '</div></div>';
+});
+html += '</div></div>';
 if (state.bracketColumnMissing) html += '<div style="margin-top:15px;padding:12px;background:#78350f;border:1px solid #f59e0b;border-radius:8px;color:#fde68a;font-size:0.8rem;">⚠️ Results are saved on this laptop only. Add a <code>bracket_state</code> jsonb column to <code>ring_assignments</code> to sync everywhere.</div>';
 content.innerHTML = html;
 }
@@ -2000,11 +1986,11 @@ match.winner = side;
 match.finished_at = new Date().toISOString();
 promote(b, r, m, match[side]);
 autoResolveByes(b);
+b.skipped_fights = [];
 await saveBracketFor(activeAssignment(), b);
-await updatePlacementsFromBracket();
 closeChangeWinnerModal();
 renderQueue(); renderBracketIfOpen();
-showToast("✓ Result corrected and placements updated.", "success");
+showToast("✓ Result corrected.", "success");
 await loadCurrentFight(false);
 }
 function openJudgeQR(slot) {
