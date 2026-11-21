@@ -690,6 +690,64 @@ function escapeHtml(str) { return String(str === null || str === undefined ? "" 
 function escapeAttr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
 function tightNorm(str) { return norm(str).replace(/\s+/g, " ").replace(/\s*-\s*/g, "-"); }
+function shuffle(arr) {
+  const copy = Array.isArray(arr) ? arr.slice() : [];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+function spreadTeams(list, size) {
+  const slots = new Array(size).fill(null);
+  if (!Array.isArray(list) || list.length === 0) return slots;
+  const byTeam = new Map();
+  list.forEach(item => {
+    const key = norm(item && item.team) || "__no_team__";
+    if (!byTeam.has(key)) byTeam.set(key, []);
+    byTeam.get(key).push(item);
+  });
+  const buckets = Array.from(byTeam.values()).sort((a, b) => b.length - a.length);
+  const ordered = [];
+  let added = true;
+  while (added) {
+    added = false;
+    for (const b of buckets) {
+      if (b.length > 0) {
+        ordered.push(b.shift());
+        added = true;
+      }
+    }
+  }
+  for (let i = 0; i < Math.min(ordered.length, size); i++) slots[i] = ordered[i];
+  return slots;
+}
+async function fetchAllCompetitors() {
+  state.competitors = [];
+  for (const table of [REG_TABLE, COMP_TABLE]) {
+    try {
+      const { data, error } = await sb.from(table).select("*").limit(2000);
+      if (error || !Array.isArray(data) || !data.length) continue;
+      state.competitors = data.map(row => {
+        const name = row.name || row.full_name || row.competitor_name || [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || "";
+        const team = row.team || row.club || row.club_name || row.dojang || "";
+        const rawDisc = String(row.discipline || row.event_type || row.mode || "sparring").trim().toLowerCase();
+        const disc = (rawDisc.includes("pattern") || rawDisc.includes("tul") || rawDisc.includes("poomsae")) ? "patterns" : "sparring";
+        const fullCat = row.category || row.category_name || row.full_category || row.division || "";
+        return Object.assign({}, row, {
+          name,
+          team,
+          gender: row.gender || row.sex || "",
+          belt: row.belt || row.rank || row.kup_dan || "",
+          _discipline: disc,
+          _full_cat: fullCat,
+          _raw_full_cat: row.raw_category || row.original_category || fullCat
+        });
+      }).filter(c => c.name);
+      return;
+    } catch (e) { console.warn("fetchAllCompetitors:", e); }
+  }
+}
 function getRingNumber() {
 const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1";
 const n = parseInt(String(raw).replace(/\D/g, ""), 10);
@@ -955,13 +1013,17 @@ pause_seconds: (rc.pause_seconds !== null && rc.pause_seconds !== undefined) ? r
 } catch (e) { console.warn("loadCategoryConfig:", e); }
 }
 async function fetchAssignments() {
-  const targetRingNum = getRingNumber();
-  try {
-    const { data, error } = await sb.from(ASSIGN_TABLE).select("*").order("id", { ascending: true });
-    if (error) throw error;
-    state.assignments = (data || []).filter(a => {
-      const aNum = parseInt(String(a.ring_number || "").trim(), 10);
-      return aNum === targetRingNum;
+const ringName = state.ring ? String(state.ring.ring_name || "").trim().toLowerCase() : "";
+const ringNum = state.ring ? String(state.ring.ring_number || "").trim().toLowerCase() : "";
+try {
+const { data, error } = await sb.from(ASSIGN_TABLE).select("*").order("id", { ascending: true });
+if (error) throw error;
+state.assignments = (data || []).filter(a => {
+const aName = String(a.ring_name || "").trim().toLowerCase();
+const aNum = String(a.ring_number || "").trim().toLowerCase();
+if (ringName && aName === ringName) return true;
+if (ringNum && aNum === ringNum) return true;
+return false;
 });
 } catch (e) { console.error("fetchAssignments:", e); state.assignments = []; }
 if (state.assignments.length > 0) {
@@ -2119,17 +2181,9 @@ state.assignChannel = sb.channel("assignments-" + getRingNumber())
 if (state.role !== "laptop") return;
 const activeId = state.activeAssignmentId;
 await fetchAssignments();
-if (activeId && state.assignments.some(a => String(a.id) === String(activeId))) {
-  state.activeAssignmentId = activeId;
-} else if (state.assignments.length > 0) {
-  state.activeAssignmentId = state.assignments[0].id;
-}
+if (activeId && state.assignments.some(a => String(a.id) === String(activeId))) state.activeAssignmentId = activeId;
 for (const a of state.assignments) { await getBracketForAssignment(a, false); }
-renderCategoryPicker(); 
-renderQueue();
-if (state.assignments.length > 0) {
-  await loadCurrentFight(false);
-}
+renderCategoryPicker(); renderQueue();
 }).subscribe();
 }
 document.getElementById("btn-admin-view").addEventListener("click", () => { if (state.isAdminUnlocked) openBracketModal(); else openAdminPasswordModal(); });
