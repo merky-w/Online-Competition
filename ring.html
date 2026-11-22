@@ -222,9 +222,11 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
 .edit-winner-icon { position: absolute; top: 4px; right: 4px; font-size: 10px; color: #fbbf24; opacity: 0.8; z-index: 5; pointer-events: none; }
 .bracket-match[onclick]:hover { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4); }
+#modal-change-winner { z-index: 1100; }
 </style>
 </head>
 <body class="bg-slate-900">
+<!-- LANDING -->
 <div id="view-landing" class="landing-container">
 <div class="landing-box">
 <div class="landing-title">
@@ -242,6 +244,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 </div>
+<!-- PHONE -->
 <div id="view-phone" class="hidden-view phone-container">
 <div class="phone-header">
 <div style="display:flex;align-items:center;gap:10px;">
@@ -301,6 +304,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
 </div>
+<!-- LAPTOP -->
 <div id="view-laptop" class="hidden-view laptop-container">
 <div class="laptop-header">
 <div class="laptop-header-left">
@@ -486,6 +490,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- TV -->
 <div id="view-tv" class="hidden-view tv-container">
 <div class="tv-top-bar">
 <div class="tv-top-info">
@@ -554,6 +559,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- QR MODAL -->
 <div id="modal-qr" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
@@ -562,6 +568,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <div><button class="timer-btn" style="background:#475569;width:100%;color:white;" onclick="closeQRModal()">Close</button></div>
 </div>
 </div>
+<!-- ADMIN KICK MODAL -->
 <div id="modal-admin-kick" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
@@ -581,6 +588,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- ADMIN PASSWORD MODAL -->
 <div id="modal-admin-password" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:400px;">
 <h3 style="color:#fbbf24;margin-bottom:15px;font-size:1.3rem;"><i class="fas fa-lock"></i> Admin Access</h3>
@@ -593,6 +601,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <div id="admin-password-error" style="color:#ef4444;margin-top:10px;font-size:0.85rem;min-height:20px;"></div>
 </div>
 </div>
+<!-- WINNER MODAL -->
 <div id="modal-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:600px;">
 <h2 id="modal-winner-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
@@ -605,6 +614,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- CHANGE WINNER MODAL -->
 <div id="modal-change-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:520px;">
 <h3 style="margin-top:0;color:#fbbf24;font-size:1.3rem;"><i class="fas fa-edit"></i> Correct Result</h3>
@@ -617,6 +627,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <p style="color:#64748b;font-size:0.75rem;margin-top:12px;">You can edit this match as many times as needed.</p>
 </div>
 </div>
+<!-- PUSH RESULTS MODAL -->
 <div id="modal-push-results" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:500px;">
 <h3 style="margin-top:0;color:#10b981;font-size:1.5rem;">🏆 Category Complete!</h3>
@@ -627,11 +638,16 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- BRACKET MODAL (Admin) -->
 <div id="modal-bracket" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width: 960px; max-height: 90vh; overflow-y: auto; text-align: left;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:15px;gap:10px;flex-wrap:wrap;">
 <h3 id="bracket-modal-title" style="margin:0; color:#fbbf24; font-size:1.4rem;">Category Bracket</h3>
-<div style="display:flex;gap:10px;">
+<div style="display:flex;gap:10px;align-items:center;">
+<select id="sel-bracket-category" style="background:#0f172a;color:white;border:1px solid #475569;border-radius:6px;padding:6px 12px;font-weight:700;font-size:0.85rem;max-width:250px;" onchange="switchBracketCategory(this.value)">
+<option value="">Loading categories…</option>
+</select>
+<button id="btn-logout-admin" class="timer-btn" style="background:#ef4444;color:white;padding:8px 16px;font-size:0.85rem;" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>
 <button id="btn-push-results-bracket" class="timer-btn" style="background:#10b981;color:white;padding:8px 16px;" onclick="manualPushResults()"><i class="fas fa-database"></i> Push Results</button>
 <button class="timer-btn" style="background:#475569; padding:8px 16px;color:white;" onclick="closeBracketModal()">Close</button>
 </div>
@@ -679,7 +695,8 @@ heartbeatInterval: null, presenceInterval: null,
 borrowedFromAssignmentId: null, borrowedFightCoords: null,
 isAdminUnlocked: false,
 lastDiag: "",
-editingAssignmentId: null
+editingAssignmentId: null,
+viewingBracketAssignmentId: null
 };
 function freshMatchObject() {
 return { judge_blue: [0,0,0,0], judge_red: [0,0,0,0], pattern_votes: [null,null,null,null], blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0 };
@@ -1049,7 +1066,7 @@ if (age > last.max_age) return last;
 let best = sorted[0], bestDist = Infinity;
 for (const g of sorted) {
 const maxA = g.max_age === null ? 999 : g.max_age;
-const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - g.max_age));
+const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - maxA));
 if (dist < bestDist) { bestDist = dist; best = g; }
 }
 return best;
@@ -1864,8 +1881,8 @@ showToast("Failed to save results", "error");
 state.editingAssignmentId = null;
 }
 async function manualPushResults() {
-const a = state.editingAssignmentId ? state.assignments.find(x => String(x.id) === String(state.editingAssignmentId)) : activeAssignment();
-const b = state.editingAssignmentId ? state.brackets[String(state.editingAssignmentId)] : state.bracket;
+const a = state.viewingBracketAssignmentId ? state.assignments.find(x => String(x.id) === String(state.viewingBracketAssignmentId)) : activeAssignment();
+const b = state.viewingBracketAssignmentId ? state.brackets[String(state.viewingBracketAssignmentId)] : state.bracket;
 if (!a || !b) {
 showToast("No category selected", "error");
 return;
@@ -2059,16 +2076,40 @@ function renderBracketIfOpen() { const modal = document.getElementById("modal-br
 function openBracketModal() {
 if (!state.isAdminUnlocked) { openAdminPasswordModal(); return; }
 const modal = document.getElementById("modal-bracket"); if (!modal) return;
-modal.classList.remove("hidden-view"); renderBracketModalContent();
+state.viewingBracketAssignmentId = state.activeAssignmentId;
+modal.classList.remove("hidden-view");
+renderBracketCategoryPicker();
+renderBracketModalContent();
 }
-function closeBracketModal() { const modal = document.getElementById("modal-bracket"); if (modal) modal.classList.add("hidden-view"); state.editingAssignmentId = null; }
+function closeBracketModal() { const modal = document.getElementById("modal-bracket"); if (modal) modal.classList.add("hidden-view"); state.viewingBracketAssignmentId = null; }
+function renderBracketCategoryPicker() {
+const sel = document.getElementById("sel-bracket-category");
+if (!sel) return;
+if (!state.assignments || !state.assignments.length) {
+sel.innerHTML = '<option value="">No categories</option>';
+return;
+}
+sel.innerHTML = state.assignments.map(a => {
+const b = state.brackets[String(a.id)];
+const done = b && b.champion ? " ✓" : "";
+const label = (a.category_name || "Category") + " · " + String(a.discipline || "sparring").toUpperCase() + done;
+const selected = String(a.id) === String(state.viewingBracketAssignmentId) ? " selected" : "";
+return '<option value="' + escapeHtml(a.id) + '"' + selected + '>' + escapeHtml(label) + '</option>';
+}).join("");
+}
+async function switchBracketCategory(assignmentId) {
+if (!assignmentId) return;
+state.viewingBracketAssignmentId = assignmentId;
+await getBracketForAssignment(state.assignments.find(a => String(a.id) === String(assignmentId)), false);
+renderBracketModalContent();
+}
 function renderBracketModalContent() {
 const content = document.getElementById("bracket-modal-content");
 const title = document.getElementById("bracket-modal-title");
 const pushBtn = document.getElementById("btn-push-results-bracket");
 if (!content) return;
-const a = state.editingAssignmentId ? state.assignments.find(x => String(x.id) === String(state.editingAssignmentId)) : activeAssignment();
-const b = state.editingAssignmentId ? state.brackets[String(state.editingAssignmentId)] : state.bracket;
+const a = state.viewingBracketAssignmentId ? state.assignments.find(x => String(x.id) === String(state.viewingBracketAssignmentId)) : activeAssignment();
+const b = state.viewingBracketAssignmentId ? state.brackets[String(state.viewingBracketAssignmentId)] : state.bracket;
 if (!a) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">No category selected.</div>'; return; }
 if (title) title.textContent = a.category_name + " · " + String(a.discipline || "sparring").toUpperCase();
 if (pushBtn) {
@@ -2131,16 +2172,24 @@ if (state.bracketColumnMissing) html += '<div style="margin-top:15px;padding:12p
 content.innerHTML = html;
 }
 function openChangeWinnerModal(r, m) {
-const b = state.editingAssignmentId ? state.brackets[String(state.editingAssignmentId)] : state.bracket;
+const b = state.viewingBracketAssignmentId ? state.brackets[String(state.viewingBracketAssignmentId)] : state.bracket;
 if (!b || !b.rounds[r] || !b.rounds[r][m]) return;
 const match = b.rounds[r][m];
 if (!match.winner || match.winner === "bye") return;
-editingMatchCoords = { r: r, m: m };
+editingMatchCoords = { r: r, m: m, assignmentId: state.viewingBracketAssignmentId };
 const info = document.getElementById("change-winner-match-info");
 info.textContent = "Match: " + match.p1.name + " vs " + match.p2.name + "\nCurrent winner: " + match[match.winner].name;
+document.getElementById("modal-bracket").classList.add("hidden-view");
 document.getElementById("modal-change-winner").classList.remove("hidden-view");
 }
-function closeChangeWinnerModal() { document.getElementById("modal-change-winner").classList.add("hidden-view"); editingMatchCoords = null; }
+function closeChangeWinnerModal() {
+document.getElementById("modal-change-winner").classList.add("hidden-view");
+editingMatchCoords = null;
+if (state.isAdminUnlocked) {
+document.getElementById("modal-bracket").classList.remove("hidden-view");
+renderBracketModalContent();
+}
+}
 function clearDownstream(b, r, m) {
 let nr = r + 1, nm = Math.floor(m / 2), slot = (m % 2 === 0) ? "p1" : "p2";
 while (nr < b.rounds.length) {
@@ -2155,8 +2204,9 @@ b.champion = null;
 }
 async function applyChangedWinner(side) {
 if (!editingMatchCoords) return;
-const b = state.editingAssignmentId ? state.brackets[String(state.editingAssignmentId)] : state.bracket;
-const a = state.editingAssignmentId ? state.assignments.find(x => String(x.id) === String(state.editingAssignmentId)) : activeAssignment();
+const assignmentId = editingMatchCoords.assignmentId || state.viewingBracketAssignmentId || state.activeAssignmentId;
+const b = state.brackets[String(assignmentId)];
+const a = state.assignments.find(x => String(x.id) === String(assignmentId));
 if (!b || !a) return;
 const r = editingMatchCoords.r, m = editingMatchCoords.m;
 const match = b.rounds[r][m];
@@ -2178,11 +2228,21 @@ showToast("✓ Result corrected (DB push failed)", "warning");
 } else {
 showToast("✓ Result corrected", "success");
 }
-closeChangeWinnerModal();
-renderQueue(); renderBracketIfOpen();
-if (state.editingAssignmentId && String(state.editingAssignmentId) === String(state.activeAssignmentId)) {
+editingMatchCoords = null;
+if (state.isAdminUnlocked) {
+document.getElementById("modal-bracket").classList.remove("hidden-view");
+renderBracketModalContent();
+}
+if (String(assignmentId) === String(state.activeAssignmentId)) {
 await loadCurrentFight(false);
 }
+renderQueue();
+}
+function logoutAdmin() {
+state.isAdminUnlocked = false;
+state.viewingBracketAssignmentId = null;
+closeBracketModal();
+showToast("Logged out of admin mode", "success");
 }
 function openJudgeQR(slot) {
 const modal = document.getElementById("modal-qr"); const title = document.getElementById("modal-qr-title"); const container = document.getElementById("qrcode-container");
