@@ -662,7 +662,6 @@ const ADMIN_PIN = "admina";
 const ADMIN_PASSWORD = "admina";
 const BYE = "BYE";
 const EMPTY_SLOT = "";
-
 const KUP_DAN_LEVELS = {
 "10th kup": 10, "10 kup": 10, "10kup": 10, "9th kup": 9, "9 kup": 9, "9kup": 9,
 "8th kup": 8, "8 kup": 8, "8kup": 8, "7th kup": 7, "7 kup": 7, "7kup": 7,
@@ -674,7 +673,6 @@ const KUP_DAN_LEVELS = {
 "5th dan": -4, "5 dan": -4, "5dan": -4, "6th dan": -5, "6 dan": -5, "6dan": -5
 };
 const AGE_GROUP_KEYWORDS = ["kids","youth","older youth","juniors","junior","cadets","cadet","seniors","senior","masters","master","veterans","veteran"];
-
 const state = {
 role: null, ring: null, loggingIn: false,
 assignments: [], competitors: [], activeAssignmentId: null,
@@ -690,7 +688,6 @@ borrowedFromAssignmentId: null, borrowedFightCoords: null,
 isAdminUnlocked: false,
 lastDiag: ""
 };
-
 function freshMatchObject() {
 return { judge_blue: [0,0,0,0], judge_red: [0,0,0,0], pattern_votes: [null,null,null,null], blue_gam_jeom: 0, red_gam_jeom: 0, blue_yellow_cards: 0, red_yellow_cards: 0 };
 }
@@ -701,22 +698,19 @@ const TIMER_CHANNEL_PREFIX = "timer-";
 const SCORE_CHANNEL_PREFIX = "scores-";
 let timerState = { round: 1, roundTime: 120, breakTime: 30, startTime: null, elapsed: 0, paused: true, finished: false, winner: null, isBreak: false };
 let timerChannel = null, timerTickInterval = null, broadcastInterval = null;
-
 function setTxt(id, val) { const el = document.getElementById(id); if (el) el.textContent = (val === null || val === undefined || val === "") ? "-" : val; }
 function escapeHtml(str) { return String(str === null || str === undefined ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 function escapeAttr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
 function tightNorm(str) { return norm(str).replace(/\s+/g, " ").replace(/\s*-\s*/g, "-"); }
-
 // BULLETPROOF CATEGORY NORMALIZATION
 function normalizeCategoryKey(str) {
-    return norm(str)
-        .replace(/\s*\((male|female|all)\)\s*/gi, ' - $1')
-        .replace(/\s*-\s*(male|female)\s*/gi, ' - $1')
-        .replace(/\s+/g, ' ')
-        .trim();
+return norm(str)
+.replace(/\s*\((male|female|all)\)\s*/gi, ' - $1')
+.replace(/\s*-\s*(male|female)\s*/gi, ' - $1')
+.replace(/\s+/g, ' ')
+.trim();
 }
-
 function getRingNumber() { const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1"; const n = parseInt(String(raw).replace(/\D/g, ""), 10); return isNaN(n) || n < 1 ? 1 : n; }
 function maxJudges() { return state.ring ? (parseInt(state.ring.max_phones, 10) || 4) : 4; }
 function currentDiscipline() { const a = activeAssignment(); return String((a && a.discipline) || (state.ring && (state.ring.mode || state.ring.discipline)) || "sparring").toLowerCase(); }
@@ -739,42 +733,94 @@ if (normalized.includes("dan") && num >= 1 && num <= 6) return -(num - 1);
 }
 return null;
 }
-
 async function saveCategoryPlacements(bracket, categoryName, discipline, ringNumber) {
-if (!bracket || !bracket.rounds || bracket.rounds.length === 0) return;
-const placements = { first: null, second: null, third_a: null, third_b: null };
-const totalRounds = bracket.totalRounds || bracket.rounds.length;
-const finalMatch = bracket.rounds[totalRounds - 1][0];
-if (finalMatch) {
-if (finalMatch.winner === "p1") { placements.first = finalMatch.p1; placements.second = finalMatch.p2; }
-else if (finalMatch.winner === "p2") { placements.first = finalMatch.p2; placements.second = finalMatch.p1; }
-}
-if (totalRounds >= 2) {
-const semiFinals = bracket.rounds[totalRounds - 2];
-if (semiFinals && semiFinals.length >= 2) {
-const sf1 = semiFinals[0], sf2 = semiFinals[1];
-if (sf1.winner === "p1") placements.third_a = sf1.p2; else if (sf1.winner === "p2") placements.third_a = sf1.p1;
-if (sf2.winner === "p1") placements.third_b = sf2.p2; else if (sf2.winner === "p2") placements.third_b = sf2.p1;
-}
-}
-const payload = {
-category_name: categoryName, discipline: discipline, ring_number: ringNumber,
-first_place_name: placements.first ? placements.first.name : null,
-first_place_team: placements.first ? (placements.first.team || "") : null,
-second_place_name: placements.second ? placements.second.name : null,
-second_place_team: placements.second ? (placements.second.team || "") : null,
-third_a_place_name: placements.third_a ? placements.third_a.name : null,
-third_a_place_team: placements.third_a ? (placements.third_a.team || "") : null,
-third_b_place_name: placements.third_b ? placements.third_b.name : null,
-third_b_place_team: placements.third_b ? (placements.third_b.team || "") : null
-};
-try {
-const { data: existing } = await sb.from("category_placements").select("id").eq("category_name", categoryName).eq("discipline", discipline).eq("ring_number", ringNumber).maybeSingle();
-if (existing) { const { error } = await sb.from("category_placements").update(payload).eq("id", existing.id); if (error) console.warn("placements update:", error.message); }
-else { const { error } = await sb.from("category_placements").insert([payload]); if (error) console.warn("placements insert:", error.message); }
-} catch (err) { console.warn("saveCategoryPlacements:", err); }
-}
+  if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
+    console.warn("saveCategoryPlacements: missing bracket rounds");
+    return;
+  }
 
+  const placements = { first: null, second: null, third_a: null, third_b: null };
+  const totalRounds = bracket.totalRounds || bracket.rounds.length;
+  const finalRound = bracket.rounds[totalRounds - 1];
+  const finalMatch = finalRound && finalRound[0];
+
+  if (finalMatch) {
+    if (finalMatch.winner === "p1" && isRealName(finalMatch.p1 && finalMatch.p1.name)) {
+      placements.first = finalMatch.p1;
+      if (isRealName(finalMatch.p2 && finalMatch.p2.name)) placements.second = finalMatch.p2;
+    } else if (finalMatch.winner === "p2" && isRealName(finalMatch.p2 && finalMatch.p2.name)) {
+      placements.first = finalMatch.p2;
+      if (isRealName(finalMatch.p1 && finalMatch.p1.name)) placements.second = finalMatch.p1;
+    }
+  }
+
+  if (!placements.first && bracket.champion && isRealName(bracket.champion.name)) {
+    placements.first = bracket.champion;
+  }
+
+  if (totalRounds >= 2) {
+    const semiFinals = bracket.rounds[totalRounds - 2];
+    if (semiFinals && semiFinals.length >= 2) {
+      const [sf1, sf2] = semiFinals;
+      if (sf1.winner === "p1" && isRealName(sf1.p2 && sf1.p2.name)) placements.third_a = sf1.p2;
+      else if (sf1.winner === "p2" && isRealName(sf1.p1 && sf1.p1.name)) placements.third_a = sf1.p1;
+
+      if (sf2.winner === "p1" && isRealName(sf2.p2 && sf2.p2.name)) placements.third_b = sf2.p2;
+      else if (sf2.winner === "p2" && isRealName(sf2.p1 && sf2.p1.name)) placements.third_b = sf2.p1;
+    }
+  }
+
+  const finalCatName = categoryName || bracket.category_name;
+  const finalDisc = String(discipline || bracket.discipline || "sparring").toLowerCase();
+  const finalRing = ringNumber || getRingNumber();
+
+  const payload = {
+    category_name: finalCatName,
+    discipline: finalDisc,
+    ring_number: finalRing,
+    first_place_name: placements.first ? placements.first.name : null,
+    first_place_team: placements.first ? (placements.first.team || "") : null,
+    second_place_name: placements.second ? placements.second.name : null,
+    second_place_team: placements.second ? (placements.second.team || "") : null,
+    third_a_place_name: placements.third_a ? placements.third_a.name : null,
+    third_a_place_team: placements.third_a ? (placements.third_a.team || "") : null,
+    third_b_place_name: placements.third_b ? placements.third_b.name : null,
+    third_b_place_team: placements.third_b ? (placements.third_b.team || "") : null
+  };
+
+  console.log("Saving category_placements payload:", payload);
+
+  try {
+    const { data: existing, error: selErr } = await sb
+      .from("category_placements")
+      .select("id")
+      .eq("category_name", finalCatName)
+      .eq("discipline", finalDisc)
+      .eq("ring_number", finalRing)
+      .maybeSingle();
+
+    if (selErr) throw selErr;
+
+    if (existing) {
+      const { error: updErr } = await sb
+        .from("category_placements")
+        .update(payload)
+        .eq("id", existing.id);
+      if (updErr) throw updErr;
+      console.log("Updated category_placements row:", existing.id);
+    } else {
+      const { data: insData, error: insErr } = await sb
+        .from("category_placements")
+        .insert([payload])
+        .select();
+      if (insErr) throw insErr;
+      console.log("Inserted category_placements row:", insData);
+    }
+  } catch (err) {
+    console.error("saveCategoryPlacements error:", err);
+    showToast("DB Save Error: " + (err.message || err), "error");
+  }
+}
 function getTimerKey() { return "tkd_timer_" + (state.ring ? state.ring.id : "unknown"); }
 function loadTimerState() { try { const s = localStorage.getItem(getTimerKey()); if (s) timerState = Object.assign({}, timerState, JSON.parse(s)); } catch(e){} }
 function saveTimerState() { try { localStorage.setItem(getTimerKey(), JSON.stringify(timerState)); } catch(e){} }
@@ -853,7 +899,6 @@ if (timerState.round === 1) { timerState.round = 2; timerState.isBreak = true; t
 else if (timerState.round === 2) { const v = judgeVoteCounts(); if (v.blue === v.red) { timerState.round = 3; timerState.isBreak = true; timerState.paused = false; timerState.startTime = Date.now(); saveTimerState(); broadcastTimerState(); renderTimer(); startTimerTick(); showToast("☕ Round 2 tied! Break started.", "warning"); } else { finishMatch(); } }
 else { finishMatch(); }
 }
-
 function subscribeScores() {
 if (state.scoreChannel) sb.removeChannel(state.scoreChannel);
 if (!state.ring) return;
@@ -940,7 +985,6 @@ updateRingLayoutCornerStats();
 function adjustSpecificJudge(judgeNum, side, delta) { if (state.role !== "laptop") return; const idx = judgeNum - 1; const jb = pad4(state.match.judge_blue); const jr = pad4(state.match.judge_red); if (side === "blue") jb[idx] = Math.max(0, jb[idx] + delta); else jr[idx] = Math.max(0, jr[idx] + delta); state.match.judge_blue = jb; state.match.judge_red = jr; renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); broadcastScoreState(); }
 function resetMatchScores() { state.match = freshMatchObject(); renderVoteScores(); renderLaptopJudges(); renderTVJudgeNets(); renderPenalties(); broadcastScoreState(); }
 async function resetMatch() { if (!confirm("Reset all scores, cards, judge corners AND the round timer for this fight?")) return; resetMatchScores(); resetTimerForNewFight(); const modal = document.getElementById("modal-winner"); if (modal) modal.classList.add("hidden-view"); showToast("Fight reset.", "success"); }
-
 async function loadTournamentDate() {
 state.tournamentDate = new Date().toISOString().split("T")[0];
 try {
@@ -1002,7 +1046,7 @@ if (age > last.max_age) return last;
 let best = sorted[0], bestDist = Infinity;
 for (const g of sorted) {
 const maxA = g.max_age === null ? 999 : g.max_age;
-const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - maxA));
+const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - g.max_age));
 if (dist < bestDist) { bestDist = dist; best = g; }
 }
 return best;
@@ -1097,7 +1141,6 @@ c._full_cat = c._raw_full_cat || "Open";
 }
 });
 }
-
 async function fetchAssignments() {
 const ringNum = getRingNumber();
 try {
@@ -1157,7 +1200,6 @@ state.competitors = out;
 recomputeCompetitorCategories();
 } catch (e) { console.error("fetchAllCompetitors:", e); state.competitors = []; }
 }
-
 async function loadSavedOrders() {
 state.savedOrders = { sparring: {}, patterns: {} };
 state.bracketOverrides = {};
@@ -1178,7 +1220,6 @@ const { data } = await sb.from("bracket_overrides").select("*");
 (data || []).forEach(r => { state.bracketOverrides[norm(r.category)] = r.forced_size; });
 } catch (e) {}
 }
-
 function parseAssignmentCategory(name) {
 let s = String(name || "").trim();
 let gender = null;
@@ -1191,16 +1232,13 @@ if (m) { gender = m[1].toLowerCase(); s = s.slice(0, m.index).trim(); }
 if (gender === "all") gender = null;
 return { base: s, gender: gender };
 }
-
 // BULLETPROOF SAVED ORDER RETRIEVAL
 function findSavedOrderRows(a) {
 const disc = String(a.discipline || "sparring").toLowerCase();
 const bucket = state.savedOrders[disc] || {};
-
 // 1. Exact normalized match
 const k = normalizeCategoryKey(a.category_name);
 if (bucket[k] && bucket[k].length) return bucket[k];
-
 // 2. Fallback: match by base name (tightNorm)
 const info = parseAssignmentCategory(a.category_name);
 const target = tightNorm(info.base);
@@ -1208,21 +1246,17 @@ for (const key in bucket) {
 const kk = tightNorm(key.replace(/\s*-\s*(male|female)$/i, "").replace(/\s*\((male|female)\)$/i, ""));
 if (kk === target) return bucket[key];
 }
-
 // 3. Last resort: partial match
 for (const key in bucket) {
 if (key.includes(target) || target.includes(key)) return bucket[key];
 }
-
 return [];
 }
-
 function findOverrideSize(a) {
 const keys = categoryKeyCandidates(a);
 for (const k of keys) { if (state.bracketOverrides[k]) return state.bracketOverrides[k]; }
 return null;
 }
-
 function categoryKeyCandidates(a) {
 const info = parseAssignmentCategory(a.category_name);
 const keys = [];
@@ -1237,7 +1271,6 @@ push(info.base);
 if (!info.gender) { push(info.base + " - male"); push(info.base + " - female"); }
 return keys;
 }
-
 // BULLETPROOF COMPETITOR MATCHING
 function competitorsForAssignment(a) {
 const info = parseAssignmentCategory(a.category_name);
@@ -1245,17 +1278,14 @@ const disc = String(a.discipline || "sparring").toLowerCase();
 const pool = state.competitors.filter(c => c._discipline === disc);
 const genderOk = c => !info.gender || getCompetitorGender(c) === info.gender;
 const target = norm(info.base), targetTight = tightNorm(info.base);
-
 let matched = pool.filter(c => genderOk(c) && norm(c._full_cat) === target);
 if (!matched.length) matched = pool.filter(c => genderOk(c) && tightNorm(c._full_cat) === targetTight);
 if (!matched.length) matched = pool.filter(c => genderOk(c) && norm(c._raw_full_cat) === target);
 if (!matched.length) matched = pool.filter(c => genderOk(c) && tightNorm(c._raw_full_cat) === targetTight);
-
 if (!matched.length && info.gender) {
 matched = pool.filter(c => norm(c._full_cat) === target);
 if (!matched.length) matched = pool.filter(c => tightNorm(c._full_cat) === targetTight);
 }
-
 const seen = new Set(); const list = [];
 matched.forEach(c => {
 const key = norm(c.name) + "|" + norm(c.team);
@@ -1265,11 +1295,9 @@ list.push({ name: c.name, team: c.team || "", gender: getCompetitorGender(c), be
 });
 return list;
 }
-
 function competitorsFor(categoryName, discipline) {
 return competitorsForAssignment({ category_name: categoryName, discipline: discipline });
 }
-
 function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
 function generateSeedOrder(size) { if (size === 1) return [0]; const half = size / 2; const left = generateSeedOrder(half); const right = left.map(x => x + half); const result = []; for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); } return result; }
 function spreadTeams(list, bracketSize) {
@@ -1286,7 +1314,6 @@ function shuffle(list) { const arr = list.slice(); for (let i = arr.length - 1; 
 function slotObj(p) { return p && p.name ? { name: p.name, team: p.team || "" } : { name: BYE, team: "" }; }
 function emptySlot() { return { name: EMPTY_SLOT, team: "" }; }
 function newMatchObj() { return { p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 }; }
-
 // STRICT BRACKET BUILDING USING MANAGE ORDER
 function buildBracketForAssignment(a) {
 const regList = competitorsForAssignment(a);
@@ -1294,58 +1321,50 @@ const saved = findSavedOrderRows(a);
 const round1Rows = saved.filter(r => (r.position_number || 0) < 10000).sort((x,y) => (x.position_number || 0) - (y.position_number || 0));
 const laterRows = saved.filter(r => (r.position_number || 0) >= 10000);
 const laterNames = new Set(laterRows.map(r => norm(r.name)));
-
 const base = []; const seen = new Set();
-const push = p => { 
-const k = norm(p.name); 
-if (!k || k === "bye" || seen.has(k)) return; 
-seen.add(k); 
-base.push({ name: p.name, team: p.team || "" }); 
+const push = p => {
+const k = norm(p.name);
+if (!k || k === "bye" || seen.has(k)) return;
+seen.add(k);
+base.push({ name: p.name, team: p.team || "" });
 };
-
 // STRICTLY use the order from round1Rows if available
 if (round1Rows.length > 0) {
-round1Rows.forEach(r => { 
-if (!laterNames.has(norm(r.name))) push(r); 
+round1Rows.forEach(r => {
+if (!laterNames.has(norm(r.name))) push(r);
 });
 // Add any remaining competitors from regList that are not in round1Rows
-regList.forEach(p => { 
-if (!laterNames.has(norm(p.name)) && !seen.has(norm(p.name))) push(p); 
+regList.forEach(p => {
+if (!laterNames.has(norm(p.name)) && !seen.has(norm(p.name))) push(p);
 });
 } else {
-regList.forEach(p => { 
-if (!laterNames.has(norm(p.name))) push(p); 
+regList.forEach(p => {
+if (!laterNames.has(norm(p.name))) push(p);
 });
 }
-
 if (!base.length) return null;
-
 const override = findOverrideSize(a);
 const size = Math.max(2, override || getBracketSize(base.length));
 const totalRounds = Math.max(1, Math.log2(size));
-
 let slots;
-if (round1Rows.length > 0) { 
+if (round1Rows.length > 0) {
 // Use the exact order from base (which is from round1Rows)
-slots = base.slice(0, size).map(slotObj); 
-while (slots.length < size) slots.push({ name: BYE, team: "" }); 
-} else { 
-slots = spreadTeams(shuffle(base), size).map(slotObj); 
+slots = base.slice(0, size).map(slotObj);
+while (slots.length < size) slots.push({ name: BYE, team: "" });
+} else {
+slots = spreadTeams(shuffle(base), size).map(slotObj);
 }
-
 const rounds = [];
 const r1 = [];
 for (let i = 0; i < size; i += 2) r1.push({ p1: slots[i], p2: slots[i+1], winner: null, blue_score: 0, red_score: 0 });
 rounds.push(r1);
-
 let matchCount = size / 2;
-for (let r = 1; r < totalRounds; r++) { 
-matchCount = matchCount / 2; 
-const arr = []; 
-for (let m = 0; m < matchCount; m++) arr.push(newMatchObj()); 
-rounds.push(arr); 
+for (let r = 1; r < totalRounds; r++) {
+matchCount = matchCount / 2;
+const arr = [];
+for (let m = 0; m < matchCount; m++) arr.push(newMatchObj());
+rounds.push(arr);
 }
-
 laterRows.forEach(entry => {
 const pos = entry.position_number;
 const round = Math.floor(pos / 10000) - 1;
@@ -1357,7 +1376,6 @@ if (slot === 0) rounds[round][match].p1 = { name: entry.name, team: entry.team |
 else if (slot === 1) rounds[round][match].p2 = { name: entry.name, team: entry.team || "" };
 }
 });
-
 return {
 version: 2, assignment_id: a.id, category_name: a.category_name,
 discipline: String(a.discipline || "sparring").toLowerCase(),
@@ -1367,7 +1385,6 @@ source: round1Rows.length ? "manage" : "auto",
 updated_at: new Date().toISOString()
 };
 }
-
 function isRealName(n) { return !!n && n !== BYE && n !== EMPTY_SLOT; }
 function promote(bracket, roundIdx, matchIdx, winnerObj) {
 const nextRound = roundIdx + 1;
@@ -1435,7 +1452,6 @@ if (remaining === 5) return "Round of 32";
 return "Round " + (roundIdx + 1);
 }
 function globalFightNumber(bracket, roundIdx, matchIdx) { let n = 0; for (let r = 0; r < roundIdx; r++) n += bracket.rounds[r].length; return n + matchIdx + 1; }
-
 function bracketLocalKey(assignmentId) { return "tkd_bracket_" + (state.ring ? state.ring.id : "ring") + "_" + assignmentId; }
 async function saveBracketFor(a, b) {
 if (!a || !b) return;
@@ -1501,7 +1517,6 @@ state.lastDiag = '<b>No fighters found for this category.</b><br>' +
 'Age groups loaded: <b>' + ((state.categoryConfig.sparring.ageGroups.length || 0) + (state.categoryConfig.patterns.ageGroups.length || 0)) + '</b>';
 }
 }
-
 async function pushRingUpdate(fields) {
 if (!state.ring || !state.ring.id) return;
 state.ring = Object.assign({}, state.ring, fields);
@@ -1678,7 +1693,7 @@ match_stage: champ ? "🏆 Category Complete" : "No Fight Available", match_numb
 });
 resetMatchScores(); resetTimerForNewFight(); renderQueue(); renderBracketIfOpen();
 if (champ) {
-await saveCategoryPlacements(b, a.category_name, String(a.discipline || "sparring").toLowerCase(), getRingNumber());
+await saveCategoryPlacements(b, b.category_name || a.category_name, String(b.discipline || a.discipline || "sparring").toLowerCase(), getRingNumber());
 showToast("🏆 " + champ.name + " wins the category!", "success");
 if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
 autoAdvanceTimeout = setTimeout(async () => { autoAdvanceTimeout = null; await advanceToNextCategory(); }, 2500);
@@ -1732,7 +1747,6 @@ if (b && !b.champion && findNextPending(b, true)) return { assignment: assignmen
 }
 return null;
 }
-
 function finishMatch() {
 const isPatterns = currentDiscipline() === "patterns";
 let winner;
@@ -1821,7 +1835,6 @@ return;
 }
 showToast("✅ All categories on this ring are complete!", "warning");
 }
-
 function updateLaptopUIForDiscipline() {
 const isPatterns = currentDiscipline() === "patterns";
 const timerSection = document.querySelector(".timer-section");
@@ -1983,7 +1996,6 @@ html += '</div>';
 }
 container.innerHTML = html;
 }
-
 function openAdminPasswordModal() {
 document.getElementById("inp-admin-password").value = "";
 document.getElementById("admin-password-error").textContent = "";
@@ -2062,7 +2074,6 @@ html += '</div></div>';
 if (state.bracketColumnMissing) html += '<div style="margin-top:15px;padding:12px;background:#78350f;border:1px solid #f59e0b;border-radius:8px;color:#fde68a;font-size:0.8rem;">⚠️ Results are saved on this laptop only. Add a <code>bracket_state</code> jsonb column to <code>ring_assignments</code> to sync everywhere.</div>';
 content.innerHTML = html;
 }
-
 function openChangeWinnerModal(r, m) {
 const b = state.bracket;
 if (!b || !b.rounds[r] || !b.rounds[r][m]) return;
@@ -2099,12 +2110,21 @@ promote(b, r, m, match[side]);
 autoResolveByes(b);
 b.skipped_fights = [];
 await saveBracketFor(activeAssignment(), b);
+
+if (b.champion) {
+  await saveCategoryPlacements(
+    b,
+    b.category_name,
+    String(b.discipline || "sparring").toLowerCase(),
+    getRingNumber()
+  );
+}
+
 closeChangeWinnerModal();
 renderQueue(); renderBracketIfOpen();
 showToast("✓ Result corrected.", "success");
 await loadCurrentFight(false);
 }
-
 function openJudgeQR(slot) {
 const modal = document.getElementById("modal-qr"); const title = document.getElementById("modal-qr-title"); const container = document.getElementById("qrcode-container");
 if (!modal || !container || !state.ring) return;
@@ -2140,7 +2160,6 @@ const btn4 = document.getElementById("qr-btn-4"); if (btn4) btn4.style.display =
 renderLaptopJudges(); renderVoteScores(); renderTVJudgeNets(); updateRingLayoutCornerStats(); broadcastScoreState();
 showToast("Ring set to " + num + " judges", "success");
 }
-
 function setPhoneStatus(msg, isError) { const el = document.getElementById("phone-status"); if (el) { el.textContent = msg; el.style.color = isError ? "#ef4444" : "#94a3b8"; } }
 async function autoEnterPhone(slot) {
 const maxJ = maxJudges(); if (slot > maxJ) slot = maxJ;
@@ -2184,7 +2203,6 @@ setPhoneStatus("✓ Vote: " + winner.toUpperCase(), false);
 try { state.scoreChannel.send({ type: "broadcast", event: "judge-patterns", payload: { slot: state.judgeSlot, winner: winner } }); } catch (e) {}
 });
 });
-
 function parseHash() {
 const raw = location.hash.replace(/^#/, "");
 const q = raw.indexOf("?");
@@ -2237,7 +2255,6 @@ else errEl.textContent = "Password matched a ring but no role.";
 } catch (e) { console.error(e); errEl.textContent = "Connection error. Check console."; }
 finally { state.loggingIn = false; btn.disabled = false; btn.textContent = "Enter Ring"; }
 }
-
 async function refreshAllData(silent) {
 if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
 state.brackets = {};
@@ -2301,7 +2318,6 @@ for (const a of state.assignments) { await getBracketForAssignment(a, false); }
 renderCategoryPicker(); renderQueue();
 }).subscribe();
 }
-
 document.getElementById("btn-admin-view").addEventListener("click", () => { if (state.isAdminUnlocked) openBracketModal(); else openAdminPasswordModal(); });
 document.getElementById("btn-open-tv").addEventListener("click", () => { let tvUrl = location.origin + location.pathname + "#tv"; if (state.ring && state.ring.tv_code) tvUrl += "?code=" + encodeURIComponent(state.ring.tv_code); window.open(tvUrl, "_blank"); });
 document.getElementById("btn-refresh-data").addEventListener("click", () => refreshAllData(false));
@@ -2340,7 +2356,6 @@ state.match[column] = Math.max(0, (state.match[column] || 0) + delta);
 renderPenalties(); broadcastScoreState();
 });
 });
-
 function cleanupChannels() {
 if (state.ringChannel) sb.removeChannel(state.ringChannel);
 if (state.scoreChannel) sb.removeChannel(state.scoreChannel);
