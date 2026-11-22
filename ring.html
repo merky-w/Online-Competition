@@ -690,64 +690,6 @@ function escapeHtml(str) { return String(str === null || str === undefined ? "" 
 function escapeAttr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
 function tightNorm(str) { return norm(str).replace(/\s+/g, " ").replace(/\s*-\s*/g, "-"); }
-function shuffle(arr) {
-  const copy = Array.isArray(arr) ? arr.slice() : [];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-function spreadTeams(list, size) {
-  const slots = new Array(size).fill(null);
-  if (!Array.isArray(list) || list.length === 0) return slots;
-  const byTeam = new Map();
-  list.forEach(item => {
-    const key = norm(item && item.team) || "__no_team__";
-    if (!byTeam.has(key)) byTeam.set(key, []);
-    byTeam.get(key).push(item);
-  });
-  const buckets = Array.from(byTeam.values()).sort((a, b) => b.length - a.length);
-  const ordered = [];
-  let added = true;
-  while (added) {
-    added = false;
-    for (const b of buckets) {
-      if (b.length > 0) {
-        ordered.push(b.shift());
-        added = true;
-      }
-    }
-  }
-  for (let i = 0; i < Math.min(ordered.length, size); i++) slots[i] = ordered[i];
-  return slots;
-}
-async function fetchAllCompetitors() {
-  state.competitors = [];
-  for (const table of [REG_TABLE, COMP_TABLE]) {
-    try {
-      const { data, error } = await sb.from(table).select("*").limit(2000);
-      if (error || !Array.isArray(data) || !data.length) continue;
-      state.competitors = data.map(row => {
-        const name = row.name || row.full_name || row.competitor_name || [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || "";
-        const team = row.team || row.club || row.club_name || row.dojang || "";
-        const rawDisc = String(row.discipline || row.event_type || row.mode || "sparring").trim().toLowerCase();
-        const disc = (rawDisc.includes("pattern") || rawDisc.includes("tul") || rawDisc.includes("poomsae")) ? "patterns" : "sparring";
-        const fullCat = row.category || row.category_name || row.full_category || row.division || "";
-        return Object.assign({}, row, {
-          name,
-          team,
-          gender: row.gender || row.sex || "",
-          belt: row.belt || row.rank || row.kup_dan || "",
-          _discipline: disc,
-          _full_cat: fullCat,
-          _raw_full_cat: row.raw_category || row.original_category || fullCat
-        });
-      }).filter(c => c.name);
-      return;
-    } catch (e) { console.warn("fetchAllCompetitors:", e); }
-  }
-}
 function getRingNumber() {
 const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1";
 const n = parseInt(String(raw).replace(/\D/g, ""), 10);
@@ -773,6 +715,77 @@ if (normalized.includes("kup") && num >= 1 && num <= 10) return num;
 if (normalized.includes("dan") && num >= 1 && num <= 6) return -(num - 1);
 }
 return null;
+}
+function shuffle(arr) {
+const copy = Array.isArray(arr) ? arr.slice() : [];
+for (let i = copy.length - 1; i > 0; i--) {
+const j = Math.floor(Math.random() * (i + 1));
+[copy[i], copy[j]] = [copy[j], copy[i]];
+}
+return copy;
+}
+function spreadTeams(list, size) {
+const slots = new Array(size).fill(null);
+if (!Array.isArray(list) || list.length === 0) return slots;
+const byTeam = new Map();
+list.forEach(item => {
+const key = norm(item && item.team) || "__no_team__";
+if (!byTeam.has(key)) byTeam.set(key, []);
+byTeam.get(key).push(item);
+});
+const buckets = Array.from(byTeam.values()).sort((a, b) => b.length - a.length);
+const ordered = [];
+let added = true;
+while (added) {
+added = false;
+for (const b of buckets) {
+if (b.length > 0) {
+ordered.push(b.shift());
+added = true;
+}
+}
+}
+for (let i = 0; i < Math.min(ordered.length, size); i++) {
+slots[i] = ordered[i];
+}
+return slots;
+}
+async function fetchAllCompetitors() {
+state.competitors = [];
+const tablesToTry = [REG_TABLE, COMP_TABLE];
+for (const table of tablesToTry) {
+try {
+const { data, error } = await sb.from(table).select("*").limit(2000);
+if (error) {
+console.warn(table + ":", error.message);
+continue;
+}
+if (Array.isArray(data) && data.length > 0) {
+state.competitors = data.map(row => {
+const name = row.name || row.full_name || row.competitor_name || [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || "";
+const team = row.team || row.club || row.club_name || row.dojang || "";
+const gender = row.gender || row.sex || "";
+const belt = row.belt || row.rank || row.kup_dan || "";
+const rawDisc = String(row.discipline || row.event_type || row.mode || "sparring").trim().toLowerCase();
+const disc = rawDisc.includes("pattern") || rawDisc.includes("tul") || rawDisc.includes("poomsae") ? "patterns" : "sparring";
+const fullCat = row.category || row.category_name || row.full_category || row.division || "";
+const rawFullCat = row.raw_category || row.original_category || fullCat;
+return Object.assign({}, row, {
+name,
+team,
+gender,
+belt,
+_discipline: disc,
+_full_cat: fullCat,
+_raw_full_cat: rawFullCat
+});
+}).filter(c => c.name);
+return;
+}
+} catch (err) {
+console.warn("fetchAllCompetitors (" + table + "):", err);
+}
+}
 }
 async function saveCategoryPlacements(bracket, categoryName, discipline, ringNumber) {
 if (!bracket || !bracket.rounds || bracket.rounds.length === 0) return;
