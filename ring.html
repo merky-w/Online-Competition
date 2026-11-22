@@ -225,7 +225,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </style>
 </head>
 <body class="bg-slate-900">
-<!-- LANDING -->
 <div id="view-landing" class="landing-container">
 <div class="landing-box">
 <div class="landing-title">
@@ -243,7 +242,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 </div>
-<!-- PHONE -->
 <div id="view-phone" class="hidden-view phone-container">
 <div class="phone-header">
 <div style="display:flex;align-items:center;gap:10px;">
@@ -303,7 +301,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
 </div>
-<!-- LAPTOP -->
 <div id="view-laptop" class="hidden-view laptop-container">
 <div class="laptop-header">
 <div class="laptop-header-left">
@@ -489,7 +486,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
-<!-- TV -->
 <div id="view-tv" class="hidden-view tv-container">
 <div class="tv-top-bar">
 <div class="tv-top-info">
@@ -558,7 +554,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
-<!-- QR MODAL -->
 <div id="modal-qr" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
@@ -567,7 +562,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <div><button class="timer-btn" style="background:#475569;width:100%;color:white;" onclick="closeQRModal()">Close</button></div>
 </div>
 </div>
-<!-- ADMIN KICK MODAL -->
 <div id="modal-admin-kick" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
@@ -587,7 +581,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
-<!-- ADMIN PASSWORD MODAL -->
 <div id="modal-admin-password" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:400px;">
 <h3 style="color:#fbbf24;margin-bottom:15px;font-size:1.3rem;"><i class="fas fa-lock"></i> Admin Access</h3>
@@ -600,7 +593,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <div id="admin-password-error" style="color:#ef4444;margin-top:10px;font-size:0.85rem;min-height:20px;"></div>
 </div>
 </div>
-<!-- WINNER MODAL -->
 <div id="modal-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:600px;">
 <h2 id="modal-winner-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
@@ -613,7 +605,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
-<!-- CHANGE WINNER MODAL -->
 <div id="modal-change-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:520px;">
 <h3 style="margin-top:0;color:#fbbf24;font-size:1.3rem;"><i class="fas fa-edit"></i> Correct Result</h3>
@@ -626,7 +617,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <p style="color:#64748b;font-size:0.75rem;margin-top:12px;">You can edit this match as many times as needed.</p>
 </div>
 </div>
-<!-- PUSH RESULTS MODAL -->
 <div id="modal-push-results" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:500px;">
 <h3 style="margin-top:0;color:#10b981;font-size:1.5rem;">🏆 Category Complete!</h3>
@@ -637,7 +627,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
-<!-- BRACKET MODAL (Admin) -->
 <div id="modal-bracket" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width: 960px; max-height: 90vh; overflow-y: auto; text-align: left;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:15px;gap:10px;flex-wrap:wrap;">
@@ -654,9 +643,6 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 <div id="toast" class="toast"></div>
 <script>
-/* ============================================================
-SUPABASE
-============================================================ */
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -805,21 +791,30 @@ async function saveCategoryPlacements(bracket, categoryName, discipline, ringNum
       .eq("ring_number", finalRing)
       .maybeSingle();
 
-    if (selErr) throw selErr;
+    if (selErr) {
+      console.error("Select error:", selErr);
+      throw selErr;
+    }
 
     if (existing) {
       const { error: updErr } = await sb
         .from("category_placements")
         .update(payload)
         .eq("id", existing.id);
-      if (updErr) throw updErr;
+      if (updErr) {
+        console.error("Update error:", updErr);
+        throw updErr;
+      }
       console.log("Updated category_placements row:", existing.id);
     } else {
       const { data: insData, error: insErr } = await sb
         .from("category_placements")
         .insert([payload])
         .select();
-      if (insErr) throw insErr;
+      if (insErr) {
+        console.error("Insert error:", insErr);
+        throw insErr;
+      }
       console.log("Inserted category_placements row:", insData);
     }
     return true;
