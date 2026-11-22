@@ -124,6 +124,80 @@ header p { color: var(--text-muted); font-size: 0.95rem; }
   text-decoration: none;
 }
 .btn-back:hover { background: rgba(255,255,255,0.2); }
+
+/* --- NEW LEADERBOARD STYLES --- */
+.leaderboards-section {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+@media (max-width: 900px) {
+  .leaderboards-section { grid-template-columns: 1fr; }
+}
+.leaderboard-card {
+  background: var(--bg-panel);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.leaderboard-card h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gold);
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 10px;
+}
+.lb-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.lb-item:last-child { margin-bottom: 0; }
+.lb-rank {
+  font-weight: 800;
+  color: var(--gold);
+  width: 30px;
+  flex-shrink: 0;
+}
+.lb-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-main);
+  padding: 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lb-points {
+  font-weight: 800;
+  color: var(--accent-secondary);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.age-group-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin: 15px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.age-group-title:first-child { margin-top: 0; }
+/* ------------------------------ */
+
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -315,7 +389,7 @@ header p { color: var(--text-muted); font-size: 0.95rem; }
 }
 @media print {
   header { position: static; }
-  .controls { display: none; }
+  .controls, .leaderboards-section { display: none; }
   .category-card { break-inside: avoid; }
   body { background: white; color: black; }
   .category-card, .card-header { background: #f5f5f5; color: black; }
@@ -363,6 +437,18 @@ header p { color: var(--text-muted); font-size: 0.95rem; }
     </div>
   </div>
 
+  <!-- NEW LEADERBOARDS SECTION -->
+  <div class="leaderboards-section">
+    <div class="leaderboard-card">
+      <h3><i class="fas fa-users"></i> Top Teams</h3>
+      <div id="teamLeaderboard"></div>
+    </div>
+    <div class="leaderboard-card">
+      <h3><i class="fas fa-user-tie"></i> Top Competitors by Age Group</h3>
+      <div id="competitorLeaderboard"></div>
+    </div>
+  </div>
+
   <div id="resultsContainer">
     <div class="loading">
       <div class="spinner"></div>
@@ -379,6 +465,7 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 let allResults = [];
+let pointsConfig = { first: 10, second: 7, third: 5 }; // Default fallback points
 
 function escapeHtml(str) {
   if (str === null || str === undefined) return "";
@@ -392,11 +479,37 @@ function showToast(msg, type) {
   setTimeout(() => t.className = "toast", 2500);
 }
 
+function extractAgeGroup(categoryName) {
+  if (!categoryName) return "Other";
+  const name = categoryName.toLowerCase();
+  if (name.includes("kids") || name.includes("child")) return "Kids";
+  if (name.includes("youth")) return "Youth";
+  if (name.includes("cadet")) return "Cadets";
+  if (name.includes("junior")) return "Juniors";
+  if (name.includes("senior")) return "Seniors";
+  if (name.includes("veteran") || name.includes("master")) return "Veterans/Masters";
+  return "Other";
+}
+
 async function loadResults() {
   const container = document.getElementById("resultsContainer");
-  container.innerHTML = '<div class="loading"><div class="spinner"></div><div>Loading results...</div></div>';
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><div>Loading results & leaderboards...</div></div>';
 
   try {
+    // 1. Fetch points configuration
+    const { data: settings } = await sb
+      .from("site_settings")
+      .select("first_place_points, second_place_points, third_place_points")
+      .eq("id", 1)
+      .single();
+    
+    if (settings) {
+      pointsConfig.first = settings.first_place_points !== null ? settings.first_place_points : 10;
+      pointsConfig.second = settings.second_place_points !== null ? settings.second_place_points : 7;
+      pointsConfig.third = settings.third_place_points !== null ? settings.third_place_points : 5;
+    }
+
+    // 2. Fetch placements
     const { data, error } = await sb
       .from("category_placements")
       .select("*")
@@ -404,12 +517,88 @@ async function loadResults() {
 
     if (error) throw error;
     allResults = data || [];
+    
+    renderLeaderboards();
     renderResults();
     showToast("✓ Loaded " + allResults.length + " categories", "success");
   } catch (err) {
     console.error(err);
     container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error Loading Results</h3><p>' + escapeHtml(err.message) + '</p></div>';
     showToast("Failed to load", "error");
+  }
+}
+
+function renderLeaderboards() {
+  let teamScores = {};
+  let competitorScores = {}; // { "AgeGroup": { "Competitor Name": points } }
+
+  const processPlacement = (name, team, points) => {
+    if (!name) return;
+    const t = (team && team.trim() !== "") ? team.trim() : "Independent";
+    teamScores[t] = (teamScores[t] || 0) + points;
+  };
+
+  allResults.forEach(r => {
+    const ageGroup = extractAgeGroup(r.category_name);
+    if (!competitorScores[ageGroup]) competitorScores[ageGroup] = {};
+
+    processPlacement(r.first_place_name, r.first_place_team, pointsConfig.first);
+    if (r.first_place_name) {
+      competitorScores[ageGroup][r.first_place_name] = (competitorScores[ageGroup][r.first_place_name] || 0) + pointsConfig.first;
+    }
+
+    processPlacement(r.second_place_name, r.second_place_team, pointsConfig.second);
+    if (r.second_place_name) {
+      competitorScores[ageGroup][r.second_place_name] = (competitorScores[ageGroup][r.second_place_name] || 0) + pointsConfig.second;
+    }
+
+    processPlacement(r.third_a_place_name, r.third_a_place_team, pointsConfig.third);
+    if (r.third_a_place_name) {
+      competitorScores[ageGroup][r.third_a_place_name] = (competitorScores[ageGroup][r.third_a_place_name] || 0) + pointsConfig.third;
+    }
+
+    processPlacement(r.third_b_place_name, r.third_b_place_team, pointsConfig.third);
+    if (r.third_b_place_name) {
+      competitorScores[ageGroup][r.third_b_place_name] = (competitorScores[ageGroup][r.third_b_place_name] || 0) + pointsConfig.third;
+    }
+  });
+
+  // Render Team Leaderboard (Top 5)
+  const teamContainer = document.getElementById("teamLeaderboard");
+  const sortedTeams = Object.entries(teamScores).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  
+  if (sortedTeams.length === 0) {
+    teamContainer.innerHTML = '<div style="color:var(--text-muted);font-style:italic;padding:10px;">No team data yet</div>';
+  } else {
+    teamContainer.innerHTML = sortedTeams.map((t, i) => `
+      <div class="lb-item">
+        <span class="lb-rank">#${i + 1}</span>
+        <span class="lb-name">${escapeHtml(t[0])}</span>
+        <span class="lb-points">${t[1]} pts</span>
+      </div>
+    `).join("");
+  }
+
+  // Render Competitor Leaderboard by Age Group (Top 3 per group)
+  const compContainer = document.getElementById("competitorLeaderboard");
+  const ageGroups = Object.keys(competitorScores).sort();
+  
+  if (ageGroups.length === 0) {
+    compContainer.innerHTML = '<div style="color:var(--text-muted);font-style:italic;padding:10px;">No competitor data yet</div>';
+  } else {
+    let html = "";
+    ageGroups.forEach(ag => {
+      const sortedCompetitors = Object.entries(competitorScores[ag]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      html += `<div class="age-group-title">${escapeHtml(ag)}</div>`;
+      html += sortedCompetitors.map((c, i) => `
+        <div class="lb-item">
+          <span class="lb-rank">#${i + 1}</span>
+          <span class="lb-name">${escapeHtml(c[0])}</span>
+          <span class="lb-points">${c[1]} pts</span>
+        </div>
+      `).join("");
+    });
+    compContainer.innerHTML = html;
   }
 }
 
