@@ -85,143 +85,42 @@ box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
 animation: pulsePaused 2s ease-in-out infinite;
 }
 .btn-tournament-start .status-dot {
-width: 10px;
-height: 10px;
-border-radius: 50%;
-background: #fff;
-display: inline-block;
-box-shadow: 0 0 8px rgba(255,255,255,0.8);
+width: 10px; height: 10px; border-radius: 50%; background: #fff;
+display: inline-block; box-shadow: 0 0 8px rgba(255,255,255,0.8);
 animation: blink 1.5s ease-in-out infinite;
 }
-.btn-tournament-start.is-started .status-dot {
-background: #fff;
-box-shadow: 0 0 10px rgba(255,255,255,0.9);
-}
-.btn-tournament-start.is-paused .status-dot {
-background: #fff;
-box-shadow: 0 0 10px rgba(255,255,255,0.9);
-animation: blinkPaused 1s ease-in-out infinite;
-}
-.btn-tournament-start.loading {
-opacity: 0.7;
-cursor: wait;
-pointer-events: none;
-}
-@keyframes blink {
-0%, 100% { opacity: 1; }
-50% { opacity: 0.4; }
-}
-@keyframes blinkPaused {
-0%, 100% { opacity: 1; }
-50% { opacity: 0.2; }
-}
-@keyframes pulseStarted {
-0%, 100% { box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4); }
-50% { box-shadow: 0 3px 18px rgba(220, 53, 69, 0.7); }
-}
-@keyframes pulsePaused {
-0%, 100% { box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4); }
-50% { box-shadow: 0 3px 18px rgba(245, 158, 11, 0.7); }
-}
+.btn-tournament-start.is-started .status-dot { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.9); }
+.btn-tournament-start.is-paused .status-dot { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.9); animation: blinkPaused 1s ease-in-out infinite; }
+.btn-tournament-start.loading { opacity: 0.7; cursor: wait; pointer-events: none; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes blinkPaused { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+@keyframes pulseStarted { 0%, 100% { box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4); } 50% { box-shadow: 0 3px 18px rgba(220, 53, 69, 0.7); } }
+@keyframes pulsePaused { 0%, 100% { box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4); } 50% { box-shadow: 0 3px 18px rgba(245, 158, 11, 0.7); } }
 .tournament-status-banner {
-display: none;
-background: linear-gradient(90deg, #dc3545 0%, #a71d2a 100%);
-color: white;
-padding: 10px 20px;
-border-radius: 10px;
-margin-bottom: 20px;
-font-weight: 700;
-text-align: center;
-box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-align-items: center;
-justify-content: center;
-gap: 10px;
-font-size: 0.95rem;
+display: none; background: linear-gradient(90deg, #dc3545 0%, #a71d2a 100%); color: white;
+padding: 10px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: 700;
+text-align: center; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+align-items: center; justify-content: center; gap: 10px; font-size: 0.95rem;
 }
 .tournament-status-banner.visible { display: flex; }
-.tournament-status-banner.paused {
-background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
-box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
+.tournament-status-banner.paused { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
 .tournament-status-banner .banner-icon { font-size: 1.3rem; animation: blink 1.5s ease-in-out infinite; }
 .tournament-status-banner.paused .banner-icon { animation: blinkPaused 1s ease-in-out infinite; }
-.tournament-status-banner .banner-time {
-background: rgba(255,255,255,0.2);
-padding: 3px 10px;
-border-radius: 12px;
-font-size: 0.8rem;
-font-weight: 600;
-}
-.phase-status-bar {
-display: none;
-background: white;
-border-radius: 12px;
-padding: 15px 20px;
-margin-bottom: 20px;
-box-shadow: var(--shadow);
-border-left: 5px solid var(--primary);
-}
+.tournament-status-banner .banner-time { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+.phase-status-bar { display: none; background: white; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; box-shadow: var(--shadow); border-left: 5px solid var(--primary); }
 .phase-status-bar.visible { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
-.phase-status-bar .phase-info {
-display: flex;
-align-items: center;
-gap: 20px;
-flex-wrap: wrap;
-}
-.phase-badge {
-display: inline-flex;
-align-items: center;
-gap: 8px;
-padding: 8px 16px;
-border-radius: 20px;
-font-weight: 700;
-font-size: 0.9rem;
-border: 2px solid;
-}
-.phase-badge.patterns {
-background: rgba(21, 101, 192, 0.1);
-color: var(--phase-patterns);
-border-color: var(--phase-patterns);
-}
-.phase-badge.sparring {
-background: rgba(194, 24, 91, 0.1);
-color: var(--phase-sparring);
-border-color: var(--phase-sparring);
-}
-.phase-badge.active {
-animation: phasePulse 2s ease-in-out infinite;
-}
-.phase-badge.completed {
-background: rgba(40, 167, 69, 0.1);
-color: var(--success);
-border-color: var(--success);
-}
-@keyframes phasePulse {
-0%, 100% { box-shadow: 0 0 0 0 rgba(21, 101, 192, 0.4); }
-50% { box-shadow: 0 0 0 8px rgba(21, 101, 192, 0); }
-}
-.phase-actions {
-display: flex;
-gap: 10px;
-}
-.btn-pause-tournament {
-background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-color: white;
-box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-}
-.btn-pause-tournament:hover {
-background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-transform: translateY(-1px);
-}
-.btn-resume-tournament {
-background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-color: white;
-box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-.btn-resume-tournament:hover {
-background: linear-gradient(135deg, #059669 0%, #047857 100%);
-transform: translateY(-1px);
-}
+.phase-status-bar .phase-info { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.phase-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; border: 2px solid; }
+.phase-badge.patterns { background: rgba(21, 101, 192, 0.1); color: var(--phase-patterns); border-color: var(--phase-patterns); }
+.phase-badge.sparring { background: rgba(194, 24, 91, 0.1); color: var(--phase-sparring); border-color: var(--phase-sparring); }
+.phase-badge.active { animation: phasePulse 2s ease-in-out infinite; }
+.phase-badge.completed { background: rgba(40, 167, 69, 0.1); color: var(--success); border-color: var(--success); }
+@keyframes phasePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(21, 101, 192, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(21, 101, 192, 0); } }
+.phase-actions { display: flex; gap: 10px; }
+.btn-pause-tournament { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); }
+.btn-pause-tournament:hover { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); transform: translateY(-1px); }
+.btn-resume-tournament { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
+.btn-resume-tournament:hover { background: linear-gradient(135deg, #059669 0%, #047857 100%); transform: translateY(-1px); }
 .filters-card { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; border-left: 5px solid var(--secondary); }
 .filters { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
 .filter-group { flex: 1; min-width: 150px; }
@@ -238,18 +137,7 @@ select, input[type="date"], input[type="text"], input[type="number"] { width: 10
 .row-item.duplicate-row { background: #ffebee !important; color: #c62828 !important; font-weight: 700; }
 .col-list:nth-child(2) .row-item { background-color: #fafafa; }
 .col-list:nth-child(2) .row-item:hover { background-color: #f0f0f0; }
-.duplicate-warning-banner {
-background: linear-gradient(90deg, #ffebee 0%, #ffcdd2 100%);
-color: #c62828;
-border: 3px solid #c62828;
-border-radius: 10px;
-padding: 16px 20px;
-margin-bottom: 20px;
-box-shadow: 0 4px 12px rgba(198, 40, 40, 0.25);
-display: flex;
-align-items: flex-start;
-gap: 14px;
-}
+.duplicate-warning-banner { background: linear-gradient(90deg, #ffebee 0%, #ffcdd2 100%); color: #c62828; border: 3px solid #c62828; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(198, 40, 40, 0.25); display: flex; align-items: flex-start; gap: 14px; }
 .duplicate-warning-banner i.warning-icon { font-size: 1.8rem; color: #c62828; flex-shrink: 0; margin-top: 2px; }
 .duplicate-warning-banner .warning-content { flex: 1; }
 .duplicate-warning-banner .warning-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
@@ -257,18 +145,7 @@ gap: 14px;
 .duplicate-warning-banner ul { margin: 0; padding-left: 20px; list-style: disc; }
 .duplicate-warning-banner li { margin: 4px 0; font-size: 0.9rem; color: #b71c1c; }
 .duplicate-warning-banner li strong { color: #880e4f; }
-.a4-page {
-background: white;
-width: 210mm;
-margin: 20px auto;
-box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-padding: 10mm 12mm;
-display: flex;
-flex-direction: column;
-page-break-after: always;
-position: relative;
-overflow: visible;
-}
+.a4-page { background: white; width: 210mm; margin: 20px auto; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); padding: 10mm 12mm; display: flex; flex-direction: column; page-break-after: always; position: relative; overflow: visible; }
 .a4-page:last-of-type { page-break-after: auto; }
 .bracket-header { text-align: center; border-bottom: 2px solid var(--secondary); padding-bottom: 6px; margin-bottom: 6px; flex-shrink: 0; }
 .bracket-header h2 { color: var(--primary); margin: 0; text-transform: uppercase; font-size: 1.1rem; }
@@ -612,270 +489,72 @@ input:checked + .slider-toggle:before { transform: translateX(18px); }
 .inline-input { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; width: 70px; font-family: inherit; }
 .inline-input:focus { border-color: var(--primary); outline: none; }
 .inline-input-wide { width: 140px; }
-.round-config-card {
-background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%);
-border: 2px solid var(--round-border);
-border-radius: 12px;
-padding: 14px 18px;
-margin-top: 14px;
-transition: var(--transition);
-position: relative;
-overflow: hidden;
-}
-.round-config-card::before {
-content: "";
-position: absolute;
-top: 0; left: 0;
-width: 5px; height: 100%;
-background: linear-gradient(180deg, var(--round-accent) 0%, #ff8f00 100%);
-}
-.round-config-card:hover {
-box-shadow: 0 4px 12px rgba(255, 111, 0, 0.15);
-border-color: var(--round-accent);
-}
-.round-config-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 12px;
-flex-wrap: wrap;
-gap: 8px;
-}
-.round-config-title {
-display: flex;
-align-items: center;
-gap: 8px;
-font-weight: 700;
-color: var(--round-accent);
-font-size: 0.95rem;
-}
+.round-config-card { background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); border: 2px solid var(--round-border); border-radius: 12px; padding: 14px 18px; margin-top: 14px; transition: var(--transition); position: relative; overflow: hidden; }
+.round-config-card::before { content: ""; position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: linear-gradient(180deg, var(--round-accent) 0%, #ff8f00 100%); }
+.round-config-card:hover { box-shadow: 0 4px 12px rgba(255, 111, 0, 0.15); border-color: var(--round-accent); }
+.round-config-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.round-config-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--round-accent); font-size: 0.95rem; }
 .round-config-title i { font-size: 1.1rem; }
-.round-config-preview {
-display: inline-flex;
-align-items: center;
-gap: 6px;
-padding: 4px 12px;
-background: white;
-border: 1px solid var(--round-border);
-border-radius: 20px;
-font-size: 0.8rem;
-font-weight: 700;
-color: var(--round-accent);
-}
+.round-config-preview { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: white; border: 1px solid var(--round-border); border-radius: 20px; font-size: 0.8rem; font-weight: 700; color: var(--round-accent); }
 .round-config-preview .preview-divider { color: var(--gray); font-weight: 400; }
-.round-config-body {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-gap: 14px;
-}
+.round-config-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
 .round-config-field { display: flex; flex-direction: column; gap: 6px; }
-.round-config-field label {
-display: flex; align-items: center; gap: 6px;
-font-size: 0.78rem; font-weight: 700; color: var(--gray);
-text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 0;
-}
+.round-config-field label { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 0; }
 .round-config-field label i { color: var(--round-accent); }
-.round-input-wrap {
-display: flex; align-items: center; gap: 6px;
-background: white; border: 2px solid var(--border);
-border-radius: 10px; padding: 4px 8px; transition: var(--transition);
-}
+.round-input-wrap { display: flex; align-items: center; gap: 6px; background: white; border: 2px solid var(--border); border-radius: 10px; padding: 4px 8px; transition: var(--transition); }
 .round-input-wrap:focus-within { border-color: var(--round-accent); box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.15); }
 .round-input-wrap .input-icon { color: var(--round-accent); font-size: 1rem; flex-shrink: 0; }
-.round-input-wrap input {
-border: none; outline: none; padding: 6px 4px;
-font-size: 1.1rem; font-weight: 700; color: var(--dark);
-background: transparent; width: 100%; text-align: center; font-family: inherit;
-}
+.round-input-wrap input { border: none; outline: none; padding: 6px 4px; font-size: 1.1rem; font-weight: 700; color: var(--dark); background: transparent; width: 100%; text-align: center; font-family: inherit; }
 .round-input-wrap input::-webkit-outer-spin-button, .round-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .round-input-wrap input[type=number] { -moz-appearance: textfield; }
 .round-input-wrap .unit-label { font-size: 0.75rem; font-weight: 700; color: var(--gray); text-transform: uppercase; flex-shrink: 0; min-width: 28px; }
 .round-stepper { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
-.round-stepper button {
-background: var(--light-gray); border: none; width: 22px; height: 16px;
-border-radius: 4px; cursor: pointer; display: flex; align-items: center;
-justify-content: center; font-size: 0.6rem; color: var(--gray);
-transition: var(--transition); padding: 0; line-height: 1;
-}
+.round-stepper button { background: var(--light-gray); border: none; width: 22px; height: 16px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--gray); transition: var(--transition); padding: 0; line-height: 1; }
 .round-stepper button:hover { background: var(--round-accent); color: white; }
-.round-total-display {
-grid-column: 1 / -1; display: flex; align-items: center; justify-content: center;
-gap: 10px; padding: 10px 14px;
-background: linear-gradient(90deg, rgba(255, 111, 0, 0.08) 0%, rgba(255, 143, 0, 0.08) 100%);
-border: 1px dashed var(--round-border); border-radius: 10px; margin-top: 4px;
-}
+.round-total-display { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px; background: linear-gradient(90deg, rgba(255, 111, 0, 0.08) 0%, rgba(255, 143, 0, 0.08) 100%); border: 1px dashed var(--round-border); border-radius: 10px; margin-top: 4px; }
 .round-total-display .total-label { font-size: 0.8rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.3px; }
 .round-total-display .total-value { font-size: 1.1rem; font-weight: 800; color: var(--round-accent); display: flex; align-items: center; gap: 6px; }
 .round-total-display .total-value i { font-size: 0.95rem; }
 .round-visual { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; flex-wrap: wrap; }
 .round-visual-dot { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.round-visual-circle {
-width: 32px; height: 32px; border-radius: 50%;
-background: linear-gradient(135deg, var(--round-accent) 0%, #ff8f00 100%);
-color: white; display: flex; align-items: center; justify-content: center;
-font-size: 0.75rem; font-weight: 800; box-shadow: 0 2px 6px rgba(255, 111, 0, 0.3);
-transition: var(--transition);
-}
+.round-visual-circle { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--round-accent) 0%, #ff8f00 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; box-shadow: 0 2px 6px rgba(255, 111, 0, 0.3); transition: var(--transition); }
 .round-visual-circle:hover { transform: scale(1.15); box-shadow: 0 4px 12px rgba(255, 111, 0, 0.5); }
 .round-visual-time { font-size: 0.62rem; font-weight: 700; color: var(--gray); white-space: nowrap; }
 .round-visual-arrow { color: var(--round-border); font-size: 0.7rem; }
-.round-config-saved-indicator {
-position: absolute; top: 8px; right: 12px; font-size: 0.7rem;
-color: var(--success); font-weight: 700; display: flex;
-align-items: center; gap: 4px; opacity: 0; transition: opacity 0.3s;
-}
+.round-config-saved-indicator { position: absolute; top: 8px; right: 12px; font-size: 0.7rem; color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px; opacity: 0; transition: opacity 0.3s; }
 .round-config-saved-indicator.visible { opacity: 1; }
-.autosave-indicator {
-position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-background: white; border: 2px solid var(--secondary); border-radius: 20px;
-padding: 6px 16px; font-size: 0.85rem; font-weight: 600; color: var(--primary);
-box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001;
-display: none; align-items: center; gap: 8px;
-}
+.autosave-indicator { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: white; border: 2px solid var(--secondary); border-radius: 20px; padding: 6px 16px; font-size: 0.85rem; font-weight: 600; color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1001; display: none; align-items: center; gap: 8px; }
 .autosave-indicator.visible { display: flex; }
 .autosave-indicator.success { border-color: var(--success); color: var(--success); }
 .autosave-indicator.error { border-color: var(--danger); color: var(--danger); }
-.spinner {
-width: 14px; height: 14px; border: 2px solid var(--border);
-border-top-color: var(--primary); border-radius: 50%;
-animation: spin 0.8s linear infinite;
-}
+.spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.modal-overlay {
-position: fixed;
-top: 0; left: 0;
-width: 100%; height: 100%;
-background: rgba(0, 0, 0, 0.7);
-display: flex;
-justify-content: center;
-align-items: center;
-z-index: 2000;
-opacity: 0;
-pointer-events: none;
-transition: opacity 0.3s ease;
-backdrop-filter: blur(4px);
-}
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px); }
 .modal-overlay.active { opacity: 1; pointer-events: all; }
-.modal-box {
-background: white;
-padding: 2rem;
-border-radius: 16px;
-width: 90%;
-max-width: 600px;
-box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-transform: scale(0.9);
-transition: transform 0.3s ease;
-max-height: 90vh;
-overflow-y: auto;
-}
+.modal-box { background: white; padding: 2rem; border-radius: 16px; width: 90%; max-width: 600px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); transform: scale(0.9); transition: transform 0.3s ease; max-height: 90vh; overflow-y: auto; }
 .modal-overlay.active .modal-box { transform: scale(1); }
-.modal-title {
-font-size: 1.5rem;
-font-weight: 800;
-color: var(--primary);
-margin-bottom: 1rem;
-text-align: center;
-}
-.phase-option {
-background: var(--light-gray);
-border: 2px solid var(--border);
-border-radius: 12px;
-padding: 1.5rem;
-margin-bottom: 1rem;
-cursor: pointer;
-transition: all 0.2s ease;
-text-align: center;
-}
-.phase-option:hover {
-border-color: var(--primary);
-background: #e7f3ff;
-transform: translateY(-2px);
-box-shadow: 0 4px 12px rgba(26, 58, 108, 0.15);
-}
-.phase-option.selected {
-border-color: var(--success);
-background: #e8f5e9;
-}
-.phase-option.disabled {
-opacity: 0.5;
-cursor: not-allowed;
-pointer-events: none;
-}
-.phase-option i {
-font-size: 2rem;
-margin-bottom: 0.5rem;
-display: block;
-}
-.phase-option h3 {
-font-size: 1.2rem;
-margin-bottom: 0.5rem;
-color: var(--dark);
-}
-.phase-option p {
-font-size: 0.9rem;
-color: var(--gray);
-}
-.phase-status-tag {
-display: inline-block;
-padding: 4px 12px;
-border-radius: 12px;
-font-size: 0.75rem;
-font-weight: 700;
-margin-top: 0.5rem;
-}
-.phase-status-tag.completed {
-background: var(--success);
-color: white;
-}
-.phase-status-tag.pending {
-background: var(--gray);
-color: white;
-}
-.modal-actions {
-display: flex;
-gap: 1rem;
-margin-top: 1.5rem;
-}
-.modal-actions button {
-flex: 1;
-}
-.ring-stop-btn {
-background: var(--danger);
-color: white;
-border: none;
-padding: 6px 12px;
-border-radius: 6px;
-font-size: 0.8rem;
-font-weight: 700;
-cursor: pointer;
-transition: var(--transition);
-display: inline-flex;
-align-items: center;
-gap: 4px;
-}
-.ring-stop-btn:hover {
-background: #c82333;
-transform: translateY(-1px);
-}
-.ring-stop-btn.stopped {
-background: var(--success);
-}
-.ring-stop-btn.stopped:hover {
-background: #218838;
-}
+.modal-title { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 1rem; text-align: center; }
+.phase-option { background: var(--light-gray); border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; cursor: pointer; transition: all 0.2s ease; text-align: center; }
+.phase-option:hover { border-color: var(--primary); background: #e7f3ff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26, 58, 108, 0.15); }
+.phase-option.selected { border-color: var(--success); background: #e8f5e9; }
+.phase-option.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+.phase-option i { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+.phase-option h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--dark); }
+.phase-option p { font-size: 0.9rem; color: var(--gray); }
+.phase-status-tag { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; margin-top: 0.5rem; }
+.phase-status-tag.completed { background: var(--success); color: white; }
+.phase-status-tag.pending { background: var(--gray); color: white; }
+.modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+.modal-actions button { flex: 1; }
+.ring-stop-btn { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 4px; }
+.ring-stop-btn:hover { background: #c82333; transform: translateY(-1px); }
+.ring-stop-btn.stopped { background: var(--success); }
+.ring-stop-btn.stopped:hover { background: #218838; }
 @media print {
 body { padding: 0; background: white; }
-.nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn,
-.toast, .selection-banner, .autosave-indicator, .bracket-header-actions,
-.drag-handle, .delete-btn, header, .tournament-status-banner, .phase-status-bar { display: none !important; }
+.nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn, .toast, .selection-banner, .autosave-indicator, .bracket-header-actions, .drag-handle, .delete-btn, header, .tournament-status-banner, .phase-status-bar { display: none !important; }
 .container > .nav + .filters-card { display: none !important; }
-.a4-page {
-margin: 0 !important;
-box-shadow: none !important;
-page-break-after: always;
-width: 100%;
-padding: 5mm;
-}
+.a4-page { margin: 0 !important; box-shadow: none !important; page-break-after: always; width: 100%; padding: 5mm; }
 .a4-page:last-of-type { page-break-after: auto; }
 .container { max-width: 100%; padding: 0; }
 #content { margin: 0; padding: 0; }
@@ -903,47 +582,21 @@ padding: 5mm;
 </style>
 </head>
 <body>
-<div class="autosave-indicator" id="autosaveIndicator">
-<span class="spinner"></span>
-<span id="autosaveText">Saving...</span>
-</div>
-<div class="selection-banner" id="selectionBanner">
-<i class="fas fa-hand-pointer"></i>
-<span id="selectionBannerText">Player selected — click another player to swap, or a BYE slot to move</span>
-<button onclick="clearSelection()">Cancel</button>
-</div>
+<div class="autosave-indicator" id="autosaveIndicator"><span class="spinner"></span><span id="autosaveText">Saving...</span></div>
+<div class="selection-banner" id="selectionBanner"><i class="fas fa-hand-pointer"></i><span id="selectionBannerText">Player selected — click another player to swap, or a BYE slot to move</span><button onclick="clearSelection()">Cancel</button></div>
 <div class="floating-search" id="floatingSearch">
-<div class="floating-search-header">
-<i class="fas fa-search"></i>
-<span>Drag players into brackets</span>
-</div>
-<div class="floating-search-input-wrap">
-<i class="fas fa-user"></i>
-<input type="text" id="autocompleteInput" placeholder="Type name or team..." oninput="updateAutocomplete(this.value)" onfocus="updateAutocomplete(this.value)" />
-<button class="search-clear" id="autocompleteClear" onclick="clearAutocomplete()"><i class="fas fa-times"></i></button>
-</div>
+<div class="floating-search-header"><i class="fas fa-search"></i><span>Drag players into brackets</span></div>
+<div class="floating-search-input-wrap"><i class="fas fa-user"></i><input type="text" id="autocompleteInput" placeholder="Type name or team..." oninput="updateAutocomplete(this.value)" onfocus="updateAutocomplete(this.value)" /><button class="search-clear" id="autocompleteClear" onclick="clearAutocomplete()"><i class="fas fa-times"></i></button></div>
 <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
-<div class="autocomplete-hint">
-<i class="fas fa-info-circle"></i> <b>Click</b> players in bracket to select & swap. <b>Drag</b> from here to BYE/Winner slots to add.
+<div class="autocomplete-hint"><i class="fas fa-info-circle"></i> <b>Click</b> players in bracket to select & swap. <b>Drag</b> from here to BYE/Winner slots to add.</div>
 </div>
-</div>
-<button class="floating-undo-btn" id="floatingUndoBtn" onclick="performUndo()" disabled title="Undo last action (Ctrl+Z)">
-<i class="fas fa-undo"></i>
-<span class="undo-count" id="undoCountBadge">0</span>
-<span class="undo-tooltip" id="undoTooltip">Nothing to undo</span>
-</button>
+<button class="floating-undo-btn" id="floatingUndoBtn" onclick="performUndo()" disabled title="Undo last action (Ctrl+Z)"><i class="fas fa-undo"></i><span class="undo-count" id="undoCountBadge">0</span><span class="undo-tooltip" id="undoTooltip">Nothing to undo</span></button>
 <div class="toast" id="toast"></div>
 <div class="container">
-<header>
-<h1>9-th Vojvodina Open ITF</h1>
-<p class="subtitle">Tournament Manager & Category System</p>
-</header>
+<header><h1>9-th Vojvodina Open ITF</h1><p class="subtitle">Tournament Manager & Category System</p></header>
 <nav class="nav">
 <a href="index.html" class="btn btn-secondary" style="text-decoration: none"><i class="fas fa-arrow-left"></i> Back to Main</a>
-<button id="btnTournamentStart" class="btn btn-tournament-start" onclick="toggleTournamentStart()" title="Start/Stop the tournament">
-<span class="status-dot"></span>
-<span id="tournamentStartLabel">Start Tournament</span>
-</button>
+<button id="btnTournamentStart" class="btn btn-tournament-start" onclick="toggleTournamentStart()" title="Start/Stop the tournament"><span class="status-dot"></span><span id="tournamentStartLabel">Start Tournament</span></button>
 <button id="btnPatterns" class="btn btn-primary" onclick="showPatterns()"><i class="fas fa-chess-board"></i> Patterns (Tul)</button>
 <button id="btnSparring" class="btn btn-secondary" onclick="showSparring()"><i class="fas fa-fist-raised"></i> Sparring (Matsogi)</button>
 <button id="btnCategories" class="btn btn-categories" onclick="showCategories()"><i class="fas fa-sliders-h"></i> Categories</button>
@@ -955,77 +608,38 @@ padding: 5mm;
 <button id="btnCoaches" class="btn btn-secondary" onclick="showCoaches()"><i class="fas fa-chalkboard-teacher"></i> Coaches</button>
 <button id="btnDebug" class="btn btn-warning" onclick="showDebugInfo()" title="Show debug info"><i class="fas fa-bug"></i> Debug</button>
 </nav>
-<div class="tournament-status-banner" id="tournamentStatusBanner">
-<span class="banner-icon"><i class="fas fa-flag-checkered"></i></span>
-<span id="tournamentStatusText">TOURNAMENT IS LIVE</span>
-<span class="banner-time" id="tournamentStartedTime">—</span>
-</div>
+<div class="tournament-status-banner" id="tournamentStatusBanner"><span class="banner-icon"><i class="fas fa-flag-checkered"></i></span><span id="tournamentStatusText">TOURNAMENT IS LIVE</span><span class="banner-time" id="tournamentStartedTime">—</span></div>
 <div class="phase-status-bar" id="phaseStatusBar">
 <div class="phase-info">
 <span style="font-weight: 700; color: var(--primary);">Tournament Phases:</span>
 <span id="phasePatternsBadge" class="phase-badge patterns"><i class="fas fa-chess-board"></i> Patterns <span id="phasePatternsStatus">Not Started</span></span>
 <span id="phaseSparringBadge" class="phase-badge sparring"><i class="fas fa-fist-raised"></i> Sparring <span id="phaseSparringStatus">Not Started</span></span>
 </div>
-<div class="phase-actions">
-<button id="btnPauseTournament" class="btn btn-pause-tournament" onclick="togglePauseTournament()"><i class="fas fa-pause"></i> Pause Tournament</button>
+<div class="phase-actions"><button id="btnPauseTournament" class="btn btn-pause-tournament" onclick="togglePauseTournament()"><i class="fas fa-pause"></i> Pause Tournament</button></div>
 </div>
-</div>
-<div class="filters-card">
-<div class="filters">
-<div class="filter-group">
-<label><i class="far fa-calendar-alt"></i> Tournament Date</label>
-<input type="date" id="tournamentDate" onchange="updateAgeForFilters()" />
-</div>
-</div>
-</div>
+<div class="filters-card"><div class="filters"><div class="filter-group"><label><i class="far fa-calendar-alt"></i> Tournament Date</label><input type="date" id="tournamentDate" onchange="updateAgeForFilters()" /></div></div></div>
 <div id="content"></div>
 </div>
-<!-- PHASE SELECTION MODAL -->
 <div class="modal-overlay" id="phaseModal">
 <div class="modal-box">
 <h2 class="modal-title">🏆 Select Tournament Phase</h2>
 <p style="text-align: center; color: var(--gray); margin-bottom: 1.5rem;">Choose which discipline to start:</p>
-<div class="phase-option" data-phase="patterns" onclick="selectPhase('patterns')">
-<i class="fas fa-chess-board" style="color: #1565c0;"></i>
-<h3>Patterns (Tul)</h3>
-<p>Start with patterns competition</p>
-<div id="phasePatternsModalStatus" class="phase-status-tag pending">Not Started</div>
-</div>
-<div class="phase-option" data-phase="sparring" onclick="selectPhase('sparring')">
-<i class="fas fa-fist-raised" style="color: #c2185b;"></i>
-<h3>Sparring (Matsogi)</h3>
-<p>Start with sparring competition</p>
-<div id="phaseSparringModalStatus" class="phase-status-tag pending">Not Started</div>
-</div>
-<div class="phase-option" data-phase="both" onclick="selectPhase('both')">
-<i class="fas fa-layer-group" style="color: #e65100;"></i>
-<h3>Both Disciplines</h3>
-<p>Both sparring and patterns categories</p>
-</div>
-<div class="modal-actions">
-<button class="btn btn-secondary" onclick="closePhaseModal()">Cancel</button>
-<button class="btn btn-success" id="btnConfirmPhase" onclick="confirmPhase()" disabled>Start Phase</button>
-</div>
+<div class="phase-option" data-phase="patterns" onclick="selectPhase('patterns')"><i class="fas fa-chess-board" style="color: #1565c0;"></i><h3>Patterns (Tul)</h3><p>Start with patterns competition</p><div id="phasePatternsModalStatus" class="phase-status-tag pending">Not Started</div></div>
+<div class="phase-option" data-phase="sparring" onclick="selectPhase('sparring')"><i class="fas fa-fist-raised" style="color: #c2185b;"></i><h3>Sparring (Matsogi)</h3><p>Start with sparring competition</p><div id="phaseSparringModalStatus" class="phase-status-tag pending">Not Started</div></div>
+<div class="phase-option" data-phase="both" onclick="selectPhase('both')"><i class="fas fa-layer-group" style="color: #e65100;"></i><h3>Both Disciplines</h3><p>Both sparring and patterns categories</p></div>
+<div class="modal-actions"><button class="btn btn-secondary" onclick="closePhaseModal()">Cancel</button><button class="btn btn-success" id="btnConfirmPhase" onclick="confirmPhase()" disabled>Start Phase</button></div>
 </div>
 </div>
 <script>
 const KUP_DAN_LEVELS = {
-"10th kup": 10, "10 kup": 10, "10kup": 10,
-"9th kup": 9, "9 kup": 9, "9kup": 9,
-"8th kup": 8, "8 kup": 8, "8kup": 8,
-"7th kup": 7, "7 kup": 7, "7kup": 7,
-"6th kup": 6, "6 kup": 6, "6kup": 6,
-"5th kup": 5, "5 kup": 5, "5kup": 5,
-"4th kup": 4, "4 kup": 4, "4kup": 4,
-"3rd kup": 3, "3 kup": 3, "3kup": 3,
-"2nd kup": 2, "2 kup": 2, "2kup": 2,
-"1st kup": 1, "1 kup": 1, "1kup": 1,
-"1st dan": 0, "1 dan": 0, "1dan": 0,
-"2nd dan": -1, "2 dan": -1, "2dan": -1,
-"3rd dan": -2, "3 dan": -2, "3dan": -2,
-"4th dan": -3, "4 dan": -3, "4dan": -3,
-"5th dan": -4, "5 dan": -4, "5dan": -4,
-"6th dan": -5, "6 dan": -5, "6dan": -5
+"10th kup": 10, "10 kup": 10, "10kup": 10, "9th kup": 9, "9 kup": 9, "9kup": 9,
+"8th kup": 8, "8 kup": 8, "8kup": 8, "7th kup": 7, "7 kup": 7, "7kup": 7,
+"6th kup": 6, "6 kup": 6, "6kup": 6, "5th kup": 5, "5 kup": 5, "5kup": 5,
+"4th kup": 4, "4 kup": 4, "4kup": 4, "3rd kup": 3, "3 kup": 3, "3kup": 3,
+"2nd kup": 2, "2 kup": 2, "2kup": 2, "1st kup": 1, "1 kup": 1, "1kup": 1,
+"1st dan": 0, "1 dan": 0, "1dan": 0, "2nd dan": -1, "2 dan": -1, "2dan": -1,
+"3rd dan": -2, "3 dan": -2, "3dan": -2, "4th dan": -3, "4 dan": -3, "4dan": -3,
+"5th dan": -4, "5 dan": -4, "5dan": -4, "6th dan": -5, "6 dan": -5, "6dan": -5
 };
 const KUP_DAN_NAMES = {
 10: "10th Kup", 9: "9th Kup", 8: "8th Kup", 7: "7th Kup",
@@ -1216,7 +830,7 @@ const seniors = pool.find(g => /senior/i.test(g.display_name));
 if (seniors) return seniors;
 return pool[Math.floor(pool.length / 2)];
 }
-  function getAgeGroupForAge(age, discipline, gender) {
+function getAgeGroupForAge(age, discipline, gender) {
 const normGender = normalizeGender(gender);
 const allGroups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active);
 if (allGroups.length === 0) return null;
@@ -1529,31 +1143,22 @@ btn.classList.add("is-paused");
 btn.classList.remove("is-started");
 label.innerHTML = '<i class="fas fa-play"></i> Resume Tournament';
 btn.title = "Tournament is PAUSED — click to resume";
-if (banner) {
-banner.classList.add("visible", "paused");
-}
+if (banner) { banner.classList.add("visible", "paused"); }
 if (bannerText) bannerText.textContent = "TOURNAMENT IS PAUSED";
 } else {
 btn.classList.add("is-started");
 btn.classList.remove("is-paused");
 label.innerHTML = '<i class="fas fa-stop-circle"></i> Stop Tournament';
 btn.title = "Tournament is LIVE — click to stop";
-if (banner) {
-banner.classList.add("visible");
-banner.classList.remove("paused");
-}
+if (banner) { banner.classList.add("visible"); banner.classList.remove("paused"); }
 if (bannerText) bannerText.textContent = "TOURNAMENT IS LIVE";
 }
 if (bannerTime && tournamentStartedAt) {
 try {
 const d = new Date(tournamentStartedAt);
 bannerTime.textContent = "Started: " + d.toLocaleString();
-} catch (e) {
-bannerTime.textContent = "";
-}
-} else if (bannerTime) {
-bannerTime.textContent = "";
-}
+} catch (e) { bannerTime.textContent = ""; }
+} else if (bannerTime) { bannerTime.textContent = ""; }
 } else {
 btn.classList.remove("is-started", "is-paused");
 label.innerHTML = '<i class="fas fa-play-circle"></i> Start Tournament';
@@ -1579,19 +1184,14 @@ if (error) throw error;
 isTournamentPaused = newPaused;
 updateTournamentStartUI();
 updatePhaseStatusBar();
-if (newPaused) {
-showToast("⏸ Tournament PAUSED", "saving");
-} else {
-showToast("▶ Tournament RESUMED", "success");
-}
+if (newPaused) { showToast("⏸ Tournament PAUSED", "saving"); }
+else { showToast("▶ Tournament RESUMED", "success"); }
 } catch (err) {
 console.error("togglePauseTournament error:", err);
 showToast("Failed: " + (err.message || err), "error");
-} finally {
-btn.disabled = false;
+} finally { btn.disabled = false; }
 }
-}
-function updatePhaseStatusBar() {
+  function updatePhaseStatusBar() {
 const bar = document.getElementById('phaseStatusBar');
 const pauseBtn = document.getElementById('btnPauseTournament');
 if (!tournamentIsStarted) {
@@ -2066,6 +1666,7 @@ await sb.from("patterns_kup_ranges").insert(rangesToInsert);
 }
 }
 }
+}
 function getPatternsCategoryLabel(kupDanNum, ageGroupId) {
 const ranges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).filter(r => r.is_active !== false);
 if (ranges.length === 0) return "Open";
@@ -2183,7 +1784,7 @@ c._full_cat = "Open - " + (origBeltName || "Open");
 }
 });
 }
-function renderDuplicateWarningBanner(duplicates, discipline) {
+  function renderDuplicateWarningBanner(duplicates, discipline) {
 if (!duplicates || duplicates.length === 0) return "";
 const filtered = duplicates.filter(d => d.discipline === discipline);
 if (filtered.length === 0) return "";
@@ -2319,7 +1920,7 @@ renderAgeGroupList(disc, gender);
 if (disc === "patterns") renderPatternsTimeline(disc, gender);
 else renderWeightSliders(disc, gender);
 }
-  function renderAgeTimeline(disc, gender) {
+function renderAgeTimeline(disc, gender) {
 const groups = (categoryConfig[disc].ageGroups || []).filter(g => normalizeGender(g.gender) === gender).slice().sort((a,b) => a.order_priority - b.order_priority);
 const track = document.getElementById("ageTrack_" + disc + "_" + gender);
 const segments = document.getElementById("ageSegments_" + disc + "_" + gender);
@@ -3341,7 +2942,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -4205,6 +3806,7 @@ csvContent += '"' + title + '",' + (colIndex + 1) + ',' + matchNum + ',"' + p1Na
 }
 });
 });
+});
 const encodedUri = encodeURI(csvContent);
 const link = document.createElement("a");
 link.setAttribute("href", encodedUri);
@@ -4222,4 +3824,823 @@ const active = document.getElementById(id);
 if (active) {
 active.classList.remove("btn-secondary");
 if (id === "btnPriceOverview") active.classList.add("btn-profit", "btn-active");
-else
+else if (id === "btnCategories") active.classList.add("btn-categories", "btn-active");
+else active.classList.add("btn-primary", "btn-active");
+}
+}
+async function fetchData() {
+try {
+lastDebugInfo = { registrations: [], competitors: [], judges: [], coaches: [], errors: [] };
+await loadCategoryConfig();
+const { data: allRegs, error: regError } = await sb.from(REG_TABLE).select("*");
+if (regError) { lastDebugInfo.errors.push("REG FETCH: " + regError.message); throw regError; }
+lastDebugInfo.registrations = allRegs || [];
+const compRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "comp" || t === "competitor" || t === "c"; });
+const judgeRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "judge" || t === "j"; });
+const coachRegs = (allRegs || []).filter((r) => { const t = (r.entry_type || r.type || r.role || "").toString().toLowerCase(); return t === "coach" || t === "c2"; });
+const compIds = [...new Set(compRegs.map((r) => r.entry_id).filter(Boolean))];
+const judgeIds = [...new Set(judgeRegs.map((r) => r.entry_id).filter(Boolean))];
+const coachIds = [...new Set(coachRegs.map((r) => r.entry_id).filter(Boolean))];
+let compDetails = [], judgeDetails = [], coachDetails = [];
+if (compIds.length > 0) { const { data, error } = await sb.from("competitors").select("*").in("id", compIds); if (!error) compDetails = data || []; }
+if (judgeIds.length > 0) { const { data, error } = await sb.from("judges").select("*").in("id", judgeIds); if (!error) judgeDetails = data || []; }
+if (coachIds.length > 0) { const { data, error } = await sb.from("coaches").select("*").in("id", coachIds); if (!error) coachDetails = data || []; }
+lastDebugInfo.competitors = compDetails;
+lastDebugInfo.judges = judgeDetails;
+lastDebugInfo.coaches = coachDetails;
+competitors = []; judges = []; coaches = [];
+compDetails.forEach((person) => {
+const personRegs = compRegs.filter((r) => String(r.entry_id) === String(person.id));
+if (personRegs.length === 0) return;
+personRegs.forEach((reg) => {
+let entries = [];
+if (reg.entry_data?.entries_list && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
+else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
+else if (reg.entries_list && Array.isArray(reg.entries_list)) entries = reg.entries_list;
+else if (reg.entry_data && typeof reg.entry_data === 'object' && !Array.isArray(reg.entry_data)) {
+if (reg.entry_data.full_cat || reg.entry_data.discipline) entries = [reg.entry_data];
+} else if (reg.full_cat || reg.category || reg.discipline) {
+entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline, label: reg.label }];
+}
+if (entries.length === 0) return;
+entries.forEach((entry) => {
+let fullCat = entry.full_cat || entry.category || entry.fullCat || "";
+let discipline = (entry.discipline || entry.type || "").toString().toLowerCase();
+let label = entry.label || entry.name || "";
+let origSubCat = "";
+let origWeight = null;
+if (discipline === "sparring") {
+const wMatch = fullCat.match(/[-\s]?(\d+(?:\.\d+)?)\s*kg/i);
+if (wMatch) { origWeight = parseFloat(wMatch[1]); origSubCat = wMatch[1] + "kg"; }
+} else if (discipline === "patterns") {
+let parts = fullCat.split(" - ");
+if (parts.length >= 2) origSubCat = parts.slice(1).join(" - ").trim();
+}
+const personGender = getCompetitorGender(person);
+competitors.push({
+...person, _reg_id: reg.id, _discipline: discipline, _label: label,
+_full_cat: fullCat, _original_sub_cat: origSubCat,
+weight_kg: origWeight || person.weight_kg || null,
+_actual_age_group: "OTHER", _actual_sub_cat: origSubCat,
+_age_group_id: null, _age_group_name: null,
+gender: personGender
+});
+});
+});
+});
+recomputeCompetitorCategories();
+const duplicates = await resolveDuplicates();
+detectedDuplicates = duplicates || [];
+judgeDetails.forEach((person) => {
+const personRegs = judgeRegs.filter((r) => String(r.entry_id) === String(person.id));
+if (personRegs.length === 0) judges.push({ ...person });
+else personRegs.forEach((reg) => judges.push({ ...person, _reg_id: reg.id }));
+});
+coachDetails.forEach((person) => {
+const personRegs = coachRegs.filter((r) => String(r.entry_id) === String(person.id));
+if (personRegs.length === 0) coaches.push({ ...person });
+else personRegs.forEach((reg) => coaches.push({ ...person, _reg_id: reg.id }));
+});
+await loadJudgeRanks();
+return detectedDuplicates;
+} catch (error) {
+console.error("fetchData error:", error);
+document.getElementById("content").innerHTML = '<div class="empty-state" style="padding:30px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;"><h3 style="color:#856404;">Error loading data</h3><p style="margin:10px 0;">' + (error.message || error) + '</p><button class="btn btn-primary" onclick="showDebugInfo()"><i class="fas fa-bug"></i> View Debug Info</button></div>';
+return [];
+}
+}
+function showDebugInfo() {
+setActiveBtn("btnDebug");
+let html = '<div class="controls"><button class="btn btn-secondary" onclick="showPatterns()"><i class="fas fa-arrow-left"></i> Back</button><button class="btn btn-warning" onclick="runFullDebug()"><i class="fas fa-sync"></i> Refresh</button></div>';
+html += '<div class="category-card"><div class="category-header">Data Summary</div><div style="padding:20px;">' +
+'<p><strong>Registrations:</strong> ' + lastDebugInfo.registrations.length + '</p>' +
+'<p><strong>Competitor Details:</strong> ' + lastDebugInfo.competitors.length + '</p>' +
+'<p><strong>Final Entries:</strong> ' + competitors.length + '</p>' +
+'<p><strong>Judges:</strong> ' + judges.length + '</p>' +
+'<p><strong>Coaches:</strong> ' + coaches.length + '</p>' +
+'<p><strong>Judge Ranks Assigned:</strong> ' + Object.keys(judgeRanksMap).length + '</p>' +
+'<p><strong>Category Config (patterns age groups):</strong> ' + categoryConfig.patterns.ageGroups.length + '</p>' +
+'<p><strong>Category Config (sparring age groups):</strong> ' + categoryConfig.sparring.ageGroups.length + '</p>' +
+'<p><strong>Patterns kup ranges defined:</strong> ' + Object.values(categoryConfig.patterns.kupRanges || {}).reduce((s, arr) => s + arr.length, 0) + '</p>' +
+'<p><strong>Sparring weight boundaries defined:</strong> ' + Object.values(categoryConfig.sparring.weightBoundaries || {}).reduce((s, arr) => s + arr.length, 0) + '</p>' +
+'<p><strong>Sparring round configs defined:</strong> ' + Object.values(categoryConfig.sparring.roundConfigs || {}).length + '</p>' +
+'<p><strong>Duplicates detected (NOT deleted):</strong> ' + detectedDuplicates.length + '</p>' +
+'<p><strong>Tournament Started:</strong> ' + (tournamentIsStarted ? 'YES 🏁' : 'No') + '</p>' +
+'<p><strong>Current Phase:</strong> ' + (currentPhase || 'none') + '</p>' +
+'<p><strong>Tournament Paused:</strong> ' + (isTournamentPaused ? 'YES ⏸' : 'No') + '</p>' +
+'</div></div>';
+if (detectedDuplicates.length > 0) {
+html += '<div class="category-card"><div class="category-header" style="background:#c62828;">Detected Duplicates (NOT deleted)</div><div style="padding:20px;">' +
+detectedDuplicates.map(d => '<div style="color:#c62828;margin:5px 0;padding:6px;background:#ffebee;border-radius:4px;">• <strong>' + escapeHtml(d.name) + '</strong> — ' + escapeHtml(d.team || 'N/A') + ' — ' + escapeHtml(d.fullCat || 'Unknown') + ' (' + d.discipline + ')</div>').join("") +
+'</div></div>';
+}
+if (lastDebugInfo.errors.length > 0) {
+html += '<div class="category-card"><div class="category-header" style="background:var(--danger);">Errors</div><div style="padding:20px;">' + lastDebugInfo.errors.map(e => '<div style="color:var(--danger);margin:5px 0;">• ' + e + '</div>').join("") + '</div></div>';
+}
+if (lastDebugInfo.registrations.length > 0) {
+html += '<div class="category-card"><div class="category-header">Sample Registration</div><div class="debug-box">' + JSON.stringify(lastDebugInfo.registrations[0], null, 2) + '</div></div>';
+}
+document.getElementById("content").innerHTML = html;
+}
+async function runFullDebug() { await fetchData(); showDebugInfo(); }
+function updateAgeForFilters() {
+tournamentDate = document.getElementById("tournamentDate").value;
+recomputeCompetitorCategories();
+const activeBtn = document.querySelector(".nav .btn.btn-active");
+if (activeBtn && activeBtn.id === "btnPatterns") runPatternFilter();
+if (activeBtn && activeBtn.id === "btnSparring") runSparringFilter();
+}
+async function showPatterns() {
+setActiveBtn("btnPatterns");
+const duplicates = await fetchData();
+const ageGroups = categoryConfig.patterns.ageGroups.filter(g => g.is_active);
+const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ') <' + normalizeGender(g.gender) + '></option>').join("");
+const kupDanRanks = new Set();
+competitors.filter(c => c._discipline === "patterns").forEach(c => {
+if (c._original_sub_cat) kupDanRanks.add(c._original_sub_cat);
+});
+const kupDanOptions = Array.from(kupDanRanks).sort((a,b) => {
+const numA = kupDanNameToNumber(a);
+const numB = kupDanNameToNumber(b);
+if (numA !== null && numB !== null) return numB - numA;
+return a.localeCompare(b);
+}).map(b => '<option value="' + escapeAttr(b) + '">' + escapeHtml(b) + '</option>').join("");
+let contentHtml = '';
+const patternsDups = (duplicates || []).filter(d => d.discipline === "patterns");
+if (patternsDups.length > 0) {
+contentHtml += renderDuplicateWarningBanner(duplicates, "patterns");
+}
+contentHtml += '<div class="filters-card"><div class="filters">' +
+'<div class="filter-group"><label>Age Category</label><select id="pAge" onchange="runPatternFilter()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '</select></div>' +
+'<div class="filter-group"><label>Gender</label><select id="pGen" onchange="runPatternFilter()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
+'<div class="filter-group"><label>Kup/Dan Rank</label><select id="pBelt" onchange="runPatternFilter()"><option value="ALL">All Ranks</option>' + kupDanOptions + '</select></div>' +
+'<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generatePatternBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>' +
+'</div></div><div id="listTarget"></div><div id="teamSummary"></div>';
+document.getElementById("content").innerHTML = contentHtml;
+runPatternFilter();
+}
+function runPatternFilter() {
+const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
+const filtered = competitors.filter((c) => {
+if (c._discipline !== "patterns") return false;
+const cGender = getCompetitorGender(c);
+const mGen = gen === "ALL" || cGender === normalizeGender(gen === "MALE" ? "male" : gen === "FEMALE" ? "female" : "ALL");
+if (!mGen) return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
+if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
+return true;
+});
+const groups = {};
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
+const t = document.getElementById("listTarget");
+t.innerHTML = "";
+if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
+else {
+for (const k in groups) {
+const catKey = k.replace(/ - (male|female)$/, "");
+const dupHtml = renderDuplicatesInCategory(catKey, detectedDuplicates, "patterns");
+if (dupHtml) t.innerHTML += dupHtml;
+t.innerHTML += createParallelCard("Pattern: " + k, groups[k]);
+}
+}
+renderTeamSummary(filtered, "Patterns");
+}
+async function generatePatternBrackets() {
+await loadBracketSizeOverrides();
+const age = document.getElementById("pAge").value, gen = document.getElementById("pGen").value, belt = document.getElementById("pBelt").value;
+const filtered = competitors.filter((c) => {
+if (c._discipline !== "patterns") return false;
+const cGender = getCompetitorGender(c);
+const mGen = gen === "ALL" || cGender === normalizeGender(gen === "MALE" ? "male" : gen === "FEMALE" ? "female" : "ALL");
+if (!mGen) return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
+if (belt !== "ALL" && c._original_sub_cat !== belt) return false;
+return true;
+});
+const groups = {};
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
+await renderBracketView(groups, "Patterns");
+}
+async function showSparring() {
+setActiveBtn("btnSparring");
+const duplicates = await fetchData();
+const ageGroups = categoryConfig.sparring.ageGroups.filter(g => g.is_active);
+const ageOptions = ageGroups.map(g => '<option value="' + escapeAttr(g.display_name) + '">' + escapeHtml(g.display_name) + ' (' + g.min_age + (g.max_age === null ? '+' : '-' + g.max_age) + ') <' + normalizeGender(g.gender) + '></option>').join("");
+let contentHtml = '';
+const sparringDups = (duplicates || []).filter(d => d.discipline === "sparring");
+if (sparringDups.length > 0) {
+contentHtml += renderDuplicateWarningBanner(duplicates, "sparring");
+}
+contentHtml += '<div class="filters-card"><div class="filters">' +
+'<div class="filter-group"><label>Age Category</label><select id="sAge" onchange="updateWeightDropdown()"><option value="ALL">All Ages (all genders)</option>' + ageOptions + '</select></div>' +
+'<div class="filter-group"><label>Gender</label><select id="sGen" onchange="updateWeightDropdown()"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>' +
+'<div class="filter-group"><label>Weight Class</label><select id="sWeight" onchange="runSparringFilter()"><option value="ALL">All</option></select></div>' +
+'<div class="filter-group" style="flex:0"><label style="visibility:hidden">Action</label><button class="btn btn-success" onclick="generateSparringBrackets()"><i class="fas fa-trophy"></i> View Brackets</button></div>' +
+'</div><div id="sparringInfo" class="info-banner"><i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.</div></div><div id="listTarget"></div><div id="teamSummary"></div>';
+document.getElementById("content").innerHTML = contentHtml;
+updateWeightDropdown();
+}
+function updateWeightDropdown() {
+const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value;
+const wDrop = document.getElementById("sWeight");
+const info = document.getElementById("sparringInfo");
+wDrop.innerHTML = '<option value="ALL">All</option>';
+const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
+const ageGroup = categoryConfig.sparring.ageGroups.find(g => g.display_name === age && g.is_active && (normGen === null || normalizeGender(g.gender) === normGen));
+let weightDivisions = [];
+if (ageGroup) {
+const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).slice().sort((a,b) => a-b);
+if (bounds.length === 0) { weightDivisions = ["Open"]; }
+else {
+weightDivisions.push("-" + bounds[0] + "kg");
+for (let i = 0; i < bounds.length - 1; i++) weightDivisions.push(Math.ceil(bounds[i]) + "-" + bounds[i+1] + "kg");
+weightDivisions.push("+" + bounds[bounds.length-1] + "kg");
+}
+} else {
+const relevantComps = competitors.filter((c) => {
+if (c._discipline !== "sparring") return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
+const cGender = getCompetitorGender(c);
+return normGen === null || cGender === normGen;
+});
+const weights = new Set();
+relevantComps.forEach((c) => { const w = (c._actual_sub_cat || "").replace("kg", ""); if (w && w !== "N/A" && w !== "Open") weights.add(w); });
+weightDivisions = Array.from(weights).sort((a, b) => {
+const numA = parseFloat(a.replace(/[^0-9.-]/g, ""));
+const numB = parseFloat(b.replace(/[^0-9.-]/g, ""));
+if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+return a.localeCompare(b);
+}).map(w => w + "kg");
+}
+weightDivisions.forEach(w => { wDrop.innerHTML += '<option value="' + w + '">' + w + '</option>'; });
+if (ageGroup) {
+const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).length;
+const genderLabel = normalizeGender(ageGroup.gender) === "male" ? "Male" : "Female";
+const roundCfg = categoryConfig.sparring.roundConfigs[ageGroup.id] || { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 };
+const roundTimeStr = roundCfg.round_seconds > 0 ? (roundCfg.round_minutes + ':' + String(roundCfg.round_seconds).padStart(2, '0')) : (roundCfg.round_minutes + ':00');
+const pauseTimeStr = (roundCfg.pause_seconds ?? 0) > 0 ? (roundCfg.pause_minutes + ':' + String(roundCfg.pause_seconds).padStart(2, '0')) : ((roundCfg.pause_minutes ?? 1) + ':00');
+info.innerHTML = '<i class="fas fa-weight-hanging"></i> <strong>' + escapeHtml(ageGroup.display_name) + ' (' + genderLabel + '):</strong> ' + bounds + ' weight division' + (bounds !== 1 ? 's' : '') + ' configured (ages ' + ageGroup.min_age + (ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age) + ') — <strong style="color:var(--round-accent)"><i class="fas fa-stopwatch"></i> ' + roundCfg.rounds_count + ' rounds × ' + roundTimeStr + ' min | <i class="fas fa-hourglass-half"></i> Pause: ' + pauseTimeStr + '</strong>';
+} else {
+info.innerHTML = '<i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.';
+}
+runSparringFilter();
+}
+function runSparringFilter() {
+const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
+const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
+const filtered = competitors.filter((c) => {
+if (c._discipline !== "sparring") return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
+const cGender = getCompetitorGender(c);
+if (normGen !== null && cGender !== normGen) return false;
+const cWeight = c._actual_sub_cat || "";
+if (weightReq !== "ALL" && cWeight !== weightReq) return false;
+return true;
+});
+const groups = {};
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
+const t = document.getElementById("listTarget");
+t.innerHTML = "";
+if (Object.keys(groups).length === 0) t.innerHTML = '<div class="empty-state" style="padding:30px;text-align:center;color:var(--gray);">No competitors found.</div>';
+else {
+for (const k in groups) {
+const catKey = k.replace(/ - (male|female)$/, "");
+const dupHtml = renderDuplicatesInCategory(catKey, detectedDuplicates, "sparring");
+if (dupHtml) t.innerHTML += dupHtml;
+t.innerHTML += createParallelCard("Sparring: " + k, groups[k]);
+}
+}
+renderTeamSummary(filtered, "Sparring");
+}
+async function generateSparringBrackets() {
+await loadBracketSizeOverrides();
+const age = document.getElementById("sAge").value, gen = document.getElementById("sGen").value, weightReq = document.getElementById("sWeight").value;
+const normGen = gen === "MALE" ? "male" : (gen === "FEMALE" ? "female" : null);
+const filtered = competitors.filter((c) => {
+if (c._discipline !== "sparring") return false;
+if (age !== "ALL" && c._age_group_name !== age) return false;
+const cGender = getCompetitorGender(c);
+if (normGen !== null && cGender !== normGen) return false;
+const cWeight = c._actual_sub_cat || "";
+if (weightReq !== "ALL" && cWeight !== weightReq) return false;
+return true;
+});
+const groups = {};
+filtered.forEach((c) => {
+const cGender = getCompetitorGender(c);
+const k = c._full_cat + " - " + cGender;
+if (!groups[k]) groups[k] = [];
+groups[k].push(c);
+});
+await renderBracketView(groups, "Sparring");
+}
+async function showTeamOverview() {
+setActiveBtn("btnTeamOverview");
+await fetchData();
+await fetchTournamentPrices();
+if (competitors.length === 0) {
+document.getElementById("content").innerHTML = '<div class="empty-state" style="padding:40px;text-align:center;background:white;border-radius:12px;box-shadow:var(--shadow);"><h3 style="color:var(--primary);margin-bottom:10px;">No Competitors Loaded</h3></div>';
+return;
+}
+const teamsMap = {};
+competitors.forEach((c) => {
+const teamName = c.team || "Unassigned";
+if (!teamsMap[teamName]) teamsMap[teamName] = { name: teamName, competitorNames: new Set(), patternsCategories: new Set(), sparringCategories: new Set(), patternsEntries: [], sparringEntries: [] };
+teamsMap[teamName].competitorNames.add(c.name);
+if (c._discipline === "patterns") { teamsMap[teamName].patternsCategories.add(c._full_cat); teamsMap[teamName].patternsEntries.push(c); }
+else if (c._discipline === "sparring") { teamsMap[teamName].sparringCategories.add(c._full_cat); teamsMap[teamName].sparringEntries.push(c); }
+});
+const teamNames = Object.keys(teamsMap).sort();
+let html = '<div class="controls"><h2 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-users-cog"></i> Team Overview</h2></div>';
+const totalPatternsCats = new Set(), totalSparringCats = new Set(), totalUniqueCompetitors = new Set();
+teamNames.forEach((tn) => {
+teamsMap[tn].patternsCategories.forEach((c) => totalPatternsCats.add(c));
+teamsMap[tn].sparringCategories.forEach((c) => totalSparringCats.add(c));
+teamsMap[tn].competitorNames.forEach((n) => totalUniqueCompetitors.add(n));
+});
+html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;">' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--primary);"><div style="font-size:2rem;font-weight:700;color:var(--primary);">' + teamNames.length + '</div><div style="color:var(--gray);font-size:0.9rem;">Teams</div></div>' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--secondary);"><div style="font-size:2rem;font-weight:700;color:var(--secondary);">' + totalUniqueCompetitors.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Unique Competitors</div></div>' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #1565c0;"><div style="font-size:2rem;font-weight:700;color:#1565c0;">' + totalPatternsCats.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Pattern Categories</div></div>' +
+'<div style="background:white;padding:20px;border-radius:12px;box-shadow:var(--shadow);text-align:center;border-top:4px solid #c2185b;"><div style="font-size:2rem;font-weight:700;color:#c2185b;">' + totalSparringCats.size + '</div><div style="color:var(--gray);font-size:0.9rem;">Sparring Categories</div></div>' +
+'</div>';
+const patternsPrice = tournamentPrices.patterns;
+const patternsExtraPrice = tournamentPrices.patternsExtra;
+const sparringPrice = tournamentPrices.sparring;
+const sparringExtraPrice = tournamentPrices.sparringExtra;
+teamNames.forEach((teamName) => {
+const t = teamsMap[teamName];
+const initial = teamName.charAt(0).toUpperCase();
+const safeTeam = escapeAttr(teamName);
+const patternsCount = t.patternsCategories.size;
+const sparringCount = t.sparringCategories.size;
+const totalCats = patternsCount + sparringCount;
+const totalEntries = t.patternsEntries.length + t.sparringEntries.length;
+const patternsBreakdown = calculateDisciplineBreakdown(t.patternsEntries, patternsPrice, patternsExtraPrice);
+const sparringBreakdown = calculateDisciplineBreakdown(t.sparringEntries, sparringPrice, sparringExtraPrice);
+const hasAnyPrice = patternsBreakdown !== null || sparringBreakdown !== null;
+const grandTotal = (patternsBreakdown?.total || 0) + (sparringBreakdown?.total || 0);
+let priceSummaryHtml = "";
+if (!hasAnyPrice) {
+priceSummaryHtml = '<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>';
+} else {
+const segments = [];
+if (patternsBreakdown) {
+let patText = `${patternsBreakdown.uniqueCompetitors} Base (${formatEuro(patternsPrice)})`;
+if (patternsBreakdown.extraEntries > 0) {
+patText += ` + ${patternsBreakdown.extraEntries} Extra (${formatEuro(patternsExtraPrice)})`;
+}
+patText += ` = <strong>${formatEuro(patternsBreakdown.total)}</strong>`;
+segments.push(`<span class="price-segment patterns-price" title="Patterns Breakdown"><i class="fas fa-chess-board"></i> Patterns: ${patText}</span>`);
+}
+if (sparringBreakdown) {
+let sparText = `${sparringBreakdown.uniqueCompetitors} Base (${formatEuro(sparringPrice)})`;
+if (sparringBreakdown.extraEntries > 0) {
+sparText += ` + ${sparringBreakdown.extraEntries} Extra (${formatEuro(sparringExtraPrice)})`;
+}
+sparText += ` = <strong>${formatEuro(sparringBreakdown.total)}</strong>`;
+segments.push(`<span class="price-segment sparring-price" title="Sparring Breakdown"><i class="fas fa-fist-raised"></i> Sparring: ${sparText}</span>`);
+}
+priceSummaryHtml = '<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ' + segments.join('<span class="price-operator">+</span>') + ' <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ' + formatEuro(grandTotal) + '</span></div>';
+}
+html += '<div class="team-overview-card"><div class="team-overview-header">' +
+'<div class="team-name-block"><div class="team-icon">' + initial + '</div><div><div class="team-name">' + escapeHtml(teamName) + '</div><div style="font-size:0.85rem;color:var(--gray);">' + t.competitorNames.size + ' competitors • ' + totalEntries + ' entries</div></div></div>' +
+'<div class="team-stats">' +
+'<span class="stat-pill total"><i class="fas fa-layer-group"></i> Categories: <span class="stat-num">' + totalCats + '</span></span>' +
+'<span class="stat-pill entries"><i class="fas fa-list"></i> Entries: <span class="stat-num">' + totalEntries + '</span></span>' +
+'<span class="stat-pill patterns"><i class="fas fa-chess-board"></i> Patterns: <span class="stat-num">' + patternsCount + '</span></span>' +
+'<span class="stat-pill sparring"><i class="fas fa-fist-raised"></i> Sparring: <span class="stat-num">' + sparringCount + '</span></span>' +
+'</div></div>' + priceSummaryHtml +
+'<div class="team-actions">' +
+'<button class="btn btn-info btn-sm" onclick="showTeamDetail(\'' + safeTeam + '\', \'patterns\')" ' + (patternsCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '><i class="fas fa-chess-board"></i> View Patterns (' + patternsCount + ')</button>' +
+'<button class="btn btn-info btn-sm" onclick="showTeamDetail(\'' + safeTeam + '\', \'sparring\')" ' + (sparringCount === 0 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : '') + '><i class="fas fa-fist-raised"></i> View Sparring (' + sparringCount + ')</button>' +
+'</div></div>';
+});
+document.getElementById("content").innerHTML = html;
+}
+function showTeamDetail(teamName, discipline) {
+const disciplineLabel = discipline === "patterns" ? "Patterns" : "Sparring";
+const headerClass = discipline === "patterns" ? "patterns-header" : "sparring-header";
+const iconClass = discipline === "patterns" ? "fa-chess-board" : "fa-fist-raised";
+const tagClass = discipline === "patterns" ? "patterns-tag" : "sparring-tag";
+const teamEntries = competitors.filter((c) => { const t = c.team || "Unassigned"; return t === teamName && c._discipline === discipline; });
+const byName = {};
+teamEntries.forEach((c) => { if (!byName[c.name]) byName[c.name] = { entries: [], gender: c.gender || "" }; byName[c.name].entries.push(c); });
+const competitorNames = Object.keys(byName).sort();
+let html = '<div class="controls"><button class="btn btn-secondary" onclick="showTeamOverview()"><i class="fas fa-arrow-left"></i> Back</button></div>' +
+'<div class="team-detail-modal"><div class="team-detail-header ' + headerClass + '"><h3><i class="fas ' + iconClass + '"></i> ' + escapeHtml(teamName) + ' — ' + disciplineLabel + '</h3></div><div style="padding:15px 0;">';
+if (competitorNames.length === 0) html += '<div class="empty-team-detail">No registrations.</div>';
+else {
+competitorNames.forEach((name) => {
+const data = byName[name];
+const uniqueCats = new Set(data.entries.map((e) => e._full_cat));
+html += '<div class="competitor-detail-card"><div class="competitor-detail-header"><div class="competitor-detail-name"><i class="fas fa-user-circle" style="color:var(--primary);"></i> ' + escapeHtml(name) + '</div><span class="category-count-badge">' + uniqueCats.size + ' categor' + (uniqueCats.size !== 1 ? 'ies' : 'y') + '</span></div><div class="category-list">';
+data.entries.forEach((e) => { html += '<span class="category-tag ' + tagClass + '">' + escapeHtml(e._full_cat) + '</span>'; });
+html += '</div></div>';
+});
+}
+html += '</div></div>';
+document.getElementById("content").innerHTML = html;
+window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function createParallelCard(title, list) {
+if (list.length === 0) return '<div class="empty-state">No competitors found.</div>';
+let n = "", t = "";
+list.forEach((c) => { n += '<div class="row-item">' + escapeHtml(c.name) + '</div>'; t += '<div class="row-item">' + (escapeHtml(c.team) || "N/A") + '</div>'; });
+return '<div class="category-card"><div class="category-header">' + escapeHtml(title) + ' <span class="category-count">' + list.length + '</span></div><div class="parallel-container"><div class="col-list"><div class="col-header"><i class="fas fa-user"></i> Competitors</div>' + n + '</div><div class="col-list"><div class="col-header"><i class="fas fa-users"></i> Teams</div>' + t + '</div></div></div>';
+}
+function renderTeamSummary(list, type) {
+const uniqueByTeam = {};
+const entriesByTeam = {};
+list.forEach((c) => {
+const teamName = c.team || "Unassigned";
+if (!uniqueByTeam[teamName]) { uniqueByTeam[teamName] = new Set(); entriesByTeam[teamName] = 0; }
+uniqueByTeam[teamName].add(c.name);
+entriesByTeam[teamName]++;
+});
+const teamKeys = Object.keys(uniqueByTeam).sort();
+let totalUnique = 0, totalEntries = 0;
+teamKeys.forEach((t) => { totalUnique += uniqueByTeam[t].size; totalEntries += entriesByTeam[t]; });
+let h = '<h3 style="color:var(--primary);margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:5px">Team Summary (' + type + ')</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">';
+if (teamKeys.length === 0) h += '<span style="color:var(--gray);grid-column:1/-1">No data.</span>';
+else {
+teamKeys.forEach((t) => {
+const uniqueCount = uniqueByTeam[t].size;
+const entryCount = entriesByTeam[t];
+const diffNote = entryCount > uniqueCount ? ' <span style="font-size:0.7rem;color:#e65100;">(' + entryCount + ' entries)</span>' : '';
+h += '<div style="background:#f8f9fa;padding:8px;border-radius:4px;border-left:3px solid var(--secondary)"><strong style="display:block">' + escapeHtml(t) + '</strong><span style="font-size:0.85rem;color:var(--gray)">' + uniqueCount + ' competitor' + (uniqueCount !== 1 ? 's' : '') + diffNote + '</span></div>';
+});
+}
+h += '</div><div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">' +
+'<div style="flex:1;min-width:150px;padding:10px;background:var(--primary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-user-check"></i> Unique: ' + totalUnique + '</div>' +
+'<div style="flex:1;min-width:150px;padding:10px;background:var(--secondary);color:white;border-radius:6px;font-weight:bold;text-align:center"><i class="fas fa-list"></i> Total Entries: ' + totalEntries + '</div>' +
+'</div>';
+document.getElementById("teamSummary").innerHTML = h;
+}
+async function loadJudgeRanks() {
+try {
+const { data, error } = await sb.from("judge_ranks").select("judge_id, rank");
+if (error) { judgeRanksMap = {}; return; }
+judgeRanksMap = {};
+(data || []).forEach(row => { judgeRanksMap[row.judge_id] = row.rank; });
+} catch (err) { judgeRanksMap = {}; }
+}
+function getJudgeRank(judgeId) { return judgeRanksMap[judgeId] || null; }
+function getRankLabel(rank) {
+if (rank === "head_referee") return "Head Referee";
+if (rank === "referee") return "Referee";
+if (rank === "computer_referee") return "Computer Referee";
+return "Unassigned";
+}
+function getRankIcon(rank) {
+if (rank === "head_referee") return "fa-crown";
+if (rank === "referee") return "fa-user-shield";
+if (rank === "computer_referee") return "fa-desktop";
+return "fa-question-circle";
+}
+function selectRank(rank) {
+rankSelectionMode = (rankSelectionMode === rank) ? null : rank;
+updateRangsUI();
+}
+function updateRangsUI() {
+document.querySelectorAll(".rank-btn").forEach(btn => { btn.classList.toggle("selected", btn.dataset.rank === rankSelectionMode); });
+const hint = document.getElementById("rangsHint");
+if (!hint) return;
+if (!rankSelectionMode) {
+hint.className = "rangs-hint";
+hint.innerHTML = '<i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.';
+} else {
+const labels = { head_referee: { name: "Head Referee", color: "headref" }, referee: { name: "Referee", color: "referee" }, computer_referee: { name: "Computer Referee", color: "computer" }, unassign: { name: "Unassign", color: "unassign" } };
+const info = labels[rankSelectionMode];
+hint.className = 'rangs-hint active-rank-' + info.color;
+hint.innerHTML = '<i class="fas ' + getRankIcon(rankSelectionMode) + '"></i> <strong>Mode: ' + info.name + '</strong> — now click on any judge row to ' + (rankSelectionMode === 'unassign' ? 'remove their rank' : 'assign them as ' + info.name.toLowerCase()) + '.';
+}
+document.querySelectorAll(".judges-table tbody tr").forEach(tr => { tr.classList.toggle("assignable", !!rankSelectionMode); });
+}
+async function assignJudgeRank(judgeId, judgeName) {
+if (!rankSelectionMode) { showToast("Select a rank first (click Rangs button)", "error"); return; }
+const row = document.querySelector('tr[data-judge-id="' + CSS.escape(String(judgeId)) + '"]');
+const displayName = safeStr(judgeName) || "Unknown";
+try {
+if (rankSelectionMode === "unassign") {
+await safeDelete("judge_ranks", { judge_id: judgeId });
+delete judgeRanksMap[judgeId];
+showToast('Rank removed from "' + displayName + '"', "success");
+} else {
+await safeDelete("judge_ranks", { judge_id: judgeId });
+await safeInsert("judge_ranks", [{ judge_id: judgeId, rank: rankSelectionMode }]);
+judgeRanksMap[judgeId] = rankSelectionMode;
+showToast('"' + displayName + '" → ' + getRankLabel(rankSelectionMode), "success");
+}
+if (row) { row.classList.add("just-assigned"); setTimeout(() => row.classList.remove("just-assigned"), 1000); }
+await refreshJudgesTable();
+} catch (err) { showToast("Failed: " + (err.message || err), "error"); }
+}
+async function refreshJudgesTable() {
+const tbody = document.querySelector(".judges-table tbody");
+if (!tbody) return;
+const rows = Array.from(tbody.querySelectorAll("tr"));
+rows.forEach(row => {
+const judgeId = row.dataset.judgeId;
+const rank = getJudgeRank(judgeId);
+const rankCell = row.querySelector(".rank-cell");
+if (rankCell) {
+const rankClass = rank || "unassigned";
+rankCell.innerHTML = '<span class="rank-badge ' + rankClass + '"><i class="fas ' + getRankIcon(rank) + '"></i> ' + getRankLabel(rank) + '</span>';
+}
+});
+updateRankLegend();
+}
+function updateRankLegend() {
+const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0 };
+judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
+const legend = document.getElementById("rankLegend");
+if (legend) {
+legend.innerHTML = '<div class="rank-legend-item"><span class="rank-badge head_referee"><i class="fas fa-crown"></i> Head Referee</span> <span class="rank-legend-count">' + counts.head_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge referee"><i class="fas fa-user-shield"></i> Referee</span> <span class="rank-legend-count">' + counts.referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge computer_referee"><i class="fas fa-desktop"></i> Computer Referee</span> <span class="rank-legend-count">' + counts.computer_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge unassigned"><i class="fas fa-question-circle"></i> Unassigned</span> <span class="rank-legend-count">' + counts.unassigned + '</span></div>';
+}
+}
+async function showJudges() {
+setActiveBtn("btnJudges");
+await fetchData();
+rankSelectionMode = null;
+const counts = { head_referee: 0, referee: 0, computer_referee: 0, unassigned: 0 };
+judges.forEach(j => { const rank = getJudgeRank(j.id); if (rank) counts[rank]++; else counts.unassigned++; });
+let html = '<div class="judges-toolbar"><div class="judges-toolbar-header">' +
+'<div class="judges-toolbar-title"><i class="fas fa-gavel"></i> Judges List (' + judges.length + ')</div>' +
+'<button class="btn btn-warning btn-sm" id="toggleRangsBtn" onclick="toggleRangsPanel()"><i class="fas fa-layer-group"></i> Rangs</button>' +
+'</div><div class="rangs-panel" id="rangsPanel">' +
+'<div class="rangs-panel-title"><i class="fas fa-layer-group"></i> Assign Rangs — Select a rank, then click a judge</div>' +
+'<div class="rangs-buttons">' +
+'<button class="rank-btn headref" data-rank="head_referee" onclick="selectRank(\'head_referee\')"><i class="fas fa-crown"></i> Head Referee</button>' +
+'<button class="rank-btn referee" data-rank="referee" onclick="selectRank(\'referee\')"><i class="fas fa-user-shield"></i> Referee</button>' +
+'<button class="rank-btn computer" data-rank="computer_referee" onclick="selectRank(\'computer_referee\')"><i class="fas fa-desktop"></i> Computer Referee</button>' +
+'<button class="rank-btn unassign" data-rank="unassign" onclick="selectRank(\'unassign\')"><i class="fas fa-times-circle"></i> Unassign</button>' +
+'</div><div class="rangs-hint" id="rangsHint"><i class="fas fa-hand-pointer"></i> <strong>Select a rank above</strong>, then click any judge in the table to assign that rank.</div>' +
+'</div><div class="rank-legend" id="rankLegend">' +
+'<div class="rank-legend-item"><span class="rank-badge head_referee"><i class="fas fa-crown"></i> Head Referee</span> <span class="rank-legend-count">' + counts.head_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge referee"><i class="fas fa-user-shield"></i> Referee</span> <span class="rank-legend-count">' + counts.referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge computer_referee"><i class="fas fa-desktop"></i> Computer Referee</span> <span class="rank-legend-count">' + counts.computer_referee + '</span></div>' +
+'<div class="rank-legend-item"><span class="rank-badge unassigned"><i class="fas fa-question-circle"></i> Unassigned</span> <span class="rank-legend-count">' + counts.unassigned + '</span></div>' +
+'</div></div>';
+if (judges.length === 0) html += '<div style="padding:30px;text-align:center;color:var(--gray);background:white;border-radius:12px;box-shadow:var(--shadow);">No judges registered.</div>';
+else {
+html += '<table class="judges-table"><thead><tr>' +
+'<th style="width:5%">#</th><th>Name</th><th>Belt</th><th>Team</th><th style="width:20%">Current Rank</th>' +
+'</tr></thead><tbody>';
+judges.forEach((j, idx) => {
+const rank = getJudgeRank(j.id);
+const rankClass = rank || "unassigned";
+const safeId = escapeAttr(j.id);
+const safeName = escapeAttr(j.name);
+const displayName = escapeHtml(j.name) || "Unknown";
+const displayBelt = escapeHtml(j.belt) || "N/A";
+const displayTeam = escapeHtml(j.team) || "N/A";
+html += '<tr data-judge-id="' + safeId + '" onclick="assignJudgeRank(\'' + safeId + '\', \'' + safeName + '\')">' +
+'<td style="color:var(--gray);font-weight:700">' + (idx + 1) + '</td>' +
+'<td style="font-weight:600">' + displayName + '</td>' +
+'<td>' + displayBelt + '</td>' +
+'<td>' + displayTeam + '</td>' +
+'<td class="rank-cell"><span class="rank-badge ' + rankClass + '"><i class="fas ' + getRankIcon(rank) + '"></i> ' + getRankLabel(rank) + '</span></td>' +
+'</tr>';
+});
+html += '</tbody></table>';
+}
+document.getElementById("content").innerHTML = html;
+}
+function toggleRangsPanel() {
+const panel = document.getElementById("rangsPanel");
+if (panel) panel.classList.toggle("active");
+}
+async function showCoaches() {
+setActiveBtn("btnCoaches");
+await fetchData();
+let h = '<div class="category-card"><div class="category-header">Coaches List (' + coaches.length + ')</div>';
+if (coaches.length === 0) h += '<div style="padding:30px;text-align:center;color:var(--gray);">No coaches.</div>';
+else {
+h += '<table style="width:100%;border-collapse:collapse"><tr><th style="padding:10px;background:var(--light-gray)">Name</th><th style="padding:10px;background:var(--light-gray)">Belt</th><th style="padding:10px;background:var(--light-gray)">Team</th></tr>';
+coaches.forEach((c) => (h += '<tr><td style="padding:8px;border-bottom:1px solid #eee">' + (escapeHtml(c.name) || "Unknown") + '</td><td style="padding:8px;border-bottom:1px solid #eee">' + (escapeHtml(c.belt) || "N/A") + '</td><td style="padding:8px;border-bottom:1px solid #eee">' + (escapeHtml(c.team) || "N/A") + '</td></tr>'));
+h += '</table>';
+}
+document.getElementById("content").innerHTML = h + '</div>';
+}
+async function showPriceOverview() {
+setActiveBtn("btnPriceOverview");
+await fetchData();
+await fetchTournamentPrices();
+const patternsPrice = tournamentPrices.patterns;
+const patternsExtraPrice = tournamentPrices.patternsExtra;
+const sparringPrice = tournamentPrices.sparring;
+const sparringExtraPrice = tournamentPrices.sparringExtra;
+const headRefPrice = tournamentPrices.headReferee;
+const refPrice = tournamentPrices.referee;
+const compRefPrice = tournamentPrices.computerReferee;
+const patternsEntries = competitors.filter(c => c._discipline === "patterns");
+const sparringEntries = competitors.filter(c => c._discipline === "sparring");
+const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
+const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
+const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
+const unassignedJudges = judges.filter(j => !getJudgeRank(j.id));
+const patternsBreakdown = calculateDisciplineBreakdown(patternsEntries, patternsPrice, patternsExtraPrice);
+const sparringBreakdown = calculateDisciplineBreakdown(sparringEntries, sparringPrice, sparringExtraPrice);
+const patternsIncome = patternsBreakdown ? patternsBreakdown.total : 0;
+const sparringIncome = sparringBreakdown ? sparringBreakdown.total : 0;
+const totalIncome = patternsIncome + sparringIncome;
+const headRefExpense = (headRefPrice !== null && !isNaN(headRefPrice)) ? headRefPrice * headReferees.length : 0;
+const refExpense = (refPrice !== null && !isNaN(refPrice)) ? refPrice * regularReferees.length : 0;
+const compRefExpense = (compRefPrice !== null && !isNaN(compRefPrice)) ? compRefPrice * computerReferees.length : 0;
+const totalExpense = headRefExpense + refExpense + compRefExpense;
+const netProfit = totalIncome - totalExpense;
+const isNegative = netProfit < 0;
+const patternsSub = `Base: ${formatEuro(patternsPrice)} | Extra: ${formatEuro(patternsExtraPrice)}`;
+const sparringSub = `Base: ${formatEuro(sparringPrice)} | Extra: ${formatEuro(sparringExtraPrice)}`;
+let html = '<div class="price-overview-container"><div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+'<h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>' +
+'<button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>' +
+'</div><div class="price-summary-grid">' +
+'<div class="price-summary-card income"><div class="card-icon-big"><i class="fas fa-arrow-down"></i></div><div class="card-label">Total Income</div><div class="card-value">' + formatEuro(totalIncome) + '</div></div>' +
+'<div class="price-summary-card expense"><div class="card-icon-big"><i class="fas fa-arrow-up"></i></div><div class="card-label">Total Expenses</div><div class="card-value">' + formatEuro(totalExpense) + '</div></div>' +
+'<div class="price-summary-card profit ' + (isNegative ? 'negative' : '') + '"><div class="card-icon-big"><i class="fas fa-' + (isNegative ? 'exclamation-triangle' : 'chart-line') + '"></i></div><div class="card-label">Net ' + (isNegative ? 'Loss' : 'Profit') + '</div><div class="card-value">' + (isNegative ? '-' : '') + formatEuro(Math.abs(netProfit)) + '</div></div>' +
+'<div class="price-summary-card count"><div class="card-icon-big"><i class="fas fa-users"></i></div><div class="card-label">Total Participants</div><div class="card-value">' + (competitors.length + judges.length + coaches.length) + '</div></div>' +
+'</div><div class="price-formula-bar">' +
+'<span class="formula-segment income-seg"><i class="fas fa-arrow-down"></i> Income: <strong>' + formatEuro(totalIncome) + '</strong></span>' +
+'<span class="formula-operator">−</span>' +
+'<span class="formula-segment expense-seg"><i class="fas fa-arrow-up"></i> Expenses: <strong>' + formatEuro(totalExpense) + '</strong></span>' +
+'<span class="formula-operator">=</span>' +
+'<span class="formula-segment profit-seg ' + (isNegative ? 'negative' : '') + '"><i class="fas fa-' + (isNegative ? 'minus' : 'equals') + '"></i> ' + (isNegative ? 'Loss' : 'Profit') + ': <strong>' + formatEuro(Math.abs(netProfit)) + '</strong></span>' +
+'</div>';
+if (unassignedJudges.length > 0) {
+html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-left:5px solid var(--warning);border-radius:8px;padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:0.9rem;color:#856404">' +
+'<i class="fas fa-exclamation-triangle" style="font-size:1.3rem"></i>' +
+'<div><strong>' + unassignedJudges.length + ' judge' + (unassignedJudges.length !== 1 ? 's' : '') + ' unassigned</strong> — their fees are NOT being counted. Go to <strong>Judges → Rangs</strong> to assign ranks.</div>' +
+'</div>';
+}
+html += '<div class="price-breakdown-section"><div class="price-breakdown-header income-header expanded" onclick="toggleBreakdown(this)">' +
+'<div class="price-breakdown-title income-title"><i class="fas fa-arrow-down"></i> INCOME — Competitor Entry Fees</div>' +
+'<div class="price-breakdown-total income-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalIncome) + '</div>' +
+'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span></div>' +
+'<div class="price-breakdown-body expanded">';
+html += buildPriceLineItem("Patterns (Tul) Entry Fees", "fa-chess-board", "patterns-icon", patternsBreakdown, "income", patternsEntries, patternsSub);
+html += buildPriceLineItem("Sparring (Matsogi) Entry Fees", "fa-fist-raised", "sparring-icon", sparringBreakdown, "income", sparringEntries, sparringSub);
+html += '</div></div><div class="price-breakdown-section"><div class="price-breakdown-header expense-header expanded" onclick="toggleBreakdown(this)">' +
+'<div class="price-breakdown-title expense-title"><i class="fas fa-arrow-up"></i> EXPENSES — Referee Fees (by Rank)</div>' +
+'<div class="price-breakdown-total expense-total"><i class="fas fa-euro-sign"></i> ' + formatEuro(totalExpense) + '</div>' +
+'<span class="price-breakdown-toggle"><i class="fas fa-chevron-down"></i></span></div>' +
+'<div class="price-breakdown-body expanded">';
+const headRefData = { total: headRefExpense, unitPrice: headRefPrice };
+const refData = { total: refExpense, unitPrice: refPrice };
+const compRefData = { total: compRefExpense, unitPrice: compRefPrice };
+html += buildPriceLineItem("Head Referees", "fa-crown", "headref-icon", headRefData, "expense", headReferees, headReferees.length + ' judge' + (headReferees.length !== 1 ? 's' : '') + ' @ ' + (headRefPrice !== null ? formatEuro(headRefPrice) : 'N/A'));
+html += buildPriceLineItem("Referees", "fa-user-shield", "referee-icon", refData, "expense", regularReferees, regularReferees.length + ' judge' + (regularReferees.length !== 1 ? 's' : '') + ' @ ' + (refPrice !== null ? formatEuro(refPrice) : 'N/A'));
+html += buildPriceLineItem("Computer Referees", "fa-desktop", "computer-icon", compRefData, "expense", computerReferees, computerReferees.length + ' judge' + (computerReferees.length !== 1 ? 's' : '') + ' @ ' + (compRefPrice !== null ? formatEuro(compRefPrice) : 'N/A'));
+html += '</div></div></div>';
+document.getElementById("content").innerHTML = html;
+}
+function buildPriceLineItem(title, icon, iconClass, dataObj, type, entries, subtitle) {
+const amountClass = type === "income" ? "income-amount" : "expense-amount";
+const sign = type === "income" ? "+" : "−";
+const total = dataObj ? (dataObj.total || 0) : 0;
+const hasPrice = dataObj !== null && dataObj !== undefined;
+let detailsHtml = "";
+if (dataObj && dataObj.competitorDetails && dataObj.competitorDetails.length > 0) {
+detailsHtml = '<div class="price-line-details">';
+detailsHtml += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.85rem; border:1px dashed var(--border); display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+<strong style="width:100%; margin-bottom:4px;"><i class="fas fa-info-circle" style="color:var(--primary)"></i> Calculation Summary:</strong>
+<span><strong>${dataObj.uniqueCompetitors}</strong> unique competitors</span>
+<span>•</span>
+<span><strong>${dataObj.baseEntries}</strong> Base entries = <strong class="${amountClass}">${formatEuro(dataObj.baseAmount)}</strong></span>
+${dataObj.extraEntries > 0 ? `<span>•</span><span><strong>${dataObj.extraEntries}</strong> Extra entries (+categories) = <strong class="${amountClass}">${formatEuro(dataObj.extraAmount)}</strong></span>` : ''}
+</div>`;
+dataObj.competitorDetails.forEach((comp, idx) => {
+let detailText = `${comp.count} entr${comp.count > 1 ? 'ies' : 'y'}`;
+let mathText = `${formatEuro(comp.baseAmount)}`;
+if (comp.extraCount > 0) {
+detailText += ` <span style="color:var(--price-total); font-weight:700;">(1 Base + ${comp.extraCount} Extra)</span>`;
+mathText += ` <span style="color:var(--gray)">+</span> (${comp.extraCount} × ${formatEuro(comp.extraUnitPrice)})`;
+}
+mathText += ` <span style="color:var(--gray)">=</span> <strong>${formatEuro(comp.compTotal)}</strong>`;
+detailsHtml += `<div class="price-detail-row">
+<div class="price-detail-name">
+<span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
+<span>${escapeHtml(comp.name)}</span>
+<span class="price-detail-team">• ${escapeHtml(comp.team)} • ${detailText}</span>
+</div>
+<div class="price-detail-amount ${amountClass}">${sign} ${mathText}</div>
+</div>`;
+});
+detailsHtml += '</div>';
+} else if (entries && entries.length > 0 && hasPrice) {
+detailsHtml = '<div class="price-line-details">';
+const unitPrice = dataObj.unitPrice;
+entries.forEach((e, idx) => {
+const name = escapeHtml(e.name) || "Unknown";
+const team = escapeHtml(e.team) || "N/A";
+detailsHtml += `<div class="price-detail-row">
+<div class="price-detail-name">
+<span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
+<span>${name}</span>
+<span class="price-detail-team">• ${team}</span>
+</div>
+<div class="price-detail-amount ${amountClass}">${sign} ${formatEuro(unitPrice)}</div>
+</div>`;
+});
+detailsHtml += '</div>';
+} else {
+detailsHtml = '<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>';
+}
+return `<div class="price-line-item" onclick="togglePriceLine(this)"><div class="price-line-left">
+<div class="price-line-icon ${iconClass}"><i class="fas ${icon}"></i></div>
+<div class="price-line-info"><div class="price-line-title">${escapeHtml(title)} <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">${entries.length} entries</span></div>
+<div class="price-line-subtitle">${escapeHtml(subtitle)}</div></div></div>
+<div class="price-line-right"><div class="price-line-amount ${amountClass}">${sign} ${formatEuro(total)}</div>
+<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span></div>
+${detailsHtml}</div>`;
+}
+function toggleBreakdown(header) {
+header.classList.toggle("expanded");
+const body = header.nextElementSibling;
+if (body) body.classList.toggle("expanded");
+}
+function togglePriceLine(item) { item.classList.toggle("expanded"); }
+function exportFinancialReport() {
+const patternsPrice = tournamentPrices.patterns;
+const patternsExtraPrice = tournamentPrices.patternsExtra;
+const sparringPrice = tournamentPrices.sparring;
+const sparringExtraPrice = tournamentPrices.sparringExtra;
+const headRefPrice = tournamentPrices.headReferee;
+const refPrice = tournamentPrices.referee;
+const compRefPrice = tournamentPrices.computerReferee;
+const patternsEntries = competitors.filter(c => c._discipline === "patterns");
+const sparringEntries = competitors.filter(c => c._discipline === "sparring");
+const headReferees = judges.filter(j => getJudgeRank(j.id) === "head_referee");
+const regularReferees = judges.filter(j => getJudgeRank(j.id) === "referee");
+const computerReferees = judges.filter(j => getJudgeRank(j.id) === "computer_referee");
+const patternsBreakdown = calculateDisciplineBreakdown(patternsEntries, patternsPrice, patternsExtraPrice);
+const sparringBreakdown = calculateDisciplineBreakdown(sparringEntries, sparringPrice, sparringExtraPrice);
+let csv = "data:text/csv;charset=utf-8,Type,Category,Name,Team,Amount (EUR)\n";
+if (patternsBreakdown) {
+patternsBreakdown.competitorDetails.forEach(comp => {
+csv += `INCOME,Patterns (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
+if (comp.extraCount > 0) {
+csv += `INCOME,Patterns (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
+}
+});
+}
+if (sparringBreakdown) {
+sparringBreakdown.competitorDetails.forEach(comp => {
+csv += `INCOME,Sparring (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
+if (comp.extraCount > 0) {
+csv += `INCOME,Sparring (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
+}
+});
+}
+headReferees.forEach(e => { csv += 'EXPENSE,Head Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (headRefPrice !== null ? -headRefPrice : 0).toFixed(2) + '\n'; });
+regularReferees.forEach(e => { csv += 'EXPENSE,Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (refPrice !== null ? -refPrice : 0).toFixed(2) + '\n'; });
+computerReferees.forEach(e => { csv += 'EXPENSE,Computer Referee,"' + safeStr(e.name) + '","' + (safeStr(e.team) || 'N/A') + '",' + (compRefPrice !== null ? -compRefPrice : 0).toFixed(2) + '\n'; });
+const encodedUri = encodeURI(csv);
+const link = document.createElement("a");
+link.setAttribute("href", encodedUri);
+link.setAttribute("download", "Financial_Report_" + new Date().toISOString().slice(0, 10) + ".csv");
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+showToast("Financial report exported", "success");
+}
+document.addEventListener("keydown", (e) => {
+if (e.key === "Escape") clearSelection();
+if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+const active = document.activeElement;
+const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+if (isTyping) return;
+if (active && active.isContentEditable && active.classList.contains("p-name")) return;
+e.preventDefault();
+performUndo();
+}
+});
+const today = new Date();
+document.getElementById("tournamentDate").valueAsDate = today;
+tournamentDate = today.toISOString().split("T")[0];
+(async () => {
+await loadTournamentStatus();
+showPatterns();
+})();
+</script>
+</body>
+</html>
