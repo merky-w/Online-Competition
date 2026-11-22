@@ -15,6 +15,7 @@ body { font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior: none; m
 button { touch-action: manipulation; cursor: pointer; }
 button:disabled { opacity: .6; cursor: not-allowed; }
 .hidden-view { display: none !important; }
+/* TV */
 .tv-container { width: 100vw; height: 100vh; background: #090d16; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .tv-top-bar { background: linear-gradient(90deg, #111827 0%, #1f2937 100%); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #fbbf24; z-index: 10; }
 .tv-top-info { display: flex; align-items: center; gap: 20px; color: white; font-size: 16px; }
@@ -60,6 +61,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tv-winner-name { font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 20px; }
 .tv-winner-sub { font-size: 1.5rem; color: #9ca3af; font-weight: 600; letter-spacing: 3px; }
 @keyframes timerBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+/* LAPTOP */
 .laptop-container { background: #1e293b; min-height: 100vh; padding: 15px; color: white; }
 .laptop-header { background: #0f172a; border-radius: 12px; padding: 15px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
 .laptop-header-left h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
@@ -138,6 +140,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .admin-kick-corner-box { position: absolute; bottom: 12px; right: 15px; }
 .admin-kick-panel-btn { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid #ef4444; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; }
 .admin-kick-panel-btn:hover { background: #ef4444; color: white; }
+/* Sidebar */
 .match-list-sidebar { background: #0f172a; border-radius: 12px; padding: 15px; border: 2px solid #334155; max-height: calc(100vh - 100px); overflow-y: auto; }
 .match-list-sidebar h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; color: #fbbf24; display: flex; align-items: center; gap: 8px; }
 .category-picker { width: 100%; background: #1e293b; color: white; border: 1px solid #475569; border-radius: 8px; padding: 10px; font-weight: 700; font-size: 0.85rem; margin-bottom: 15px; }
@@ -158,8 +161,15 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .ml-pill.done { background: #475569; color: #e2e8f0; }
 .ml-pill.next { background: #fbbf24; color: #1f2937; }
 .ml-pill.borrowed { background: #3b82f6; color: #1e3a5f; }
+.admin-bracket-view { background: #0f172a; border-radius: 12px; padding: 15px; margin-top: 15px; border: 2px solid #fbbf24; }
+.admin-bracket-view h4 { color: #fbbf24; margin: 0 0 12px 0; font-size: 1rem; }
+.diag-box { background: #78350f; border: 1px solid #f59e0b; border-radius: 8px; padding: 10px; color: #fde68a; font-size: 0.72rem; line-height: 1.5; margin-bottom: 10px; word-break: break-word; }
+.diag-box b { color: #fff; }
+.diag-box code { background: rgba(0,0,0,0.35); padding: 1px 4px; border-radius: 4px; }
+/* Modals */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
 .modal-box { background: #1e293b; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; border: 3px solid #fbbf24; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+/* Phone */
 .phone-container { background: #0f172a; min-height: 100vh; color: white; display: flex; flex-direction: column; }
 .phone-header { background: #1e293b; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; }
 .phone-competitors-bar { background: #000; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; }
@@ -184,6 +194,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .phone-btn .pb-value { font-size: 2.5rem; font-weight: 900; line-height: 1; }
 .phone-btn .pb-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; opacity: 0.8; margin-top: 3px; }
 .phone-status-bar { padding: 12px 20px; text-align: center; font-size: 0.85rem; background: #1e293b; border-top: 2px solid #334155; }
+/* Landing */
 .landing-container { min-height: 100vh; background: #0f172a; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .landing-box { background: #1e293b; border-radius: 20px; padding: 40px; max-width: 450px; width: 100%; border: 2px solid #334155; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .landing-title { text-align: center; margin-bottom: 30px; }
@@ -196,6 +207,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .landing-btn:hover { background: #1d4ed8; }
 .landing-error { color: #ef4444; text-align: center; margin-top: 15px; font-size: 0.9rem; min-height: 20px; }
 .landing-hints { margin-top: 30px; padding-top: 20px; border-top: 1px solid #334155; text-align: center; color: #64748b; font-size: 0.85rem; line-height: 1.8; }
+/* Toast */
 .toast { position: fixed; bottom: 30px; right: 30px; background: #1e293b; color: white; padding: 15px 25px; border-radius: 12px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 2000; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; border-left: 4px solid #10b981; max-width: 380px; }
 .toast.show { opacity: 1; transform: translateY(0); }
 .toast.error { border-left-color: #ef4444; }
@@ -204,6 +216,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
 .scored-flash { animation: scoredFlash 0.25s ease; }
 @keyframes scoredFlash { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,1); } 100% { box-shadow: 0 0 0 15px rgba(16,185,129,0); } }
+/* Bracket Table */
 .bracket-table { width: 100%; border-collapse: collapse; min-width: 620px; font-size: 0.85rem; }
 .bracket-table th { padding: 10px; background: #1e293b; color: #fbbf24; border: 1px solid #334155; text-align: center; }
 .bracket-table td { vertical-align: middle; padding: 6px; border: 1px solid #334155; }
@@ -220,6 +233,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </style>
 </head>
 <body class="bg-slate-900">
+<!-- LANDING -->
 <div id="view-landing" class="landing-container">
 <div class="landing-box">
 <div class="landing-title">
@@ -237,6 +251,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 </div>
 </div>
+<!-- PHONE -->
 <div id="view-phone" class="hidden-view phone-container">
 <div class="phone-header">
 <div style="display:flex;align-items:center;gap:10px;">
@@ -296,6 +311,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 </div>
 <div class="phone-status-bar" id="phone-status">Tap a button to award points</div>
 </div>
+<!-- LAPTOP -->
 <div id="view-laptop" class="hidden-view laptop-container">
 <div class="laptop-header">
 <div class="laptop-header-left">
@@ -481,6 +497,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- TV -->
 <div id="view-tv" class="hidden-view tv-container">
 <div class="tv-top-bar">
 <div class="tv-top-info">
@@ -549,6 +566,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- QR MODAL -->
 <div id="modal-qr" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 id="modal-qr-title" style="margin-top:0;color:#fbbf24;font-size:1.4rem;">Judge QR Code</h3>
@@ -557,6 +575,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <div><button class="timer-btn" style="background:#475569;width:100%;color:white;" onclick="closeQRModal()">Close</button></div>
 </div>
 </div>
+<!-- ADMIN KICK MODAL -->
 <div id="modal-admin-kick" class="hidden-view modal-overlay">
 <div class="modal-box">
 <h3 style="margin-top:0;color:#ef4444;font-size:1.3rem;">⚠️ Admin Kick Judge</h3>
@@ -576,6 +595,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- ADMIN PASSWORD MODAL -->
 <div id="modal-admin-password" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:400px;">
 <h3 style="color:#fbbf24;margin-bottom:15px;font-size:1.3rem;"><i class="fas fa-lock"></i> Admin Access</h3>
@@ -588,6 +608,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <div id="admin-password-error" style="color:#ef4444;margin-top:10px;font-size:0.85rem;min-height:20px;"></div>
 </div>
 </div>
+<!-- WINNER MODAL -->
 <div id="modal-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:600px;">
 <h2 id="modal-winner-title" style="font-size:2.5rem;font-weight:900;margin-bottom:15px;">BLUE WINS!</h2>
@@ -600,6 +621,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 </div>
 </div>
+<!-- CHANGE WINNER MODAL -->
 <div id="modal-change-winner" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width:520px;">
 <h3 style="margin-top:0;color:#fbbf24;font-size:1.3rem;"><i class="fas fa-edit"></i> Correct Result</h3>
@@ -612,6 +634,7 @@ Confirming a winner promotes them to the next round and automatically loads the 
 <p style="color:#64748b;font-size:0.75rem;margin-top:12px;">Changing a result clears the affected later rounds so they can be fought again.</p>
 </div>
 </div>
+<!-- BRACKET MODAL (Admin) -->
 <div id="modal-bracket" class="hidden-view modal-overlay">
 <div class="modal-box" style="max-width: 960px; max-height: 90vh; overflow-y: auto; text-align: left;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #334155; padding-bottom:15px;gap:10px;flex-wrap:wrap;">
@@ -625,6 +648,9 @@ Confirming a winner promotes them to the next round and automatically loads the 
 </div>
 <div id="toast" class="toast"></div>
 <script>
+/* ============================================================
+SUPABASE
+============================================================ */
 const SUPABASE_URL = "https://cziwnycosdxeuacslcza.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aXdueWNvc2R4ZXVhY3NsY3phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTkxMDAsImV4cCI6MjA4MjI5NTEwMH0.7OvfatHP7RAp6JS1F5hMlwfdSDgpN7EXsY2SVMoFSoY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -681,6 +707,16 @@ function escapeHtml(str) { return String(str === null || str === undefined ? "" 
 function escapeAttr(str) { return String(str === null || str === undefined ? "" : str).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
 function norm(str) { return String(str === null || str === undefined ? "" : str).trim().toLowerCase(); }
 function tightNorm(str) { return norm(str).replace(/\s+/g, " ").replace(/\s*-\s*/g, "-"); }
+
+// BULLETPROOF CATEGORY NORMALIZATION
+function normalizeCategoryKey(str) {
+    return norm(str)
+        .replace(/\s*\((male|female|all)\)\s*/gi, ' - $1')
+        .replace(/\s*-\s*(male|female)\s*/gi, ' - $1')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 function getRingNumber() { const raw = (state.ring && (state.ring.ring_number || state.ring.ring_name || state.ring.ring_code)) || "1"; const n = parseInt(String(raw).replace(/\D/g, ""), 10); return isNaN(n) || n < 1 ? 1 : n; }
 function maxJudges() { return state.ring ? (parseInt(state.ring.max_phones, 10) || 4) : 4; }
 function currentDiscipline() { const a = activeAssignment(); return String((a && a.discipline) || (state.ring && (state.ring.mode || state.ring.discipline)) || "sparring").toLowerCase(); }
@@ -945,6 +981,122 @@ pause_seconds: (rc.pause_seconds !== null && rc.pause_seconds !== undefined) ? r
 }
 } catch (e) { console.warn("loadCategoryConfig:", e); }
 }
+function computeAge(dob) {
+if (!dob || !state.tournamentDate) return null;
+try {
+const birth = new Date(dob); const tour = new Date(state.tournamentDate);
+if (isNaN(birth.getTime()) || isNaN(tour.getTime())) return null;
+let age = tour.getFullYear() - birth.getFullYear();
+const m = tour.getMonth() - birth.getMonth();
+if (m < 0 || (m === 0 && tour.getDate() < birth.getDate())) age--;
+return age;
+} catch (e) { return null; }
+}
+function findClosestAgeGroup(age, groups) {
+if (!groups || !groups.length) return null;
+const sorted = groups.slice().sort((a,b) => a.min_age - b.min_age);
+if (age < sorted[0].min_age) return sorted[0];
+const last = sorted[sorted.length - 1];
+if (last.max_age === null) return last;
+if (age > last.max_age) return last;
+let best = sorted[0], bestDist = Infinity;
+for (const g of sorted) {
+const maxA = g.max_age === null ? 999 : g.max_age;
+const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - maxA));
+if (dist < bestDist) { bestDist = dist; best = g; }
+}
+return best;
+}
+function getFallbackAgeGroup(discipline, gender) {
+const all = (state.categoryConfig[discipline].ageGroups || []).filter(g => g.is_active);
+if (!all.length) return null;
+const same = all.filter(g => normalizeGender(g.gender) === normalizeGender(gender));
+const pool = same.length ? same : all;
+const seniors = pool.find(g => /senior/i.test(g.display_name));
+if (seniors) return seniors;
+return pool[Math.floor(pool.length / 2)];
+}
+function getAgeGroupForAge(age, discipline, gender) {
+const ng = normalizeGender(gender);
+const all = (state.categoryConfig[discipline].ageGroups || []).filter(g => g.is_active);
+if (!all.length) return null;
+let groups = all.filter(g => normalizeGender(g.gender) === ng);
+for (const g of groups) { if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g; }
+for (const g of all) { if (age >= g.min_age && (g.max_age === null || age <= g.max_age)) return g; }
+const closest = findClosestAgeGroup(age, all);
+if (closest) return closest;
+return getFallbackAgeGroup(discipline, gender);
+}
+function parseAgeGroupFromOriginalCategory(fullCat) {
+if (!fullCat) return null;
+const lower = fullCat.toLowerCase();
+for (const kw of AGE_GROUP_KEYWORDS) { if (lower.startsWith(kw)) return kw.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "); }
+const parts = fullCat.split(" - ");
+if (parts.length >= 2) { const c = parts[0].trim(); if (c.length > 0 && c.length < 30) return c; }
+return null;
+}
+function findAgeGroupByName(name, discipline, gender) {
+if (!name) return null;
+const ng = normalizeGender(gender);
+const all = (state.categoryConfig[discipline].ageGroups || []).filter(g => g.is_active);
+const lower = name.toLowerCase().trim();
+let m = all.find(g => normalizeGender(g.gender) === ng && g.display_name.toLowerCase() === lower); if (m) return m;
+m = all.find(g => g.display_name.toLowerCase() === lower); if (m) return m;
+m = all.find(g => normalizeGender(g.gender) === ng && lower.includes(g.display_name.toLowerCase())); if (m) return m;
+m = all.find(g => lower.includes(g.display_name.toLowerCase())); if (m) return m;
+return null;
+}
+function getPatternsCategoryLabel(kupDanNum, ageGroupId) {
+const ranges = (state.categoryConfig.patterns.kupRanges[ageGroupId] || []).filter(r => r.is_active !== false);
+if (!ranges.length) return "Open";
+for (const r of ranges) {
+const hi = Math.max(r.min_kup, r.max_kup), lo = Math.min(r.min_kup, r.max_kup);
+if (kupDanNum <= hi && kupDanNum >= lo) return r.display_name;
+}
+return "Open";
+}
+function getSparringCategoryLabel(weightKg, ageGroupId) {
+const boundaries = (state.categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
+if (!boundaries.length) return "Open";
+if (weightKg <= boundaries[0]) return "-" + boundaries[0] + "kg";
+for (let i = 0; i < boundaries.length - 1; i++) {
+if (weightKg > boundaries[i] && weightKg <= boundaries[i+1]) return Math.ceil(boundaries[i]) + "-" + boundaries[i+1] + "kg";
+}
+return "+" + boundaries[boundaries.length-1] + "kg";
+}
+function recomputeCompetitorCategories() {
+state.competitors.forEach(c => {
+const discipline = c._discipline;
+const gender = getCompetitorGender(c);
+const age = computeAge(c.dob || c.date_of_birth || c.birthdate);
+let ageGroup = null;
+if (age !== null) ageGroup = getAgeGroupForAge(age, discipline, gender);
+else {
+const parsed = parseAgeGroupFromOriginalCategory(c._raw_full_cat);
+if (parsed) ageGroup = findAgeGroupByName(parsed, discipline, gender);
+}
+if (!ageGroup) ageGroup = getFallbackAgeGroup(discipline, gender);
+c._computed_gender = gender;
+c._computed_age = age;
+if (ageGroup) {
+c._age_group_id = ageGroup.id;
+c._age_group_name = ageGroup.display_name;
+if (discipline === "sparring") {
+const w = parseFloat(c.weight_kg);
+if (!isNaN(w) && w > 0) { c._actual_sub_cat = getSparringCategoryLabel(w, ageGroup.id); c._full_cat = ageGroup.display_name + " - " + c._actual_sub_cat; }
+else { c._actual_sub_cat = "Open"; c._full_cat = ageGroup.display_name + " - Open"; }
+} else {
+const beltName = c._original_sub_cat || c._actual_sub_cat || "";
+const num = kupDanNameToNumber(beltName);
+if (num !== null) { c._actual_sub_cat = getPatternsCategoryLabel(num, ageGroup.id); c._full_cat = ageGroup.display_name + " - " + c._actual_sub_cat; }
+else { c._actual_sub_cat = beltName || "Open"; c._full_cat = ageGroup.display_name + " - " + (beltName || "Open"); }
+}
+} else {
+c._age_group_id = null; c._age_group_name = "Open";
+c._full_cat = c._raw_full_cat || "Open";
+}
+});
+}
 
 async function fetchAssignments() {
 const ringNum = getRingNumber();
@@ -959,6 +1111,52 @@ if (!still) state.activeAssignmentId = state.assignments[0].id;
 } else state.activeAssignmentId = null;
 renderCategoryPicker();
 }
+async function fetchAllCompetitors() {
+try {
+const { data: allRegs, error } = await sb.from(REG_TABLE).select("*");
+if (error) throw error;
+const compRegs = (allRegs || []).filter(r => { const t = String(r.entry_type || r.type || r.role || "").toLowerCase(); return t === "comp" || t === "competitor" || t === "c"; });
+const ids = [...new Set(compRegs.map(r => r.entry_id).filter(Boolean))];
+if (!ids.length) { state.competitors = []; return; }
+const { data: people, error: pErr } = await sb.from(COMP_TABLE).select("*").in("id", ids);
+if (pErr) throw pErr;
+const out = [];
+(people || []).forEach(person => {
+const regs = compRegs.filter(r => String(r.entry_id) === String(person.id));
+regs.forEach(reg => {
+let entries = [];
+if (reg.entry_data && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
+else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
+else if (Array.isArray(reg.entries_list)) entries = reg.entries_list;
+else if (reg.entry_data && typeof reg.entry_data === "object" && !Array.isArray(reg.entry_data) && (reg.entry_data.full_cat || reg.entry_data.discipline)) entries = [reg.entry_data];
+else if (reg.full_cat || reg.category || reg.discipline) entries = [{ full_cat: reg.full_cat || reg.category, discipline: reg.discipline, label: reg.label }];
+entries.forEach(entry => {
+const fullCat = entry.full_cat || entry.category || entry.fullCat || "";
+const disc = String(entry.discipline || entry.type || "").toLowerCase();
+if (disc !== "sparring" && disc !== "patterns") return;
+let origSubCat = "", origWeight = null;
+if (disc === "sparring") {
+const wMatch = String(fullCat).match(/[-\s]?(\d+(?:\.\d+)?)\s*kg/i);
+if (wMatch) { origWeight = parseFloat(wMatch[1]); origSubCat = wMatch[1] + "kg"; }
+} else {
+const parts = String(fullCat).split(" - ");
+if (parts.length >= 2) origSubCat = parts.slice(1).join(" - ").trim();
+}
+out.push(Object.assign({}, person, {
+id: person.id, name: person.name || "Unknown", team: person.team || "N/A",
+gender: getCompetitorGender(person), belt: person.belt || "",
+_reg_id: reg.id, _discipline: disc, _raw_full_cat: fullCat, _full_cat: fullCat,
+_original_sub_cat: origSubCat, _actual_sub_cat: origSubCat,
+weight_kg: origWeight || person.weight_kg || null,
+_age_group_id: null, _age_group_name: null
+}));
+});
+});
+});
+state.competitors = out;
+recomputeCompetitorCategories();
+} catch (e) { console.error("fetchAllCompetitors:", e); state.competitors = []; }
+}
 
 async function loadSavedOrders() {
 state.savedOrders = { sparring: {}, patterns: {} };
@@ -969,7 +1167,8 @@ try {
 const { data, error } = await sb.from(table).select("*");
 if (error) { console.warn(table + ":", error.message); continue; }
 (data || []).forEach(r => {
-const k = norm(r.category);
+// USE BULLETPROOF NORMALIZATION HERE
+const k = normalizeCategoryKey(r.category);
 (state.savedOrders[disc][k] = state.savedOrders[disc][k] || []).push(r);
 });
 } catch (e) { console.warn(table, e); }
@@ -993,92 +1192,160 @@ if (gender === "all") gender = null;
 return { base: s, gender: gender };
 }
 
-// SIMPLIFIED: Just use exact category match from saved orders
+// BULLETPROOF SAVED ORDER RETRIEVAL
 function findSavedOrderRows(a) {
 const disc = String(a.discipline || "sparring").toLowerCase();
 const bucket = state.savedOrders[disc] || {};
-const catName = norm(a.category_name);
 
-// Direct match
-if (bucket[catName] && bucket[catName].length) return bucket[catName];
+// 1. Exact normalized match
+const k = normalizeCategoryKey(a.category_name);
+if (bucket[k] && bucket[k].length) return bucket[k];
 
-// Try without gender suffix
+// 2. Fallback: match by base name (tightNorm)
 const info = parseAssignmentCategory(a.category_name);
-const baseKey = norm(info.base);
+const target = tightNorm(info.base);
 for (const key in bucket) {
-const k = norm(key);
-if (k === baseKey || k.startsWith(baseKey + " ") || k.startsWith(baseKey + "-") || k.startsWith(baseKey + "(")) {
-return bucket[key];
+const kk = tightNorm(key.replace(/\s*-\s*(male|female)$/i, "").replace(/\s*\((male|female)\)$/i, ""));
+if (kk === target) return bucket[key];
 }
+
+// 3. Last resort: partial match
+for (const key in bucket) {
+if (key.includes(target) || target.includes(key)) return bucket[key];
 }
 
 return [];
 }
 
 function findOverrideSize(a) {
-const keys = [norm(a.category_name)];
-const info = parseAssignmentCategory(a.category_name);
-keys.push(norm(info.base));
+const keys = categoryKeyCandidates(a);
 for (const k of keys) { if (state.bracketOverrides[k]) return state.bracketOverrides[k]; }
 return null;
 }
 
-function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
+function categoryKeyCandidates(a) {
+const info = parseAssignmentCategory(a.category_name);
+const keys = [];
+const push = k => { if (k && keys.indexOf(norm(k)) === -1) keys.push(norm(k)); };
+if (info.gender) {
+push(info.base + " - " + info.gender);
+push(info.base + " (" + info.gender + ")");
+push(info.base + "-" + info.gender);
+}
+push(a.category_name);
+push(info.base);
+if (!info.gender) { push(info.base + " - male"); push(info.base + " - female"); }
+return keys;
+}
 
+// BULLETPROOF COMPETITOR MATCHING
+function competitorsForAssignment(a) {
+const info = parseAssignmentCategory(a.category_name);
+const disc = String(a.discipline || "sparring").toLowerCase();
+const pool = state.competitors.filter(c => c._discipline === disc);
+const genderOk = c => !info.gender || getCompetitorGender(c) === info.gender;
+const target = norm(info.base), targetTight = tightNorm(info.base);
+
+let matched = pool.filter(c => genderOk(c) && norm(c._full_cat) === target);
+if (!matched.length) matched = pool.filter(c => genderOk(c) && tightNorm(c._full_cat) === targetTight);
+if (!matched.length) matched = pool.filter(c => genderOk(c) && norm(c._raw_full_cat) === target);
+if (!matched.length) matched = pool.filter(c => genderOk(c) && tightNorm(c._raw_full_cat) === targetTight);
+
+if (!matched.length && info.gender) {
+matched = pool.filter(c => norm(c._full_cat) === target);
+if (!matched.length) matched = pool.filter(c => tightNorm(c._full_cat) === targetTight);
+}
+
+const seen = new Set(); const list = [];
+matched.forEach(c => {
+const key = norm(c.name) + "|" + norm(c.team);
+if (seen.has(key)) return;
+seen.add(key);
+list.push({ name: c.name, team: c.team || "", gender: getCompetitorGender(c), belt: c.belt || "" });
+});
+return list;
+}
+
+function competitorsFor(categoryName, discipline) {
+return competitorsForAssignment({ category_name: categoryName, discipline: discipline });
+}
+
+function getBracketSize(count) { if (count <= 1) return 1; if (count === 2) return 2; if (count <= 4) return 4; if (count <= 8) return 8; if (count <= 16) return 16; if (count <= 32) return 32; return 64; }
+function generateSeedOrder(size) { if (size === 1) return [0]; const half = size / 2; const left = generateSeedOrder(half); const right = left.map(x => x + half); const result = []; for (let i = 0; i < half; i++) { result.push(left[i]); result.push(right[i]); } return result; }
+function spreadTeams(list, bracketSize) {
+const slots = new Array(bracketSize).fill(null);
+const teams = {};
+list.forEach(p => { const key = p.team || "N/A"; (teams[key] = teams[key] || []).push(p); });
+const sortedTeams = Object.values(teams).sort((a,b) => b.length - a.length);
+const positions = generateSeedOrder(bracketSize);
+let i = 0;
+sortedTeams.forEach(arr => arr.forEach(p => { if (i < positions.length) { slots[positions[i]] = p; i++; } }));
+return slots;
+}
+function shuffle(list) { const arr = list.slice(); for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+function slotObj(p) { return p && p.name ? { name: p.name, team: p.team || "" } : { name: BYE, team: "" }; }
 function emptySlot() { return { name: EMPTY_SLOT, team: "" }; }
 function newMatchObj() { return { p1: emptySlot(), p2: emptySlot(), winner: null, blue_score: 0, red_score: 0 }; }
 
-// STRICT BRACKET BUILDING FROM SAVED POSITIONS ONLY
+// STRICT BRACKET BUILDING USING MANAGE ORDER
 function buildBracketForAssignment(a) {
+const regList = competitorsForAssignment(a);
 const saved = findSavedOrderRows(a);
-if (!saved || saved.length === 0) {
-console.warn("No saved bracket found for:", a.category_name);
-return null;
-}
-
-// Separate round 1 and later rounds
-const round1Rows = saved.filter(r => (r.position_number || 0) < 10000)
-.sort((x,y) => (x.position_number || 0) - (y.position_number || 0));
+const round1Rows = saved.filter(r => (r.position_number || 0) < 10000).sort((x,y) => (x.position_number || 0) - (y.position_number || 0));
 const laterRows = saved.filter(r => (r.position_number || 0) >= 10000);
+const laterNames = new Set(laterRows.map(r => norm(r.name)));
 
-if (round1Rows.length === 0) {
-console.warn("No round 1 positions found for:", a.category_name);
-return null;
+const base = []; const seen = new Set();
+const push = p => { 
+const k = norm(p.name); 
+if (!k || k === "bye" || seen.has(k)) return; 
+seen.add(k); 
+base.push({ name: p.name, team: p.team || "" }); 
+};
+
+// STRICTLY use the order from round1Rows if available
+if (round1Rows.length > 0) {
+round1Rows.forEach(r => { 
+if (!laterNames.has(norm(r.name))) push(r); 
+});
+// Add any remaining competitors from regList that are not in round1Rows
+regList.forEach(p => { 
+if (!laterNames.has(norm(p.name)) && !seen.has(norm(p.name))) push(p); 
+});
+} else {
+regList.forEach(p => { 
+if (!laterNames.has(norm(p.name))) push(p); 
+});
 }
 
-// Determine bracket size from positions
-const maxPos = Math.max(...round1Rows.map(r => r.position_number));
-const size = Math.max(2, getBracketSize(maxPos));
+if (!base.length) return null;
+
+const override = findOverrideSize(a);
+const size = Math.max(2, override || getBracketSize(base.length));
 const totalRounds = Math.max(1, Math.log2(size));
 
-// Build round 1 slots in EXACT order from saved positions
-const slots = [];
-for (let i = 1; i <= size; i++) {
-const row = round1Rows.find(r => r.position_number === i);
-if (row) {
-slots.push({ name: row.name, team: row.team || "" });
-} else {
-slots.push({ name: BYE, team: "" });
-}
+let slots;
+if (round1Rows.length > 0) { 
+// Use the exact order from base (which is from round1Rows)
+slots = base.slice(0, size).map(slotObj); 
+while (slots.length < size) slots.push({ name: BYE, team: "" }); 
+} else { 
+slots = spreadTeams(shuffle(base), size).map(slotObj); 
 }
 
-// Build all rounds
 const rounds = [];
 const r1 = [];
-for (let i = 0; i < size; i += 2) {
-r1.push({ p1: slots[i], p2: slots[i+1], winner: null, blue_score: 0, red_score: 0 });
-}
+for (let i = 0; i < size; i += 2) r1.push({ p1: slots[i], p2: slots[i+1], winner: null, blue_score: 0, red_score: 0 });
 rounds.push(r1);
 
 let matchCount = size / 2;
-for (let r = 1; r < totalRounds; r++) {
-matchCount = matchCount / 2;
-const arr = [];
-for (let m = 0; m < matchCount; m++) arr.push(newMatchObj());
-rounds.push(arr);
+for (let r = 1; r < totalRounds; r++) { 
+matchCount = matchCount / 2; 
+const arr = []; 
+for (let m = 0; m < matchCount; m++) arr.push(newMatchObj()); 
+rounds.push(arr); 
 }
 
-// Fill in later round positions from saved data
 laterRows.forEach(entry => {
 const pos = entry.position_number;
 const round = Math.floor(pos / 10000) - 1;
@@ -1094,9 +1361,9 @@ else if (slot === 1) rounds[round][match].p2 = { name: entry.name, team: entry.t
 return {
 version: 2, assignment_id: a.id, category_name: a.category_name,
 discipline: String(a.discipline || "sparring").toLowerCase(),
-competitor_count: round1Rows.length, size: size, totalRounds: totalRounds, rounds: rounds,
+competitor_count: base.length, size: size, totalRounds: totalRounds, rounds: rounds,
 currentRound: 0, currentMatch: 0, champion: null, skipped_fights: [],
-source: "manage",
+source: round1Rows.length ? "manage" : "auto",
 updated_at: new Date().toISOString()
 };
 }
@@ -1205,6 +1472,7 @@ candidate.category_name = a.category_name;
 candidate.discipline = String(a.discipline || "sparring").toLowerCase();
 candidate.totalRounds = candidate.rounds.length;
 if (!candidate.skipped_fights) candidate.skipped_fights = [];
+if (typeof candidate.competitor_count !== "number") candidate.competitor_count = competitorsForAssignment(a).length;
 autoResolveByes(candidate);
 if (candidate.currentRound === null || candidate.currentRound === undefined) {
 const n = findNextPending(candidate, false);
@@ -1223,10 +1491,14 @@ if (force) { try { localStorage.removeItem(bracketLocalKey(a.id)); } catch(e){} 
 const b = await getBracketForAssignment(a, force);
 if (!assignmentId || String(assignmentId) === String(state.activeAssignmentId) || !state.bracket) state.bracket = b;
 if (!b) {
-state.lastDiag = '<b>No saved bracket found for this category.</b><br>' +
+const info = parseAssignmentCategory(a.category_name);
+const saved = findSavedOrderRows(a);
+state.lastDiag = '<b>No fighters found for this category.</b><br>' +
 'Assignment: <code>' + escapeHtml(a.category_name) + '</code><br>' +
-'Saved Manage bracket rows: <b>0</b><br>' +
-'Please save the bracket in the Manage panel first.';
+'Parsed: <code>' + escapeHtml(info.base) + '</code> gender=<code>' + (info.gender || "any") + '</code> disc=<code>' + escapeHtml(String(a.discipline)) + '</code><br>' +
+'Registrations loaded: <b>' + state.competitors.length + '</b> · matched: <b>0</b><br>' +
+'Saved Manage bracket rows: <b>' + saved.length + '</b><br>' +
+'Age groups loaded: <b>' + ((state.categoryConfig.sparring.ageGroups.length || 0) + (state.categoryConfig.patterns.ageGroups.length || 0)) + '</b>';
 }
 }
 
@@ -1332,7 +1604,7 @@ state.bracket = b;
 if (!b) {
 await pushRingUpdate({ blue_name: null, red_name: null, blue_club: null, red_club: null, next_blue_name: null, next_red_name: null, category_name: a.category_name, discipline: String(a.discipline || "sparring").toLowerCase(), match_stage: "No fighters", match_number: 0 });
 renderQueue();
-if (manual) showToast("No saved bracket for this category.", "warning");
+if (manual) showToast("No competitors matched this category.", "warning");
 return;
 }
 autoResolveByes(b);
@@ -1520,7 +1792,7 @@ renderQueue(); renderBracketIfOpen();
 async function resetCategoryBracket() {
 if (autoAdvanceTimeout) { clearTimeout(autoAdvanceTimeout); autoAdvanceTimeout = null; }
 const a = activeAssignment(); if (!a) return;
-if (!confirm("Rebuild the bracket for '" + a.category_name + "' from the Manage bracket? All ring results will be cleared.")) return;
+if (!confirm("Rebuild the bracket for '" + a.category_name + "' from the Manage bracket / registrations? All ring results will be cleared.")) return;
 try { localStorage.removeItem(bracketLocalKey(a.id)); } catch(e){}
 delete state.brackets[String(a.id)];
 try { await sb.from(ASSIGN_TABLE).update({ bracket_state: null }).eq("id", a.id); a.bracket_state = null; } catch(e){}
@@ -1651,7 +1923,7 @@ const discColor = disc === "sparring" ? "#c2185b" : "#1565c0";
 const discIcon = disc === "sparring" ? "fa-fist-raised" : "fa-chess-board";
 html += '<div style="background:#1e293b;border-left:4px solid ' + discColor + ';border-radius:8px;padding:10px;margin-bottom:10px;">';
 html += '<div style="font-weight:800;color:#fbbf24;font-size:0.9rem;"><i class="fas ' + discIcon + '" style="color:' + discColor + ';margin-right:6px;"></i>' + escapeHtml(a.category_name) + (state.borrowedFromAssignmentId ? ' <span style="color:#f59e0b;font-size:0.75rem;">(borrowed)</span>' : '') + '</div>';
-html += '<div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">' + (b.competitor_count || 0) + ' competitors · ' + b.size + ' slots · from Manage bracket</div>';
+html += '<div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">' + (b.competitor_count || 0) + ' competitors · ' + b.size + ' slots · ' + (b.source === "manage" ? 'from Manage bracket' : 'auto-seeded') + '</div>';
 if (b.champion) html += '<div style="font-size:0.8rem;color:#10b981;font-weight:800;margin-top:6px;">🏆 Champion: ' + escapeHtml(b.champion.name) + '</div>';
 html += '</div>';
 for (let r = 0; r < b.rounds.length; r++) {
@@ -1683,8 +1955,13 @@ html += '</div>';
 }
 }
 } else {
-html += '<div class="diag-box">' + (state.lastDiag || 'No saved bracket found for this category.') + '</div>';
+html += '<div class="diag-box">' + (state.lastDiag || 'No bracket could be built for this category.') + '</div>';
 html += '<button class="timer-btn" style="background:#3b82f6;color:white;width:100%;margin-bottom:10px;" onclick="resetCategoryBracket()"><i class="fas fa-rotate-left"></i> Rebuild Bracket</button>';
+const sample = [...new Set(state.competitors.filter(c => c._discipline === String(a.discipline || "sparring").toLowerCase()).map(c => c._full_cat))].slice(0, 12);
+if (sample.length) {
+html += '<div class="queue-group-title">Categories found in registrations</div>';
+sample.forEach(s => { html += '<div class="match-list-item" style="cursor:default;"><div class="ml-names" style="font-size:0.78rem;">' + escapeHtml(s) + '</div></div>'; });
+}
 }
 const nextCat = peekNextCategoryAssignment(a.id);
 if (nextCat && nextCat.bracket) {
@@ -1734,10 +2011,10 @@ if (!content) return;
 const a = activeAssignment(); const b = state.bracket;
 if (!a) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">No category selected.</div>'; return; }
 if (title) title.textContent = a.category_name + " · " + String(a.discipline || "sparring").toUpperCase();
-if (!b) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No saved bracket available.<br><br>' + (state.lastDiag || "") + '</div>'; return; }
+if (!b) { content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-users-slash" style="font-size:2rem;display:block;margin-bottom:10px;"></i>No bracket available.<br><br>' + (state.lastDiag || "") + '</div>'; return; }
 let html = "";
 if (b.champion) html += '<div style="background:#064e3b;border:1px solid #10b981;border-radius:10px;padding:12px;margin-bottom:15px;text-align:center;color:#6ee7b7;font-weight:800;">🏆 Category Champion: ' + escapeHtml(b.champion.name) + ' (' + escapeHtml(b.champion.team || "") + ')</div>';
-html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Click any finished match</strong> (✏️) to correct the winner. Source: Manage bracket</div>';
+html += '<div style="padding:10px;background:#1e293b;border-radius:8px;margin-bottom:15px;font-size:0.8rem;color:#94a3b8;text-align:center;"><i class="fas fa-info-circle"></i> <strong>Click any finished match</strong> (✏️) to correct the winner. Source: ' + (b.source === "manage" ? "Manage bracket" : "auto-seeded") + '</div>';
 html += '<div style="overflow-x:auto;padding:4px;margin-bottom:20px;"><table class="bracket-table"><thead><tr>';
 for (let r = 0; r < b.totalRounds; r++) html += '<th>' + (r === b.totalRounds - 1 ? "🏆 " : "") + escapeHtml(stageName(r, b.totalRounds)) + '</th>';
 html += '</tr></thead><tbody>';
@@ -1769,6 +2046,19 @@ html += '</div></td>';
 html += '</tr>';
 }
 html += '</tbody></table></div>';
+const list = competitorsForAssignment(a);
+html += '<div style="padding:18px;background:#1e293b;border-radius:12px;border:1px solid #334155;">';
+html += '<h4 style="color:#fbbf24;margin:0 0 12px;display:flex;align-items:center;gap:8px;"><i class="fas fa-list"></i> Matched Competitors (' + list.length + ')</h4>';
+html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;">';
+list.forEach((c, idx) => {
+html += '<div style="background:#0f172a;padding:10px;border-radius:8px;border-left:3px solid #3b82f6;">';
+html += '<div style="font-weight:700;color:#f1f5f9;margin-bottom:3px;">' + (idx + 1) + '. ' + escapeHtml(c.name) + '</div>';
+html += '<div style="font-size:0.72rem;color:#94a3b8;display:flex;gap:8px;flex-wrap:wrap;"><span><i class="fas fa-users"></i> ' + escapeHtml(c.team) + '</span>';
+if (c.gender) html += '<span><i class="fas fa-venus-mars"></i> ' + escapeHtml(c.gender) + '</span>';
+if (c.belt) html += '<span><i class="fas fa-certificate"></i> ' + escapeHtml(c.belt) + '</span>';
+html += '</div></div>';
+});
+html += '</div></div>';
 if (state.bracketColumnMissing) html += '<div style="margin-top:15px;padding:12px;background:#78350f;border:1px solid #f59e0b;border-radius:8px;color:#fde68a;font-size:0.8rem;">⚠️ Results are saved on this laptop only. Add a <code>bracket_state</code> jsonb column to <code>ring_assignments</code> to sync everywhere.</div>';
 content.innerHTML = html;
 }
@@ -1954,13 +2244,14 @@ state.brackets = {};
 await loadTournamentDate();
 await loadCategoryConfig();
 await fetchAssignments();
+await fetchAllCompetitors();
 await loadSavedOrders();
 for (const a of state.assignments) { await getBracketForAssignment(a, false); }
 await loadOrCreateBracket(false);
 await loadCurrentFight(false);
 renderCategoryPicker();
 renderQueue(); renderLaptopJudges(); renderVoteScores(); renderPenalties(); updateCompetitorDisplay();
-if (!silent) showToast("Data refreshed (" + state.assignments.length + " categories).", "success");
+if (!silent) showToast("Data refreshed (" + state.assignments.length + " categories, " + state.competitors.length + " entries).", "success");
 }
 async function enterLaptop() {
 setTxt("laptop-ring-name", state.ring.ring_name);
