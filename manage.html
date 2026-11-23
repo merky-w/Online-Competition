@@ -121,6 +121,18 @@ align-items: center; justify-content: center; gap: 10px; font-size: 0.95rem;
 .btn-pause-tournament:hover { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); transform: translateY(-1px); }
 .btn-resume-tournament { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
 .btn-resume-tournament:hover { background: linear-gradient(135deg, #059669 0%, #047857 100%); transform: translateY(-1px); }
+.category-counter-bar { display: none; background: linear-gradient(90deg, #e8f5e9 0%, #fff8e1 50%, #ffebee 100%); border: 2px solid var(--secondary); border-radius: 12px; padding: 12px 20px; margin-bottom: 20px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: var(--shadow); }
+.category-counter-bar.visible { display: flex; }
+.counter-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.counter-title { font-weight: 700; color: var(--primary); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.counter-stat { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+.counter-stat.total { background: white; color: var(--primary); border: 1px solid var(--primary); }
+.counter-stat.done { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
+.counter-stat.pending { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+.counter-progress-wrap { flex: 1; min-width: 200px; max-width: 400px; }
+.counter-progress-bar { height: 12px; background: #f0f0f0; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.counter-progress-fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--secondary)); transition: width 0.5s ease; border-radius: 6px; }
+.counter-progress-label { font-size: 0.75rem; color: var(--gray); text-align: center; margin-top: 4px; font-weight: 600; }
 .filters-card { background: white; border-radius: 12px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; border-left: 5px solid var(--secondary); }
 .filters { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
 .filter-group { flex: 1; min-width: 150px; }
@@ -550,9 +562,15 @@ input:checked + .slider-toggle:before { transform: translateX(18px); }
 .ring-stop-btn:hover { background: #c82333; transform: translateY(-1px); }
 .ring-stop-btn.stopped { background: var(--success); }
 .ring-stop-btn.stopped:hover { background: #218838; }
+.ring-cat-done-btn { background: var(--success); color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 4px; }
+.ring-cat-done-btn:hover { background: #218838; transform: translateY(-1px); }
+.ring-cat-done-btn.is-done { background: var(--gray); }
+.ring-cat-done-btn.is-done:hover { background: #5a6268; }
+.ring-cat-row.is-completed { opacity: 0.6; background: #f1f8e9 !important; }
+.ring-cat-row.is-completed td { text-decoration: line-through; color: var(--gray); }
 @media print {
 body { padding: 0; background: white; }
-.nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn, .toast, .selection-banner, .autosave-indicator, .bracket-header-actions, .drag-handle, .delete-btn, header, .tournament-status-banner, .phase-status-bar { display: none !important; }
+.nav, .filters-card, .bracket-controls-bar, .floating-search, .floating-undo-btn, .toast, .selection-banner, .autosave-indicator, .bracket-header-actions, .drag-handle, .delete-btn, header, .tournament-status-banner, .phase-status-bar, .category-counter-bar { display: none !important; }
 .container > .nav + .filters-card { display: none !important; }
 .a4-page { margin: 0 !important; box-shadow: none !important; page-break-after: always; width: 100%; padding: 5mm; }
 .a4-page:last-of-type { page-break-after: auto; }
@@ -578,6 +596,7 @@ body { padding: 0; background: white; }
 .round-config-body { grid-template-columns: 1fr; }
 .phase-status-bar .phase-info { flex-direction: column; align-items: flex-start; }
 .phase-actions { width: 100%; justify-content: center; }
+.category-counter-bar { flex-direction: column; align-items: stretch; }
 }
 </style>
 </head>
@@ -616,6 +635,18 @@ body { padding: 0; background: white; }
 <span id="phaseSparringBadge" class="phase-badge sparring"><i class="fas fa-fist-raised"></i> Sparring <span id="phaseSparringStatus">Not Started</span></span>
 </div>
 <div class="phase-actions"><button id="btnPauseTournament" class="btn btn-pause-tournament" onclick="togglePauseTournament()"><i class="fas fa-pause"></i> Pause Tournament</button></div>
+</div>
+<div class="category-counter-bar" id="categoryCounterBar">
+<div class="counter-left">
+<span class="counter-title"><i class="fas fa-tasks"></i> Category Progress (Active Phase)</span>
+<span class="counter-stat total" id="counterTotal">0 total</span>
+<span class="counter-stat done" id="counterDone">0 done</span>
+<span class="counter-stat pending" id="counterPending">0 pending</span>
+</div>
+<div class="counter-progress-wrap">
+<div class="counter-progress-bar"><div class="counter-progress-fill" id="counterProgressFill" style="width:0%"></div></div>
+<div class="counter-progress-label" id="counterProgressLabel">0% complete</div>
+</div>
 </div>
 <div class="filters-card"><div class="filters"><div class="filter-group"><label><i class="far fa-calendar-alt"></i> Tournament Date</label><input type="date" id="tournamentDate" onchange="updateAgeForFilters()" /></div></div></div>
 <div id="content"></div>
@@ -750,6 +781,7 @@ let tournamentStatusId = null;
 let currentPhase = null;
 let isTournamentPaused = false;
 let selectedPhase = null;
+let completedCategoriesCache = {};
 function calculateDisciplineBreakdown(entries, basePrice, extraPrice) {
 if (basePrice === null || isNaN(basePrice)) return null;
 const compCounts = {};
@@ -1072,6 +1104,7 @@ showToast("🔄 Calculating " + currentPhase + " categories...", "saving");
 const stats = await calculateAndSaveTournamentStats(currentPhase);
 updateTournamentStartUI();
 updatePhaseStatusBar();
+await updateCategoryCounter();
 const phaseLabel = currentPhase === 'patterns' ? 'Patterns' : currentPhase === 'sparring' ? 'Sparring' : 'Both';
 showToast(
 "🏁 " + phaseLabel + " phase STARTED!\n• " + stats.totalFights + " total fights\n• " + Math.ceil(stats.totalTimeSeconds/60) + " min total time\n• Balanced across " + stats.numRings + " ring(s)",
@@ -1120,8 +1153,11 @@ isTournamentPaused = false;
 try { await sb.from("ring_assignments").delete().neq("id", 0); } catch(e) {}
 try { await sb.from("category_counts").delete().in("category_name", ["total_fights", "total_time_minutes"]); } catch(e) {}
 try { await sb.from("ring_status").delete().neq("id", 0); } catch(e) {}
+try { await sb.from("category_completion").delete().neq("id", 0); } catch(e) {}
+completedCategoriesCache = {};
 updateTournamentStartUI();
 updatePhaseStatusBar();
+updateCategoryCounter();
 showToast("⏸ Tournament STOPPED — user access unlocked", "error");
 } catch (err) {
 console.error("toggleTournamentStart error:", err);
@@ -1191,7 +1227,7 @@ console.error("togglePauseTournament error:", err);
 showToast("Failed: " + (err.message || err), "error");
 } finally { btn.disabled = false; }
 }
-  function updatePhaseStatusBar() {
+function updatePhaseStatusBar() {
 const bar = document.getElementById('phaseStatusBar');
 const pauseBtn = document.getElementById('btnPauseTournament');
 if (!tournamentIsStarted) {
@@ -1269,12 +1305,100 @@ const { error } = await sb.from("tournament_status")
 if (error) throw error;
 currentPhase = null;
 updatePhaseStatusBar();
+await updateCategoryCounter();
 const phaseLabel = phase === 'patterns' ? 'Patterns' : 'Sparring';
 showToast("✓ " + phaseLabel + " phase marked as completed!", "success");
 } catch (err) {
 console.error("markPhaseCompleted error:", err);
 showToast("Failed: " + (err.message || err), "error");
 }
+}
+async function loadCompletedCategories() {
+try {
+const { data, error } = await sb.from("category_completion").select("*");
+if (error) { completedCategoriesCache = {}; return; }
+completedCategoriesCache = {};
+(data || []).forEach(row => {
+const key = row.category_name + "|||" + row.discipline;
+completedCategoriesCache[key] = row;
+});
+} catch (err) {
+completedCategoriesCache = {};
+}
+}
+function isCategoryCompleted(categoryName, discipline) {
+const key = categoryName + "|||" + discipline;
+return !!completedCategoriesCache[key];
+}
+async function toggleCategoryCompletion(categoryName, discipline, ringNumber) {
+const key = categoryName + "|||" + discipline;
+const isDone = isCategoryCompleted(categoryName, discipline);
+try {
+if (isDone) {
+await sb.from("category_completion").delete().eq("category_name", categoryName).eq("discipline", discipline);
+delete completedCategoriesCache[key];
+showToast("↩ " + categoryName + " marked as pending", "saving");
+} else {
+const existing = completedCategoriesCache[key];
+if (existing) {
+await sb.from("category_completion").update({
+completed_at: new Date().toISOString(),
+ring_number: ringNumber || null
+}).eq("category_name", categoryName).eq("discipline", discipline);
+} else {
+await sb.from("category_completion").insert([{
+category_name: categoryName,
+discipline: discipline,
+ring_number: ringNumber || null,
+completed_at: new Date().toISOString()
+}]);
+}
+completedCategoriesCache[key] = { category_name: categoryName, discipline: discipline, ring_number: ringNumber, completed_at: new Date().toISOString() };
+showToast("✓ " + categoryName + " marked as completed", "success");
+}
+await updateCategoryCounter();
+showRingSchedule();
+} catch (err) {
+console.error("toggleCategoryCompletion error:", err);
+showToast("Failed: " + (err.message || err), "error");
+}
+}
+async function updateCategoryCounter() {
+const bar = document.getElementById("categoryCounterBar");
+if (!bar) return;
+if (!tournamentIsStarted || !currentPhase || currentPhase === 'none') {
+bar.classList.remove('visible');
+return;
+}
+bar.classList.add('visible');
+await loadCompletedCategories();
+let allAssignments = [];
+try {
+const { data } = await sb.from("ring_assignments").select("*");
+allAssignments = data || [];
+} catch(e) {}
+const filtered = allAssignments.filter(a => {
+if (currentPhase === 'patterns') return a.discipline === 'patterns';
+if (currentPhase === 'sparring') return a.discipline === 'sparring';
+return true;
+});
+const total = filtered.length;
+let done = 0;
+filtered.forEach(a => {
+if (isCategoryCompleted(a.category_name, a.discipline)) done++;
+});
+const pending = total - done;
+const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+const totalEl = document.getElementById("counterTotal");
+const doneEl = document.getElementById("counterDone");
+const pendingEl = document.getElementById("counterPending");
+const fillEl = document.getElementById("counterProgressFill");
+const labelEl = document.getElementById("counterProgressLabel");
+if (totalEl) totalEl.textContent = total + " total";
+if (doneEl) doneEl.textContent = done + " done";
+if (pendingEl) pendingEl.textContent = pending + " pending";
+if (fillEl) fillEl.style.width = pct + "%";
+if (labelEl) labelEl.textContent = pct + "% complete (" + done + "/" + total + " categories)";
 }
 async function calculateAndSaveTournamentStats(phaseFilter = 'both') {
 await fetchData();
@@ -1368,6 +1492,8 @@ await sb.from("category_counts").upsert([
 } catch(e) {
 console.warn("Note: category_counts update skipped (table may not exist or lacks unique constraint). Tournament started successfully.", e);
 }
+try { await sb.from("category_completion").delete().neq("id", 0); } catch(e) {}
+completedCategoriesCache = {};
 return { totalFights, totalTimeSeconds, numRings, ringAssignments, categoryCount: categoryStats.length };
 }
 function balanceRingsLPT(categories, numRings) {
@@ -1399,8 +1525,20 @@ async function showRingSchedule() {
 setActiveBtn("btnRingSchedule");
 const content = document.getElementById("content");
 content.innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner" style="width:40px;height:40px;border-width:4px;margin:0 auto 15px;"></div> Loading ring schedule...</div>';
-const { data: assignments } = await sb.from("ring_assignments")
+await loadCompletedCategories();
+await updateCategoryCounter();
+let assignmentsFilter = [];
+const { data: allAssignments } = await sb.from("ring_assignments")
 .select("*").order("ring_number", { ascending: true }).order("time_seconds", { ascending: false });
+if (allAssignments) {
+if (currentPhase === 'patterns') {
+assignmentsFilter = allAssignments.filter(a => a.discipline === 'patterns');
+} else if (currentPhase === 'sparring') {
+assignmentsFilter = allAssignments.filter(a => a.discipline === 'sparring');
+} else {
+assignmentsFilter = allAssignments;
+}
+}
 const { data: countsData } = await sb.from("category_counts")
 .select("category_name,competitor_count")
 .in("category_name", ["total_fights", "total_time_minutes"]);
@@ -1415,7 +1553,7 @@ ringStatusMap[rs.ring_id] = rs;
 const totalFights = (countsData || []).find(r => r.category_name === "total_fights")?.competitor_count || 0;
 const totalMinutes = (countsData || []).find(r => r.category_name === "total_time_minutes")?.competitor_count || 0;
 const byRing = {};
-(assignments || []).forEach(a => {
+assignmentsFilter.forEach(a => {
 if (!byRing[a.ring_number]) byRing[a.ring_number] = { categories: [], totalTime: 0, totalMatches: 0 };
 byRing[a.ring_number].categories.push(a);
 byRing[a.ring_number].totalTime += a.time_seconds;
@@ -1423,12 +1561,13 @@ byRing[a.ring_number].totalMatches += a.num_matches;
 });
 const ringNumbers = Object.keys(byRing).map(Number).sort((a,b) => a-b);
 const maxTime = Math.max(1, ...ringNumbers.map(r => byRing[r].totalTime));
+const phaseLabel = currentPhase === 'patterns' ? 'Patterns' : currentPhase === 'sparring' ? 'Sparring' : 'All Disciplines';
 let html = '<div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
-'<h2 style="color:var(--primary);margin:0;"><i class="fas fa-ring"></i> Ring Schedule</h2>' +
+'<h2 style="color:var(--primary);margin:0;"><i class="fas fa-ring"></i> Ring Schedule <span style="font-size:0.9rem;color:var(--gray);font-weight:400;">(' + phaseLabel + ')</span></h2>' +
 '<div style="display:flex;gap:10px;">';
 if (tournamentIsStarted && currentPhase && currentPhase !== 'both' && currentPhase !== 'none') {
-const phaseLabel = currentPhase === 'patterns' ? 'Patterns' : 'Sparring';
-html += '<button class="btn btn-success btn-sm" onclick="markPhaseCompleted(\'' + currentPhase + '\')"><i class="fas fa-check"></i> Mark ' + phaseLabel + ' Complete</button>';
+const pLabel = currentPhase === 'patterns' ? 'Patterns' : 'Sparring';
+html += '<button class="btn btn-success btn-sm" onclick="markPhaseCompleted(\'' + currentPhase + '\')"><i class="fas fa-check"></i> Mark ' + pLabel + ' Complete</button>';
 }
 html += '<button class="btn btn-warning btn-sm" onclick="recalculateRingSchedule()"><i class="fas fa-sync"></i> Recalculate Now</button></div></div>';
 html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:25px;">' +
@@ -1450,10 +1589,14 @@ const ringId = ringInfo?.id || ringNum;
 const isStopped = ringStatusMap[ringId]?.is_stopped || false;
 const pct = (ring.totalTime / maxTime) * 100;
 const balance = pct >= 90 ? "✅ Well balanced" : pct >= 70 ? "⚠️ Slight imbalance" : "❌ Imbalanced";
+let ringDone = 0;
+ring.categories.forEach(c => { if (isCategoryCompleted(c.category_name, c.discipline)) ringDone++; });
+const ringTotal = ring.categories.length;
+const ringPct = ringTotal > 0 ? Math.round((ringDone / ringTotal) * 100) : 0;
 html += '<div style="background:white;border-radius:12px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;border-left:5px solid ' + (isStopped ? 'var(--danger)' : 'var(--primary)') + ';">' +
 '<div style="background:linear-gradient(135deg,' + (isStopped ? '#dc3545, #a71d2a' : 'var(--primary),var(--primary-dark)') + ');color:white;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
 '<div><h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-ring"></i> ' + escapeHtml(ringName) + (isStopped ? ' <span style="background:rgba(255,255,255,0.3);padding:2px 8px;border-radius:8px;font-size:0.7rem;">STOPPED</span>' : '') + '</h3>' +
-'<div style="font-size:0.85rem;opacity:0.9;margin-top:4px;">' + ring.categories.length + ' categories • ' + ring.totalMatches + ' fights • <strong>' + formatDuration(ring.totalTime) + '</strong></div></div>' +
+'<div style="font-size:0.85rem;opacity:0.9;margin-top:4px;">' + ring.categories.length + ' categories • ' + ring.totalMatches + ' fights • <strong>' + formatDuration(ring.totalTime) + '</strong> • <span style="background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:8px;">' + ringDone + '/' + ringTotal + ' done (' + ringPct + '%)</span></div></div>' +
 '<div style="display:flex;gap:10px;align-items:center;">' +
 '<button class="ring-stop-btn ' + (isStopped ? 'stopped' : '') + '" onclick="toggleRingStop(' + ringId + ', ' + (isStopped ? 'false' : 'true') + ')">' +
 '<i class="fas fa-' + (isStopped ? 'play' : 'stop') + '"></i> ' + (isStopped ? 'Resume' : 'Stop') +
@@ -1466,19 +1609,24 @@ html += '<div style="background:white;border-radius:12px;box-shadow:var(--shadow
 '<th style="padding:8px;text-align:center;font-size:0.85rem;width:80px;">Players</th>' +
 '<th style="padding:8px;text-align:center;font-size:0.85rem;width:80px;">Fights</th>' +
 '<th style="padding:8px;text-align:center;font-size:0.85rem;width:120px;">Duration</th>' +
-'<th style="padding:8px;text-align:center;font-size:0.85rem;width:100px;">Action</th>' +
+'<th style="padding:8px;text-align:center;font-size:0.85rem;width:140px;">Action</th>' +
 '</tr></thead><tbody>';
 ring.categories.forEach(cat => {
 const discIcon = cat.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
 const discColor = cat.discipline === 'sparring' ? 'var(--price-sparring)' : 'var(--price-patterns)';
 const safeCatName = escapeAttr(cat.category_name);
 const safeDisc = cat.discipline;
-html += '<tr style="border-bottom:1px solid var(--border);' + (isStopped ? 'opacity:0.5;' : '') + '">' +
-'<td style="padding:10px;font-weight:600;"><i class="fas ' + discIcon + '" style="color:' + discColor + ';margin-right:8px;"></i>' + escapeHtml(cat.category_name) + '</td>' +
+const isDone = isCategoryCompleted(cat.category_name, cat.discipline);
+html += '<tr class="ring-cat-row ' + (isDone ? 'is-completed' : '') + '" style="border-bottom:1px solid var(--border);' + (isStopped ? 'opacity:0.5;' : '') + '">' +
+'<td style="padding:10px;font-weight:600;"><i class="fas ' + discIcon + '" style="color:' + discColor + ';margin-right:8px;"></i>' + escapeHtml(cat.category_name) + (isDone ? ' <i class="fas fa-check-circle" style="color:var(--success);margin-left:6px;" title="Completed"></i>' : '') + '</td>' +
 '<td style="padding:10px;text-align:center;"><span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-weight:700;font-size:0.8rem;">' + (cat.count || '?') + '</span></td>' +
 '<td style="padding:10px;text-align:center;"><span style="background:var(--secondary);color:white;padding:2px 10px;border-radius:12px;font-weight:700;">' + cat.num_matches + '</span></td>' +
 '<td style="padding:10px;text-align:center;font-weight:700;color:var(--primary);">' + formatDuration(cat.time_seconds) + '</td>' +
-'<td style="padding:10px;text-align:center;"><button class="btn btn-info btn-xs" onclick="viewBracket(\'' + safeCatName + '\', \'' + safeDisc + '\')"><i class="fas fa-eye"></i> View</button></td></tr>';
+'<td style="padding:10px;text-align:center;"><div style="display:flex;gap:4px;justify-content:center;">' +
+'<button class="btn btn-info btn-xs" onclick="viewBracket(\'' + safeCatName + '\', \'' + safeDisc + '\')"><i class="fas fa-eye"></i> View</button>' +
+'<button class="ring-cat-done-btn ' + (isDone ? 'is-done' : '') + '" onclick="toggleCategoryCompletion(\'' + safeCatName + '\', \'' + safeDisc + '\', ' + ringNum + ')">' +
+'<i class="fas fa-' + (isDone ? 'undo' : 'check') + '"></i> ' + (isDone ? 'Undo' : 'Done') +
+'</button></div></td></tr>';
 });
 html += '</tbody></table></div></div>';
 });
@@ -1546,11 +1694,13 @@ showToast("Failed: " + (err.message || err), "error");
 async function recalculateRingSchedule() {
 if (!confirm("Recalculate ring schedule now? This will overwrite current assignments.")) return;
 showToast("🔄 Recalculating...", "saving");
-const stats = await calculateAndSaveTournamentStats('both');
+const phaseToUse = (tournamentIsStarted && currentPhase && currentPhase !== 'none') ? currentPhase : 'both';
+const stats = await calculateAndSaveTournamentStats(phaseToUse);
 showToast("✅ Done! " + stats.totalFights + " fights, " + stats.categoryCount + " categories across " + stats.numRings + " ring(s)", "success");
+await updateCategoryCounter();
 showRingSchedule();
 }
-async function loadCategoryConfig() {
+  async function loadCategoryConfig() {
 try {
 const { data: ageGroups, error: ageErr } = await sb
 .from("age_groups").select("*").order("order_priority", { ascending: true });
@@ -1622,6 +1772,7 @@ const def = (name && DEFAULT_ROUND_CONFIGS[name]) ? DEFAULT_ROUND_CONFIGS[name] 
 categoryConfig.sparring.roundConfigs[id] = { ...def };
 }
 });
+}
 }
 } catch (err) {
 console.error("loadCategoryConfig error:", err);
@@ -1784,7 +1935,7 @@ c._full_cat = "Open - " + (origBeltName || "Open");
 }
 });
 }
-  function renderDuplicateWarningBanner(duplicates, discipline) {
+function renderDuplicateWarningBanner(duplicates, discipline) {
 if (!duplicates || duplicates.length === 0) return "";
 const filtered = duplicates.filter(d => d.discipline === discipline);
 if (filtered.length === 0) return "";
@@ -2942,7 +3093,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -3626,7 +3777,7 @@ initDragHandleDrag();
 initWinnerDropZones();
 }, 100);
 }
-let dragHandleState = null;
+  let dragHandleState = null;
 function initDragHandleDrag() {
 document.querySelectorAll(".drag-handle").forEach(handle => { handle.addEventListener("mousedown", startDragHandle); });
 }
@@ -3660,7 +3811,7 @@ dragHandleState.ghost.style.top = (e.clientY - dragHandleState.offsetY) + "px";
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 if (!elemBelow) return;
 const targetRow = elemBelow.closest(".player-row");
@@ -3675,7 +3826,7 @@ const slot = detectDroppedSlot(matchBox, e.clientY);
 const slotRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 if (slotRow) slotRow.classList.add("drop-hover-slot");
 }
-const winnerZone = elemBelow.closest(".winner-drop-zone, .placement_drop-zone");
+const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
 if (winnerZone) winnerZone.classList.add("drop-hover");
 }
 async function onDragHandleEnd(e) {
@@ -3686,7 +3837,7 @@ dragHandleState.ghost.remove();
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 const state = dragHandleState;
 dragHandleState = null;
