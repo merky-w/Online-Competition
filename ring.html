@@ -222,7 +222,6 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .bracket-team { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
 .edit-winner-icon { position: absolute; top: 4px; right: 4px; font-size: 10px; color: #fbbf24; opacity: 0.8; z-index: 5; pointer-events: none; }
 .bracket-match[onclick]:hover { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4); }
-#modal-change-winner { z-index: 1100; }
 </style>
 </head>
 <body class="bg-slate-900">
@@ -1066,7 +1065,7 @@ if (age > last.max_age) return last;
 let best = sorted[0], bestDist = Infinity;
 for (const g of sorted) {
 const maxA = g.max_age === null ? 999 : g.max_age;
-const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - maxA));
+const dist = (age >= g.min_age && age <= maxA) ? 0 : Math.min(Math.abs(age - g.min_age), Math.abs(age - g.max_age));
 if (dist < bestDist) { bestDist = dist; best = g; }
 }
 return best;
@@ -2039,24 +2038,52 @@ html += '<div class="queue-group-title">Categories found in registrations</div>'
 sample.forEach(s => { html += '<div class="match-list-item" style="cursor:default;"><div class="ml-names" style="font-size:0.78rem;">' + escapeHtml(s) + '</div></div>'; });
 }
 }
-const nextCat = peekNextCategoryAssignment(a.id);
-if (nextCat && nextCat.bracket) {
-html += '<div class="queue-next-category-title">⏭️ Next: ' + escapeHtml(nextCat.assignment.category_name) + '</div>';
-const nb = nextCat.bracket;
-let shown = 0;
-for (let r = 0; r < nb.rounds.length && shown < 6; r++) {
-for (let m = 0; m < nb.rounds[r].length && shown < 6; m++) {
-const match = nb.rounds[r][m];
-if (match.winner) continue;
-if (!isRealName(match.p1.name) || !isRealName(match.p2.name)) continue;
-shown++;
-html += '<div class="match-list-item next-cat" onclick="loadSpecificFight(\'' + escapeAttr(nextCat.assignment.id) + '\',' + r + ',' + m + ')" style="cursor:pointer;">';
-html += '<div class="ml-number"><span>#' + globalFightNumber(nb, r, m) + ' · ' + escapeHtml(stageName(r, nb.totalRounds)) + '</span><span class="ml-pill borrowed">LOAD</span></div>';
-html += '<div class="ml-names">🔵 ' + escapeHtml(match.p1.name) + '<br>🔴 ' + escapeHtml(match.p2.name) + '</div>';
-html += '</div>';
+
+// --- ENHANCED QUEUE: Look ahead up to 5 FULL matches across future categories ---
+let futureMatches = [];
+const currentIdx = state.assignments.findIndex(x => String(x.id) === String(a.id));
+
+for (let i = currentIdx + 1; i < state.assignments.length; i++) {
+  if (futureMatches.length >= 5) break;
+  const futureAssignment = state.assignments[i];
+  const fb = state.brackets[String(futureAssignment.id)];
+  if (!fb || !fb.rounds) continue;
+  
+  for (let r = 0; r < fb.rounds.length; r++) {
+    if (futureMatches.length >= 5) break;
+    for (let m = 0; m < fb.rounds[r].length; m++) {
+      if (futureMatches.length >= 5) break;
+      const match = fb.rounds[r][m];
+      if (match.winner) continue;
+      // Only count matches where BOTH fighters have real names
+      if (!isRealName(match.p1.name) || !isRealName(match.p2.name)) continue;
+      
+      futureMatches.push({
+        assignment: futureAssignment,
+        bracket: fb,
+        r: r,
+        m: m,
+        match: match
+      });
+    }
+  }
 }
+
+if (futureMatches.length > 0) {
+  let lastCatId = null;
+  for (const fm of futureMatches) {
+    if (fm.assignment.id !== lastCatId) {
+      lastCatId = fm.assignment.id;
+      html += '<div class="queue-next-category-title">⏭️ Up Next: ' + escapeHtml(fm.assignment.category_name) + '</div>';
+    }
+    const fightNo = globalFightNumber(fm.bracket, fm.r, fm.m);
+    html += '<div class="match-list-item next-cat" onclick="loadSpecificFight(\'' + escapeAttr(fm.assignment.id) + '\',' + fm.r + ',' + fm.m + ')" style="cursor:pointer;">';
+    html += '<div class="ml-number"><span>#' + fightNo + ' · ' + escapeHtml(stageName(fm.r, fm.bracket.totalRounds)) + '</span><span class="ml-pill borrowed">LOAD</span></div>';
+    html += '<div class="ml-names">🔵 ' + escapeHtml(fm.match.p1.name) + '<br>🔴 ' + escapeHtml(fm.match.p2.name) + '</div>';
+    html += '</div>';
+  }
 }
-}
+
 container.innerHTML = html;
 }
 function openAdminPasswordModal() {
