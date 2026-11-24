@@ -1849,7 +1849,7 @@ let age = tour.getFullYear() - birth.getFullYear();
 const m = tour.getMonth() - birth.getMonth();
 if (m < 0 || (m === 0 && tour.getDate() < birth.getDate())) age--;
 return age;
-} catch { return null; }
+} catch (e) { return null; }
 }
 function recomputeCompetitorCategories() {
 let noAgeCount = 0;
@@ -3093,7 +3093,7 @@ function handleWinnerZoneClick(e) {
 const clearBtn = e.target.closest(".clear-winner, .clear-placement");
 if (clearBtn) {
 e.stopPropagation();
-const zone = clearBtn.closest(".winner-drop-zone, .placement-drop-zone");
+const zone = clearBtn.closest(".winner-drop-zone, .placement_drop-zone");
 if (!zone) return;
 const page = zone.closest(".a4-page");
 if (!page) return;
@@ -3130,7 +3130,7 @@ return;
 }
 const data = e.dataTransfer.getData("application/player");
 if (!data) return;
-let player; try { player = JSON.parse(data); } catch { return; }
+let player; try { player = JSON.parse(data); } catch (err) { return; }
 if (zone.classList.contains("winner-drop-zone")) setWinnerZoneValue(zone, player.name);
 else setPlacementZoneValue(zone, player.name);
 saveWinnersForCategory(page.dataset.category, page.dataset.type);
@@ -3245,7 +3245,7 @@ const targetRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]'
 if (selectedPlayerData) { moveSelectedPlayerToBye(matchBox, targetRow); return; }
 const data = e.dataTransfer.getData("application/player");
 if (!data) return;
-let player; try { player = JSON.parse(data); } catch { return; }
+let player; try { player = JSON.parse(data); } catch (err) { return; }
 const page = matchBox.closest(".a4-page");
 if (!page) return;
 addPlayerToSpecificSlot(player.name, player.team, page.dataset.category, page.dataset.type, parseInt(matchBox.dataset.round || "0"), parseInt(matchBox.dataset.match || "0"), slot);
@@ -3826,7 +3826,7 @@ const slot = detectDroppedSlot(matchBox, e.clientY);
 const slotRow = matchBox.querySelector('.player-row[data-slot="' + slot + '"]');
 if (slotRow) slotRow.classList.add("drop-hover-slot");
 }
-const winnerZone = elemBelow.closest(".winner-drop-zone, .placement-drop-zone");
+const winnerZone = elemBelow.closest(".winner-drop-zone, .placement_drop-zone");
 if (winnerZone) winnerZone.classList.add("drop-hover");
 }
 async function onDragHandleEnd(e) {
@@ -3837,7 +3837,7 @@ dragHandleState.ghost.remove();
 document.querySelectorAll(".player-row.swap-target").forEach(el => el.classList.remove("swap-target"));
 document.querySelectorAll(".match-box.bye-selected").forEach(el => el.classList.remove("bye-selected"));
 document.querySelectorAll(".player-row.drop-hover-slot").forEach(el => el.classList.remove("drop-hover-slot"));
-document.querySelectorAll(".winner-drop-zone.drop-hover, .placement-drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
+document.querySelectorAll(".winner-drop-zone.drop-hover, .placement_drop-zone.drop-hover").forEach(el => el.classList.remove("drop-hover"));
 const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 const state = dragHandleState;
 dragHandleState = null;
@@ -4005,7 +4005,7 @@ const personRegs = compRegs.filter((r) => String(r.entry_id) === String(person.i
 if (personRegs.length === 0) return;
 personRegs.forEach((reg) => {
 let entries = [];
-if (reg.entry_data?.entries_list && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
+if (reg.entry_data && reg.entry_data.entries_list && Array.isArray(reg.entry_data.entries_list)) entries = reg.entry_data.entries_list;
 else if (Array.isArray(reg.entry_data)) entries = reg.entry_data;
 else if (reg.entries_list && Array.isArray(reg.entries_list)) entries = reg.entries_list;
 else if (reg.entry_data && typeof reg.entry_data === 'object' && !Array.isArray(reg.entry_data)) {
@@ -4239,7 +4239,7 @@ const bounds = (categoryConfig.sparring.weightBoundaries[ageGroup.id] || []).len
 const genderLabel = normalizeGender(ageGroup.gender) === "male" ? "Male" : "Female";
 const roundCfg = categoryConfig.sparring.roundConfigs[ageGroup.id] || { rounds_count: 3, round_minutes: 2, round_seconds: 0, pause_minutes: 1, pause_seconds: 0 };
 const roundTimeStr = roundCfg.round_seconds > 0 ? (roundCfg.round_minutes + ':' + String(roundCfg.round_seconds).padStart(2, '0')) : (roundCfg.round_minutes + ':00');
-const pauseTimeStr = (roundCfg.pause_seconds ?? 0) > 0 ? (roundCfg.pause_minutes + ':' + String(roundCfg.pause_seconds).padStart(2, '0')) : ((roundCfg.pause_minutes ?? 1) + ':00');
+const pauseTimeStr = (roundCfg.pause_seconds !== undefined && roundCfg.pause_seconds > 0) ? (roundCfg.pause_minutes + ':' + String(roundCfg.pause_seconds).padStart(2, '0')) : ((roundCfg.pause_minutes !== undefined ? roundCfg.pause_minutes : 1) + ':00');
 info.innerHTML = '<i class="fas fa-weight-hanging"></i> <strong>' + escapeHtml(ageGroup.display_name) + ' (' + genderLabel + '):</strong> ' + bounds + ' weight division' + (bounds !== 1 ? 's' : '') + ' configured (ages ' + ageGroup.min_age + (ageGroup.max_age === null ? '+' : '-' + ageGroup.max_age) + ') — <strong style="color:var(--round-accent)"><i class="fas fa-stopwatch"></i> ' + roundCfg.rounds_count + ' rounds × ' + roundTimeStr + ' min | <i class="fas fa-hourglass-half"></i> Pause: ' + pauseTimeStr + '</strong>';
 } else {
 info.innerHTML = '<i class="fas fa-info-circle"></i> Select Age and Gender to see weight divisions.';
@@ -4345,27 +4345,27 @@ const totalEntries = t.patternsEntries.length + t.sparringEntries.length;
 const patternsBreakdown = calculateDisciplineBreakdown(t.patternsEntries, patternsPrice, patternsExtraPrice);
 const sparringBreakdown = calculateDisciplineBreakdown(t.sparringEntries, sparringPrice, sparringExtraPrice);
 const hasAnyPrice = patternsBreakdown !== null || sparringBreakdown !== null;
-const grandTotal = (patternsBreakdown?.total || 0) + (sparringBreakdown?.total || 0);
+const grandTotal = ((patternsBreakdown && patternsBreakdown.total) ? patternsBreakdown.total : 0) + ((sparringBreakdown && sparringBreakdown.total) ? sparringBreakdown.total : 0);
 let priceSummaryHtml = "";
 if (!hasAnyPrice) {
 priceSummaryHtml = '<div class="price-unavailable"><i class="fas fa-info-circle"></i> Prices not configured</div>';
 } else {
 const segments = [];
 if (patternsBreakdown) {
-let patText = `${patternsBreakdown.uniqueCompetitors} Base (${formatEuro(patternsPrice)})`;
+let patText = patternsBreakdown.uniqueCompetitors + ' Base (' + formatEuro(patternsPrice) + ')';
 if (patternsBreakdown.extraEntries > 0) {
-patText += ` + ${patternsBreakdown.extraEntries} Extra (${formatEuro(patternsExtraPrice)})`;
+patText += ' + ' + patternsBreakdown.extraEntries + ' Extra (' + formatEuro(patternsExtraPrice) + ')';
 }
-patText += ` = <strong>${formatEuro(patternsBreakdown.total)}</strong>`;
-segments.push(`<span class="price-segment patterns-price" title="Patterns Breakdown"><i class="fas fa-chess-board"></i> Patterns: ${patText}</span>`);
+patText += ' = <strong>' + formatEuro(patternsBreakdown.total) + '</strong>';
+segments.push('<span class="price-segment patterns-price" title="Patterns Breakdown"><i class="fas fa-chess-board"></i> Patterns: ' + patText + '</span>');
 }
 if (sparringBreakdown) {
-let sparText = `${sparringBreakdown.uniqueCompetitors} Base (${formatEuro(sparringPrice)})`;
+let sparText = sparringBreakdown.uniqueCompetitors + ' Base (' + formatEuro(sparringPrice) + ')';
 if (sparringBreakdown.extraEntries > 0) {
-sparText += ` + ${sparringBreakdown.extraEntries} Extra (${formatEuro(sparringExtraPrice)})`;
+sparText += ' + ' + sparringBreakdown.extraEntries + ' Extra (' + formatEuro(sparringExtraPrice) + ')';
 }
-sparText += ` = <strong>${formatEuro(sparringBreakdown.total)}</strong>`;
-segments.push(`<span class="price-segment sparring-price" title="Sparring Breakdown"><i class="fas fa-fist-raised"></i> Sparring: ${sparText}</span>`);
+sparText += ' = <strong>' + formatEuro(sparringBreakdown.total) + '</strong>';
+segments.push('<span class="price-segment sparring-price" title="Sparring Breakdown"><i class="fas fa-fist-raised"></i> Sparring: ' + sparText + '</span>');
 }
 priceSummaryHtml = '<div class="team-price-summary"><i class="fas fa-calculator" style="color:var(--price-total);font-size:1.1rem;"></i> ' + segments.join('<span class="price-operator">+</span>') + ' <span class="price-operator">=</span> <span class="price-segment total-price"><i class="fas fa-euro-sign"></i> ' + formatEuro(grandTotal) + '</span></div>';
 }
@@ -4620,8 +4620,8 @@ const compRefExpense = (compRefPrice !== null && !isNaN(compRefPrice)) ? compRef
 const totalExpense = headRefExpense + refExpense + compRefExpense;
 const netProfit = totalIncome - totalExpense;
 const isNegative = netProfit < 0;
-const patternsSub = `Base: ${formatEuro(patternsPrice)} | Extra: ${formatEuro(patternsExtraPrice)}`;
-const sparringSub = `Base: ${formatEuro(sparringPrice)} | Extra: ${formatEuro(sparringExtraPrice)}`;
+const patternsSub = 'Base: ' + formatEuro(patternsPrice) + ' | Extra: ' + formatEuro(patternsExtraPrice);
+const sparringSub = 'Base: ' + formatEuro(sparringPrice) + ' | Extra: ' + formatEuro(sparringExtraPrice);
 let html = '<div class="price-overview-container"><div class="controls" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
 '<h2 style="color:var(--price-profit);margin:0"><i class="fas fa-coins"></i> Price & Profit Overview</h2>' +
 '<button class="btn btn-info btn-sm" onclick="exportFinancialReport()"><i class="fas fa-file-csv"></i> Export Report</button>' +
@@ -4672,29 +4672,31 @@ const hasPrice = dataObj !== null && dataObj !== undefined;
 let detailsHtml = "";
 if (dataObj && dataObj.competitorDetails && dataObj.competitorDetails.length > 0) {
 detailsHtml = '<div class="price-line-details">';
-detailsHtml += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.85rem; border:1px dashed var(--border); display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-<strong style="width:100%; margin-bottom:4px;"><i class="fas fa-info-circle" style="color:var(--primary)"></i> Calculation Summary:</strong>
-<span><strong>${dataObj.uniqueCompetitors}</strong> unique competitors</span>
-<span>•</span>
-<span><strong>${dataObj.baseEntries}</strong> Base entries = <strong class="${amountClass}">${formatEuro(dataObj.baseAmount)}</strong></span>
-${dataObj.extraEntries > 0 ? `<span>•</span><span><strong>${dataObj.extraEntries}</strong> Extra entries (+categories) = <strong class="${amountClass}">${formatEuro(dataObj.extraAmount)}</strong></span>` : ''}
-</div>`;
-dataObj.competitorDetails.forEach((comp, idx) => {
-let detailText = `${comp.count} entr${comp.count > 1 ? 'ies' : 'y'}`;
-let mathText = `${formatEuro(comp.baseAmount)}`;
-if (comp.extraCount > 0) {
-detailText += ` <span style="color:var(--price-total); font-weight:700;">(1 Base + ${comp.extraCount} Extra)</span>`;
-mathText += ` <span style="color:var(--gray)">+</span> (${comp.extraCount} × ${formatEuro(comp.extraUnitPrice)})`;
+detailsHtml += '<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.85rem; border:1px dashed var(--border); display:flex; flex-wrap:wrap; gap:10px; align-items:center;">';
+detailsHtml += '<strong style="width:100%; margin-bottom:4px;"><i class="fas fa-info-circle" style="color:var(--primary)"></i> Calculation Summary:</strong>';
+detailsHtml += '<span><strong>' + dataObj.uniqueCompetitors + '</strong> unique competitors</span>';
+detailsHtml += '<span>•</span>';
+detailsHtml += '<span><strong>' + dataObj.baseEntries + '</strong> Base entries = <strong class="' + amountClass + '">' + formatEuro(dataObj.baseAmount) + '</strong></span>';
+if (dataObj.extraEntries > 0) {
+detailsHtml += '<span>•</span><span><strong>' + dataObj.extraEntries + '</strong> Extra entries (+categories) = <strong class="' + amountClass + '">' + formatEuro(dataObj.extraAmount) + '</strong></span>';
 }
-mathText += ` <span style="color:var(--gray)">=</span> <strong>${formatEuro(comp.compTotal)}</strong>`;
-detailsHtml += `<div class="price-detail-row">
-<div class="price-detail-name">
-<span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
-<span>${escapeHtml(comp.name)}</span>
-<span class="price-detail-team">• ${escapeHtml(comp.team)} • ${detailText}</span>
-</div>
-<div class="price-detail-amount ${amountClass}">${sign} ${mathText}</div>
-</div>`;
+detailsHtml += '</div>';
+dataObj.competitorDetails.forEach((comp, idx) => {
+let detailText = comp.count + ' entr' + (comp.count > 1 ? 'ies' : 'y');
+let mathText = formatEuro(comp.baseAmount);
+if (comp.extraCount > 0) {
+detailText += ' <span style="color:var(--price-total); font-weight:700;">(1 Base + ' + comp.extraCount + ' Extra)</span>';
+mathText += ' <span style="color:var(--gray)">+</span> (' + comp.extraCount + ' × ' + formatEuro(comp.extraUnitPrice) + ')';
+}
+mathText += ' <span style="color:var(--gray)">=</span> <strong>' + formatEuro(comp.compTotal) + '</strong>';
+detailsHtml += '<div class="price-detail-row">';
+detailsHtml += '<div class="price-detail-name">';
+detailsHtml += '<span style="color:var(--gray);font-weight:700;width:22px">' + (idx + 1) + '.</span>';
+detailsHtml += '<span>' + escapeHtml(comp.name) + '</span>';
+detailsHtml += '<span class="price-detail-team">• ' + escapeHtml(comp.team) + ' • ' + detailText + '</span>';
+detailsHtml += '</div>';
+detailsHtml += '<div class="price-detail-amount ' + amountClass + '">' + sign + ' ' + mathText + '</div>';
+detailsHtml += '</div>';
 });
 detailsHtml += '</div>';
 } else if (entries && entries.length > 0 && hasPrice) {
@@ -4703,26 +4705,26 @@ const unitPrice = dataObj.unitPrice;
 entries.forEach((e, idx) => {
 const name = escapeHtml(e.name) || "Unknown";
 const team = escapeHtml(e.team) || "N/A";
-detailsHtml += `<div class="price-detail-row">
-<div class="price-detail-name">
-<span style="color:var(--gray);font-weight:700;width:22px">${idx + 1}.</span>
-<span>${name}</span>
-<span class="price-detail-team">• ${team}</span>
-</div>
-<div class="price-detail-amount ${amountClass}">${sign} ${formatEuro(unitPrice)}</div>
-</div>`;
+detailsHtml += '<div class="price-detail-row">';
+detailsHtml += '<div class="price-detail-name">';
+detailsHtml += '<span style="color:var(--gray);font-weight:700;width:22px">' + (idx + 1) + '.</span>';
+detailsHtml += '<span>' + name + '</span>';
+detailsHtml += '<span class="price-detail-team">• ' + team + '</span>';
+detailsHtml += '</div>';
+detailsHtml += '<div class="price-detail-amount ' + amountClass + '">' + sign + ' ' + formatEuro(unitPrice) + '</div>';
+detailsHtml += '</div>';
 });
 detailsHtml += '</div>';
 } else {
 detailsHtml = '<div class="price-line-details"><div class="price-empty-msg">No entries in this category</div></div>';
 }
-return `<div class="price-line-item" onclick="togglePriceLine(this)"><div class="price-line-left">
-<div class="price-line-icon ${iconClass}"><i class="fas ${icon}"></i></div>
-<div class="price-line-info"><div class="price-line-title">${escapeHtml(title)} <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">${entries.length} entries</span></div>
-<div class="price-line-subtitle">${escapeHtml(subtitle)}</div></div></div>
-<div class="price-line-right"><div class="price-line-amount ${amountClass}">${sign} ${formatEuro(total)}</div>
-<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span></div>
-${detailsHtml}</div>`;
+return '<div class="price-line-item" onclick="togglePriceLine(this)"><div class="price-line-left">' +
+'<div class="price-line-icon ' + iconClass + '"><i class="fas ' + icon + '"></i></div>' +
+'<div class="price-line-info"><div class="price-line-title">' + escapeHtml(title) + ' <span style="background:var(--light-gray);color:var(--gray);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">' + entries.length + ' entries</span></div>' +
+'<div class="price-line-subtitle">' + escapeHtml(subtitle) + '</div></div></div>' +
+'<div class="price-line-right"><div class="price-line-amount ' + amountClass + '">' + sign + ' ' + formatEuro(total) + '</div>' +
+'<span class="price-line-expand"><i class="fas fa-chevron-down"></i></span></div>' +
+detailsHtml + '</div>';
 }
 function toggleBreakdown(header) {
 header.classList.toggle("expanded");
@@ -4748,17 +4750,17 @@ const sparringBreakdown = calculateDisciplineBreakdown(sparringEntries, sparring
 let csv = "data:text/csv;charset=utf-8,Type,Category,Name,Team,Amount (EUR)\n";
 if (patternsBreakdown) {
 patternsBreakdown.competitorDetails.forEach(comp => {
-csv += `INCOME,Patterns (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
+csv += 'INCOME,Patterns (Base),"' + safeStr(comp.name) + '","' + safeStr(comp.team) + '",' + comp.baseAmount.toFixed(2) + '\n';
 if (comp.extraCount > 0) {
-csv += `INCOME,Patterns (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
+csv += 'INCOME,Patterns (Extra),"' + safeStr(comp.name) + '","' + safeStr(comp.team) + ' (' + comp.extraCount + ' extra categories)",' + comp.extraAmount.toFixed(2) + '\n';
 }
 });
 }
 if (sparringBreakdown) {
 sparringBreakdown.competitorDetails.forEach(comp => {
-csv += `INCOME,Sparring (Base),"${safeStr(comp.name)}","${safeStr(comp.team)}",${comp.baseAmount.toFixed(2)}\n`;
+csv += 'INCOME,Sparring (Base),"' + safeStr(comp.name) + '","' + safeStr(comp.team) + '",' + comp.baseAmount.toFixed(2) + '\n';
 if (comp.extraCount > 0) {
-csv += `INCOME,Sparring (Extra),"${safeStr(comp.name)}","${safeStr(comp.team)} (${comp.extraCount} extra categories)",${comp.extraAmount.toFixed(2)}\n`;
+csv += 'INCOME,Sparring (Extra),"' + safeStr(comp.name) + '","' + safeStr(comp.team) + ' (' + comp.extraCount + ' extra categories)",' + comp.extraAmount.toFixed(2) + '\n';
 }
 });
 }
