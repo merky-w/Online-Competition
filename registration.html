@@ -1,4 +1,19 @@
-<!doctype html>
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                
+              </style>
+                        </head>
+                        <body>
+                            <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1192,6 +1207,7 @@
         });
       }
 
+      // FIXED FUNCTION: Now includes ALL calculated categories (Main + Extras) on initial registration
       async function handleRegistrationClick(card, person, type) {
         const { data: { session } } = await supaClient.auth.getSession();
         if(!session) return;
@@ -1200,8 +1216,19 @@
         const entriesList = [];
         
         if (type === 'comp') {
-           if (cats.sparring.main) entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
-           if (cats.patterns.main) entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
+           // Add Sparring Main and any available extras
+           if (cats.sparring.main) {
+             entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
+             if (cats.sparring.weightUp) entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: cats.sparring.weightUp.fullCat });
+             if (cats.sparring.ageUp) entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: cats.sparring.ageUp.fullCat });
+             if (cats.sparring.bothUp) entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: cats.sparring.bothUp.fullCat });
+           }
+           
+           // Add Patterns Main and any available extras
+           if (cats.patterns.main) {
+             entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
+             if (cats.patterns.ageUp) entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: cats.patterns.ageUp.fullCat });
+           }
         }
 
         const payload = {
@@ -1395,3 +1422,16 @@
     </script>
   </body>
 </html>
+
+
+              <script>
+                              if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) entriesList.push(newCats.patterns.ageUp);
+
+if (cats.sparring.main) entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
+if (cats.patterns.main) entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
+
+
+              </script>
+                        </body>
+                        </html>
+                    
