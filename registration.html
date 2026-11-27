@@ -137,11 +137,11 @@
         display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
         padding: 1.5rem; background-color: var(--bg-body); min-height: 100px;
       }
-      .col-header { 
-        text-align: center; font-size: 0.9rem; font-weight: 700; 
-        margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; 
-        color: var(--text-muted); padding-bottom: 0.5rem; 
-        border-bottom: 1px solid rgba(255,255,255, 0.05); 
+      .col-header {
+        text-align: center; font-size: 0.9rem; font-weight: 700;
+        margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;
+        color: var(--text-muted); padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255,255,255, 0.05);
       }
 
       .person-card {
@@ -151,7 +151,7 @@
         position: relative; margin-bottom: 1rem;
         display: flex; flex-direction: column; gap: 0.5rem;
       }
-      
+
       .col-left .person-card { cursor: pointer; }
       .col-left .person-card:hover {
         transform: translateY(-3px); border-color: var(--accent-primary);
@@ -172,28 +172,28 @@
 
       .card-actions { display: flex; gap: 8px; margin-top: 8px; }
       .btn-edit-info {
-        flex: 1; justify-content: center; background: rgba(255,255,255,0.1); 
+        flex: 1; justify-content: center; background: rgba(255,255,255,0.1);
         color: var(--text-main); border: 1px solid rgba(255,255,255,0.1);
       }
       .btn-edit-info:hover { background: rgba(255,255,255,0.2); }
-      
+
       .btn-categories {
-        flex: 1; justify-content: center; background: var(--accent-secondary); 
+        flex: 1; justify-content: center; background: var(--accent-secondary);
         color: white; border: 1px solid transparent;
       }
       .btn-categories:hover { background: #059669; }
 
       .card-categories { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; margin-top: 6px; }
       body.hide-categories .card-categories { display: none; }
-      
-      .cat-tag { 
+
+      .cat-tag {
         display: flex; align-items: center; justify-content: space-between;
         gap: 8px; padding: 4px 8px; border-radius: 6px;
         background: rgba(255,255,255,0.05);
         animation: fadeIn 0.3s ease;
       }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-      
+
       .cat-tag-left { display: flex; align-items: center; gap: 6px; }
       .cat-spar { color: #a78bfa; }
       .cat-pat { color: #fcd34d; }
@@ -323,7 +323,7 @@
       }
     </style>
   </head>
-  <body> 
+  <body>
     <header>
       <div class="header-left">
         <div class="logo" style="font-weight:bold; color:white; font-size:1.2rem;">Team Registration</div>
@@ -469,10 +469,10 @@
       const authSection = document.getElementById("authSection");
       const competitionSection = document.getElementById("competitionSection");
       const loadingOverlay = document.getElementById("loadingOverlay");
-      
+
       let currentEditingPerson = null;
       let tournamentDate = new Date().toISOString().split('T')[0];
-      let tempSelections = {}; 
+      let tempSelections = {};
       let currentCategoryCounts = {};
 
       let categoryConfig = {
@@ -497,9 +497,9 @@
         if (KUP_DAN_LEVELS[normalized] !== undefined) return KUP_DAN_LEVELS[normalized];
         const numMatch = normalized.match(/(\d+)/);
         if (numMatch) {
-          const num = parseInt(numMatch[1]);
-          if (normalized.includes('kup') && num >= 1 && num <= 10) return num;
-          if (normalized.includes('dan') && num >= 1 && num <= 6) return -(num - 1);
+          const num = parseInt(numMatch[1], 10);
+          if (normalized.includes("kup") && num >= 1 && num <= 10) return num;
+          if (normalized.includes("dan") && num >= 1 && num <= 6) return -(num - 1);
         }
         return null;
       }
@@ -512,6 +512,15 @@
         return "male";
       }
 
+      function isFlagEnabled(val) {
+        if (val === true || val === 1) return true;
+        if (typeof val === "string") {
+          const s = val.trim().toLowerCase();
+          return s === "yes" || s === "true" || s === "1";
+        }
+        return false;
+      }
+
       async function loadCategoryConfig() {
         try {
           const { data: ageGroups, error: ageErr } = await supaClient
@@ -522,8 +531,19 @@
             return;
           }
 
-          const patternsGroups = ageGroups.filter(g => g.discipline === "patterns").sort((a,b) => a.order_priority - b.order_priority);
-          const sparringGroups = ageGroups.filter(g => g.discipline === "sparring").sort((a,b) => a.order_priority - b.order_priority);
+          const normalizedGroups = ageGroups.map(g => ({
+            ...g,
+            discipline: (g.discipline || "").toString().trim().toLowerCase(),
+            order_priority: Number(g.order_priority) || 0,
+            is_active: g.is_active !== false
+          }));
+
+          const patternsGroups = normalizedGroups
+            .filter(g => g.discipline === "patterns")
+            .sort((a, b) => a.order_priority - b.order_priority);
+          const sparringGroups = normalizedGroups
+            .filter(g => g.discipline === "sparring")
+            .sort((a, b) => a.order_priority - b.order_priority);
 
           categoryConfig.patterns.ageGroups = patternsGroups;
           categoryConfig.sparring.ageGroups = sparringGroups;
@@ -535,7 +555,9 @@
             categoryConfig.patterns.kupRanges = {};
             if (pRanges) {
               pRanges.forEach(r => {
-                if (!categoryConfig.patterns.kupRanges[r.age_group_id]) categoryConfig.patterns.kupRanges[r.age_group_id] = [];
+                if (!categoryConfig.patterns.kupRanges[r.age_group_id]) {
+                  categoryConfig.patterns.kupRanges[r.age_group_id] = [];
+                }
                 categoryConfig.patterns.kupRanges[r.age_group_id].push(r);
               });
             }
@@ -548,7 +570,9 @@
             categoryConfig.sparring.weightBoundaries = {};
             if (sBounds) {
               sBounds.forEach(b => {
-                if (!categoryConfig.sparring.weightBoundaries[b.age_group_id]) categoryConfig.sparring.weightBoundaries[b.age_group_id] = [];
+                if (!categoryConfig.sparring.weightBoundaries[b.age_group_id]) {
+                  categoryConfig.sparring.weightBoundaries[b.age_group_id] = [];
+                }
                 categoryConfig.sparring.weightBoundaries[b.age_group_id].push(b.boundary_kg);
               });
             }
@@ -560,11 +584,14 @@
 
       function getAgeGroupForAge(age, discipline, gender) {
         const normGender = normalizeGender(gender);
-        const groups = (categoryConfig[discipline]?.ageGroups || []).filter(g => g.is_active && normalizeGender(g.gender) === normGender);
+        const groups = (categoryConfig[discipline]?.ageGroups || [])
+          .filter(g => g.is_active !== false && normalizeGender(g.gender) === normGender)
+          .sort((a, b) => a.order_priority - b.order_priority);
+
         for (const g of groups) {
-          const min = Number(g.min_age);
-          const max = g.max_age === null || g.max_age === undefined ? null : Number(g.max_age);
-          if (age >= min && (max === null || age <= max)) return g;
+          const min = g.min_age === null || g.min_age === undefined || g.min_age === "" ? -Infinity : Number(g.min_age);
+          const max = g.max_age === null || g.max_age === undefined || g.max_age === "" ? Infinity : Number(g.max_age);
+          if (age >= min && age <= max) return g;
         }
         return null;
       }
@@ -574,8 +601,8 @@
         const groups = (categoryConfig[discipline]?.ageGroups || [])
           .filter(g => g.is_active !== false && normalizeGender(g.gender) === normGender)
           .sort((a, b) => a.order_priority - b.order_priority);
-        
-        const idx = groups.findIndex(g => g.id === currentAgeGroup.id);
+
+        const idx = groups.findIndex(g => String(g.id) === String(currentAgeGroup.id));
         if (idx !== -1 && idx < groups.length - 1) return groups[idx + 1];
         return null;
       }
@@ -583,19 +610,19 @@
       function getSparringWeightLabel(weightKg, ageGroupId) {
         const w = Number(weightKg);
         if (isNaN(w)) return null;
-        const boundaries = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
+        const boundaries = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
         if (boundaries.length === 0) return null;
         if (w <= boundaries[0]) return "-" + boundaries[0] + "kg";
         for (let i = 0; i < boundaries.length - 1; i++) {
-          if (w > boundaries[i] && w <= boundaries[i+1]) {
-            return Math.ceil(boundaries[i]) + "-" + boundaries[i+1] + "kg";
+          if (w > boundaries[i] && w <= boundaries[i + 1]) {
+            return Math.ceil(boundaries[i]) + "-" + boundaries[i + 1] + "kg";
           }
         }
-        return "+" + boundaries[boundaries.length-1] + "kg";
+        return "+" + boundaries[boundaries.length - 1] + "kg";
       }
 
       function getNextWeightClass(currentWeightLabel, ageGroupId) {
-        const boundaries = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).slice().sort((a,b) => a-b);
+        const boundaries = (categoryConfig.sparring.weightBoundaries[ageGroupId] || []).map(Number).filter(n => !isNaN(n)).sort((a, b) => a - b);
         if (boundaries.length === 0 || !currentWeightLabel) return null;
 
         let currentIdx = -1;
@@ -606,7 +633,7 @@
         } else {
           const match = currentWeightLabel.match(/^(\d+)-(\d+)kg$/);
           if (match) {
-            const lower = parseInt(match[1]);
+            const lower = parseInt(match[1], 10);
             for (let i = 0; i < boundaries.length - 1; i++) {
               if (boundaries[i] === lower || Math.ceil(boundaries[i]) === lower) {
                 currentIdx = i + 1;
@@ -619,11 +646,11 @@
         if (currentIdx === -1 || currentIdx >= boundaries.length) return null;
         const nextIdx = currentIdx + 1;
         if (nextIdx > boundaries.length) return null;
-        
+
         if (nextIdx === boundaries.length) {
-          return "+" + boundaries[boundaries.length-1] + "kg";
+          return "+" + boundaries[boundaries.length - 1] + "kg";
         } else {
-          return Math.ceil(boundaries[nextIdx-1]) + "-" + boundaries[nextIdx] + "kg";
+          return Math.ceil(boundaries[nextIdx - 1]) + "-" + boundaries[nextIdx] + "kg";
         }
       }
 
@@ -631,9 +658,19 @@
         const ranges = (categoryConfig.patterns.kupRanges[ageGroupId] || []).filter(r => r.is_active !== false);
         if (ranges.length === 0) return null;
         for (const r of ranges) {
-          const minK = Number(r.min_kup), maxK = Number(r.max_kup);
-          const hi = Math.max(minK, maxK), lo = Math.min(minK, maxK);
-          if (kupDanNum <= hi && kupDanNum >= lo) return r.display_name;
+          const hasMin = r.min_kup !== null && r.min_kup !== undefined && r.min_kup !== "";
+          const hasMax = r.max_kup !== null && r.max_kup !== undefined && r.max_kup !== "";
+          if (!hasMin && !hasMax) continue;
+
+          const minK = hasMin ? Number(r.min_kup) : -Infinity;
+          const maxK = hasMax ? Number(r.max_kup) : Infinity;
+          if (isNaN(minK) || isNaN(maxK)) continue;
+
+          const hi = Math.max(minK, maxK);
+          const lo = Math.min(minK, maxK);
+          if (kupDanNum <= hi && kupDanNum >= lo) {
+            return r.display_name || r.label || r.name || null;
+          }
         }
         return null;
       }
@@ -650,9 +687,9 @@
 
       function computePersonCategories(personObj) {
         const age = calcAge(personObj.birthdate);
-        const genderStr = (personObj.gender || "").trim().toUpperCase().startsWith("M") ? "male" : "female";
+        const genderStr = normalizeGender(personObj.gender);
         const genderLabel = genderStr === "male" ? "Male" : "Female";
-        
+
         const result = {
           age,
           genderChar: genderStr === "male" ? "M" : "F",
@@ -660,21 +697,14 @@
           patterns: { main: null, ageUp: null }
         };
 
-        const isSparring = String(personObj.sparring).toLowerCase() === "yes" || personObj.sparring === true;
-        const isPatterns = String(personObj.patterns).toLowerCase() === "yes" || personObj.patterns === true;
+        const isSparring = isFlagEnabled(personObj.sparring);
+        const isPatterns = isFlagEnabled(personObj.patterns);
         const weightNum = Number(personObj.weight);
-
-        console.log("=== computePersonCategories ===");
-        console.log("Person:", personObj.name);
-        console.log("Age:", age, "Gender:", genderStr, "Weight:", weightNum);
-        console.log("isSparring:", isSparring, "isPatterns:", isPatterns);
 
         if (isSparring && weightNum > 0) {
           const ageGroup = getAgeGroupForAge(age, "sparring", genderStr);
-          console.log("Sparring ageGroup:", ageGroup?.display_name);
           if (ageGroup) {
             const weightLabel = getSparringWeightLabel(weightNum, ageGroup.id);
-            console.log("Sparring weightLabel:", weightLabel);
             if (weightLabel) {
               result.sparring.main = {
                 ageGroup: ageGroup.display_name,
@@ -684,7 +714,6 @@
               };
 
               const nextWeight = getNextWeightClass(weightLabel, ageGroup.id);
-              console.log("Sparring nextWeight:", nextWeight);
               if (nextWeight && nextWeight !== weightLabel) {
                 result.sparring.weightUp = {
                   ageGroup: ageGroup.display_name,
@@ -695,12 +724,11 @@
               }
 
               const nextAgeGroup = getNextAgeGroup(ageGroup, "sparring", genderStr);
-              console.log("Sparring nextAgeGroup:", nextAgeGroup?.display_name);
               if (nextAgeGroup) {
                 const nextBoundaries = categoryConfig.sparring.weightBoundaries[nextAgeGroup.id];
                 if (nextBoundaries && nextBoundaries.length > 0) {
                   const weightInNextAge = getSparringWeightLabel(weightNum, nextAgeGroup.id);
-                  console.log("Sparring weightInNextAge:", weightInNextAge);
+
                   if (weightInNextAge) {
                     result.sparring.ageUp = {
                       ageGroup: nextAgeGroup.display_name,
@@ -727,13 +755,10 @@
 
         if (isPatterns) {
           const kupDanNum = kupDanNameToNumber(personObj.belt);
-          console.log("Patterns kupDanNum:", kupDanNum);
           if (kupDanNum !== null) {
             const ageGroup = getAgeGroupForAge(age, "patterns", genderStr);
-            console.log("Patterns ageGroup:", ageGroup?.display_name);
             if (ageGroup) {
               const beltLabel = getPatternsBeltLabel(kupDanNum, ageGroup.id);
-              console.log("Patterns beltLabel:", beltLabel);
               if (beltLabel) {
                 result.patterns.main = {
                   ageGroup: ageGroup.display_name,
@@ -743,12 +768,10 @@
                 };
 
                 const nextAgeGroup = getNextAgeGroup(ageGroup, "patterns", genderStr);
-                console.log("Patterns nextAgeGroup:", nextAgeGroup?.display_name);
                 if (nextAgeGroup) {
                   const nextRanges = categoryConfig.patterns.kupRanges[nextAgeGroup.id];
                   if (nextRanges && nextRanges.length > 0) {
                     const beltInNextAge = getPatternsBeltLabel(kupDanNum, nextAgeGroup.id);
-                    console.log("Patterns beltInNextAge:", beltInNextAge);
                     if (beltInNextAge) {
                       result.patterns.ageUp = {
                         ageGroup: nextAgeGroup.display_name,
@@ -764,7 +787,6 @@
           }
         }
 
-        console.log("Final result:", result);
         return result;
       }
 
@@ -788,7 +810,7 @@
       document.getElementById('signinBtn').addEventListener('click', async () => {
         const em = document.getElementById('email').value;
         const pw = document.getElementById('password').value;
-        if(!em || !pw) return showToast("Please fill in all fields.", "error");
+        if (!em || !pw) return showToast("Please fill in all fields.", "error");
         const { error } = await supaClient.auth.signInWithPassword({ email: em, password: pw });
         if (error) showToast(error.message, "error");
         else showToast("Signed in successfully!", "success");
@@ -797,7 +819,7 @@
       document.getElementById('signupBtn').addEventListener('click', async () => {
         const em = document.getElementById('email').value;
         const pw = document.getElementById('password').value;
-        if(!em || !pw) return showToast("Please fill in all fields.", "error");
+        if (!em || !pw) return showToast("Please fill in all fields.", "error");
         const { error } = await supaClient.auth.signUp({ email: em, password: pw });
         if (error) showToast(error.message, "error");
         else showToast("Check email for confirmation link.", "success");
@@ -805,7 +827,7 @@
 
       document.getElementById('forgotBtn').addEventListener('click', async () => {
         const em = document.getElementById('email').value;
-        if(!em) return showToast("Please enter your email.", "error");
+        if (!em) return showToast("Please enter your email.", "error");
         const { error } = await supaClient.auth.resetPasswordForEmail(em);
         if (error) showToast(error.message, "error");
         else showToast("Password reset email sent.", "success");
@@ -820,13 +842,13 @@
 
       async function loadAllData(userId) {
         loadingOverlay.style.display = "flex";
-        tempSelections = {}; 
+        tempSelections = {};
 
         await loadCategoryConfig();
 
-        const { data: settings } = await supaClient.from("site_settings").select("tournament_date").eq("id",1).single();
+        const { data: settings } = await supaClient.from("site_settings").select("tournament_date").eq("id", 1).single();
         if (settings && settings.tournament_date) tournamentDate = settings.tournament_date;
-        
+
         const [compRes, judgeRes, coachRes, countsRes, regRes] = await Promise.all([
           supaClient.from("competitors").select("*").eq("user_id", userId),
           supaClient.from("judges").select("*").eq("user_id", userId),
@@ -848,7 +870,7 @@
         renderSplitSection("comp", "Competitors", "fa-users", compRes.data || [], regMap);
         renderSplitSection("judge", "Judges", "fa-gavel", judgeRes.data || [], regMap);
         renderSplitSection("coach", "Coaches", "fa-chalkboard-teacher", coachRes.data || [], regMap);
-        
+
         toggleSection("sec-competitors");
         loadingOverlay.style.display = "none";
       }
@@ -856,7 +878,7 @@
       function renderSplitSection(typeShort, typeName, iconClass, data, regMap) {
         const leftContainer = document.getElementById(`${typeShort}-left`);
         const rightContainer = document.getElementById(`${typeShort}-right`);
-        leftContainer.innerHTML = ""; 
+        leftContainer.innerHTML = "";
         rightContainer.innerHTML = "";
 
         if (data.length === 0) {
@@ -868,11 +890,11 @@
         data.forEach(person => {
           const personIdStr = String(person.id);
           const isRegistered = !!regMap.get(personIdStr);
-          
+
           if (!isRegistered) {
             const card = document.createElement("div");
             card.className = "person-card";
-            
+
             const headerDiv = document.createElement("div");
             headerDiv.className = "card-header-row";
             const nameDiv = document.createElement("div");
@@ -882,7 +904,7 @@
             infoBtn.innerHTML = '<i class="fas fa-info"></i>';
             infoBtn.style.cssText = 'color:var(--accent-primary); cursor:pointer;';
             infoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
-            
+
             headerDiv.appendChild(nameDiv);
             headerDiv.appendChild(infoBtn);
             card.appendChild(headerDiv);
@@ -908,7 +930,7 @@
             btnUnreg.innerHTML = '<i class="fas fa-times"></i>';
             btnUnreg.addEventListener("click", async (e) => {
               e.stopPropagation();
-              if(confirm(`Remove ${person.name} completely from registration?`)) {
+              if (confirm(`Remove ${person.name} completely from registration?`)) {
                 const { data: { session } } = await supaClient.auth.getSession();
                 if (!session) return;
                 const { error } = await supaClient.from("final_registrations").delete().eq("id", registration.id).eq("user_id", session.user.id);
@@ -944,35 +966,32 @@
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
               catDiv.id = `cat-display-${registration.id}`;
-              
+
               const entriesList = registration.entry_data?.entries_list || [];
-              console.log("=== Rendering categories for", person.name, "===");
-              console.log("entriesList from DB:", entriesList);
-              
               entriesList.forEach(entry => {
-                 const tagDiv = document.createElement("div");
-                 tagDiv.className = "cat-tag";
-                 
-                 const leftDiv = document.createElement("div");
-                 leftDiv.className = "cat-tag-left";
-                 
-                 const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-                 const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-                 const count = currentCategoryCounts[entry.full_cat] || 0;
-                 
-                 leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat} <span style="opacity:0.7; font-size:0.75rem;">(${count})</span>`;
-                 
-                 const removeBtn = document.createElement("button");
-                 removeBtn.className = "btn-remove-cat";
-                 removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                 removeBtn.addEventListener("click", async (e) => {
-                   e.stopPropagation();
-                   await removeSingleCategory(registration.id, entry);
-                 });
-                 
-                 tagDiv.appendChild(leftDiv);
-                 tagDiv.appendChild(removeBtn);
-                 catDiv.appendChild(tagDiv);
+                const tagDiv = document.createElement("div");
+                tagDiv.className = "cat-tag";
+
+                const leftDiv = document.createElement("div");
+                leftDiv.className = "cat-tag-left";
+
+                const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
+                const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+                const count = currentCategoryCounts[entry.full_cat] || 0;
+
+                leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat} <span style="opacity:0.7; font-size:0.75rem;">(${count})</span>`;
+
+                const removeBtn = document.createElement("button");
+                removeBtn.className = "btn-remove-cat";
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.addEventListener("click", async (e) => {
+                  e.stopPropagation();
+                  await removeSingleCategory(registration.id, entry);
+                });
+
+                tagDiv.appendChild(leftDiv);
+                tagDiv.appendChild(removeBtn);
+                catDiv.appendChild(tagDiv);
               });
 
               card.appendChild(catDiv);
@@ -988,18 +1007,18 @@
             actionsDiv.appendChild(editInfoBtn);
 
             if (typeShort === 'comp') {
-               const catBtn = document.createElement("button");
-               catBtn.className = "btn btn-categories";
-               catBtn.innerHTML = '<i class="fas fa-list-ul"></i> Additional Categories';
-               catBtn.addEventListener("click", (e) => { e.stopPropagation(); card.classList.toggle('expanded'); });
-               actionsDiv.appendChild(catBtn);
+              const catBtn = document.createElement("button");
+              catBtn.className = "btn btn-categories";
+              catBtn.innerHTML = '<i class="fas fa-list-ul"></i> Additional Categories';
+              catBtn.addEventListener("click", (e) => { e.stopPropagation(); card.classList.toggle('expanded'); });
+              actionsDiv.appendChild(catBtn);
             }
 
             card.appendChild(actionsDiv);
 
             if (typeShort === 'comp') {
-               const extrasPanel = createExtrasPanel(person, registration);
-               card.appendChild(extrasPanel);
+              const extrasPanel = createExtrasPanel(person, registration);
+              card.appendChild(extrasPanel);
             }
 
             rightContainer.appendChild(card);
@@ -1009,13 +1028,13 @@
 
       async function removeSingleCategory(regId, entryToRemove) {
         if (!confirm(`Remove "${entryToRemove.full_cat}"?`)) return;
-        
+
         const { data: { session } } = await supaClient.auth.getSession();
         const { data: regData } = await supaClient.from("final_registrations").select("*").eq("id", regId).eq("user_id", session.user.id).single();
         if (!regData) return;
 
         let currentList = regData.entry_data?.entries_list || [];
-        currentList = currentList.filter(e => 
+        currentList = currentList.filter(e =>
           !(e.discipline === entryToRemove.discipline && e.label === entryToRemove.label)
         );
 
@@ -1038,7 +1057,7 @@
 
         const savedList = registration.entry_data?.entries_list || [];
         tempSelections[regId] = JSON.parse(JSON.stringify(savedList));
-        
+
         const cats = computePersonCategories(person);
 
         const isEntrySelected = (disc, lbl) => tempSelections[regId].some(e => e.discipline === disc && e.label === lbl);
@@ -1047,43 +1066,43 @@
           const row = document.createElement("div");
           row.className = "extra-row" + (isAvailable ? "" : " unavailable");
           const count = currentCategoryCounts[catName] || 0;
-          
+
           let rightSideHtml = '';
           if (isAvailable) {
             rightSideHtml = `<input type="checkbox" class="extra-checkbox" ${isChecked ? 'checked' : ''}>`;
           } else {
             rightSideHtml = `<span class="extra-unavailable-note"><i class="fas fa-ban"></i> Not available</span>`;
           }
-          
+
           row.innerHTML = `
             <span class="extra-label">${displayLabel} <span class="extra-cat-name">${catName} <span style="opacity:0.7; font-size:0.8em;">(${count})</span></span></span>
             ${rightSideHtml}
           `;
-          
+
           if (isAvailable) {
             const checkbox = row.querySelector('input');
             checkbox.addEventListener('change', (e) => {
               e.stopPropagation();
               const newChecked = checkbox.checked;
-              
+
               if (newChecked && saveLabel !== "Main") {
-                 const list = tempSelections[regId];
-                 const hasMain = list.some(e => e.discipline === discipline && e.label === "Main");
-                 if (!hasMain) {
-                    checkbox.checked = false;
-                    showToast("You must select the Main category first.", "error");
-                    return; 
-                 }
+                const list = tempSelections[regId];
+                const hasMain = list.some(e => e.discipline === discipline && e.label === "Main");
+                if (!hasMain) {
+                  checkbox.checked = false;
+                  showToast("You must select the Main category first.", "error");
+                  return;
+                }
               }
 
               if (!newChecked && saveLabel === "Main") {
-                 const list = tempSelections[regId];
-                 const hasExtras = list.some(e => e.discipline === discipline && e.label !== "Main");
-                 if (hasExtras) {
-                    checkbox.checked = true;
-                    showToast("Uncheck additional categories first.", "error");
-                    return; 
-                 }
+                const list = tempSelections[regId];
+                const hasExtras = list.some(e => e.discipline === discipline && e.label !== "Main");
+                if (hasExtras) {
+                  checkbox.checked = true;
+                  showToast("Uncheck additional categories first.", "error");
+                  return;
+                }
               }
 
               toggleCategorySelection(regId, person, discipline, saveLabel, catName, newChecked);
@@ -1122,7 +1141,7 @@
         const saveBtn = document.createElement("button");
         saveBtn.className = "btn-save-panel";
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Categories';
-        
+
         saveBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           const btn = e.currentTarget;
@@ -1133,31 +1152,31 @@
           const uniqueList = [];
           const seen = new Set();
           for (const ent of tempSelections[regId]) {
-             const sk = `${ent.discipline}-${ent.label}`;
-             if (!seen.has(sk)) {
-                seen.add(sk);
-                uniqueList.push(ent);
-             }
+            const sk = `${ent.discipline}-${ent.label}`;
+            if (!seen.has(sk)) {
+              seen.add(sk);
+              uniqueList.push(ent);
+            }
           }
 
           if (uniqueList.length === 0) {
-             await supaClient.from("final_registrations").delete().eq("id", regId);
+            await supaClient.from("final_registrations").delete().eq("id", regId);
           } else {
-             const { error } = await supaClient.from("final_registrations").update({
-               entry_data: { entries_list: uniqueList }
-             }).eq("id", regId);
+            const { error } = await supaClient.from("final_registrations").update({
+              entry_data: { entries_list: uniqueList }
+            }).eq("id", regId);
 
-             if (error) {
-               showToast("Error saving: " + error.message, "error");
-               btn.innerHTML = originalText;
-               btn.disabled = false;
-               return;
-             }
+            if (error) {
+              showToast("Error saving: " + error.message, "error");
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              return;
+            }
           }
-          
+
           showToast("Categories updated successfully!", "success");
           const { data: { session } } = await supaClient.auth.getSession();
-          if(session) loadAllData(session.user.id);
+          if (session) loadAllData(session.user.id);
         });
 
         panel.appendChild(saveBtn);
@@ -1165,13 +1184,13 @@
       }
 
       function toggleCategorySelection(regId, personObj, discipline, label, catName, isChecked) {
-         let list = tempSelections[regId];
-         list = list.filter(e => !(e.discipline === discipline && e.label === label));
-         if (isChecked) {
-           list.push({ discipline, label, full_cat: catName });
-         }
-         tempSelections[regId] = list;
-         updateCategoryTagsDisplay(regId, list);
+        let list = tempSelections[regId];
+        list = list.filter(e => !(e.discipline === discipline && e.label === label));
+        if (isChecked) {
+          list.push({ discipline, label, full_cat: catName });
+        }
+        tempSelections[regId] = list;
+        updateCategoryTagsDisplay(regId, list);
       }
 
       function updateCategoryTagsDisplay(regId, list) {
@@ -1182,76 +1201,39 @@
 
         catDiv.innerHTML = "";
         list.forEach(entry => {
-           const tagDiv = document.createElement("div");
-           tagDiv.className = "cat-tag";
-           const leftDiv = document.createElement("div");
-           leftDiv.className = "cat-tag-left";
-           const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
-           const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
-           const count = currentCategoryCounts[entry.full_cat] || 0;
-           leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat} <span style="opacity:0.7; font-size:0.75rem;">(${count})</span>`;
-           
-           const removeBtn = document.createElement("button");
-           removeBtn.className = "btn-remove-cat";
-           removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-           removeBtn.addEventListener("click", async (e) => {
-             e.stopPropagation();
-             await removeSingleCategory(regId, entry);
-           });
-           tagDiv.appendChild(leftDiv);
-           tagDiv.appendChild(removeBtn);
-           catDiv.appendChild(tagDiv);
+          const tagDiv = document.createElement("div");
+          tagDiv.className = "cat-tag";
+          const leftDiv = document.createElement("div");
+          leftDiv.className = "cat-tag-left";
+          const icon = entry.discipline === 'sparring' ? 'fa-fist-raised' : 'fa-chess-board';
+          const colorClass = entry.discipline === 'sparring' ? 'cat-spar' : 'cat-pat';
+          const count = currentCategoryCounts[entry.full_cat] || 0;
+          leftDiv.innerHTML = `<i class="fas ${icon} ${colorClass}"></i> ${entry.full_cat} <span style="opacity:0.7; font-size:0.75rem;">(${count})</span>`;
+
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "btn-remove-cat";
+          removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+          removeBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            await removeSingleCategory(regId, entry);
+          });
+          tagDiv.appendChild(leftDiv);
+          tagDiv.appendChild(removeBtn);
+          catDiv.appendChild(tagDiv);
         });
       }
 
       async function handleRegistrationClick(card, person, type) {
         const { data: { session } } = await supaClient.auth.getSession();
-        if(!session) return;
+        if (!session) return;
 
         const cats = computePersonCategories(person);
         const entriesList = [];
-        
-        console.log("=== handleRegistrationClick ===");
-        console.log("Person:", person.name, "Type:", type);
-        console.log("Computed categories:", cats);
-        
-        if (type === 'comp') {
-           // SPARRING - Add all available categories
-           if (cats.sparring.main) {
-             entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
-             console.log("Added sparring Main:", cats.sparring.main.fullCat);
-             
-             if (cats.sparring.weightUp) {
-               entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: cats.sparring.weightUp.fullCat });
-               console.log("Added sparring Weight +1:", cats.sparring.weightUp.fullCat);
-             }
-             if (cats.sparring.ageUp) {
-               entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: cats.sparring.ageUp.fullCat });
-               console.log("Added sparring Age +1:", cats.sparring.ageUp.fullCat);
-             }
-             if (cats.sparring.bothUp) {
-               entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: cats.sparring.bothUp.fullCat });
-               console.log("Added sparring Both +1:", cats.sparring.bothUp.fullCat);
-             }
-           } else {
-             console.log("No sparring main category found");
-           }
-           
-           // PATTERNS - Add all available categories
-           if (cats.patterns.main) {
-             entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
-             console.log("Added patterns Main:", cats.patterns.main.fullCat);
-             
-             if (cats.patterns.ageUp) {
-               entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: cats.patterns.ageUp.fullCat });
-               console.log("Added patterns Age +1:", cats.patterns.ageUp.fullCat);
-             }
-           } else {
-             console.log("No patterns main category found");
-           }
-        }
 
-        console.log("Final entriesList to save:", entriesList);
+        if (type === 'comp') {
+          if (cats.sparring.main) entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
+          if (cats.patterns.main) entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
+        }
 
         const payload = {
           user_id: session.user.id,
@@ -1264,11 +1246,8 @@
         const { error } = await supaClient.from("final_registrations").insert([payload]);
         loadingOverlay.style.display = "none";
 
-        if (error) {
-          console.error("Registration error:", error);
-          showToast("Error registering: " + error.message, "error");
-        } else {
-          console.log("Registration successful!");
+        if (error) showToast("Error registering: " + error.message, "error");
+        else {
           showToast(`${person.name} registered!`, "success");
           loadAllData(session.user.id);
         }
@@ -1277,7 +1256,7 @@
       function toggleSection(sectionId) {
         document.querySelectorAll(".split-content").forEach(el => el.classList.remove("open"));
         document.querySelectorAll(".category-header i.fa-chevron-up").forEach(el => {
-            el.classList.remove("fa-chevron-up"); el.classList.add("fa-chevron-down");
+          el.classList.remove("fa-chevron-up"); el.classList.add("fa-chevron-down");
         });
         const content = document.getElementById(`content-${sectionId}`);
         const icon = document.getElementById(`icon-${sectionId}`);
@@ -1288,7 +1267,7 @@
       }
 
       document.getElementById('catToggle').addEventListener('change', (e) => {
-        if(e.target.checked) document.body.classList.remove('hide-categories');
+        if (e.target.checked) document.body.classList.remove('hide-categories');
         else document.body.classList.add('hide-categories');
       });
 
@@ -1335,18 +1314,18 @@
         labelEl.className = "stat-label";
         labelEl.textContent = label;
         wrapper.appendChild(labelEl);
-        
+
         const valEl = document.createElement("div");
         valEl.className = "stat-value";
         valEl.id = `val-${key}`;
         valEl.textContent = value || "-";
         wrapper.appendChild(valEl);
-        
+
         const inpEl = document.createElement(inputType === "select" || inputType === "belt-select" ? "select" : "input");
         inpEl.className = "stat-input";
         inpEl.id = `inp-${key}`;
         inpEl.dataset.key = key;
-        
+
         if (inputType === "number") inpEl.type = "number";
         if (inputType === "date") inpEl.type = "date";
         if (inputType === "select") {
@@ -1357,7 +1336,7 @@
             inpEl.appendChild(o);
           });
         } else if (inputType === "belt-select") {
-          const belts = ["10 kup","9 kup","8 kup","7 kup","6 kup","5 kup","4 kup","3 kup","2 kup","1 kup","1 dan","2 dan","3 dan","4 dan","5 dan","6 dan"];
+          const belts = ["10 kup", "9 kup", "8 kup", "7 kup", "6 kup", "5 kup", "4 kup", "3 kup", "2 kup", "1 kup", "1 dan", "2 dan", "3 dan", "4 dan", "5 dan", "6 dan"];
           belts.forEach(b => {
             const o = document.createElement("option");
             o.value = b; o.textContent = b;
@@ -1380,67 +1359,75 @@
         const inputs = document.querySelectorAll(".stat-input");
         const updateData = {};
         inputs.forEach(inp => { updateData[inp.dataset.key] = inp.value; });
-        
+
         if (!updateData.name || !updateData.belt) { showToast("Name and Belt are required.", "error"); return; }
         if (currentEditingPerson.type === 'comp' && (!updateData.weight || updateData.weight <= 0)) { showToast("Weight is required.", "error"); return; }
-        
+
         const btn = document.querySelector(".btn-save");
         const originalText = btn.textContent;
         btn.textContent = "Saving..."; btn.disabled = true;
-        
+
         let tableName = currentEditingPerson.type === 'comp' ? "competitors" : currentEditingPerson.type === 'judge' ? "judges" : "coaches";
-        
+
         const { error } = await supaClient.from(tableName).update(updateData).eq("id", currentEditingPerson.id);
         if (error) {
-          showToast("Error saving: " + error.message, "error"); 
-          btn.textContent = originalText; btn.disabled = false; 
+          showToast("Error saving: " + error.message, "error");
+          btn.textContent = originalText; btn.disabled = false;
           return;
         }
 
         if (currentEditingPerson.type === 'comp') {
-           const newPersonData = { ...currentEditingPerson.data, ...updateData };
-           const newCats = computePersonCategories(newPersonData);
+          const newPersonData = { ...currentEditingPerson.data, ...updateData };
+          const newCats = computePersonCategories(newPersonData);
 
-           const { data: { session } } = await supaClient.auth.getSession();
-           const { data: regData } = await supaClient.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).eq("user_id", session.user.id).single();
+          const { data: { session } } = await supaClient.auth.getSession();
+          const { data: regData } = await supaClient.from("final_registrations").select("*").eq("entry_id", String(currentEditingPerson.id)).eq("user_id", session.user.id).single();
 
-           if (regData) {
-               let entriesList = regData.entry_data?.entries_list || [];
-               const isSparringNo = String(updateData.sparring).toLowerCase() === "no";
-               const isPatternsNo = String(updateData.patterns).toLowerCase() === "no";
+          if (regData) {
+            let entriesList = regData.entry_data?.entries_list || [];
+            const isSparringNo = String(updateData.sparring).toLowerCase() === "no";
+            const isPatternsNo = String(updateData.patterns).toLowerCase() === "no";
 
-               if (isSparringNo) entriesList = entriesList.filter(e => e.discipline !== "sparring");
-               if (isPatternsNo) entriesList = entriesList.filter(e => e.discipline !== "patterns");
+            if (isSparringNo) entriesList = entriesList.filter(e => e.discipline !== "sparring");
+            if (isPatternsNo) entriesList = entriesList.filter(e => e.discipline !== "patterns");
 
-               const isSparringYes = String(newPersonData.sparring).toLowerCase() === "yes" || newPersonData.sparring === true;
-               const isPatternsYes = String(newPersonData.patterns).toLowerCase() === "yes" || newPersonData.patterns === true;
-               const coreChanged = updateData.weight !== currentEditingPerson.data.weight || updateData.birthdate !== currentEditingPerson.data.birthdate || updateData.belt !== currentEditingPerson.data.belt;
+            const isSparringYes = isFlagEnabled(newPersonData.sparring);
+            const isPatternsYes = isFlagEnabled(newPersonData.patterns);
+            const coreChanged = updateData.weight !== currentEditingPerson.data.weight || updateData.birthdate !== currentEditingPerson.data.birthdate || updateData.belt !== currentEditingPerson.data.belt;
 
-               if (coreChanged || isSparringYes || isPatternsYes) {
-                  const oldExtras = entriesList.filter(e => e.label !== "Main");
-                  entriesList = []; 
+            if (coreChanged || isSparringYes || isPatternsYes) {
+              const oldExtras = entriesList.filter(e => e.label !== "Main");
+              entriesList = [];
 
-                  if (isSparringYes && newCats.sparring.main) {
-                     entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparring.main.fullCat });
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Weight +1") && newCats.sparring.weightUp) entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: newCats.sparring.weightUp.fullCat });
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Age +1") && newCats.sparring.ageUp) entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: newCats.sparring.ageUp.fullCat });
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Both +1") && newCats.sparring.bothUp) entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: newCats.sparring.bothUp.fullCat });
-                  }
+              if (isSparringYes && newCats.sparring.main) {
+                entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparring.main.fullCat });
+                if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Weight +1") && newCats.sparring.weightUp) {
+                  entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: newCats.sparring.weightUp.fullCat });
+                }
+                if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Age +1") && newCats.sparring.ageUp) {
+                  entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: newCats.sparring.ageUp.fullCat });
+                }
+                if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Both +1") && newCats.sparring.bothUp) {
+                  entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: newCats.sparring.bothUp.fullCat });
+                }
+              }
 
-                  if (isPatternsYes && newCats.patterns.main) {
-                     entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patterns.main.fullCat });
-                     if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: newCats.patterns.ageUp.fullCat });
-                  }
-               }
+              if (isPatternsYes && newCats.patterns.main) {
+                entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patterns.main.fullCat });
+                if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) {
+                  entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: newCats.patterns.ageUp.fullCat });
+                }
+              }
+            }
 
-               await supaClient.from("final_registrations").update({ entry_data: { entries_list: entriesList } }).eq("id", regData.id);
-           }
+            await supaClient.from("final_registrations").update({ entry_data: { entries_list: entriesList } }).eq("id", regData.id);
+          }
         }
 
         btn.textContent = originalText; btn.disabled = false;
         closeModal();
         const { data: { session } } = await supaClient.auth.getSession();
-        if(session) loadAllData(session.user.id);
+        if (session) loadAllData(session.user.id);
       }
 
       document.addEventListener("DOMContentLoaded", checkSession);
