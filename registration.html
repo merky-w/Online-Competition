@@ -1,19 +1,4 @@
-
-                        <!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body {
-                  background-color: white; /* Ensure the iframe has a white background */
-                }
-
-                
-              </style>
-                        </head>
-                        <body>
-                            <!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -679,10 +664,17 @@
         const isPatterns = String(personObj.patterns).toLowerCase() === "yes" || personObj.patterns === true;
         const weightNum = Number(personObj.weight);
 
+        console.log("=== computePersonCategories ===");
+        console.log("Person:", personObj.name);
+        console.log("Age:", age, "Gender:", genderStr, "Weight:", weightNum);
+        console.log("isSparring:", isSparring, "isPatterns:", isPatterns);
+
         if (isSparring && weightNum > 0) {
           const ageGroup = getAgeGroupForAge(age, "sparring", genderStr);
+          console.log("Sparring ageGroup:", ageGroup?.display_name);
           if (ageGroup) {
             const weightLabel = getSparringWeightLabel(weightNum, ageGroup.id);
+            console.log("Sparring weightLabel:", weightLabel);
             if (weightLabel) {
               result.sparring.main = {
                 ageGroup: ageGroup.display_name,
@@ -692,6 +684,7 @@
               };
 
               const nextWeight = getNextWeightClass(weightLabel, ageGroup.id);
+              console.log("Sparring nextWeight:", nextWeight);
               if (nextWeight && nextWeight !== weightLabel) {
                 result.sparring.weightUp = {
                   ageGroup: ageGroup.display_name,
@@ -702,11 +695,12 @@
               }
 
               const nextAgeGroup = getNextAgeGroup(ageGroup, "sparring", genderStr);
+              console.log("Sparring nextAgeGroup:", nextAgeGroup?.display_name);
               if (nextAgeGroup) {
                 const nextBoundaries = categoryConfig.sparring.weightBoundaries[nextAgeGroup.id];
                 if (nextBoundaries && nextBoundaries.length > 0) {
                   const weightInNextAge = getSparringWeightLabel(weightNum, nextAgeGroup.id);
-                  
+                  console.log("Sparring weightInNextAge:", weightInNextAge);
                   if (weightInNextAge) {
                     result.sparring.ageUp = {
                       ageGroup: nextAgeGroup.display_name,
@@ -733,10 +727,13 @@
 
         if (isPatterns) {
           const kupDanNum = kupDanNameToNumber(personObj.belt);
+          console.log("Patterns kupDanNum:", kupDanNum);
           if (kupDanNum !== null) {
             const ageGroup = getAgeGroupForAge(age, "patterns", genderStr);
+            console.log("Patterns ageGroup:", ageGroup?.display_name);
             if (ageGroup) {
               const beltLabel = getPatternsBeltLabel(kupDanNum, ageGroup.id);
+              console.log("Patterns beltLabel:", beltLabel);
               if (beltLabel) {
                 result.patterns.main = {
                   ageGroup: ageGroup.display_name,
@@ -746,10 +743,12 @@
                 };
 
                 const nextAgeGroup = getNextAgeGroup(ageGroup, "patterns", genderStr);
+                console.log("Patterns nextAgeGroup:", nextAgeGroup?.display_name);
                 if (nextAgeGroup) {
                   const nextRanges = categoryConfig.patterns.kupRanges[nextAgeGroup.id];
                   if (nextRanges && nextRanges.length > 0) {
                     const beltInNextAge = getPatternsBeltLabel(kupDanNum, nextAgeGroup.id);
+                    console.log("Patterns beltInNextAge:", beltInNextAge);
                     if (beltInNextAge) {
                       result.patterns.ageUp = {
                         ageGroup: nextAgeGroup.display_name,
@@ -765,6 +764,7 @@
           }
         }
 
+        console.log("Final result:", result);
         return result;
       }
 
@@ -902,7 +902,6 @@
             card.className = "person-card";
             card.setAttribute("data-reg-id", registration.id);
 
-            // === UNREGISTER BUTTON: Always show for ALL types (competitors, judges, coaches) ===
             const btnUnreg = document.createElement("div");
             btnUnreg.className = "btn-unregister";
             btnUnreg.title = "Unregister " + person.name;
@@ -931,7 +930,6 @@
             headerDiv.appendChild(nameDiv);
             card.appendChild(headerDiv);
 
-            // === Show details for judges/coaches (belt, team) ===
             if (typeShort === 'judge' || typeShort === 'coach') {
               const details = document.createElement("div");
               details.className = "card-details";
@@ -942,13 +940,15 @@
               card.appendChild(details);
             }
 
-            // === Competitors: show category tags ===
             if (typeShort === 'comp') {
               const catDiv = document.createElement("div");
               catDiv.className = "card-categories";
               catDiv.id = `cat-display-${registration.id}`;
               
               const entriesList = registration.entry_data?.entries_list || [];
+              console.log("=== Rendering categories for", person.name, "===");
+              console.log("entriesList from DB:", entriesList);
+              
               entriesList.forEach(entry => {
                  const tagDiv = document.createElement("div");
                  tagDiv.className = "cat-tag";
@@ -978,7 +978,6 @@
               card.appendChild(catDiv);
             }
 
-            // === Action buttons for ALL types ===
             const actionsDiv = document.createElement("div");
             actionsDiv.className = "card-actions";
 
@@ -988,7 +987,6 @@
             editInfoBtn.addEventListener("click", (e) => { e.stopPropagation(); openPersonModal(person, typeShort, person.id); });
             actionsDiv.appendChild(editInfoBtn);
 
-            // === Additional Categories button: only for competitors ===
             if (typeShort === 'comp') {
                const catBtn = document.createElement("button");
                catBtn.className = "btn btn-categories";
@@ -999,7 +997,6 @@
 
             card.appendChild(actionsDiv);
 
-            // === Extras panel: only for competitors ===
             if (typeShort === 'comp') {
                const extrasPanel = createExtrasPanel(person, registration);
                card.appendChild(extrasPanel);
@@ -1207,7 +1204,6 @@
         });
       }
 
-      // FIXED FUNCTION: Now includes ALL calculated categories (Main + Extras) on initial registration
       async function handleRegistrationClick(card, person, type) {
         const { data: { session } } = await supaClient.auth.getSession();
         if(!session) return;
@@ -1215,21 +1211,47 @@
         const cats = computePersonCategories(person);
         const entriesList = [];
         
+        console.log("=== handleRegistrationClick ===");
+        console.log("Person:", person.name, "Type:", type);
+        console.log("Computed categories:", cats);
+        
         if (type === 'comp') {
-           // Add Sparring Main and any available extras
+           // SPARRING - Add all available categories
            if (cats.sparring.main) {
              entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
-             if (cats.sparring.weightUp) entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: cats.sparring.weightUp.fullCat });
-             if (cats.sparring.ageUp) entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: cats.sparring.ageUp.fullCat });
-             if (cats.sparring.bothUp) entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: cats.sparring.bothUp.fullCat });
+             console.log("Added sparring Main:", cats.sparring.main.fullCat);
+             
+             if (cats.sparring.weightUp) {
+               entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: cats.sparring.weightUp.fullCat });
+               console.log("Added sparring Weight +1:", cats.sparring.weightUp.fullCat);
+             }
+             if (cats.sparring.ageUp) {
+               entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: cats.sparring.ageUp.fullCat });
+               console.log("Added sparring Age +1:", cats.sparring.ageUp.fullCat);
+             }
+             if (cats.sparring.bothUp) {
+               entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: cats.sparring.bothUp.fullCat });
+               console.log("Added sparring Both +1:", cats.sparring.bothUp.fullCat);
+             }
+           } else {
+             console.log("No sparring main category found");
            }
            
-           // Add Patterns Main and any available extras
+           // PATTERNS - Add all available categories
            if (cats.patterns.main) {
              entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
-             if (cats.patterns.ageUp) entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: cats.patterns.ageUp.fullCat });
+             console.log("Added patterns Main:", cats.patterns.main.fullCat);
+             
+             if (cats.patterns.ageUp) {
+               entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: cats.patterns.ageUp.fullCat });
+               console.log("Added patterns Age +1:", cats.patterns.ageUp.fullCat);
+             }
+           } else {
+             console.log("No patterns main category found");
            }
         }
+
+        console.log("Final entriesList to save:", entriesList);
 
         const payload = {
           user_id: session.user.id,
@@ -1242,8 +1264,11 @@
         const { error } = await supaClient.from("final_registrations").insert([payload]);
         loadingOverlay.style.display = "none";
 
-        if (error) showToast("Error registering: " + error.message, "error");
-        else {
+        if (error) {
+          console.error("Registration error:", error);
+          showToast("Error registering: " + error.message, "error");
+        } else {
+          console.log("Registration successful!");
           showToast(`${person.name} registered!`, "success");
           loadAllData(session.user.id);
         }
@@ -1397,14 +1422,14 @@
 
                   if (isSparringYes && newCats.sparring.main) {
                      entriesList.push({ discipline: "sparring", label: "Main", full_cat: newCats.sparring.main.fullCat });
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Weight +1") && newCats.sparring.weightUp) entriesList.push(newCats.sparring.weightUp);
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Age +1") && newCats.sparring.ageUp) entriesList.push(newCats.sparring.ageUp);
-                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Both +1") && newCats.sparring.bothUp) entriesList.push(newCats.sparring.bothUp);
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Weight +1") && newCats.sparring.weightUp) entriesList.push({ discipline: "sparring", label: "Weight +1", full_cat: newCats.sparring.weightUp.fullCat });
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Age +1") && newCats.sparring.ageUp) entriesList.push({ discipline: "sparring", label: "Age +1", full_cat: newCats.sparring.ageUp.fullCat });
+                     if (oldExtras.some(e => e.discipline === "sparring" && e.label === "Both +1") && newCats.sparring.bothUp) entriesList.push({ discipline: "sparring", label: "Both +1", full_cat: newCats.sparring.bothUp.fullCat });
                   }
 
                   if (isPatternsYes && newCats.patterns.main) {
                      entriesList.push({ discipline: "patterns", label: "Main", full_cat: newCats.patterns.main.fullCat });
-                     if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) entriesList.push(newCats.patterns.ageUp);
+                     if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) entriesList.push({ discipline: "patterns", label: "Age +1", full_cat: newCats.patterns.ageUp.fullCat });
                   }
                }
 
@@ -1422,16 +1447,3 @@
     </script>
   </body>
 </html>
-
-
-              <script>
-                              if (oldExtras.some(e => e.discipline === "patterns" && e.label === "Age +1") && newCats.patterns.ageUp) entriesList.push(newCats.patterns.ageUp);
-
-if (cats.sparring.main) entriesList.push({ discipline: "sparring", label: "Main", full_cat: cats.sparring.main.fullCat });
-if (cats.patterns.main) entriesList.push({ discipline: "patterns", label: "Main", full_cat: cats.patterns.main.fullCat });
-
-
-              </script>
-                        </body>
-                        </html>
-                    
